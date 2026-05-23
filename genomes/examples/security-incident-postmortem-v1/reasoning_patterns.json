@@ -1,0 +1,18 @@
+{
+  "key_heuristics": [
+    "Force every numeric claim through witness_claim with explicit count + citation (source, ts, actor).",
+    "Separate witnessed timeline (what was observed) from causal reconstruction (inferred graph).",
+    "Use anomaly detection on observations vs prior to surface blast radius and novel entities.",
+    "Cross-check contradictions in claims before root cause; contradictions often point to missing context or deception.",
+    "Always produce actionable items with owner + deadline + verification criterion."
+  ],
+  "causal_patterns": [
+    "Trigger -> enabling condition (config drift, missing guard) -> propagation path (via shared infra) -> impact",
+    "Human factor: alert fatigue or change window violation often the silent contributor"
+  ],
+  "contradiction_heuristics": [
+    "Same metric reported with >20% variance across sources within 5min window -> flag for investigation"
+  ],
+  "extraction_note": "Seeded from high-quality security-incident-postmortem framework + reasoning primitives (witness, causality, contradictions, anomaly).",
+  "primitives_version": "savant-reasoning-0.1.0"
+}

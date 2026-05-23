@@ -1,0 +1,31 @@
+{
+  "id": "codebase-architecture-map",
+  "version": "1.0.0",
+  "content_hash": "sha256:50f5ef19c8ab37071e9492d3d670677f8a7b80501556debeaa8fa55aec8f2c03",
+  "created": "2026-05-23T14:04:03.172277",
+  "last_improved": "2026-05-23T14:04:03.172372",
+  "authors": [
+    {
+      "type": "human",
+      "name": "Pablo Navarro",
+      "id": null,
+      "run": null
+    }
+  ],
+  "applicability": {
+    "domains": [
+      "codebase",
+      "reverse-engineering"
+    ],
+    "problem_signatures": [
+      "architectural understanding",
+      "structured analysis"
+    ]
+  },
+  "dependencies": {
+    "genomes": [],
+    "agent_capabilities": []
+  },
+  "evaluation_score": {},
+  "schema_version": "1.0"
+}

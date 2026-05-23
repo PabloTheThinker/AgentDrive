@@ -1,0 +1,95 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "savant"
+version = "0.1.0"
+description = "Savant — The Living, Learning Ecosystem for AI Agents. An evolutionary framework for scanning, sharing, and improving agent DNA (genomes) across an open ecosystem."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Pablo Navarro", email = "pablo@nousresearch.com" }]
+license = { text = "MIT" }
+keywords = ["ai", "agents", "genomes", "evolution", "orchestration", "framework", "savant"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Environment :: Console",
+    "Typing :: Typed",
+]
+dependencies = [
+    "pydantic>=2.0",
+    "pyyaml>=6.0",
+    "rich>=13.0",
+    "prompt_toolkit>=3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+    "ruff",
+    "mypy",
+    "types-PyYAML",
+]
+test = [
+    "pytest>=7.0",
+    "pytest-cov",
+]
+
+[project.scripts]
+savant = "savant.cli:main"
+
+[project.entry-points."savant.scanners"]
+# Example: framework = "savant.scanners.framework:FrameworkScanner"
+# Register custom scanners here (plugins)
+
+[project.entry-points."savant.workers"]
+# Example: external = "savant.workers.adapters:ExternalAgentAdapter"
+# Adapters register themselves or via this
+
+[project.entry-points."savant.orchestrator"]
+# Future pluggable strategies
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["savant*"]
+
+[tool.setuptools.package-data]
+savant = ["*.yaml", "*.json", "genomes/**/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "I", "W", "UP"]
+ignore = ["E501"]  # line length handled by formatter
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-ra -q --strict-markers"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: integration tests that may require external agents",
+]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # relax for early stage
+ignore_missing_imports = true
+

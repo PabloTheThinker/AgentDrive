@@ -1,0 +1,121 @@
+framework:
+  id: codebase-architecture-map
+  version: 0.1.0
+  display_name: Codebase Architecture Map
+  description: 'Read a codebase summary and produce a structured architecture map:
+    component inventory, dependency graph, hotspots, recommended refactor passes,
+    and risk register. Designed for new engineers onboarding to a project and for
+    engineering leaders auditing technical debt.
+
+    '
+  category: codebase
+  tags:
+  - architecture
+  - onboarding
+  - refactor
+  - technical-debt
+  author: pablothethinker
+  license: CC-BY-4.0
+  inputs:
+  - name: repo_summary
+    type: string
+    required: true
+    description: "A 2-5 paragraph plain-English description of the codebase \u2014\
+      \ what it does, who uses it, and the major components."
+  - name: language
+    type: string
+    required: true
+    description: Primary programming language (Python, TypeScript, Go, Rust, etc.).
+  - name: loc
+    type: integer
+    required: false
+    minimum: 0
+    description: Approximate total lines of code, if known.
+  - name: tech_stack
+    type: array
+    items: string
+    required: false
+    description: Named frameworks, runtimes, databases, and infrastructure (e.g. FastAPI,
+      Postgres, Redis, Kubernetes).
+  - name: team_size
+    type: integer
+    required: false
+    minimum: 1
+    description: Engineers actively committing to the repo.
+  steps:
+  - id: classify_archetype
+    type: reasoning
+    agent: ilo-core
+    inputs:
+    - repo_summary
+    - language
+    - tech_stack
+    output: archetype
+  - id: enumerate_components
+    type: reasoning
+    agent: ilo-core
+    depends_on:
+    - classify_archetype
+    inputs:
+    - repo_summary
+    - language
+    - tech_stack
+    with:
+    - archetype
+    output: components
+  - id: build_dependency_graph
+    type: reasoning
+    agent: ilo-core
+    depends_on:
+    - enumerate_components
+    with:
+    - components
+    output: dependency_graph
+  - id: identify_hotspots
+    type: reasoning
+    agent: ilo-core
+    depends_on:
+    - enumerate_components
+    inputs:
+    - loc
+    - team_size
+    with:
+    - components
+    output: hotspots
+  - id: recommend_refactors
+    type: reasoning
+    agent: ilo-core
+    depends_on:
+    - identify_hotspots
+    - build_dependency_graph
+    with:
+    - components
+    - hotspots
+    - dependency_graph
+    output: refactor_passes
+  - id: assess_risks
+    type: reasoning
+    agent: ilo-core
+    depends_on:
+    - enumerate_components
+    - identify_hotspots
+    with:
+    - components
+    - hotspots
+    output: risk_register
+  - id: compose_artifact
+    type: validate
+    agent: ilo-core
+    depends_on:
+    - classify_archetype
+    - enumerate_components
+    - build_dependency_graph
+    - identify_hotspots
+    - recommend_refactors
+    - assess_risks
+  output:
+    schema: ../../schemas/codebase-architecture-map-v0.1.json
+    formats:
+    - markdown
+    - json
+    title_template: "Codebase Architecture Map \u2014 {{ archetype.name }}"

@@ -1,0 +1,23 @@
+id: savant-framework
+version: 1.0.0
+content_hash: sha256:dbd0c4b3d9d4059fd6f1ab144e94d6f8676311eab80a23920a3669755fcbcde7
+created: '2026-05-23T14:04:03.182532'
+last_improved: '2026-05-23T14:04:03.182645'
+authors:
+- type: human
+  name: Pablo Navarro
+  id: null
+  run: null
+applicability:
+  domains:
+  - cognition
+  - savant
+  - analysis
+  problem_signatures:
+  - architectural understanding
+  - structured analysis
+dependencies:
+  genomes: []
+  agent_capabilities: []
+evaluation_score: {}
+schema_version: '1.0'

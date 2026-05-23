@@ -1,0 +1,139 @@
+"""
+Codex / OpenAI Agent Savant Adapter — Skeleton & Integration Guide.
+
+Codex (and the broader OpenAI agent / "o1" / custom agent frameworks) usually
+expose agent creation via:
+
+- The Assistants API + tool calling
+- Custom "agent" or "swarm" libraries the user writes
+- Function calling loops where the model decides to "spawn worker"
+
+Because there is no universal `spawn_subagent` in the public OpenAI surface,
+integration is typically done at the *orchestrator* level the user (or the
+model) maintains.
+
+User instruction for a Codex-powered session:
+
+    "Whenever you create helper agents, sub-solvers, or parallel workers for
+     this task, give them access to the Savant Pool using the Codex adapter:
+
+     from savant.adapters.codex_adapter import CodexSavantAdapter
+     adapter = CodexSavantAdapter()
+     adapter.activate(swarm_id='codex-experiment-042')
+
+     Then every worker you instantiate should receive a scoped pool via
+     get_scoped_pool() or by passing the adapter's context."
+
+The skeleton below provides:
+- A uniform adapter the model can call
+- Helpers to inject Savant DNA into tool definitions / system prompts
+- A ready-made wrapper for common "create_agent" patterns
+"""
+
+from __future__ import annotations
+
+import logging
+import os
+from typing import Any, Callable, Dict, Optional
+
+from savant.adapters.base import SavantAdapterBase, SavantContext, create_scoped_pool, SavantPool
+
+logger = logging.getLogger(__name__)
+
+
+class CodexSavantAdapter(SavantAdapterBase):
+    """Adapter for Codex-style / OpenAI agent runtimes.
+
+    Typical usage pattern inside a Codex loop:
+
+        adapter = CodexSavantAdapter()
+        adapter.activate(swarm_id="my-codex-swarm")
+
+        def my_create_worker(prompt, **kwargs):
+            ctx = adapter.get_context_for_child()
+            # pass ctx into the worker's system prompt or env
+            worker = real_create_worker(prompt + adapter.dna_injection_prompt(), env=ctx.as_env(), ...)
+            return worker
+    """
+
+    def __init__(self, swarm_id: Optional[str] = None, **kwargs: Any):
+        super().__init__(name="codex", default_swarm_id=swarm_id, **kwargs)
+        self._last_context: Optional[SavantContext] = None
+
+    def get_name(self) -> str:
+        return "codex"
+
+    def activate(self, swarm_id: Optional[str] = None, **options: Any) -> None:
+        super().activate(swarm_id=swarm_id, **options)
+        logger.info("CodexSavantAdapter activated for OpenAI/Codex-style agents.")
+
+    def get_context_for_child(self, subagent_id: Optional[str] = None) -> SavantContext:
+        """Return a SavantContext dict that can be serialized into a child worker."""
+        swarm, _ = self.detect_context().swarm_id, None
+        if not swarm:
+            swarm = self._default_swarm or "codex-default"
+        sub = subagent_id or f"codex-worker-{id(self) % 10000:04d}"
+        ctx = SavantContext(swarm_id=swarm, subagent_id=sub, parent_agent_id=os.environ.get("SAVANT_SUBAGENT_ID"))
+        self._last_context = ctx
+        return ctx
+
+    def dna_injection_prompt(self, task: str = "") -> str:
+        """Return a ready-to-append system-prompt fragment that tells the agent
+        about available Savant DNA and how to use the pool.
+        """
+        pool = self.get_scoped_pool()
+        # Pull a couple of examples so the prompt itself is grounded
+        try:
+            dna = pool.get_relevant_dna(task or "general agent task", top_k=2)
+            summary = "\n".join(
+                f"- {d.get('genome_id')}: {d.get('why_relevant', '')[:120]}"
+                for d in dna
+            )
+        except Exception:
+            summary = "(Savant Pool is active — call get_scoped_pool() at runtime for live DNA)"
+
+        return f"""
+
+You have access to a Savant Pool of evolved agent DNA (frameworks + reasoning patterns).
+Before tackling complex tasks, call (in your Python environment):
+
+    from savant.adapters import get_scoped_pool
+    pool = get_scoped_pool()
+    dna = pool.get_dna_for_task("...")
+
+Relevant DNA already known for similar work:
+{summary}
+
+After successful work, record outcomes so the pool (and future agents) improve.
+""".strip()
+
+    # Example wrapper the Codex user/model can apply around their agent factory
+    def wrap_agent_factory(self, original_factory: Callable) -> Callable:
+        """Decorator / wrapper for any `create_agent(...)` or `spawn(...)` the model uses."""
+
+        def wrapped(*args: Any, **kwargs: Any) -> Any:
+            ctx = self.get_context_for_child()
+            # Common patterns: pass as "extra_context", "env", or "system_prompt_suffix"
+            if "env" in kwargs:
+                kwargs["env"] = {**kwargs.get("env", {}), **ctx.as_env()}
+            else:
+                kwargs.setdefault("extra_context", {}).update(ctx.as_env())
+
+            # Also inject a hint into any prompt
+            if "prompt" in kwargs and isinstance(kwargs["prompt"], str):
+                kwargs["prompt"] = kwargs["prompt"] + "\n" + self.dna_injection_prompt(kwargs["prompt"][:200])
+
+            agent = original_factory(*args, **kwargs)
+            # If the returned agent object supports .run or similar, we could wrap further
+            return agent
+
+        return wrapped
+
+    def get_pool(self, swarm_id: Optional[str] = None, subagent_id: Optional[str] = None) -> SavantPool:
+        return super().get_pool(swarm_id, subagent_id)
+
+
+# Make import nice
+CodexSavantAdapter = CodexSavantAdapter  # explicit
+
+__all__ = ["CodexSavantAdapter"]

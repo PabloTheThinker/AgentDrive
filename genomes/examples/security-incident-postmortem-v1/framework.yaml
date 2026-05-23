@@ -1,0 +1,25 @@
+# Example Genome: Security Incident Postmortem (v1)
+# High-quality seeded example for Savant Genome registry.
+
+framework:
+  id: security-incident-postmortem
+  version: 1.0.0
+
+  inputs:
+    - incident_summary
+    - timeline
+    - affected_systems
+    - severity
+
+  steps:
+    - name: establish_facts
+      description: "Create a clear, blameless timeline of what happened."
+    - name: identify_root_causes
+      description: "Go beyond the obvious trigger and find contributing factors using causal reasoning."
+    - name: assess_impact_and_risk
+    - name: generate_actionable_recommendations
+      description: "Prioritized, specific, assigned recommendations with owners and timelines."
+    - name: synthesize_narrative
+      description: "Write the final human-readable postmortem document."
+
+  output_schema: "security-postmortem-v1"

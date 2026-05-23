@@ -1,0 +1,9 @@
+{
+  "skill_description": "Read a startup's customer-discovery interview notes and produce a structured synthesis: dominant themes, top three jobs-to-be-done, top three objections, and a recommended next experiment.",
+  "proposed_id": "customer-discovery-synthesis",
+  "target_category": "business",
+  "example_intake": {
+    "interview_notes": "We spoke with 12 founders...",
+    "interviewer": "Pablo"
+  }
+}

@@ -1,0 +1,25 @@
+id: skill-creator
+version: 1.0.0
+content_hash: sha256:0f58d5263ff14e45a9d43c7f58d2bbe096137f83b6dce61279744470f9bf2acf
+created: '2026-05-23T14:04:03.163744'
+last_improved: '2026-05-23T14:04:03.164022'
+authors:
+- type: human
+  name: Pablo Navarro
+  id: null
+  run: null
+applicability:
+  domains:
+  - meta
+  - framework-engineering
+  - codebase
+  problem_signatures:
+  - need to turn description into reusable typed agent capability
+dependencies:
+  genomes: []
+  agent_capabilities:
+  - synthesis
+  - code-gen
+evaluation_score:
+  reference_tasks: 0.8
+schema_version: '1.0'
