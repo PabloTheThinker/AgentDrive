@@ -117,6 +117,97 @@ prompt_yes_no() {
 }
 
 # ============================================================================
+# ============================================================================
+# Gum Integration (OpenClaw + Hermes level delight)
+# ============================================================================
+# We optionally bootstrap "gum" (Charmbracelet) for beautiful spinners and
+# confirms during long operations. Falls back gracefully like OpenClaw does.
+
+GUM_VERSION="0.17.0"
+GUM=""
+GUM_STATUS="skipped"
+GUM_REASON=""
+
+gum_is_tty() {
+    if [[ -n "${NO_COLOR:-}" ]]; then return 1; fi
+    if [[ "${TERM:-dumb}" == "dumb" ]]; then return 1; fi
+    if [[ -t 1 || -t 2 ]]; then return 0; fi
+    if { : </dev/tty; } 2>/dev/null; then return 0; fi
+    return 1
+}
+
+gum_detect_os() {
+    case "$(uname -s 2>/dev/null || true)" in
+        Darwin) echo "Darwin" ;;
+        Linux) echo "Linux" ;;
+        *) echo "unsupported" ;;
+    esac
+}
+
+gum_detect_arch() {
+    case "$(uname -m 2>/dev/null || true)" in
+        x86_64|amd64) echo "x86_64" ;;
+        arm64|aarch64) echo "arm64" ;;
+        *) echo "unknown" ;;
+    esac
+}
+
+bootstrap_gum() {
+    if ! gum_is_tty; then
+        GUM_REASON="no suitable TTY"
+        return 1
+    fi
+
+    if command -v gum >/dev/null 2>&1; then
+        GUM="gum"
+        GUM_STATUS="found"
+        return 0
+    fi
+
+    local os arch asset url checksum_url gum_dir
+    os="$(gum_detect_os)"
+    arch="$(gum_detect_arch)"
+
+    if [[ "$os" == "unsupported" || "$arch" == "unknown" ]]; then
+        GUM_REASON="unsupported platform"
+        return 1
+    fi
+
+    asset="gum_${GUM_VERSION}_${os}_${arch}.tar.gz"
+    url="https://github.com/charmbracelet/gum/releases/download/v${GUM_VERSION}/${asset}"
+    checksum_url="https://github.com/charmbracelet/gum/releases/download/v${GUM_VERSION}/checksums.txt"
+
+    gum_dir="$(mktemp -d)"
+    TMPFILES+=("$gum_dir")
+
+    if ! curl -fsSL --retry 2 "$url" -o "$gum_dir/$asset" 2>/dev/null; then
+        GUM_REASON="download failed"
+        return 1
+    fi
+
+    # Best effort checksum (non-fatal)
+    curl -fsSL --retry 1 "$checksum_url" -o "$gum_dir/checksums.txt" 2>/dev/null || true
+
+    tar -xzf "$gum_dir/$asset" -C "$gum_dir" --strip-components=1 2>/dev/null || {
+        GUM_REASON="extract failed"
+        return 1
+    }
+
+    if [[ -x "$gum_dir/gum" ]]; then
+        GUM="$gum_dir/gum"
+        GUM_STATUS="bootstrapped"
+        chmod +x "$GUM"
+        return 0
+    fi
+
+    GUM_REASON="binary not found after extract"
+    return 1
+}
+
+# Call early so we can use gum for spinners later
+bootstrap_gum
+
+# ============================================================================
 # Argument Parsing (Hermes-grade)
 # ============================================================================
 
@@ -284,20 +375,31 @@ install_with_uv() {
     return 1
 }
 
+run_install_step() {
+    local title="$1"
+    shift
+
+    if [[ -n "$GUM" ]]; then
+        "$GUM" spin --spinner dot --title "$title" -- bash -c "$*"
+    else
+        log_info "$title"
+        bash -c "$*"
+    fi
+}
+
 success=false
 
 if [ "$USE_UV" = true ] && command -v uv &> /dev/null; then
-    log_info "Trying fast path with uv..."
-    if install_with_uv "$INSTALL_SPEC"; then
+    if run_install_step "Installing with uv (this can take a minute)..." "install_with_uv '$INSTALL_SPEC'"; then
         log_success "Savant installed with uv"
         success=true
     else
-        log_warn "uv failed, falling back to pip (showing real error below)..."
+        log_warn "uv path failed, trying pip with real error output..."
     fi
 fi
 
 if [ "$success" = false ]; then
-    if install_with_pip "$INSTALL_SPEC"; then
+    if run_install_step "Installing Savant with pip (this can take a minute)..." "install_with_pip '$INSTALL_SPEC'"; then
         log_success "Savant installed successfully"
         success=true
     fi
@@ -394,7 +496,18 @@ echo "Documentation: https://github.com/pablothethinker/savant"
 echo
 
 # 8. Offer to launch immediately (Hermes-style delight)
-if prompt_yes_no "Launch Savant now?" "yes"; then
+launch_now=false
+if [[ -n "$GUM" ]]; then
+    if "$GUM" confirm "Launch Savant TUI now?" --default=true --affirmative="Yes, launch it" --negative="Later"; then
+        launch_now=true
+    fi
+else
+    if prompt_yes_no "Launch Savant now?" "yes"; then
+        launch_now=true
+    fi
+fi
+
+if [ "$launch_now" = true ]; then
     if [[ -n "$SAVANT_BIN" && -x "$SAVANT_BIN" ]]; then
         exec "$SAVANT_BIN"
     elif command -v savant >/dev/null 2>&1; then
