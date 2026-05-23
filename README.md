@@ -46,32 +46,74 @@ Early foundation stage. We are building the Savant Framework with a strong empha
 - Clean separation between orchestration and evolutionary learning
 - High-quality patterns for agent ecosystems
 
-## Getting Started
+## Installation
+
+Savant follows the same high-quality installation experience as Hermes.
 
 ### One-line Install (Recommended)
 
 ```bash
 curl -fsSL https://vektraindustries.com/savant/install | bash
+# or
+curl -fsSL https://vektraindustries.com/savant/install.sh | bash
 ```
 
-This installs the latest Savant from source, adds it to your PATH, and gives you the `savant` command.
+This is the canonical, production-grade installer. It:
+- Verifies Python ≥ 3.11
+- Installs the latest Savant from source
+- Sets up your PATH correctly (bash, zsh, fish)
+- Creates `~/.savant/` with proper structure
+- Offers to launch the TUI immediately
 
-After installation, simply run:
+After installation, just run:
 
 ```bash
 savant
 ```
 
-The first time you run it you will go through a beautiful Hermes-style onboarding flow and land in the professional TUI with the dedicated welcome screen.
+You will be greeted with the professional onboarding flow and the dedicated first-launch welcome screen.
 
-Alternative (once published to PyPI):
+### Manual Installation
 
+If you prefer not to use the installer:
+
+```bash
+python3 -m pip install --user git+https://github.com/PabloTheThinker/savant.git
+export PATH="$HOME/.local/bin:$PATH"
+savant
+```
+
+**Requirements**
+- Python 3.11 or newer
+- pip
+
+**Once on PyPI** (coming soon):
 ```bash
 pip install savant
 savant
 ```
 
 ### Quick Verification
+
+```bash
+savant doctor          # Health check
+savant --help
+savant pool status     # Your DNA pools
+```
+
+The first run will trigger the full Hermes-style setup wizard and create your initial global Savant Pool.
+
+### Updating
+
+Re-run the one-line installer at any time — it is safe and will upgrade in place.
+
+### Platform Notes
+
+- **Linux / macOS**: Full support.
+- **Termux (Android)**: Works with some limitations (no heavy browser extras).
+- **Windows**: Use WSL2 (recommended) or Git Bash + Python.
+
+For the absolute latest development version or to contribute, see the [Development](#development) section below.
 
 ```bash
 savant --version

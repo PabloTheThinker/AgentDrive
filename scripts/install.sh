@@ -2,9 +2,12 @@
 #
 # Savant Installer — Apple-grade, Hermes-style production installer
 #
-# Usage:
+# Usage (recommended):
 #   curl -fsSL https://vektraindustries.com/savant/install | bash
 #   curl -fsSL https://vektraindustries.com/savant/install.sh | bash
+#
+# Canonical source (like Hermes):
+#   https://raw.githubusercontent.com/PabloTheThinker/savant/main/scripts/install.sh
 #
 # This script installs the Savant Framework (The Living DNA Pool for AI Agent Swarms).
 # It is safe to re-run at any time.
