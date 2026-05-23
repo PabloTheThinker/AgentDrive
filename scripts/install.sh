@@ -188,7 +188,7 @@ done
 # Configuration
 # ============================================================================
 
-SAVANT_REPO="https://github.com/PabloTheThinker/savant.git"
+SAVANT_REPO="https://github.com/PabloTheThinker/savant.git"  # Correct casing is important for GitHub raw / git+ URLs
 MIN_PYTHON="3.11"
 SAVANT_HOME="${SAVANT_HOME:-$HOME/.savant}"
 
@@ -258,28 +258,64 @@ fi
 
 log_info "Installing Savant from ${REF}..."
 
-# Prefer uv if available and allowed
+install_with_pip() {
+    local spec="$1"
+    local tmp_log
+    tmp_log=$(mktemp)
+
+    if python3 -m pip install --user --upgrade "$spec" >"$tmp_log" 2>&1; then
+        rm -f "$tmp_log"
+        return 0
+    else
+        log_error "pip install failed with the following output:"
+        echo ""
+        cat "$tmp_log" | sed 's/^/    /'
+        echo ""
+        rm -f "$tmp_log"
+        return 1
+    fi
+}
+
+install_with_uv() {
+    local spec="$1"
+    if uv pip install --user --upgrade "$spec" 2>/dev/null || uv pip install "$spec" 2>/dev/null; then
+        return 0
+    fi
+    return 1
+}
+
+success=false
+
 if [ "$USE_UV" = true ] && command -v uv &> /dev/null; then
-    log_info "Using uv (fast path)..."
-    if uv pip install --user --upgrade "$INSTALL_SPEC" 2>/dev/null || uv pip install "$INSTALL_SPEC" 2>/dev/null; then
+    log_info "Trying fast path with uv..."
+    if install_with_uv "$INSTALL_SPEC"; then
         log_success "Savant installed with uv"
+        success=true
     else
-        log_warn "uv install failed, falling back to pip..."
-        python3 -m pip install --user --upgrade "$INSTALL_SPEC" --quiet || {
-            log_error "Both uv and pip failed to install Savant."
-            exit 1
-        }
-        log_success "Savant installed successfully (pip fallback)"
+        log_warn "uv failed, falling back to pip (showing real error below)..."
     fi
-else
-    if python3 -m pip install --user --upgrade "$INSTALL_SPEC" --quiet 2>/dev/null; then
+fi
+
+if [ "$success" = false ]; then
+    if install_with_pip "$INSTALL_SPEC"; then
         log_success "Savant installed successfully"
-    else
-        log_error "Installation failed."
-        log_info "Manual command:"
-        log_info "  python3 -m pip install --user git+${SAVANT_REPO}@${REF}"
-        exit 1
+        success=true
     fi
+fi
+
+if [ "$success" = false ]; then
+    log_error "Installation failed."
+    log_info "Common causes:"
+    log_info "  • git is not installed"
+    log_info "  • No internet / corporate proxy blocking git+https"
+    log_info "  • Python version or permissions issue"
+    echo ""
+    log_info "Manual command to try:"
+    log_info "  python3 -m pip install --user git+${SAVANT_REPO}@${REF}"
+    echo ""
+    log_info "If you have git installed, you can also do:"
+    log_info "  git clone --branch ${REF} ${SAVANT_REPO} && cd savant && python -m pip install -e ."
+    exit 1
 fi
 
 # 4. Locate the savant binary
