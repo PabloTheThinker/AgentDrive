@@ -44,13 +44,28 @@ def bump_version(current: str, part: str) -> str:
     return f"{major}.{minor}.{patch}"
 
 def main():
-    if len(sys.argv) != 2 or sys.argv[1] not in ("major", "minor", "patch"):
-        print("Usage: python scripts/bump_version.py [major|minor|patch]")
+    if len(sys.argv) < 2:
+        print("Usage: python scripts/bump_version.py [major|minor|patch] [--dry-run] [--print-only]")
         sys.exit(1)
 
     part = sys.argv[1]
+    dry_run = "--dry-run" in sys.argv
+    print_only = "--print-only" in sys.argv
+
+    if part not in ("major", "minor", "patch"):
+        print("Error: part must be major, minor, or patch")
+        sys.exit(1)
+
     current = get_current_version()
     new = bump_version(current, part)
+
+    if print_only:
+        print(new)
+        return
+
+    if dry_run:
+        print(f"[dry-run] Would bump: {current} → {new}")
+        return
 
     content = PYPROJECT.read_text()
     new_content = re.sub(
@@ -61,8 +76,11 @@ def main():
     PYPROJECT.write_text(new_content)
 
     print(f"Bumped version: {current} → {new}")
-    print(f"Run: git add pyproject.toml && git commit -m 'chore: bump version to {new}'")
-    print(f"Then: git tag v{new} && git push origin main --tags")
+    print("Next steps:")
+    print(f"  git add pyproject.toml CHANGELOG.md")
+    print(f"  git commit -m 'chore: release v{new}'")
+    print(f"  git tag -a v{new} -m 'Release v{new}'")
+    print(f"  git push origin main --tags")
 
 if __name__ == "__main__":
     main()
