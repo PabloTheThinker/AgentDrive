@@ -180,13 +180,35 @@ bootstrap_gum() {
     gum_dir="$(mktemp -d)"
     TMPFILES+=("$gum_dir")
 
-    if ! curl -fsSL --retry 2 "$url" -o "$gum_dir/$asset" 2>/dev/null; then
-        GUM_REASON="download failed"
+    # Strict HTTPS + retries
+    if ! curl -fsSL --proto '=https' --tlsv1.2 --retry 3 --retry-delay 1 \
+         -o "$gum_dir/$asset" "$url" 2>/dev/null; then
+        GUM_REASON="secure download failed"
         return 1
     fi
 
-    # Best effort checksum (non-fatal)
-    curl -fsSL --retry 1 "$checksum_url" -o "$gum_dir/checksums.txt" 2>/dev/null || true
+    # Download checksums
+    if ! curl -fsSL --proto '=https' --tlsv1.2 --retry 2 \
+         -o "$gum_dir/checksums.txt" "$checksum_url" 2>/dev/null; then
+        GUM_REASON="failed to fetch checksums"
+        return 1
+    fi
+
+    # Mandatory checksum verification (OpenClaw-style)
+    if command -v sha256sum >/dev/null 2>&1; then
+        if ! (cd "$gum_dir" && sha256sum --ignore-missing -c checksums.txt >/dev/null 2>&1); then
+            GUM_REASON="checksum verification failed"
+            return 1
+        fi
+    elif command -v shasum >/dev/null 2>&1; then
+        if ! (cd "$gum_dir" && shasum -a 256 --ignore-missing -c checksums.txt >/dev/null 2>&1); then
+            GUM_REASON="checksum verification failed"
+            return 1
+        fi
+    else
+        GUM_REASON="no sha256sum/shasum available for verification"
+        return 1
+    fi
 
     tar -xzf "$gum_dir/$asset" -C "$gum_dir" --strip-components=1 2>/dev/null || {
         GUM_REASON="extract failed"
