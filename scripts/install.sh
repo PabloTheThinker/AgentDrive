@@ -117,12 +117,88 @@ prompt_yes_no() {
 }
 
 # ============================================================================
+# Argument Parsing (Hermes-grade)
+# ============================================================================
+
+BRANCH="main"
+USE_UV=true
+RUN_LAUNCH=true
+DEV_MODE=false
+CUSTOM_PYTHON=""
+
+show_help() {
+    echo "Savant Installer"
+    echo ""
+    echo "Usage: install.sh [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  --help              Show this help message"
+    echo "  --no-color          Disable colored output"
+    echo "  --branch NAME       Install from a specific branch (default: main)"
+    echo "  --no-uv             Do not use uv even if available (use pip)"
+    echo "  --python VERSION    Use a specific Python version (e.g. 3.12)"
+    echo "  --dev               Install in editable mode (for contributors)"
+    echo "  --skip-launch       Do not offer to launch Savant after install"
+    echo ""
+    echo "Examples:"
+    echo "  curl -fsSL ... | bash -s -- --branch develop"
+    echo "  curl -fsSL ... | bash -s -- --dev"
+    echo ""
+    exit 0
+}
+
+# Parse arguments (support both direct execution and curl | bash -s --)
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --help|-h)
+            show_help
+            ;;
+        --no-color)
+            RED='' GREEN='' YELLOW='' BLUE='' MAGENTA='' CYAN='' BOLD='' NC=''
+            shift
+            ;;
+        --branch)
+            BRANCH="$2"
+            shift 2
+            ;;
+        --no-uv)
+            USE_UV=false
+            shift
+            ;;
+        --python)
+            CUSTOM_PYTHON="$2"
+            shift 2
+            ;;
+        --dev)
+            DEV_MODE=true
+            shift
+            ;;
+        --skip-launch)
+            RUN_LAUNCH=false
+            shift
+            ;;
+        *)
+            log_warn "Unknown option: $1 (ignoring)"
+            shift
+            ;;
+    esac
+done
+
+# ============================================================================
 # Configuration
 # ============================================================================
 
-SAVANT_REPO="https://github.com/pablothethinker/savant.git"
+SAVANT_REPO="https://github.com/PabloTheThinker/savant.git"
 MIN_PYTHON="3.11"
 SAVANT_HOME="${SAVANT_HOME:-$HOME/.savant}"
+
+if [ -n "$CUSTOM_PYTHON" ]; then
+    MIN_PYTHON="$CUSTOM_PYTHON"
+fi
+
+if [ "$DEV_MODE" = true ]; then
+    log_info "Development mode enabled"
+fi
 
 # ============================================================================
 # Main Installation Flow
@@ -163,16 +239,47 @@ if ! python3 -m pip --version >/dev/null 2>&1; then
     exit 1
 fi
 
-# 3. Install Savant
-log_info "Installing Savant from GitHub (main branch)..."
+# 3. Install Savant (support uv + branch + dev mode)
+REF="main"
+if [ "$BRANCH" != "main" ]; then
+    REF="$BRANCH"
+fi
 
-if python3 -m pip install --user --upgrade "git+${SAVANT_REPO}" --quiet 2>/dev/null; then
-    log_success "Savant installed successfully"
+INSTALL_SPEC="git+${SAVANT_REPO}@${REF}"
+
+if [ "$DEV_MODE" = true ]; then
+    log_info "Development install mode"
+    if [ -d ".git" ]; then
+        INSTALL_SPEC="-e ."
+    else
+        log_warn "--dev was passed but you're not inside a Savant checkout. Falling back to remote install."
+    fi
+fi
+
+log_info "Installing Savant from ${REF}..."
+
+# Prefer uv if available and allowed
+if [ "$USE_UV" = true ] && command -v uv &> /dev/null; then
+    log_info "Using uv (fast path)..."
+    if uv pip install --user --upgrade "$INSTALL_SPEC" 2>/dev/null || uv pip install "$INSTALL_SPEC" 2>/dev/null; then
+        log_success "Savant installed with uv"
+    else
+        log_warn "uv install failed, falling back to pip..."
+        python3 -m pip install --user --upgrade "$INSTALL_SPEC" --quiet || {
+            log_error "Both uv and pip failed to install Savant."
+            exit 1
+        }
+        log_success "Savant installed successfully (pip fallback)"
+    fi
 else
-    log_error "Installation via pip failed."
-    log_info "You can try manually:"
-    log_info "  python3 -m pip install --user git+${SAVANT_REPO}"
-    exit 1
+    if python3 -m pip install --user --upgrade "$INSTALL_SPEC" --quiet 2>/dev/null; then
+        log_success "Savant installed successfully"
+    else
+        log_error "Installation failed."
+        log_info "Manual command:"
+        log_info "  python3 -m pip install --user git+${SAVANT_REPO}@${REF}"
+        exit 1
+    fi
 fi
 
 # 4. Locate the savant binary
