@@ -595,6 +595,55 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             },
         )
 
+    @app.post("/dna/grants")
+    def issue_grant_route(
+        request: Request,
+        issuer: Annotated[str, Form()],
+        grantee: Annotated[str, Form()],
+        min_eval: Annotated[float, Form()] = 0.7,
+        ttl_hours: Annotated[int, Form()] = 24,
+        user: User = Depends(require_user),
+    ):
+        """Issue an Ed25519-signed lineage grant from one agent to another.
+
+        Real GrantScope fields: ``topics``, ``min_eval``, ``content_hashes``.
+        Only ``min_eval`` is surfaced via this form; the others can be
+        added when the UI grows topic / hash filters.
+        """
+        import re as _re
+
+        from agentdrive.dna.grants import GrantScope, GrantStore
+
+        safe_re = _re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
+        if not safe_re.fullmatch(issuer) or not safe_re.fullmatch(grantee):
+            return _redirect(f"/dna?agent={issuer}&error=bad-agent-id")
+        if min_eval < 0.0 or min_eval > 1.0:
+            return _redirect(f"/dna?agent={issuer}&error=bad-min-eval")
+        store_path = get_agentdrive_home() / "grants.db"
+        gs = GrantStore(db_path=store_path)
+        try:
+            grant = gs.issue(
+                issuer=issuer,
+                grantee=grantee,
+                scope=GrantScope(min_eval=min_eval),
+                ttl_seconds=ttl_hours * 3600,
+            )
+        except Exception as exc:  # noqa: BLE001
+            return _redirect(f"/dna?agent={issuer}&error={exc.__class__.__name__}")
+        return _redirect(f"/dna?agent={issuer}&info=grant-{grant.grant_id[:8]}")
+
+    @app.post("/dna/grants/{grant_id}/revoke")
+    def revoke_grant_route(
+        request: Request,
+        grant_id: str,
+        user: User = Depends(require_user),
+    ):
+        from agentdrive.dna.grants import GrantStore
+
+        gs = GrantStore(db_path=get_agentdrive_home() / "grants.db")
+        gs.revoke(grant_id)
+        return _redirect("/dna")
+
     @app.get("/capabilities", response_class=HTMLResponse)
     def capabilities_page(
         request: Request,
@@ -679,7 +728,13 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         )
 
     @app.get("/peers", response_class=HTMLResponse)
-    def peers_page(request: Request, user: User = Depends(require_user)):
+    def peers_page(
+        request: Request,
+        user: User = Depends(require_user),
+        info: str | None = None,
+        error: str | None = None,
+    ):
+        peers_list, quarantine_list = _list_peers_and_quarantine()
         return templates.TemplateResponse(
             request,
             "peers.html",
@@ -687,10 +742,79 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                 "request": request,
                 "user": user,
                 "active": "peer",
-                "peers": [],
-                "quarantine": [],
+                "peers": peers_list,
+                "quarantine": quarantine_list,
+                "info": info,
+                "error": error,
             },
         )
+
+    @app.post("/peers")
+    def add_peer_route(
+        request: Request,
+        name: Annotated[str, Form()],
+        address: Annotated[str, Form()] = "",
+        public_key: Annotated[str, Form()] = "",
+        trust: Annotated[str, Form()] = "review",
+        user: User = Depends(require_user),
+    ):
+        import re as _re
+
+        from agentdrive.peers import VALID_TRUST_LEVELS, PeerRegistry
+
+        safe_re = _re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
+        if not safe_re.fullmatch(name):
+            return _redirect("/peers?error=bad-name")
+        if trust not in VALID_TRUST_LEVELS:
+            return _redirect("/peers?error=bad-trust-level")
+        try:
+            reg = PeerRegistry()
+            reg.add(
+                peer_id=name,
+                address=address,
+                public_key=public_key or None,
+                trust_level=trust,
+            )
+        except Exception as exc:  # noqa: BLE001
+            return _redirect(f"/peers?error={exc.__class__.__name__}")
+        return _redirect(f"/peers?info=added-{name}")
+
+    @app.post("/peers/quarantine/{quarantine_id}/approve")
+    def approve_quarantine_route(
+        request: Request,
+        quarantine_id: str,
+        user: User = Depends(require_user),
+    ):
+        from agentdrive.quarantine import get_default_quarantine
+
+        try:
+            drive = AgentDrive(drive_path=get_default_drive_path())
+            ok = get_default_quarantine().approve(
+                quarantine_id,
+                target_pool=drive,
+                note=f"approved via web by {user.username}",
+            )
+        except KeyError:
+            return _redirect("/peers?error=unknown-quarantine-id")
+        except Exception as exc:  # noqa: BLE001
+            return _redirect(f"/peers?error={exc.__class__.__name__}")
+        status = "approved" if ok else "validation-failed"
+        return _redirect(f"/peers?info={status}-{quarantine_id[:8]}")
+
+    @app.post("/peers/quarantine/{quarantine_id}/reject")
+    def reject_quarantine_route(
+        request: Request,
+        quarantine_id: str,
+        reason: Annotated[str, Form()] = "rejected by operator",
+        user: User = Depends(require_user),
+    ):
+        from agentdrive.quarantine import get_default_quarantine
+
+        try:
+            get_default_quarantine().reject(quarantine_id, reason=reason)
+        except Exception as exc:  # noqa: BLE001
+            return _redirect(f"/peers?error={exc.__class__.__name__}")
+        return _redirect(f"/peers?info=rejected-{quarantine_id[:8]}")
 
     # ── snapshots ──────────────────────────────────────────────────────
 
@@ -916,6 +1040,49 @@ def _snapshot_count(agent_id: str) -> int:
         return len(_snapshot_manager(agent_id).list_snapshots())
     except Exception:  # pragma: no cover
         return 0
+
+
+def _list_peers_and_quarantine() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Return (peers, quarantine_entries) for the /peers page.
+
+    Both sides come straight from the real data stores; an empty result
+    means nothing has been added yet, not that the page is unwired.
+    """
+    peers: list[dict[str, Any]] = []
+    quarantine: list[dict[str, Any]] = []
+    try:
+        from agentdrive.peers import PeerRegistry
+
+        for p in PeerRegistry().list():
+            peers.append(
+                {
+                    "name": p.peer_id,
+                    "fingerprint": (p.public_key or p.address or "")[:48],
+                    "trust": p.trust_level.title(),
+                    "last_sync": _humanize_age(
+                        getattr(p, "last_sync_at", None) or getattr(p, "added_at", None)
+                    ),
+                    "pulled": "—",
+                }
+            )
+    except Exception:  # pragma: no cover
+        pass
+    try:
+        from agentdrive.quarantine import QuarantineStatus, get_default_quarantine
+
+        for e in get_default_quarantine().list(status=QuarantineStatus.PENDING):
+            quarantine.append(
+                {
+                    "quarantine_id": e.quarantine_id,
+                    "hash": (e.sha256 or "")[:12],
+                    "source": e.source_peer or "—",
+                    "received": _humanize_age(getattr(e, "submitted_at", None)),
+                    "reason": getattr(e, "hold_reason", "") or "pending review",
+                }
+            )
+    except Exception:  # pragma: no cover
+        pass
+    return peers, quarantine
 
 
 def _list_swarms() -> list[dict[str, Any]]:

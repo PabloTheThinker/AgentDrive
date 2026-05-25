@@ -50,6 +50,24 @@
       <span class="mono">{{ agent_id }}</span> has no recorded ancestors yet.
     </div>
   {% endif %}
+
+  <form method="post" action="/dna/grants" style="margin-top: 24px;">
+    <div class="panel" style="padding: 16px;">
+      <div class="kicker" style="margin-bottom: 10px;">Issue a lineage grant</div>
+      <div class="u-stack" style="gap: 8px;">
+        <div class="u-row" style="gap: 8px;">
+          <input class="fld mono" name="issuer" placeholder="agent-7 (donor)" value="{{ agent_id or '' }}" required>
+          <input class="fld mono" name="grantee" placeholder="agent-12 (recipient)" required>
+        </div>
+        <div class="u-row" style="gap: 8px;">
+          <input class="fld mono" name="min_eval" type="number" min="0" max="1" step="0.05" value="0.7" placeholder="min_eval">
+          <input class="fld mono" name="ttl_hours" type="number" min="1" value="24" placeholder="ttl_hours">
+          <button class="btn btn-primary" type="submit">{{ icon('plus', 12) }} Issue</button>
+        </div>
+      </div>
+      <div class="mono u-small u-muted" style="margin-top: 8px;">Ed25519-signed via <code>GrantStore.issue()</code>. Recipient pulls land in quarantine before merging.</div>
+    </div>
+  </form>
 </div>
 {% endblock %}
 

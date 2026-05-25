@@ -47,14 +47,39 @@
           <p class="item-title mono">{{ q.hash }}…</p>
           <div class="item-meta">from {{ q.source }}  ·  {{ q.received }}  ·  {{ q.reason }}</div>
         </div>
-        <button class="btn btn-ghost" type="button" style="padding: 4px 10px; font-size: 11px; color: var(--accent);">Approve</button>
-        <button class="btn btn-ghost" type="button" style="padding: 4px 10px; font-size: 11px; color: var(--danger);">Reject</button>
+        <form method="post" action="/peers/quarantine/{{ q.quarantine_id }}/approve" style="display: inline;">
+          <button class="btn btn-ghost" type="submit" style="padding: 4px 10px; font-size: 11px; color: var(--accent);">Approve</button>
+        </form>
+        <form method="post" action="/peers/quarantine/{{ q.quarantine_id }}/reject" style="display: inline;">
+          <button class="btn btn-ghost" type="submit" style="padding: 4px 10px; font-size: 11px; color: var(--danger);">Reject</button>
+        </form>
       </div>
     </div>
     {% endfor %}
   {% else %}
     <div style="font-size: 13px; color: var(--tertiary); padding: 16px 0;">Queue empty.</div>
   {% endif %}
+
+  <form method="post" action="/peers" style="margin-top: 24px;">
+    <div class="panel" style="padding: 16px;">
+      <div class="kicker" style="margin-bottom: 10px;">Add a peer</div>
+      <div class="u-stack" style="gap: 8px;">
+        <input class="fld mono" name="name" placeholder="peer-omega" required>
+        <input class="fld mono" name="address" placeholder="https://peer.example/agentdrive  (or local path)">
+        <input class="fld mono" name="public_key" placeholder="ed25519:9f3e:42a7:… (optional)">
+        <div class="u-row" style="gap: 8px;">
+          <select class="fld" name="trust" style="max-width: 200px;">
+            <option value="untrusted">Untrusted</option>
+            <option value="review" selected>Under review</option>
+            <option value="trusted">Trusted</option>
+          </select>
+          <div style="flex: 1;"></div>
+          <button class="btn btn-primary" type="submit">{{ icon('plus', 12) }} Add peer</button>
+        </div>
+      </div>
+      <div class="mono u-small u-muted" style="margin-top: 8px;">Calls <code>PeerRegistry.add()</code>. Pulled DNA from any peer lands in quarantine before it can affect anything.</div>
+    </div>
+  </form>
 </div>
 {% endblock %}
 

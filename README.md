@@ -102,7 +102,7 @@ All components below ship in **v0.1.0** and are exercised by tested code paths. 
 | **Snapshot backup** | `agentdrive.backup.snapshot.SnapshotManager`, `agentdrive.backup.ui` | Pointer-only snapshot manifests store hashes, not copied bytes. Default cadence is 6 hours with rolling retention of 6 hourly, 7 daily, 4 weekly, plus pinned snapshots. Restore is read-only and returns hashes. The older localhost snapshot UI on `:8420` is legacy while its controls are absorbed into the FastAPI web surface. |
 | **Harness** | `agentdrive.harness` | The runtime wrapper for adapter agents. Pulls relevant DNA at task start and records outcomes at task end. |
 | **Adapters** | `agentdrive.workers.adapters` | Sidecar integrations for Grok Build, Claude Code, Codex, MCP, and custom orchestrators. |
-| **Web surface** | `agentdrive.web` | FastAPI + HTMX direction for the operator dashboard. Launch with `agentdrive web` and open `http://127.0.0.1:8421`. Phase 1 covers auth, dashboard shell, and user administration; deeper Drive/Swarms/DNA/Snapshots/Capabilities pages are Phase 2+. |
+| **Web surface** | `agentdrive.web` | FastAPI + Jinja2 dashboard. Launch with `agentdrive web` and open `http://127.0.0.1:8421`. Auth (Argon2id, admin-approval signup, 5-failure rate limit, Origin-checked CSRF), dashboard, Personal/Swarms/DNA/Snapshots/Capabilities/Peers, and admin user management all ship. Interactive flows: mint/revoke capability, import genome, spawn swarm, take/pin/restore/delete snapshot, issue lineage grant, add peer, approve/reject quarantine. Health probe at `/healthz`, JSON request logs with `request_id`. |
 
 ---
 

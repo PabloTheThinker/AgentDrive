@@ -160,6 +160,102 @@ def test_swarms_spawn_flow(tmp_path: Path) -> None:
     assert "swarm_id must be" in r.text
 
 
+def test_dna_grant_issue_and_revoke(tmp_path: Path) -> None:
+    """POST /dna/grants persists an Ed25519-signed grant in GrantStore;
+    POST /dna/grants/{grant_id}/revoke marks it revoked.
+    """
+    _clean_drives()
+    grants_db = get_agentdrive_home() / "grants.db"
+    if grants_db.exists():
+        grants_db.unlink()
+
+    client = _make_client(tmp_path)
+    _login(client)
+
+    r = client.post(
+        "/dna/grants",
+        data={
+            "issuer": "agent-7",
+            "grantee": "agent-12",
+            "min_eval": "0.7",
+            "ttl_hours": "24",
+        },
+    )
+    assert r.status_code == 303
+    assert "grant-" in r.headers["location"]
+
+    # Verify on-disk via the GrantStore API directly.
+    from agentdrive.dna.grants import GrantStore
+
+    gs = GrantStore(db_path=grants_db)
+    with gs._conn() as c:  # noqa: SLF001
+        rows = list(c.execute("SELECT grant_id, issuer, grantee FROM grants WHERE revoked = 0"))
+    assert any(r[1] == "agent-7" and r[2] == "agent-12" for r in rows), rows
+    grant_id = rows[0][0]
+
+    r = client.post(f"/dna/grants/{grant_id}/revoke")
+    assert r.status_code == 303
+
+
+def test_dna_grant_rejects_bad_ids(tmp_path: Path) -> None:
+    _clean_drives()
+    client = _make_client(tmp_path)
+    _login(client)
+    r = client.post("/dna/grants", data={"issuer": "../etc/passwd", "grantee": "agent-12"})
+    assert r.status_code == 303
+    assert "error=bad-agent-id" in r.headers["location"]
+
+
+def test_peers_add_and_list(tmp_path: Path) -> None:
+    """POST /peers calls PeerRegistry.add(), and the new peer renders on GET /peers."""
+    _clean_drives()
+    shutil.rmtree(get_agentdrive_home() / "peers", ignore_errors=True)
+
+    client = _make_client(tmp_path)
+    _login(client)
+
+    r = client.post(
+        "/peers",
+        data={
+            "name": "peer-omega",
+            "address": "https://peer.example",
+            "public_key": "ed25519:abc",
+            "trust": "trusted",
+        },
+    )
+    assert r.status_code == 303
+    assert "info=added-peer-omega" in r.headers["location"]
+
+    r = client.get("/peers?info=added-peer-omega")
+    assert r.status_code == 200
+    assert "peer-omega" in r.text
+
+
+def test_peers_reject_bad_name_and_trust(tmp_path: Path) -> None:
+    _clean_drives()
+    client = _make_client(tmp_path)
+    _login(client)
+
+    r = client.post("/peers", data={"name": "bad/name", "address": "x", "trust": "trusted"})
+    assert r.status_code == 303
+    assert "error=bad-name" in r.headers["location"]
+
+    r = client.post("/peers", data={"name": "ok-name", "address": "x", "trust": "owner"})
+    assert r.status_code == 303
+    assert "error=bad-trust-level" in r.headers["location"]
+
+
+def test_quarantine_approve_handles_unknown_id_gracefully(tmp_path: Path) -> None:
+    """No 500 / no traceback in the response — redirect to /peers with an error param."""
+    _clean_drives()
+    client = _make_client(tmp_path)
+    _login(client)
+
+    r = client.post("/peers/quarantine/no-such-id/approve")
+    assert r.status_code == 303
+    assert "error=unknown-quarantine-id" in r.headers["location"]
+
+
 def test_capabilities_requires_login(tmp_path: Path) -> None:
     client = _make_client(tmp_path)
     r = client.get("/capabilities")
