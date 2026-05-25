@@ -342,15 +342,20 @@ class GrantStore:
                 ),
             )
 
-        # Inline CR/LF strip is the ONLY pattern CodeQL's py/log-injection
-        # query recognises as a sanitiser. Helpers (safe_for_log) and other
-        # encoders (urllib.parse.quote) don't satisfy the rule.
+        # Sanitise to local variables first, THEN pass into the extra dict.
+        # CodeQL py/log-injection traces flow site-by-site; the four sibling
+        # log sites cleared with this exact pattern but ``grant.grant_id``
+        # was still being flagged via the dict expression — extracting to a
+        # plain local makes the sanitiser visible at the sink expression.
+        safe_grant_id = str(grant.grant_id).replace("\r", "").replace("\n", "")
+        safe_issuer = str(issuer).replace("\r", "").replace("\n", "")
+        safe_grantee = str(grantee).replace("\r", "").replace("\n", "")
         logger.info(
             "Issued lineage_share grant",
             extra={
-                "grant_id": str(grant.grant_id).replace("\r", "").replace("\n", ""),
-                "issuer": str(issuer).replace("\r", "").replace("\n", ""),
-                "grantee": str(grantee).replace("\r", "").replace("\n", ""),
+                "grant_id": safe_grant_id,
+                "issuer": safe_issuer,
+                "grantee": safe_grantee,
                 "ttl_seconds": ttl_seconds,
             },
         )
