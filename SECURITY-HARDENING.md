@@ -190,3 +190,26 @@ network — even a private one — the items below MUST be set.
 - Do not log `Authorization` headers or session cookies — the JSON
   request logger never does, but custom middleware authors should
   keep this in mind.
+
+### Admin-role routes (not cap-gated by design)
+
+Most mutating routes are gated by `require_cap(scheme, action, ...)`
+and verified through the single `CapStore.verify_request()` path.
+A small set of **auth-system lifecycle** routes are gated by
+`require_admin` (role check) instead:
+
+- `POST /setup` — first-run bootstrap (unauthenticated by design)
+- `POST /signup` — onboarding (unauthenticated by design)
+- `POST /logout` — session cleanup (session-bound, no cap surface)
+- `POST /settings/users/{user_id}/approve` — admin-role only
+
+These are operations *on* the capability + auth system itself, not
+operations *under* it. Issuing a capability URI for "approve a user"
+would be circular — the cap system needs an admin role to exist
+before any caps can be minted. The audit log still records every
+admin-role decision; the `decision` field will read `allow_admin`
+rather than `allow_cap`.
+
+This is **the only place** in the daemon where authorization is
+role-gated rather than cap-gated. Every other mutating route routes
+through `CapStore.verify_request()`.
