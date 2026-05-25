@@ -161,10 +161,17 @@ The fix list above closed productization. The v2 architecture milestones from `A
 | M2 | Shared swarm Drive (sibling-learning primitive) | ✅ `SwarmDrivePolicy` defaults `isolation_level="swarm"`, `sibling_sharing="read"` |
 | M3 | Capability URIs + key-derivation tree | ✅ `cap/uri.py`, `cap/store.py`; 14/15 routes verify via `CapStore.verify_request` |
 | M4 | CRDT counters (G-Counter) + conflict copies | ✅ `drive/crdt.py`, `drive/conflict.py`, ingest wired with `AGENTDRIVE_M4_DISABLE` opt-out; 27 new tests |
-| M5 | P-384 trust circle + cross-device sync | ⏳ next |
-| M6 | Promotion gates + tiered sync (finish) | ⏳ |
+| M5 | P-384 trust circle + cross-device sync | ✅ `trust/` module (crypto/models/store), voucher admission, sealed sync envelopes, disk persistence; 17 new tests |
+| M6 | Promotion gates + tiered sync (finish) | ⏳ next |
 
 **M4 design calls (Pablo defaults):**
 - `crdt-set` is add-only (G-Set). OR-Set deferred — removals would require tombstones and bigger on-disk state. Easy to upgrade later.
 - `merge_strategy` defaults to `"last-write"` so every existing Genome stays back-compat. The new fields are only included in the content hash when explicitly set (preserves pre-M4 hashes byte-for-byte).
 - Conflict suffix: `conflict-<sha8(version_vector)>-<sanitized_author>`. Deterministic so retrying the same losing write doesn't pile up duplicates.
+
+**M5 design calls (Pablo defaults):**
+- Single sponsor signature admits a new device for v1. Quorum / multi-signer admission deferred — would expand the wire format and onboarding UX without clear v1 value.
+- Private key at rest is plaintext PEM under `~/.agentdrive/trust/self.json`, chmod 0600. Local-first stance: if the home directory is compromised, everything else is too. OS-keychain integration is a later option.
+- Curve choice: **P-384** via `cryptography` (already a declared dep). One library gives ECDSA + ECDH + HKDF + AES-256-GCM. No Noise / NaCl pull-in for v1.
+- `device_id` = first 16 hex chars of `SHA-256(public_pem)`. Stable, derivable, no separate id registry.
+- Replay protection: voucher ids logged to `trust/nonces.log`; a voucher used once cannot be used again on the same device. Different devices fail key-binding instead (see `prepare_invitee_keypair`).
