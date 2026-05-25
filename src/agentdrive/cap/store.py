@@ -48,6 +48,8 @@ from cryptography.hazmat.primitives.serialization import (
     PublicFormat,
 )
 
+from agentdrive.constants import get_agentdrive_home
+
 from .uri import Capability, parse_uri
 
 logger = logging.getLogger(__name__)
@@ -140,6 +142,39 @@ class CapVerifyContext:
         )
 
 
+def default_cap_store_path() -> Path:
+    """Default CapStore DB path under the active ``AGENTDRIVE_HOME``."""
+    return get_agentdrive_home() / "cap" / "_caps.db"
+
+
+_default_cap_store: CapStore | None = None
+
+
+def get_default_cap_store() -> CapStore:
+    """Process-local default CapStore, rebuilt if ``AGENTDRIVE_HOME`` changes."""
+    global _default_cap_store
+    expected_path = default_cap_store_path()
+    if _default_cap_store is None or _default_cap_store.db_path != expected_path:
+        _default_cap_store = CapStore(expected_path)
+    return _default_cap_store
+
+
+def _request_scope(capability: Capability) -> Capability:
+    """Return only the fields that constrain a requested operation.
+
+    ``expires`` is a validity attenuation checked by ``verify()``. It
+    should not force every caller to echo a timestamp in their request
+    context.
+    """
+    return Capability(
+        scheme=capability.scheme,
+        action=capability.action,
+        resource_kind=capability.resource_kind,
+        resource_id=capability.resource_id,
+        attenuations=tuple((k, v) for k, v in capability.attenuations if k != "expires"),
+    )
+
+
 class CapStore:
     """Mint, derive, verify capability URIs. The single arbiter of access."""
 
@@ -151,8 +186,11 @@ class CapStore:
 
     @contextmanager
     def _conn(self) -> Iterator[sqlite3.Connection]:
+        from agentdrive.db_pragmas import apply_pragmas
+
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
+        apply_pragmas(conn)
         try:
             yield conn
             conn.commit()
@@ -273,6 +311,40 @@ class CapStore:
         )
         return signed
 
+    def mint_session(
+        self,
+        *,
+        issuer: str,
+        capability: Capability,
+        ttl_seconds: int = 300,
+        parent_cap_id: str | None = None,
+    ) -> SignedCap:
+        """Mint a short-lived cap using the existing signed-cap primitive.
+
+        The helper only adds an ``expires`` attenuation before delegating to
+        ``mint()``. If the caller already supplied ``expires``, the stricter
+        earlier deadline wins.
+        """
+        if ttl_seconds <= 0:
+            raise ValueError("ttl_seconds must be positive")
+
+        now = time.time()
+        deadline = now + ttl_seconds
+        existing = capability.attenuation("expires")
+        if existing is not None:
+            try:
+                deadline = min(deadline, float(existing))
+            except ValueError as exc:
+                raise CapDerivationError(f"cap has malformed expires={existing!r}") from exc
+            if deadline <= now:
+                raise CapDerivationError("session cap expiry must be in the future")
+
+        return self.mint(
+            issuer=issuer,
+            capability=capability.with_attenuation("expires", f"{deadline:.6f}"),
+            parent_cap_id=parent_cap_id,
+        )
+
     # ── derive ─────────────────────────────────────────────────────────────
 
     def derive(
@@ -369,7 +441,77 @@ class CapStore:
         """
         self.verify(cap)
         requested = context.as_capability()
-        if not requested.is_narrower_than(cap.capability):
+        if not requested.is_narrower_than(_request_scope(cap.capability)):
             raise InsufficientCapability(
                 f"cap {cap.uri!r} does not authorize request {requested.to_uri()!r}"
             )
+
+
+class RequestAuthorizer:
+    """Small boundary helper around ``CapStore.verify_request()``.
+
+    Call sites should build the concrete request through these methods so
+    every boundary uses the same CapStore semantics while still making the
+    protected operation obvious in code.
+    """
+
+    def __init__(self, store: CapStore | None = None):
+        self.store = store or get_default_cap_store()
+
+    def verify(self, cap: SignedCap, context: CapVerifyContext) -> SignedCap:
+        self.store.verify_request(cap, context)
+        return cap
+
+    def verify_drive_read(self, cap: SignedCap, *, swarm_id: str) -> SignedCap:
+        return self.verify(
+            cap,
+            CapVerifyContext(
+                scheme="drive",
+                action="read",
+                resource_kind="swarm",
+                resource_id=swarm_id,
+            ),
+        )
+
+    def verify_drive_write(
+        self,
+        cap: SignedCap,
+        *,
+        swarm_id: str,
+        subagent_id: str | None = None,
+    ) -> SignedCap:
+        attenuations = (("sub", subagent_id),) if subagent_id else ()
+        return self.verify(
+            cap,
+            CapVerifyContext(
+                scheme="drive",
+                action="write",
+                resource_kind="swarm",
+                resource_id=swarm_id,
+                attenuations=attenuations,
+            ),
+        )
+
+    def verify_dna_pull(
+        self,
+        cap: SignedCap,
+        *,
+        lineage_id: str,
+        max_hops: int | None = None,
+        min_eval: float | None = None,
+    ) -> SignedCap:
+        attenuations: list[tuple[str, str]] = []
+        if max_hops is not None:
+            attenuations.append(("max_hops", str(max_hops)))
+        if min_eval is not None:
+            attenuations.append(("min_eval", str(min_eval)))
+        return self.verify(
+            cap,
+            CapVerifyContext(
+                scheme="dna",
+                action="pull",
+                resource_kind="lineage",
+                resource_id=lineage_id,
+                attenuations=tuple(attenuations),
+            ),
+        )

@@ -20,6 +20,7 @@ The guarantees that make this the AgentDrive moment:
 from __future__ import annotations
 
 import time
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -32,6 +33,9 @@ from agentdrive.cap import (
     CapURIError,
     CapVerifyContext,
     InsufficientCapability,
+    RequestAuthorizer,
+    default_cap_store_path,
+    get_default_cap_store,
     parse_uri,
 )
 
@@ -165,6 +169,11 @@ def test_minted_cap_verifies(store: CapStore) -> None:
     store.verify(cap)
 
 
+def test_default_cap_store_uses_active_agentdrive_home(isolated_savant_home: Path) -> None:
+    assert default_cap_store_path() == isolated_savant_home / "cap" / "_caps.db"
+    assert get_default_cap_store().db_path == default_cap_store_path()
+
+
 def test_unknown_trust_root_rejected(tmp_path: Path) -> None:
     """Caps signed by an agent the store has never seen should not verify."""
     store_a = CapStore(tmp_path / "a.db")
@@ -174,6 +183,18 @@ def test_unknown_trust_root_rejected(tmp_path: Path) -> None:
     store_b = CapStore(tmp_path / "b.db")
     with pytest.raises(CapInvalidError, match="trust roots"):
         store_b.verify(cap)
+
+
+def test_tampered_cap_uri_rejected(store: CapStore) -> None:
+    cap = store.mint(issuer="alice", capability=parse_uri("drive:read:swarm:demo"))
+    tampered = replace(
+        cap,
+        uri="drive:read:swarm:other",
+        capability=parse_uri("drive:read:swarm:other"),
+    )
+
+    with pytest.raises(CapInvalidError, match="signature"):
+        store.verify(tampered)
 
 
 def test_revoked_cap_rejected(store: CapStore) -> None:
@@ -190,6 +211,39 @@ def test_expired_attenuation_rejected(store: CapStore) -> None:
     )
     with pytest.raises(CapInvalidError, match="expired"):
         store.verify(cap)
+
+
+def test_session_cap_authorizes_until_expiry(
+    store: CapStore,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    now = 1_000.0
+    monkeypatch.setattr("agentdrive.cap.store.time.time", lambda: now)
+    cap = store.mint_session(
+        issuer="alice",
+        capability=parse_uri("drive:read:swarm:demo"),
+        ttl_seconds=5,
+    )
+    ctx = CapVerifyContext(
+        scheme="drive",
+        action="read",
+        resource_kind="swarm",
+        resource_id="demo",
+    )
+
+    store.verify_request(cap, ctx)
+    now = 1_006.0
+    with pytest.raises(CapInvalidError, match="expired"):
+        store.verify_request(cap, ctx)
+
+
+def test_session_cap_rejects_invalid_ttl(store: CapStore) -> None:
+    with pytest.raises(ValueError, match="positive"):
+        store.mint_session(
+            issuer="alice",
+            capability=parse_uri("drive:read:swarm:demo"),
+            ttl_seconds=0,
+        )
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -325,3 +379,28 @@ def test_verify_request_attenuation_within_bounds_passes(store: CapStore) -> Non
         attenuations=(("max_hops", "2"),),  # asking for tighter — fine
     )
     store.verify_request(cap, ctx)
+
+
+def test_request_authorizer_verifies_dna_pull_boundary(store: CapStore) -> None:
+    cap = store.mint_session(
+        issuer="alice",
+        capability=parse_uri("dna:pull:lineage:root:max_hops=3:min_eval=0.7"),
+        ttl_seconds=60,
+    )
+    authorizer = RequestAuthorizer(store)
+
+    authorizer.verify_dna_pull(cap, lineage_id="root", max_hops=2, min_eval=0.8)
+
+
+def test_request_authorizer_rejects_widened_dna_pull(store: CapStore) -> None:
+    cap = store.mint_session(
+        issuer="alice",
+        capability=parse_uri("dna:pull:lineage:root:max_hops=3:min_eval=0.7"),
+        ttl_seconds=60,
+    )
+    authorizer = RequestAuthorizer(store)
+
+    with pytest.raises(InsufficientCapability):
+        authorizer.verify_dna_pull(cap, lineage_id="root", max_hops=4, min_eval=0.8)
+    with pytest.raises(InsufficientCapability):
+        authorizer.verify_dna_pull(cap, lineage_id="root", max_hops=2, min_eval=0.1)

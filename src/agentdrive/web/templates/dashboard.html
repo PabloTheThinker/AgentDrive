@@ -1,0 +1,83 @@
+{% extends "_shell.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Dashboard · AgentDrive{% endblock %}
+
+{% block page_main %}
+{% set kicker = "Command center" %}
+{% set headline = 'Welcome back, <span class="mono">' ~ user.username ~ '</span>' %}
+{% set stats = [
+  {"text": stats_drives ~ " Drives", "color": "tertiary"},
+  {"text": stats_agents ~ " agents", "color": "tertiary"},
+  {"text": "daemon healthy", "color": "success", "dot": "on"},
+  {"text": "v" ~ version, "color": "tertiary"},
+] %}
+{% set actions_html %}
+  <a class="btn btn-secondary" href="https://github.com/PabloTheThinker/AgentDrive">Docs</a>
+  <a class="btn btn-primary" href="/capabilities">{{ icon('plus', 12) }} Mint capability</a>
+{% endset %}
+{% include "_header_band.html" %}
+
+<div class="u-stack" style="position: relative; z-index: 10; padding: 24px 32px; overflow-y: auto; gap: 24px;">
+
+  <!-- Metric cards -->
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+    {% for m in metrics %}
+    <div class="metric">
+      <div class="kicker">{{ m.label }}</div>
+      <div class="metric-value">{{ m.value }}</div>
+      {% if m.delta %}<div class="metric-delta">↗ {{ m.delta }}</div>{% else %}<div class="metric-delta muted">—</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Activity + Health -->
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px;">
+    <div class="panel" style="padding: 24px;">
+      <div class="u-spread" style="margin-bottom: 12px;">
+        <div class="kicker">Recent activity</div>
+      </div>
+      {% if activity %}
+        {% for a in activity %}
+        <div class="u-row" style="padding: 12px 0; border-bottom: 1px solid var(--line); align-items: flex-start;">
+          <span style="color: var(--secondary); margin-top: 2px;">{{ icon(a.icon) }}</span>
+          <div class="u-flex1">
+            <div style="font-size: 13px;"><span class="mono" style="color: var(--primary);">{{ a.who }}</span> <span style="color: var(--secondary);">{{ a.what }}</span></div>
+          </div>
+          <span class="mono u-small u-muted">{{ a.when }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="font-size: 13px; color: var(--tertiary); padding: 16px 0;">No activity yet. Spawn an agent or import a genome to populate this view.</div>
+      {% endif %}
+    </div>
+
+    <div class="panel" style="padding: 24px;">
+      <div class="kicker" style="margin-bottom: 16px;">Health</div>
+      <div class="u-stack" style="gap: 14px;">
+        {% for h in health %}
+        <div class="u-spread">
+          <span style="font-size: 13px; color: var(--secondary);">{{ h.label }}</span>
+          <span class="u-small" style="color: var(--{{ h.color }});">{{ h.value }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Drive shortcuts -->
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+    {% for s in shortcuts %}
+    <a class="panel" href="{{ s.href }}" style="padding: 20px; text-decoration: none; color: inherit; display: block;">
+      <div class="u-row">
+        <div class="glyph {{ s.color }}" style="width: 40px; height: 40px; border-radius: 12px;">{{ icon(s.icon) }}</div>
+        <div class="u-flex1">
+          <div style="font-weight: 500;">{{ s.title }}</div>
+          <div class="mono" style="font-size: 10px; color: var(--tertiary); margin-top: 4px;">{{ s.meta }}</div>
+        </div>
+        <span style="color: var(--tertiary);">→</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

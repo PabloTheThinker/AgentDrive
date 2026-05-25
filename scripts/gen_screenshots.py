@@ -23,16 +23,15 @@ os.environ["AGENTDRIVE_HOME"] = _tmp
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "src"))
 
+from rich.align import Align  # noqa: E402
 from rich.console import Console  # noqa: E402
 from rich.panel import Panel  # noqa: E402
-from rich.text import Text  # noqa: E402
-from rich.align import Align  # noqa: E402
 from rich.table import Table  # noqa: E402
+from rich.text import Text  # noqa: E402
 
 from agentdrive.board.mission_board import Mission, MissionBoard, MissionStatus  # noqa: E402
 from agentdrive.tui.board_view import render_board  # noqa: E402
-from agentdrive.tui.chrome import Palette, Glyphs  # noqa: E402
-
+from agentdrive.tui.chrome import Palette  # noqa: E402
 
 ASSETS = REPO / "docs" / "assets"
 ASSETS.mkdir(parents=True, exist_ok=True)

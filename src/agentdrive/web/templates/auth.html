@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · AgentDrive{% endblock %}
+
+{% block layout %}
+<div class="auth-shell">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-name">AgentDrive</div>
+      <div class="brand-tagline">Local-first storage for AI agents</div>
+    </div>
+
+    <div class="panel">
+      <h1>{{ heading }}</h1>
+      {% if intro %}
+      <p style="font-size: 13px; color: var(--secondary); margin: 0 0 24px;">{{ intro }}</p>
+      {% endif %}
+
+      {% if error %}
+      <div class="notice">{{ error }}</div>
+      {% endif %}
+      {% if info %}
+      <div class="notice info">{{ info }}</div>
+      {% endif %}
+
+      <form method="post" action="{{ action }}" class="u-stack">
+        <div>
+          <label class="field-label" for="username">Username</label>
+          <input id="username" name="username" type="text" class="fld" required autocomplete="username" autofocus value="{{ username or '' }}">
+        </div>
+        <div>
+          <label class="field-label" for="password">Password</label>
+          <input id="password" name="password" type="password" class="fld" required autocomplete="{{ password_autocomplete or 'current-password' }}">
+        </div>
+        {% if confirm_password %}
+        <div>
+          <label class="field-label" for="confirm">Confirm password</label>
+          <input id="confirm" name="confirm" type="password" class="fld" required autocomplete="new-password">
+        </div>
+        {% endif %}
+
+        <button class="btn btn-primary" type="submit" style="width: 100%; justify-content: center; padding: 10px 12px; margin-top: 4px;">{{ submit_label }}</button>
+      </form>
+
+      {% if foot_html %}
+      <div class="panel-foot">{{ foot_html | safe }}</div>
+      {% endif %}
+    </div>
+
+    <div class="footnote">
+      {{ footnote | safe }}
+    </div>
+  </div>
+</div>
+{% endblock %}

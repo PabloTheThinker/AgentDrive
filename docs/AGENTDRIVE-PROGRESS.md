@@ -1,6 +1,6 @@
 # AgentDrive — Progress Audit & OSS Adapt Plan
 
-> **Date:** 2026-05-24
+> **Date:** 2026-05-25
 > **Scope:** where we are *right now* (post-rebrand, post-Milestone-1) + what to lift from Supabase and ProtonDrive (both open source) to make AgentDrive credible as an OSS project an outside contributor would actually take seriously.
 >
 > Companion docs: [`AGENTDRIVE-V2.md`](AGENTDRIVE-V2.md) (the v2 architecture proposal), [`AGENTDRIVE-V2-RESEARCH.md`](AGENTDRIVE-V2-RESEARCH.md) (cloud-drive cross-cutting study).
@@ -14,24 +14,30 @@
 | Source LOC (`src/agentdrive/`) | 21,932 | clean fanout: `drive/`, `harness/`, `adapters/`, `reasoning/`, `scanners/`, `quarantine`, `peers`, `inheritance`, `confidence`, `reconciliation` |
 | Test LOC | 3,671 | pytest only; no integration harness |
 | Doc LOC | 2,257 | growing; some filenames still legacy (`POOL.md`, `POOL-EVOLUTION.md`) |
-| Tests | 126 passing | + 3 deep functional scripts (healing-loop, federation, failure-modes) |
+| Tests | pytest passes locally | count intentionally not hardcoded here; use current pytest output as source of truth |
 | TODO / FIXME density | 3 across 22k LOC | genuinely low — debt is not the problem |
 | Public Python API | `Harness`, `AgentDrive`, `DriveQuery`, `DriveSettings`, `Genome`, `GenomeRegistry`, `Quarantine`, `PeerRegistry` | + new `ContentStore` + content-addressing helpers from Milestone 1 |
 
-**What's solid.** The engine works end-to-end. The rebrand is coherent across code, CLI, docs, and the website install endpoint. Content-addressing is live and dogfooded — I (ILO) stored real session reasoning patterns in my own Drive and queried them back, with dedup verified on the way through. The federation/quarantine spine has been hardened by the adversarial test pass that landed before the rebrand and still holds.
+**What's solid.** The engine works end-to-end. The AgentDrive product name is now the public entrypoint across the README, site, CLI help, examples, and CI. Content-addressing is live. The federation/quarantine spine has been hardened by adversarial tests and the core test suite passes locally.
 
-**What's weak.** The repo is shaped like a *project*, not like an *open-source product*. The gaps below are concrete and fixable in a single afternoon — none of them require new architecture.
+**What's weak.** The repo is moving from project to open-source product, but a few product-readiness gaps remain: package hygiene, capability enforcement hardening, FastAPI web Phase 2+, naming cleanup in older engine docs, Docker/self-host packaging, and an actual PyPI/release path.
 
 ---
 
 ## 2. OSS-readiness gaps, ranked
 
-### Critical — blocks credibility for any new contributor
+### Cleared since the original audit
 
-1. **CI runs only CodeQL.** There is no workflow that runs `pytest` on PRs. A red branch can merge green. **Fix:** add `.github/workflows/ci.yml` running pytest + ruff + mypy on every push/PR.
-2. **`examples/` is broken.** `rich_agent_with_savant_pool.py`, `savant_pool_demo.py`, `savant_swarm_dna_demo.py` all import old names. First-time visitor runs them, hits `ModuleNotFoundError`, leaves. **Fix:** rewrite as `agentdrive_dogfood.py`, `swarm_drive_demo.py`, `dedup_demo.py` using the new API.
-3. **Landing site (`site/index.html`)** still reads "Savant — The Living DNA Pool for AI Agent Swarms" with the old GitHub link. Public-facing rebrand miss. **Fix:** rewrite around the AgentDrive narrative; mirror the README hero.
-4. **Stale `src/savant.egg-info/`** alongside `src/agentdrive.egg-info/` — leftover from the package rename. Pollutes `pip show`, `find`, mental model. **Fix:** trash it; add both `*.egg-info/` to `.gitignore` if not already.
+1. **CI now exists beyond CodeQL.** `.github/workflows/ci.yml` runs pytest and ruff, with mypy present as an informational check.
+2. **Examples exist under the AgentDrive API.** Current examples are `examples/01_hello_drive.py`, `examples/02_dedup.py`, and `examples/03_swarm.py`.
+3. **Landing site is AgentDrive-facing.** `site/index.html` now uses AgentDrive public copy and links the AgentDrive repository.
+4. **Product CLI alias exists.** `agentdrive = "agentdrive.cli:main"` is present in `pyproject.toml`.
+
+### Critical — still blocks credibility for a new contributor
+
+1. **Package hygiene.** Confirm old rename artifacts such as stale egg-info directories are gone from source control and keep `*.egg-info/` ignored.
+2. **Capability enforcement hardening.** Capability URIs are a core claim; every user-facing operation should be audited to ensure authorization passes through the single verification path.
+3. **FastAPI web Phase 2+.** `agentdrive web` serves the new FastAPI + HTMX direction at `http://127.0.0.1:8421`, but Drive/Swarms/DNA/Snapshots/Capabilities/Peers pages still need real backing behavior. The old `:8420` snapshot UI is legacy until absorbed.
 
 ### Important — what makes a repo feel like a real OSS project
 
@@ -41,15 +47,13 @@
 8. **`CONTRIBUTING.md` is pre-v2.** Update for the new module shape; gate feature PRs behind a GitHub Discussion (steal verbatim from Supabase's pattern — it works because Discussions become the lightweight RFC surface without ceremony).
 9. **No `DEVELOPERS.md`.** Anyone hacking on the engine needs a one-command bring-up: `make dev` should boot a default Drive + a 2-sub-agent swarm + a simulated peer. Today contributors have to read source to figure out what to run.
 10. **No `AGENTS.md` / `.github/copilot-instructions.md`.** AgentDrive is an agent-native product; if AI contributors can't onboard cleanly, that's dissonant with the mission. Supabase ships these and they're table stakes now.
-11. **Empty top-level dirs (`agents/`, `frameworks/`).** Either populate with a starter or remove.
-12. **Doc filenames still say `POOL.md` / `POOL-EVOLUTION.md`.** Content was updated; the filenames are stale and will rot grep-ability. **Fix:** `git mv POOL.md DRIVE.md` + update references.
+11. **Doc filenames still say `POOL.md` / `POOL-EVOLUTION.md`.** Kept for link stability for now. The content should continue to frame Pool as an internal engine concept behind AgentDrive.
 
 ### Strategic — what unblocks the next 100 contributors
 
-13. **No PyPI release.** `pip install agentdrive` doesn't work. Manual install via `git+https://…` only. **Plan:** add `.github/workflows/release.yml` that publishes on tag push. Cut `v0.1.0` once Milestones 1-3 are in.
-14. **No `docker/` directory.** Supabase's whole "you own your data" claim is concretized in one `docker compose up`. AgentDrive needs an equivalent — a compose file that boots 1 default Drive + 2 sub-agent Drives + a peer over a virtual network. This is the demo that sells the system in 90 seconds.
-15. **No architecture SVG in README.** Mermaid is fine; an SVG that visualizes Genome → Drive → Swarm → Peer → Federation is fine. Pick one. Supabase's success here is real — a picture lands faster than the architecture doc.
-16. **No "AgentDrive moment" artifact.** See §5 below.
+13. **No PyPI release.** `pip install agentdrive` should not be advertised until it works from PyPI. Manual install via `git+https://…` remains the honest path.
+14. **No `docker/` directory.** AgentDrive still needs a self-host/demo compose file that boots one default Drive, two sub-agents, and a peer over a virtual network.
+15. **No "AgentDrive moment" artifact.** See §5 below.
 
 ---
 
@@ -134,18 +138,13 @@ In order. Each item is small enough to be a single PR.
 
 | # | Item | Effort | Unblocks |
 |---|---|---|---|
-| 1 | Add `.github/workflows/ci.yml` running pytest + ruff + mypy | 30 min | every future PR being trustworthy |
-| 2 | Trash `src/savant.egg-info/`, add `*.egg-info/` to `.gitignore` | 5 min | cleanliness |
-| 3 | Rewrite `examples/` for AgentDrive API + add dedup demo | 1 hr | first impression for visitors |
-| 4 | Rewrite `site/index.html` around AgentDrive | 1 hr | public-facing rebrand |
-| 5 | Add `.github/ISSUE_TEMPLATE/{bug,feature}.md` + `pull_request_template.md` | 30 min | contribution discipline |
-| 6 | Add `CODE_OF_CONDUCT.md`, update `CONTRIBUTING.md` for v2 | 30 min | OSS table stakes |
-| 7 | Add `DEVELOPERS.md` with `make dev` one-command bring-up | 1 hr | new contributor onboarding |
-| 8 | `git mv POOL.md DRIVE.md` + update internal links | 15 min | doc hygiene |
-| 9 | Add architecture SVG to README | 1 hr | first-glance comprehension |
-| 10 | Build the Milestone 2 PR (shared swarm Drive + sibling-learning default) | 1 day | actual product progress |
-| 11 | Build the Milestone 3 PR (capability URIs + key-derivation tree + 30-line cap resolver) | 2-3 days | the AgentDrive moment |
-| 12 | `docker/docker-compose.yml` booting 1 default + 2 sub-agents + 1 peer | 1 day | self-host story |
-| 13 | Cut `v0.1.0` PyPI release + tag-based release workflow | 1 day | install-ability |
+| 1 | Audit capability enforcement across CLI, web, adapters, and snapshot paths | 1 day | validates the core security claim |
+| 2 | Build FastAPI web Phase 2 pages for Drive/Swarms/DNA/Snapshots/Capabilities/Peers | 1-2 days | replaces legacy `:8420` snapshot-only UI with one operator surface |
+| 3 | Trash stale rename artifacts if still tracked; keep package metadata ignored | 5 min | cleanliness |
+| 4 | Add `CODE_OF_CONDUCT.md` and `DEVELOPERS.md` with one-command bring-up | 1 hr | contributor onboarding |
+| 5 | Keep link-preserving naming cleanup moving through older Pool/Savant docs | 30 min | public naming coherence |
+| 6 | Build the 30-line cap resolver reference | 0.5 day | the AgentDrive moment |
+| 7 | `docker/docker-compose.yml` booting 1 default + 2 sub-agents + 1 peer | 1 day | self-host story |
+| 8 | Cut the PyPI release + tag-based release workflow | 1 day | installability |
 
-Items 1-9 are pure hygiene; doing them clears the runway for everything after. Items 10-13 are the actual v2 build sequence from the architecture doc, with Supabase/ProtonDrive lessons baked in.
+Items 1-5 are truth and hygiene. Items 6-8 are the productization sequence that makes the project feel coherent outside the local checkout.

@@ -1,8 +1,10 @@
-# Savant Integration Guide — Connecting Grok, Claude Code, Codex, and Any Model
+# AgentDrive Integration Guide — Connecting Grok, Claude Code, Codex, and Any Model
 
-> Part of the Savant engine — the open-source substrate behind AgentDrive. See [README](../README.md).
+> AgentDrive is the public product. The historical Savant engine wording remains
+> in a few Python class names and older design notes; new integrations should use
+> the `agentdrive` package and CLI.
 
-Savant is designed as a **neutral, model-agnostic evolutionary layer**. Any agent runtime that can spawn sub-agents or execute work can participate in (and benefit from) Savant Pools by using one of the provided adapters or the lightweight harness.
+AgentDrive is designed as a **neutral, model-agnostic evolutionary layer**. Any agent runtime that can spawn sub-agents or execute work can participate in Drive-backed pools by using one of the provided adapters or the lightweight harness.
 
 The goal: every time you tell Grok “use sub-agents for this task”, Claude Code “break this down across workers”, or Codex “run this analysis in parallel”, each child automatically receives its own living DNA pool.
 
@@ -14,19 +16,20 @@ Any Python-based agent or sub-agent can directly use:
 
 - `Harness` — the simplest participation wrapper (pull DNA → adapt → record).
 - `RichAgentAdapter` / `ExternalWorkerAdapter` — canonical reference implementation showing a rich, tool-using, trajectory-emitting agent.
-- `SavantPool` + `GenomeRegistry` for direct control.
+- `AgentDrive`, `DriveQuery`, and `GenomeRegistry` for direct control.
 - `SavantRunScanner` (and custom scanners) to turn raw trajectories into new Genomes.
 
 See:
-- `src/savant/harness/harness.py`
-- `src/savant/workers/rich_agent_adapter.py` (runnable demo)
-- `examples/rich_agent_with_savant_pool.py`
-- `examples/savant_pool_demo.py`
+- `src/agentdrive/harness/harness.py`
+- `src/agentdrive/workers/rich_agent_adapter.py` (runnable demo/reference worker)
+- `examples/01_hello_drive.py`
+- `examples/02_dedup.py`
+- `examples/03_swarm.py`
 
 **Minimal integration for a sub-agent**:
 
 ```python
-from savant import Harness, create_harness
+from agentdrive import Harness, create_harness
 
 # In your sub-agent entrypoint
 harness = create_harness(agent_id=os.environ.get("SUBAGENT_ID", "unknown"))
@@ -42,18 +45,18 @@ with harness.task_context(user_task):
 
 Parent runtimes pass two environment variables (or context) when launching children:
 
-- `SAVANT_SWARM_ID` — groups related sub-agents (e.g. one mission or conversation thread)
-- `SAVANT_SUBAGENT_ID` — unique identity for this child (its private pool lives here)
+- `SAVANT_SWARM_ID` — legacy-compatible name that groups related sub-agents (e.g. one mission or conversation thread)
+- `SAVANT_SUBAGENT_ID` — legacy-compatible name for this child (its private pool lives here)
 
-Savant helpers (`get_swarm_pool_path`, `get_effective_pool_settings`) automatically create and select the correct isolated pool directory and policy set.
+AgentDrive helpers (`get_swarm_pool_path`, `get_effective_pool_settings`) automatically create and select the correct isolated pool directory and policy set.
 
-See `docs/SWARM.md` and `src/savant/constants.py`.
+See `docs/SWARM.md` and `src/agentdrive/constants.py`.
 
 ### 3. Adapter Pattern for External Runtimes
 
-Savant defines clean protocols:
+AgentDrive defines clean protocols:
 
-- `AgentAdapter` / `Worker` (in `src/savant/workers/base.py`) — for orchestrators that want to dispatch frameworks to external agents.
+- `AgentAdapter` / `Worker` (in `src/agentdrive/workers/base.py`) — for orchestrators that want to dispatch frameworks to external agents.
 - `contribute_genome(run_data)` — feed a completed run back for scanning and ingestion.
 - `as_worker()` — turn the external agent into a dispatch target.
 
@@ -61,21 +64,22 @@ Current reference:
 - `ExternalAgentAdapter` — for external-powered processes (subprocess, ACP, or in-process).
 - `RichAgentAdapter` — full harness + trajectory style (the "canonical rich worker").
 
-Future adapters will live under `src/savant/adapters/`.
+Future adapters will live under `src/agentdrive/adapters/`.
 
-### 4. MCP, stdio, and HTTP Bridges (Planned / Extensible)
+### 4. MCP, stdio, HTTP, and Web Bridges
 
-Savant exposes its pool and harness capabilities via standard interfaces so non-Python models can call them as tools:
+AgentDrive exposes its pool and harness capabilities via standard interfaces so non-Python models can call them as tools:
 
-- **MCP Server** — Model Context Protocol tool server. Exposes `savant_pool_query`, `savant_harness_record`, `savant_get_settings`, etc.
+- **MCP Server** — Model Context Protocol tool server. Planned surface for pool query, harness record, settings, and Drive operations.
 - **stdio / JSON-RPC** — Lightweight for local subprocess integration.
 - **HTTP / SSE** — For remote or containerized sub-agents.
+- **FastAPI web app** — `agentdrive web` starts the new operator surface at `http://127.0.0.1:8421`. Auth/dashboard scaffolding exists now; deeper Drive/Swarms/DNA/Snapshots/Capabilities pages are Phase 2+.
 
-Until the dedicated MCP package is complete, any model that can shell out or call Python can invoke `savant pool query "..."` and `savant` Python entrypoints.
+Until the dedicated MCP package is complete, any model that can shell out or call Python can invoke `agentdrive drive query "..."` and AgentDrive Python entrypoints.
 
 Instruct the model:
 
-> “You have access to the Savant CLI and Python API. Use `savant pool query` and the harness to participate in the user’s DNA pool for this swarm.”
+> “You have access to the AgentDrive CLI and Python API. Use `agentdrive drive query` and the harness to participate in the user’s Drive for this swarm.”
 
 ### 5. Grok Build System Integration (spawn_subagent pattern)
 
@@ -87,14 +91,14 @@ Grok’s build / agent orchestration already supports spawning sub-agents (via `
 2. Launch the child process / container / sandbox with the two `SAVANT_*` env vars.
 3. In the child’s bootstrap (or via injected system prompt + tool), ensure it:
    - Imports/uses `Harness` (if Python) **or**
-   - Is told “you are participating in Savant Pool for swarm X; use the provided adapter / CLI / MCP tools to pull and record DNA”.
+   - Is told “you are participating in AgentDrive for swarm X; use the provided adapter / CLI / MCP tools to pull and record DNA”.
 4. On child completion, the parent (or the child itself via harness) can trigger scanners on exported trajectories.
 
-Because Savant pools are just directories + Python objects, even a non-Python Grok sub-agent can participate by calling the Savant CLI or a thin MCP wrapper.
+Because AgentDrive pools are just directories + Python objects, even a non-Python Grok sub-agent can participate by calling the AgentDrive CLI or a thin MCP wrapper.
 
 User instruction example to Grok:
 
-> “For all sub-agents you spawn on this task, set SAVANT_SWARM_ID to ‘user-mission-42’, give each a distinct SUBAGENT_ID, attach the Harness (or equivalent), and respect the pool settings I have in ~/.savant/config.yaml under the ‘pool’ section.”
+> “For all sub-agents you spawn on this task, set SAVANT_SWARM_ID to ‘user-mission-42’, give each a distinct SUBAGENT_ID, attach the Harness (or equivalent), and respect the Drive settings I have in ~/.agentdrive/config.yaml.”
 
 ### 6. Claude Code, Cursor, Windsurf, Codex, and Other IDE/Agent Runtimes
 
@@ -102,7 +106,7 @@ Same principles apply:
 
 - These systems have “agent” or “sub-task” modes that can run custom code or call external tools.
 - Provide a thin wrapper script or MCP server that the runtime can invoke.
-- Use natural language: “Always use Savant DNA injection and recording for every sub-task you create.”
+- Use natural language: “Always use AgentDrive DNA injection and recording for every sub-task you create.”
 
 Example wrapper (invoked by Claude Code’s “run in agent”):
 
@@ -110,18 +114,18 @@ Example wrapper (invoked by Claude Code’s “run in agent”):
 #!/bin/bash
 export SAVANT_SWARM_ID="${CLAUDE_MISSION_ID:-default}"
 export SAVANT_SUBAGENT_ID="${CLAUDE_SUBTASK_ID:-$(uuidgen)}"
-python -m savant.workers.rich_agent_adapter --task "$*"
+python -m agentdrive.workers.rich_agent_adapter --task "$*"
 ```
 
 ### 7. Custom Models & Local LLMs (LM Studio, Ollama, etc.)
 
 - Run your agent loop in Python and use the harness directly (zero friction).
-- Or expose Savant as a set of local tools via OpenAI-compatible function calling.
+- Or expose AgentDrive as a set of local tools via OpenAI-compatible function calling.
 - The `RichAgentAdapter` demo is deliberately model-agnostic — replace the simulated work with your actual model calls.
 
 ## Configuration for Integrations
 
-All integration behavior is controlled in `~/.savant/config.yaml`:
+All integration behavior is controlled in `~/.agentdrive/config.yaml`:
 
 ```yaml
 pool:
@@ -146,7 +150,7 @@ The `as_user_instructions()` method on `PoolSettingsManager` returns ready-to-pa
 3. **Export rich trajectories** — the more structure (observations, claims, reflections, tool calls), the better the scanners can extract high-quality DNA.
 4. **Let the user (or parent) decide policies** — never hard-code sharing rules.
 5. **Version everything** — every Genome carries content hash + full lineage.
-6. **Surface Savant in the UI** — the TUI `pool` view and `savant doctor` make the integration visible and debuggable.
+6. **Surface AgentDrive in the UI** — the TUI/CLI and `agentdrive doctor` make the integration visible and debuggable.
 
 ## Current Status & Roadmap
 
@@ -157,14 +161,15 @@ The `as_user_instructions()` method on `PoolSettingsManager` returns ready-to-pa
 - Relevance engine powered by reasoning primitives
 - Runnable reference workers
 
-**In active development** (see `MISSION_PLAN.md`):
+**In active development**:
 - Auto env-var detection in `get_default_pool()` / harness factories
 - Dedicated MCP server + stdio bridge
+- FastAPI web Phase 2+ pages beyond auth/dashboard shell
 - Grok-specific spawn_subagent hook
 - First-class Claude Code / Codex example adapters
 - TUI swarm browser with live metrics
 
-You can start using Savant with any model **right now** by following the Python or CLI patterns above. The architecture is deliberately forward-compatible.
+You can start using AgentDrive with any model **right now** by following the Python or CLI patterns above. The architecture is deliberately forward-compatible.
 
 ## Example End-to-End Flow (Grok + 3 Sub-Agents)
 
@@ -176,8 +181,8 @@ You can start using Savant with any model **right now** by following the Python 
 6. On completion, high-value deltas are proposed upward.
 7. Grok (or user in TUI) reviews, merges the best, and the family pool is now smarter for the next payments-related mission.
 
-This is how agent intelligence stops being ephemeral and starts compounding — under your complete control.
+This is how agent intelligence stops being ephemeral and starts compounding under your control.
 
 ---
 
-**Savant turns every model’s sub-agent capability into a participant in your personal, ever-evolving intelligence collective.**
+**AgentDrive turns every model’s sub-agent capability into a participant in your personal, ever-evolving intelligence collective.**

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, rail_btn %}
+
+{% block layout %}
+<div class="shell">
+  <aside class="rail">
+    <div class="rail-logo">{{ icon('logo') }}</div>
+    {{ rail_btn('drive',    '/dashboard',    'Dashboard',     active == 'dashboard') }}
+    {{ rail_btn('search',   '/personal',     'Personal Drive', active == 'drive') }}
+    {{ rail_btn('swarm',    '/swarms',       'Swarms',         active == 'swarm') }}
+    {{ rail_btn('dna',      '/dna',          'DNA Lineage',    active == 'dna') }}
+    {{ rail_btn('snapshot', '/snapshots',    'Snapshots',      active == 'snapshot') }}
+    {{ rail_btn('cap',      '/capabilities', 'Capabilities',   active == 'cap') }}
+    {{ rail_btn('peer',     '/peers',        'Peers',          active == 'peer') }}
+    <div class="rail-spacer"></div>
+    {% if user and user.role == 'admin' %}
+      {{ rail_btn('users', '/settings/users', 'Users', active == 'users') }}
+    {% endif %}
+    <div class="rail-avatar" title="{{ user.username if user else '' }}">
+      {{ (user.username[:2] if user else '?').upper() }}
+    </div>
+  </aside>
+
+  <section class="main">
+    <div class="main-grid"></div>
+    <div class="main-glow"></div>
+    {% block page_main %}{% endblock %}
+  </section>
+
+  {% block page_inspector %}{% endblock %}
+</div>
+{% endblock %}

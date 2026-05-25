@@ -3,7 +3,7 @@
 </div>
 
 <p align="center">
-  <a href="https://github.com/PabloTheThinker/AgentDrive/actions"><img alt="build" src="https://img.shields.io/badge/build-passing-2563eb?style=flat-square&labelColor=12121a"></a>
+  <a href="https://github.com/PabloTheThinker/AgentDrive/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/PabloTheThinker/AgentDrive/ci.yml?branch=main&style=flat-square&label=CI&labelColor=12121a&color=2563eb"></a>
   <a href="#license"><img alt="license" src="https://img.shields.io/badge/license-MIT-2563eb?style=flat-square&labelColor=12121a"></a>
   <a href="#quickstart"><img alt="python" src="https://img.shields.io/badge/python-3.11+-2563eb?style=flat-square&labelColor=12121a"></a>
   <a href="https://vektraindustries.com/agentdrive"><img alt="site" src="https://img.shields.io/badge/site-vektraindustries.com/agentdrive-2563eb?style=flat-square&labelColor=12121a"></a>
@@ -91,7 +91,7 @@ agentdrive genomes list
 
 ## What's in the box
 
-All components below ship in **v0.1.0** and are exercised by tested code paths. Current release status: **227/227 tests passing**, **ruff clean**, **mypy clean**, **CodeQL clean**.
+All components below ship in **v0.1.0** and are exercised by tested code paths. Current local verification: `pytest -q` passes, `ruff check src tests` is clean, CI runs pytest/ruff/CodeQL, and mypy is configured as an informational CI check. In this local checkout, `mypy` is not installed, so it is not claimed as a local green gate.
 
 | Component | Modules | Shipped behavior |
 |---|---|---|
@@ -99,9 +99,10 @@ All components below ship in **v0.1.0** and are exercised by tested code paths. 
 | **Content-addressed object store** | `agentdrive.drive.content_store` | Objects are named by SHA-256 of canonical JSON and sharded as `objects/<aa>/<rest>.json`. Writes are atomic via temporary file + `os.replace`. Identical genomes deduplicate across every Drive on the machine. |
 | **Capability URIs** | `agentdrive.cap.uri.Capability`, `agentdrive.cap.store.CapStore` | Capabilities use the format `<resource>:<action>:<scope>[:<param>=<value> ...]`, are Ed25519-signed, TTL-bounded, and verified through a single chokepoint: `CapStore.verify_request(cap, op, scope)`. |
 | **Lineage grants** | `agentdrive.dna.grants.LineageShareGrant` | Cross-agent DNA inheritance with signed, TTL-bounded grants and scope controls such as `max_hops` and `min_eval`. Received DNA lands in quarantine before use. |
-| **Snapshot backup** | `agentdrive.backup.snapshot.SnapshotManager`, `agentdrive.backup.ui` | Pointer-only snapshot manifests store hashes, not copied bytes. Default cadence is 6 hours with rolling retention of 6 hourly, 7 daily, 4 weekly, plus pinned snapshots. Localhost UI runs on `:8420`. Restore is read-only and returns hashes. |
+| **Snapshot backup** | `agentdrive.backup.snapshot.SnapshotManager`, `agentdrive.backup.ui` | Pointer-only snapshot manifests store hashes, not copied bytes. Default cadence is 6 hours with rolling retention of 6 hourly, 7 daily, 4 weekly, plus pinned snapshots. Restore is read-only and returns hashes. The older localhost snapshot UI on `:8420` is legacy while its controls are absorbed into the FastAPI web surface. |
 | **Harness** | `agentdrive.harness` | The runtime wrapper for adapter agents. Pulls relevant DNA at task start and records outcomes at task end. |
 | **Adapters** | `agentdrive.workers.adapters` | Sidecar integrations for Grok Build, Claude Code, Codex, MCP, and custom orchestrators. |
+| **Web surface** | `agentdrive.web` | FastAPI + HTMX direction for the operator dashboard. Launch with `agentdrive web` and open `http://127.0.0.1:8421`. Phase 1 covers auth, dashboard shell, and user administration; deeper Drive/Swarms/DNA/Snapshots/Capabilities pages are Phase 2+. |
 
 ---
 
@@ -326,6 +327,19 @@ See [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`GENOME-SPEC.md`](GENOME-SPEC.md) 
 
 ---
 
+## Web And Snapshot UI
+
+AgentDrive's public web direction is the FastAPI + HTMX operator surface:
+
+```bash
+agentdrive web
+# http://127.0.0.1:8421
+```
+
+The current web surface is intentionally early: local setup/login, session-backed auth, a dashboard shell, and admin user approval. The next work is Phase 2+ integration of Drive, Swarms, DNA, Snapshots, Capabilities, and Peers.
+
+The old stdlib snapshot control UI on `:8420` remains a legacy/snapshot-specific surface until those controls are folded into the FastAPI app. Treat `127.0.0.1:8421` as the forward path.
+
 ## Snapshot backup
 
 Snapshot backup is designed around references, not duplication. A snapshot manifest is a JSON record of the hashes that defined a Drive at a point in time. The content bytes remain in the shared content store.
@@ -334,7 +348,7 @@ Shipped behavior:
 
 - **Default cadence:** every 6 hours
 - **Retention:** 6 hourly, 7 daily, 4 weekly, plus pinned snapshots
-- **UI:** localhost on `:8420`
+- **UI:** legacy snapshot UI on localhost `:8420`; new FastAPI web direction at `http://127.0.0.1:8421`
 - **Restore mode:** read-only; returns hashes and lets the caller decide what to rebuild
 
 Security hardening in the shipped UI includes:
@@ -427,15 +441,19 @@ Shipped and verified in this release:
 
 Current quality gates:
 
-- **227/227 tests passing**
-- **ruff clean**
-- **mypy clean**
-- **CodeQL clean**
+- **pytest passes locally**
+- **ruff clean for `src` and `tests` locally**
+- **mypy configured as informational in CI; not installed in this local checkout**
+- **CI exists for pytest/ruff and CodeQL**
 
 Next planned milestones:
 
+- FastAPI web Phase 2+ pages for Drive, Swarms, DNA, Snapshots, Capabilities, and Peers
+- capability enforcement hardening across every user-facing path
+- public naming cleanup where legacy Savant wording is still only historical/internal
 - public Genome registry
 - evolutionary scanners
+- Docker/self-host demo
 - PyPI release
 
 ---

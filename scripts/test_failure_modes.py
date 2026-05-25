@@ -15,9 +15,7 @@ edge cases the unit tests do not exercise.
 
 from __future__ import annotations
 
-import json
 import logging
-import os
 import sys
 import tempfile
 import threading
@@ -36,12 +34,12 @@ SRC = REPO_ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
+from agentdrive.confidence import ConfidenceRating, compute_rating, get_rating, update  # noqa: E402
 from agentdrive.constants import (  # noqa: E402
     reset_agentdrive_home_override,
     set_agentdrive_home_override,
 )
-from agentdrive import confidence  # noqa: E402
-from agentdrive.confidence import ConfidenceRating, compute_rating, get_rating, update  # noqa: E402
+from agentdrive.drive.drive import AgentDrive, DriveQuery  # noqa: E402
 from agentdrive.events import (  # noqa: E402
     Event,
     PeerSyncCompleted,
@@ -54,11 +52,9 @@ from agentdrive.events import (  # noqa: E402
 from agentdrive.genome.models import Genome, GenomeManifest  # noqa: E402
 from agentdrive.inheritance import InheritanceManifest, record_manifest  # noqa: E402
 from agentdrive.peers import PeerRegistry, sync_peer  # noqa: E402
-from agentdrive.drive.drive import DriveQuery, AgentDrive  # noqa: E402
 from agentdrive.quarantine import Quarantine, QuarantineStatus  # noqa: E402
 from agentdrive.reconciliation import ReconciliationRunner  # noqa: E402
 from agentdrive.registry import GenomeRegistry  # noqa: E402
-
 
 # ─────────────────────────────────────────────────────────────────────
 # Helpers
@@ -470,7 +466,7 @@ def mode_11_reconciliation_under_live_mutation() -> Tuple[bool, str]:
         return (
             False,
             f"deltas captured ({sum(len(d.new_genomes) for d in deltas)} new) "
-            f"but none of the live-mutated ids: saw={list(saw)[:3]}",
+            f"but none of the live-mutated ids: saw={list(saw_bases)[:3]}",
         )
     return True, f"{len(deltas)} delta(s) fired, captured {len(overlap)} live-ingested ids"
 

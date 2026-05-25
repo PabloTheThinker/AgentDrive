@@ -47,6 +47,9 @@ from .store import (
     CapStore,
     CapVerifyContext,
     InsufficientCapability,
+    RequestAuthorizer,
+    default_cap_store_path,
+    get_default_cap_store,
 )
 from .uri import Capability, CapURIError, parse_uri
 
@@ -58,5 +61,8 @@ __all__ = [
     "CapDerivationError",
     "InsufficientCapability",
     "CapVerifyContext",
+    "RequestAuthorizer",
+    "default_cap_store_path",
+    "get_default_cap_store",
     "parse_uri",
 ]

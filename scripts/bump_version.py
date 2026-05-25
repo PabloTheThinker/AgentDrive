@@ -77,10 +77,10 @@ def main():
 
     print(f"Bumped version: {current} → {new}")
     print("Next steps:")
-    print(f"  git add pyproject.toml CHANGELOG.md")
+    print("  git add pyproject.toml CHANGELOG.md")
     print(f"  git commit -m 'chore: release v{new}'")
     print(f"  git tag -a v{new} -m 'Release v{new}'")
-    print(f"  git push origin main --tags")
+    print("  git push origin main --tags")
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,74 @@
+{% extends "_shell.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Peers · AgentDrive{% endblock %}
+
+
+{% block page_main %}
+{% set kicker = "Operations · Peers" %}
+{% set headline = "Federated trust" %}
+{% set stats = [
+  {"text": (peers|length) ~ " peers", "color": "tertiary"},
+  {"text": (quarantine|length) ~ " in quarantine", "color": "warm"},
+] %}
+{% set actions_html %}<a class="btn btn-primary" href="#">{{ icon('plus', 12) }} Add peer</a>{% endset %}
+{% include "_header_band.html" %}
+
+<div style="position: relative; z-index: 10; flex: 1; overflow-y: auto; padding: 24px 32px;">
+  <div class="kicker" style="margin-bottom: 8px;">Connected peers</div>
+  {% if peers %}
+    {% for p in peers %}
+    <div class="item">
+      <span class="rail-stripe {{ 'accent' if p.trust == 'Trusted' else 'warm' }}"></span>
+      <div class="item-row">
+        <div class="glyph {{ 'accent' if p.trust == 'Trusted' else 'warm' }}">{{ icon('peer', 14) }}</div>
+        <div class="u-flex1">
+          <div class="u-row" style="gap: 8px;">
+            <p class="item-title mono">{{ p.name }}</p>
+            <span class="mono u-small" style="color: var({{ '--accent' if p.trust == 'Trusted' else '--warm' }});">{{ p.trust|upper }}</span>
+          </div>
+          <div class="item-meta">{{ p.fingerprint }}</div>
+        </div>
+        <span class="mono u-small u-muted">last sync {{ p.last_sync }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div style="font-size: 13px; color: var(--tertiary); padding: 16px 0;">No peers configured. Federation is opt-in.</div>
+  {% endif %}
+
+  <div class="kicker" style="margin-top: 24px; margin-bottom: 8px;">Quarantine queue</div>
+  {% if quarantine %}
+    {% for q in quarantine %}
+    <div class="item">
+      <span class="rail-stripe warm"></span>
+      <div class="item-row">
+        <div class="glyph warm">{{ icon('cap', 14) }}</div>
+        <div class="u-flex1">
+          <p class="item-title mono">{{ q.hash }}…</p>
+          <div class="item-meta">from {{ q.source }}  ·  {{ q.received }}  ·  {{ q.reason }}</div>
+        </div>
+        <button class="btn btn-ghost" type="button" style="padding: 4px 10px; font-size: 11px; color: var(--accent);">Approve</button>
+        <button class="btn btn-ghost" type="button" style="padding: 4px 10px; font-size: 11px; color: var(--danger);">Reject</button>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div style="font-size: 13px; color: var(--tertiary); padding: 16px 0;">Queue empty.</div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block page_inspector %}
+{% set inspector_kicker = "Federation" %}
+{% set inspector_body_html %}
+<div>
+  <div class="kicker" style="margin-bottom: 8px;">About</div>
+  <div class="panel-raised" style="padding: 16px; font-size: 13px; color: var(--secondary); line-height: 1.55;">
+    Pulled DNA from peers always lands in quarantine before it can affect anything. Approve genomes that look right; reject the rest.
+  </div>
+</div>
+{% endset %}
+{% set prompt_label = "Add or query peer" %}
+{% set prompt_placeholder = "Add peer ed25519:… as probationary for 7 days…" %}
+{% include "_inspector.html" %}
+{% endblock %}

@@ -12,7 +12,6 @@ Run::
 
 from __future__ import annotations
 
-import json
 import os
 import random
 import shutil
@@ -33,13 +32,13 @@ if str(SRC) not in sys.path:
 
 from rich.console import Console
 from rich.live import Live
-from rich.text import Text
 
+from agentdrive import confidence as confidence_module
+from agentdrive import genomes_api, local_models
 from agentdrive.constants import (
-    reset_agentdrive_home_override,
     set_agentdrive_home_override,
 )
-from agentdrive import local_models
+from agentdrive.drive.drive import AgentDrive
 from agentdrive.events import (
     ConfidenceUpdated,
     GenomeEvolved,
@@ -50,14 +49,12 @@ from agentdrive.events import (
     SubagentSpawn,
     SubagentTokens,
     SubagentTool,
-    default_bus,
     emit,
     subscribe,
     unsubscribe,
 )
 from agentdrive.genome.models import Genome, GenomeManifest
 from agentdrive.harness.harness import Harness
-from agentdrive.drive.drive import AgentDrive
 from agentdrive.quarantine import get_default_quarantine
 from agentdrive.registry import GenomeRegistry
 from agentdrive.tui.chrome import (
@@ -68,9 +65,6 @@ from agentdrive.tui.chrome import (
     section_panel,
 )
 from agentdrive.tui.subagent_tree import SubagentTree
-from agentdrive import confidence as confidence_module
-from agentdrive import genomes_api
-
 
 # ─────────────────────────────────────────────────────────────────────
 # Helpers
@@ -327,7 +321,6 @@ def show_candidates(eligible: list) -> list:
 # AGENTDRIVE_REPAIR_CLI env var; otherwise the script falls back to a
 # stub that reports "no backend configured" and the test still exercises
 # the routing path (just without a real LLM in the loop).
-import os
 CODEX_TOOL = Path(os.environ.get("AGENTDRIVE_REPAIR_CLI", "")) if os.environ.get("AGENTDRIVE_REPAIR_CLI") else None
 SUBAGENT_TIMEOUT_S = 90
 

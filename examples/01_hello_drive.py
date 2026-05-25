@@ -4,14 +4,13 @@ The smallest possible end-to-end: ingest a Genome (a reasoning pattern an
 agent learned) into your default Drive, then query for it back.
 
 Run:
-    python examples/01_hello_drive.py
+    python3 examples/01_hello_drive.py
 """
 
 from __future__ import annotations
 
 from agentdrive import AgentDrive, Harness
 from agentdrive.genome.models import Genome
-
 
 # 1. Open the default Drive (lives at ~/.agentdrive/drive/).
 drive = AgentDrive()

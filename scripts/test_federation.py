@@ -34,20 +34,19 @@ SRC = REPO_ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from rich.console import Console, Group
+from rich.console import Console
 from rich.panel import Panel
 from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
 
-from agentdrive.confidence import ConfidenceRating, SIDECAR_NAME
+from agentdrive.confidence import SIDECAR_NAME, ConfidenceRating
 from agentdrive.constants import (
-    get_agentdrive_home,
     reset_agentdrive_home_override,
     set_agentdrive_home_override,
 )
+from agentdrive.drive.drive import AgentDrive
 from agentdrive.events import (
-    Event,
     InheritanceReceived,
     PeerSyncCompleted,
     PeerSyncStarted,
@@ -68,11 +67,10 @@ from agentdrive.genome.models import (
 from agentdrive.genomes_api import list_genomes
 from agentdrive.inheritance import InheritanceManifest, record_manifest
 from agentdrive.peers import PeerRegistry, sync_peer
-from agentdrive.drive.drive import AgentDrive
 from agentdrive.quarantine import QuarantineStatus, get_default_quarantine
 from agentdrive.reconciliation import ReconciliationRunner
 from agentdrive.registry import GenomeRegistry
-from agentdrive.tui.chrome import Glyphs, Palette, Section, section_panel
+from agentdrive.tui.chrome import Glyphs, Palette, Section
 
 CONSOLE = Console(force_terminal=True, color_system="truecolor", highlight=False)
 PALETTE = Palette()

@@ -5,14 +5,13 @@ writes via the Genome author field. Siblings can read each other's work
 without any cross-config — this is the "we work together" experience pool.
 
 Run:
-    python examples/03_swarm.py
+    python3 examples/03_swarm.py
 """
 
 from __future__ import annotations
 
 from agentdrive.drive.swarm_manager import get_swarm_drive_manager
 from agentdrive.genome.models import Genome
-
 
 SWARM = "examples-swarm-2026-05"
 

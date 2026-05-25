@@ -30,9 +30,13 @@ dependencies = [
     "rich>=15.0.0",
     "prompt_toolkit>=3.0.52",
     "httpx>=0.27.0",
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.0",
+    "python-multipart>=0.0.9",
+    "jinja2>=3.1.4",
     # v2 / Milestone 2c: Ed25519 signatures for lineage_share grants.
-    # Listed explicitly so fresh CI / pip installs don't fail on import.
-    "cryptography>=42.0.0",
+    # Also provides Argon2id KDF for the web UI password store.
+    "cryptography>=46.0.0",
 ]
 
 [project.optional-dependencies]
@@ -68,10 +72,10 @@ agentdrive = "agentdrive.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["savant*"]
+include = ["agentdrive*"]
 
 [tool.setuptools.package-data]
-savant = ["*.yaml", "*.json", "genomes/**/*"]
+agentdrive = ["*.yaml", "*.json", "genomes/**/*"]
 
 [tool.ruff]
 line-length = 100
@@ -128,4 +132,3 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false  # relax for early stage
 ignore_missing_imports = true
-

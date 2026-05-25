@@ -8,6 +8,7 @@ Subcommand structure:
   agentdrive setup              # Full interactive setup wizard (strongly recommended first time)
   agentdrive setup swarm        # Only reconfigure Swarm & Sub-Agent DNA policies
   agentdrive tui
+  agentdrive web
   savant onboard            # Lightweight first-run consent flow
   agentdrive doctor
   agentdrive drive ...
@@ -72,6 +73,25 @@ def cmd_version(args: argparse.Namespace) -> int:
 def cmd_tui(args: argparse.Namespace) -> int:
     setup_logging()
     launch_tui()
+    return 0
+
+
+def cmd_web(args: argparse.Namespace) -> int:
+    setup_logging()
+    try:
+        import uvicorn
+    except ImportError:
+        console.print("[red]Missing web dependency:[/] install AgentDrive with web extras.")
+        return 1
+
+    uvicorn.run(
+        "agentdrive.web.app:create_app",
+        host=args.host,
+        port=args.port,
+        reload=bool(args.reload),
+        log_level=args.log_level,
+        factory=True,
+    )
     return 0
 
 
@@ -2031,6 +2051,7 @@ def build_parser() -> argparse.ArgumentParser:
         epilog="""First run:  savant                    (guided onboarding + TUI)
 Setup:     agentdrive setup              (full wizard, all sections)
 TUI:       agentdrive tui                (launch directly)
+Web:       agentdrive web                (http://127.0.0.1:8421)
 Help:      agentdrive doctor             (system health check)
 
 Drive operations:
@@ -2059,6 +2080,14 @@ Self-manage:
     # tui
     p = subparsers.add_parser("tui", help="Launch the interactive TUI")
     p.set_defaults(func=cmd_tui)
+
+    # web
+    p = subparsers.add_parser("web", help="Launch the AgentDrive web UI")
+    p.add_argument("--host", default="127.0.0.1", help="Bind host (default: 127.0.0.1)")
+    p.add_argument("--port", type=int, default=8421, help="Bind port (default: 8421)")
+    p.add_argument("--reload", action="store_true", help="Enable Uvicorn reload")
+    p.add_argument("--log-level", default="info", help="Uvicorn log level")
+    p.set_defaults(func=cmd_web)
 
     # setup wizard (modular experience)
     p = subparsers.add_parser("setup", help="Interactive setup wizard")

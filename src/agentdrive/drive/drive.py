@@ -18,7 +18,7 @@ import re
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from agentdrive.constants import (
     get_current_subagent_id,
@@ -35,6 +35,10 @@ from agentdrive.genome.models import Genome
 from agentdrive.registry import GenomeRegistry
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from agentdrive.cap import CapStore
+    from agentdrive.cap.store import SignedCap
 
 
 # --- Relevance scoring helpers (use style & logic from agentdrive.reasoning primitives) ---
@@ -382,6 +386,77 @@ class AgentDrive:
                 break
 
         return results
+
+    # --- Capability-gated boundary helpers ---
+
+    def capability_resource(self) -> tuple[str, str]:
+        """Return the capability resource selector for this Drive.
+
+        Existing callers still use ``ingest`` / ``query`` directly. New
+        external boundaries should route through ``authorized_ingest`` and
+        ``authorized_query`` so the same capability resolver protects Drive
+        access without changing the legacy in-process API in one large break.
+        """
+        if self.swarm_id:
+            return ("swarm", self.swarm_id)
+        if self.subagent_id:
+            return ("agent", self.subagent_id)
+        return ("default", self.name or "main")
+
+    def verify_capability(
+        self,
+        cap_store: "CapStore",
+        cap: "SignedCap",
+        *,
+        action: str,
+        resource_kind: str | None = None,
+        resource_id: str | None = None,
+        attenuations: tuple[tuple[str, str], ...] = (),
+    ) -> None:
+        """Verify that ``cap`` authorizes an operation against this Drive."""
+        from agentdrive.cap import CapVerifyContext
+
+        default_kind, default_id = self.capability_resource()
+        ctx = CapVerifyContext(
+            scheme="drive",
+            action=action,
+            resource_kind=resource_kind or default_kind,
+            resource_id=resource_id or default_id,
+            attenuations=tuple(sorted(attenuations)),
+        )
+        cap_store.verify_request(cap, ctx)
+
+    def authorized_ingest(
+        self,
+        cap_store: "CapStore",
+        cap: "SignedCap",
+        genome: Genome,
+        source: str = "unknown",
+        actor: str | None = None,
+        subagent_id: str | None = None,
+    ) -> DriveIngestResult:
+        """Capability-checked wrapper for the write boundary."""
+        attenuations = (("sub", subagent_id),) if subagent_id else ()
+        self.verify_capability(cap_store, cap, action="write", attenuations=attenuations)
+        return self.ingest(genome, source=source, actor=actor, subagent_id=subagent_id)
+
+    def authorized_query(
+        self,
+        cap_store: "CapStore",
+        cap: "SignedCap",
+        query: DriveQuery,
+    ) -> list[Genome]:
+        """Capability-checked wrapper for the read boundary."""
+        attenuations: list[tuple[str, str]] = []
+        if query.min_score:
+            attenuations.append(("min_eval", str(query.min_score)))
+        self.verify_capability(
+            cap_store,
+            cap,
+            action="read",
+            attenuations=tuple(attenuations),
+        )
+        return self.query(query)
 
     def get_dna_for_task(self, task: str, top_k: int = 5) -> list[dict[str, Any]]:
         """

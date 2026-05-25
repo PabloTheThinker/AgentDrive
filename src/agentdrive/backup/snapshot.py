@@ -69,7 +69,9 @@ class SnapshotEntry:
 
 
 def _iso(ts: float) -> str:
-    return datetime.fromtimestamp(ts, tz=UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    # Millisecond precision so two snapshots in the same UTC second produce
+    # distinct directory names. Format stays sortable lexicographically.
+    return datetime.fromtimestamp(ts, tz=UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
 
 import re as _re
@@ -168,7 +170,72 @@ class SnapshotManager:
                 "cadence_id": cadence_id,
             },
         )
+        # Enforce retention immediately after a successful take so the
+        # backup tree never drifts above the configured policy. Pinned
+        # snapshots and the one we just wrote are always preserved.
+        self.enforce_retention(keep_recent=entry)
         return entry
+
+    def enforce_retention(
+        self,
+        *,
+        keep_recent: SnapshotEntry | None = None,
+        policy: dict[str, int] | None = None,
+    ) -> list[str]:
+        """Apply the rolling retention policy. Returns deleted snapshot ids.
+
+        Policy slots: ``keep_hourly`` (most recent within the last 24h),
+        ``keep_daily`` (one per UTC day, most recent), ``keep_weekly``
+        (one per ISO week, most recent). Pinned snapshots survive
+        regardless. The just-taken entry, if provided, is also kept.
+        """
+        policy = policy or DEFAULT_RETENTION
+        all_snaps = self.list_snapshots()  # newest first
+        if not all_snaps:
+            return []
+
+        keep_ids: set[str] = set()
+        if keep_recent is not None:
+            keep_ids.add(keep_recent.snapshot_id)
+        for s in all_snaps:
+            if s.pinned:
+                keep_ids.add(s.snapshot_id)
+
+        now = time.time()
+        hourly_kept: list[str] = []
+        daily_seen: dict[str, str] = {}
+        weekly_seen: dict[str, str] = {}
+        for s in all_snaps:
+            # Hourly bucket: most recent N within last 24h.
+            if now - s.taken_at < 86400 and len(hourly_kept) < policy["keep_hourly"]:
+                hourly_kept.append(s.snapshot_id)
+                keep_ids.add(s.snapshot_id)
+            # Daily bucket: one per UTC day, newest wins (because list is sorted desc).
+            day_key = datetime.fromtimestamp(s.taken_at, tz=UTC).strftime("%Y-%m-%d")
+            if day_key not in daily_seen and len(daily_seen) < policy["keep_daily"]:
+                daily_seen[day_key] = s.snapshot_id
+                keep_ids.add(s.snapshot_id)
+            # Weekly bucket: ISO week.
+            wk = datetime.fromtimestamp(s.taken_at, tz=UTC).strftime("%G-W%V")
+            if wk not in weekly_seen and len(weekly_seen) < policy["keep_weekly"]:
+                weekly_seen[wk] = s.snapshot_id
+                keep_ids.add(s.snapshot_id)
+
+        deleted: list[str] = []
+        for s in all_snaps:
+            if s.snapshot_id in keep_ids:
+                continue
+            try:
+                self.delete(s.snapshot_id)
+                deleted.append(s.snapshot_id)
+            except SnapshotError:  # pragma: no cover — pinned race
+                continue
+        if deleted:
+            logger.info(
+                "Snapshot retention pruned",
+                extra={"agent_id": self.agent_id, "deleted_count": len(deleted)},
+            )
+        return deleted
 
     def snapshot_if_due(self, *, now: float | None = None) -> SnapshotEntry | None:
         """Take a snapshot only if more than ``cadence_seconds`` have passed

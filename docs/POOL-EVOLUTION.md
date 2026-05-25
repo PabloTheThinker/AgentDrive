@@ -1,7 +1,8 @@
-# Savant Pool Evolution — a continuous learning loop
+# AgentDrive Pool Evolution — a continuous learning loop
 
 **Status:** proposal for Pablo's review. AgentDrive's federated learning
-surface — what the pool does between turns and across instances.
+surface — what the internal pool engine does between turns and across
+instances.
 
 ---
 
@@ -28,30 +29,30 @@ reads.
 These four are domain-agnostic. They show up in game-AI companion
 systems, in distributed package registries, in CDN edge caching, and in
 biology's selection-pressure model. The proposal below applies them to
-Savant's pool specifically.
+AgentDrive's pool engine specifically.
 
 ---
 
-## 2. The four mechanics mapped to Savant
+## 2. The four mechanics mapped to AgentDrive
 
-| Mechanic | Savant implementation |
+| Mechanic | AgentDrive implementation |
 |---|---|
 | Encounter-graded confidence | Per-genome **encounter confidence** — score climbs only with repeat success on the same problem shape |
 | Knowledge ferrying back to a home pool | **Inheritance manifests** — DNA learned in a foreign pool surfaces in the home pool on return |
 | Trust-gated contagion control | **Trust-gated quarantine** on every foreign DNA before live use |
 | Provenance threading at runtime | Pre-turn **provenance ribbon** naming the genome's lineage and prior wins |
-| Cross-instance capability exchange | **Federated absorption** between trusted peer Savants under explicit policy |
+| Cross-instance capability exchange | **Federated absorption** between trusted peer AgentDrive instances under explicit policy |
 | Behavioral profile shaped by past use | (deferred — echo-chamber risk warrants holding until we have isolation primitives in place) |
 
 ---
 
-## 3. Proposed Savant evolutions
+## 3. Proposed AgentDrive evolutions
 
 ### 3.1 Encounter-graded confidence
 Per-genome confidence climbs only on repeat success against the same
 problem shape, not raw use count. Surfaces as a 0–3 marker in `/pool`.
 **Build.** Extend `PoolOutcome` with a coarse `encounter_tag` (hash of
-intent+domain) at harness entry. New `~/.savant/pool/encounters.jsonl`.
+intent+domain) at harness entry. New `~/.agentdrive/pool/encounters.jsonl`.
 Weight `get_relevant_dna` toward confidence-for-this-encounter over raw
 average score.
 **Impact:** high. **Risk:** tag collision — cap the vocabulary to a
@@ -62,10 +63,10 @@ Every agent runs a periodic background pass that scans foreign pools
 (sub-agents, federated peers) for entries added since last reconciliation
 and ingests anything that clears trust + quality gates. The reframe in §4
 becomes real here.
-**Build.** New `savant.pool.reconciler` module. Cron-style worker driven
+**Build.** New `agentdrive.pool.reconciler` module. Cron-style worker driven
 by the event bus or `apscheduler`. New events `PoolReconcileStart`,
 `PoolAbsorb`, `PoolReconcileDone`. Audit trail at
-`~/.savant/pool/reconcile.jsonl`.
+`~/.agentdrive/pool/reconcile.jsonl`.
 **Impact:** high. **Risk:** runaway absorption — per-source quotas + an
 audit ribbon in chat.
 
@@ -96,16 +97,16 @@ quarantine-eligible. Replaces today's implicit swarm-pool merge with an
 explicit, auditable hand-off.
 **Build.** New `manifest.jsonl` per pool. `Harness` emits one on
 context exit. Reconciler (§3.2) consumes them. New CLI:
-`savant pool inherit <swarm_id>`.
+`agentdrive drive inherit <swarm_id>`.
 **Impact:** high. **Risk:** schema churn — version the manifest from day
 one.
 
 ### 3.6 Federated peer registry
-Opt-in directory of trusted peer Savants (other operators, external
+Opt-in directory of trusted peer AgentDrive instances (other operators, external
 agent frameworks that speak the pool protocol) the reconciler may poll.
 Pull-only. Zero cloud.
-Configured in `~/.savant/peers.yaml`.
-**Build.** New `savant.adapters.peers` module + a minimal HTTP manifest
+Configured in `~/.agentdrive/peers.yaml`.
+**Build.** New `agentdrive.adapters.peers` module + a minimal HTTP manifest
 endpoint, built on the `adapters/` skeleton in MISSION_PLAN.md.
 **Impact:** medium today, transformative once peers exist. **Risk:**
 trust model. Ship local-only first; gate federation behind a real
@@ -113,14 +114,14 @@ handshake.
 
 ---
 
-## 4. The reframe of Savant's purpose
+## 4. The reframe of AgentDrive's purpose
 
-Today Savant is a **library of capabilities**: an agent walks up at
+Today AgentDrive's pool is a **library of capabilities**: an agent walks up at
 prompt time, asks for genomes matching the task, and injects them into
 its system prompt. The pool is a reactive lookup table.
 
 The reframe: every agent runs a **pool reconciliation routine** in the
-background, periodically scanning sub-agent pools, peer Savants, and
+background, periodically scanning sub-agent pools, peer AgentDrive instances, and
 external sources (partner installs, third-party agent frameworks
 speaking the pool protocol) for new DNA produced since last
 reconciliation. Anything clearing trust + quarantine
@@ -128,7 +129,7 @@ gates is absorbed, ranked, and made available next turn — without the
 operator asking. The agent inherits continuously, the way a city absorbs
 people who move into it.
 
-This shifts the Savant engine from "library of capabilities" to **a
+This shifts the AgentDrive pool engine from "library of capabilities" to **a
 living federated learning organism**: every agent session, every
 sub-agent run, every peer's promoted genome flows through quarantine
 and lands in the operator's Drive overnight. The pool stops being a tool and becomes

@@ -1,0 +1,78 @@
+{% extends "_shell.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Capabilities · AgentDrive{% endblock %}
+
+
+{% block page_main %}
+{% set kicker = "Operations · Capabilities" %}
+{% set headline = "Signed access tokens" %}
+{% set stats = [
+  {"text": (caps|length) ~ " active", "color": "tertiary"},
+  {"text": "Ed25519 verified", "color": "success", "dot": "on"},
+] %}
+{% set actions_html %}{% endset %}
+{% include "_header_band.html" %}
+
+{% if error %}<div style="padding: 0 32px;"><div class="notice">{{ error }}</div></div>{% endif %}
+{% if info  %}<div style="padding: 0 32px;"><div class="notice info">{{ info }}</div></div>{% endif %}
+
+<div style="position: relative; z-index: 10; flex: 1; overflow-y: auto; padding: 24px 32px;">
+
+  <!-- Mint form -->
+  <form method="post" action="/capabilities" style="margin-bottom: 24px;">
+    <div class="panel" style="padding: 16px;">
+      <div class="kicker" style="margin-bottom: 10px;">Mint a capability</div>
+      <div class="u-row" style="gap: 8px;">
+        <input class="fld mono" name="uri" placeholder="drive:read:swarm:demo" style="flex: 1;" required>
+        <button class="btn btn-primary" type="submit">{{ icon('plus', 12) }} Mint</button>
+      </div>
+      <div class="mono u-small u-muted" style="margin-top: 8px;">
+        Format: <code>resource:action:scope[:param=value …]</code>. Signed with your local Ed25519 keypair on disk.
+      </div>
+    </div>
+  </form>
+
+  {% if caps %}
+    {% for c in caps %}
+    <div class="item">
+      <span class="rail-stripe {{ c.rail or 'accent' }}"></span>
+      <div class="item-row">
+        <div class="glyph {{ c.rail or 'accent' }}">{{ icon('cap', 14) }}</div>
+        <div class="u-flex1">
+          <p class="item-title mono">{{ c.uri }}</p>
+          <div class="item-meta">cap_id <code>{{ c.cap_id[:8] }}…</code>  ·  issued by {{ c.issued_to }}  ·  {{ c.issued_at }}</div>
+        </div>
+        <div style="text-align: right;">
+          <div class="kicker" style="font-size: 9px;">Expires</div>
+          <div class="mono" style="font-size: 12px; color: var(--accent); margin-top: 2px;">{{ c.expires }}</div>
+        </div>
+        <form method="post" action="/capabilities/{{ c.cap_id }}/revoke" style="display: inline; margin-left: 8px;">
+          <button class="btn btn-ghost" type="submit" style="padding: 4px 10px; font-size: 11px; color: var(--danger);">Revoke</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div style="text-align: center; padding: 60px 0; color: var(--tertiary);">
+      <div style="font-size: 14px;">No active capabilities.</div>
+      <div class="mono" style="font-size: 11px; margin-top: 6px;">Mint one above to delegate scoped access to another agent.</div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block page_inspector %}
+{% set inspector_kicker = "Capability Store" %}
+{% set inspector_body_html %}
+<div>
+  <div class="kicker" style="margin-bottom: 8px;">About</div>
+  <div class="panel-raised" style="padding: 16px; font-size: 13px; color: var(--secondary); line-height: 1.55;">
+    Capability URIs are Ed25519-signed, TTL-bounded access tokens verified through one chokepoint:
+    <code class="u-mono" style="color: var(--accent); font-size: 12px;">CapStore.verify_request(cap, op, scope)</code>.
+  </div>
+</div>
+{% endset %}
+{% set prompt_label = "Mint a new capability" %}
+{% set prompt_placeholder = "Issue drive:read on swarm:demo for agent-7 valid for 24h…" %}
+{% include "_inspector.html" %}
+{% endblock %}

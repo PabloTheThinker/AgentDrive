@@ -5,14 +5,13 @@ underlying object on disk. This is the content-addressing payoff: two
 sub-agents that independently discover the same pattern store it once.
 
 Run:
-    python examples/02_dedup.py
+    python3 examples/02_dedup.py
 """
 
 from __future__ import annotations
 
 from agentdrive import AgentDrive
 from agentdrive.genome.models import Genome
-
 
 SHARED_FRAMEWORK = {
     "steps": [

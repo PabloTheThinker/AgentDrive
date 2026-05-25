@@ -1,0 +1,28 @@
+{# Right-side inspector aside. Vars: inspector_kicker, inspector_body_html,
+   prompt_label, prompt_placeholder, prompt_action, prompt_chips_html. #}
+<aside class="inspector">
+  <div class="inspector-head">
+    <div>
+      <div class="kicker">{{ inspector_kicker }}</div>
+      <div style="font-size: 15px; font-weight: 600; margin-top: 2px;">Inspector</div>
+    </div>
+  </div>
+  <div class="inspector-body">
+    {{ inspector_body_html | safe }}
+  </div>
+  {% if prompt_label %}
+  <div class="inspector-foot">
+    <div class="kicker" style="margin-bottom: 8px;">{{ prompt_label }}</div>
+    <form method="post" action="{{ prompt_action or '#' }}">
+      <div class="panel" style="padding: 12px; background: var(--panel);">
+        <textarea name="prompt" rows="2" placeholder="{{ prompt_placeholder }}" style="width: 100%; background: transparent; resize: none; outline: none; border: 0; font-size: 13px; color: var(--primary);"></textarea>
+        <div class="u-spread" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line);">
+          <span></span>
+          <button class="btn btn-primary" type="submit" style="width: 28px; height: 28px; padding: 0; justify-content: center;">→</button>
+        </div>
+      </div>
+      {% if prompt_chips_html %}<div style="margin-top: 8px;">{{ prompt_chips_html | safe }}</div>{% endif %}
+    </form>
+  </div>
+  {% endif %}
+</aside>

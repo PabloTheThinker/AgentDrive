@@ -1,0 +1,21 @@
+{# Header band: kicker + headline + stat line + actions. #}
+{# Vars: kicker, headline (HTML), stats (list of {text, color}), actions_html (optional). #}
+
+<div class="header-band" style="position: relative; z-index: 10;">
+  <div class="header-row">
+    <div>
+      <div class="kicker">{{ kicker }}</div>
+      <h1 class="headline">{{ headline | safe }}</h1>
+      {% if stats %}
+      <div class="stat-line">
+        {% for s in stats %}
+          {% if not loop.first %}<span class="dot-mark">·</span>{% endif %}
+          {% if s.dot %}<span class="dot dot-{{ s.dot }}"></span>{% endif %}
+          <span class="mono" style="color: var(--{{ s.color or 'tertiary' }});">{{ s.text }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% if actions_html %}<div class="u-row" style="gap: 8px;">{{ actions_html | safe }}</div>{% endif %}
+  </div>
+</div>

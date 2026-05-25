@@ -1,0 +1,78 @@
+{% extends "_shell.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}DNA Lineage · AgentDrive{% endblock %}
+
+
+{% block page_main %}
+{% set kicker = "DNA Lineage" %}
+{% set headline = 'Ancestry of <span class="mono">' ~ (agent_id or "—") ~ '</span>' %}
+{% set stats = [
+  {"text": (ancestors|length) ~ " ancestors", "color": "tertiary"},
+  {"text": (grants|length) ~ " grants", "color": "tertiary"},
+] %}
+{% set actions_html %}<a class="btn btn-primary" href="#">{{ icon('plus', 12) }} Issue grant</a>{% endset %}
+{% include "_header_band.html" %}
+
+<div style="position: relative; z-index: 10; flex: 1; overflow-y: auto; padding: 24px 32px;">
+  {% if agents %}
+    <div class="kicker" style="margin-bottom: 8px;">Choose agent</div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-bottom: 24px;">
+      {% for a in agents %}
+      <a href="/dna?agent={{ a }}" style="text-decoration: none;" class="item" style="margin: 0;">
+        <span class="rail-stripe accent"></span>
+        <div class="item-row">
+          <div class="glyph accent">{{ icon('dna', 14) }}</div>
+          <div class="u-flex1">
+            <p class="item-title mono">{{ a }}</p>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if ancestors %}
+    <div class="kicker" style="margin-bottom: 8px;">Ancestors</div>
+    {% for an in ancestors %}
+    <div class="item">
+      <span class="rail-stripe {{ 'accent' if an.depth == 1 else 'tertiary' }}"></span>
+      <div class="item-row">
+        <div class="glyph {{ 'accent' if an.depth == 1 else 'tertiary' }}">{{ icon('dna', 14) }}</div>
+        <div class="u-flex1">
+          <p class="item-title mono">{{ an.ancestor_id }}</p>
+          <div class="item-meta">depth {{ an.depth }}</div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  {% elif agent_id %}
+    <div style="text-align: center; padding: 60px 0; color: var(--tertiary); font-size: 13px;">
+      <span class="mono">{{ agent_id }}</span> has no recorded ancestors yet.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block page_inspector %}
+{% set inspector_kicker = "Inheritance" %}
+{% set inspector_body_html %}
+{% if grants %}
+<div>
+  <div class="kicker" style="margin-bottom: 8px;">Active grants</div>
+  {% for g in grants %}
+  <div class="panel-raised" style="padding: 12px; margin-bottom: 8px;">
+    <div class="mono u-small" style="color: var(--primary);">{{ g.donor_id }} → {{ g.recipient_id }}</div>
+    <div class="item-meta" style="margin-top: 4px;">max_hops {{ g.max_hops }}  ·  min_eval {{ g.min_eval }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="panel-raised" style="padding: 16px; font-size: 13px; color: var(--secondary); line-height: 1.55;">
+  No active lineage grants. Issue one to let another agent inherit DNA from this one.
+</div>
+{% endif %}
+{% endset %}
+{% set prompt_label = "Issue a new grant" %}
+{% set prompt_placeholder = "Grant agent-7 inheritance up to 3 hops with min eval 0.7 for 24h…" %}
+{% include "_inspector.html" %}
+{% endblock %}

@@ -92,9 +92,11 @@ class Ancestry:
 
     @contextmanager
     def _conn(self) -> Iterator[sqlite3.Connection]:
+        from agentdrive.db_pragmas import apply_pragmas
+
         conn = sqlite3.connect(self.db_path)
-        conn.execute("PRAGMA foreign_keys = ON")
         conn.row_factory = sqlite3.Row
+        apply_pragmas(conn)
         try:
             yield conn
             conn.commit()

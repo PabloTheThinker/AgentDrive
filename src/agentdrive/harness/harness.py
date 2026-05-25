@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import logging
 from contextlib import contextmanager
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from agentdrive import confidence as confidence_module
 from agentdrive.constants import get_current_subagent_id, get_current_swarm_id
@@ -28,6 +28,10 @@ from agentdrive.events import ConfidenceUpdated, GenomeEvolved, PoolOutcome, emi
 from agentdrive.ultimate import check_promotion, promote
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from agentdrive.dna import DNADrive
+    from agentdrive.genome.models import Genome
 
 
 class Harness:
@@ -50,6 +54,7 @@ class Harness:
         pool: AgentDrive | None = None,
         swarm_id: str | None = None,
         subagent_id: str | None = None,
+        dna_drive: "DNADrive | None" = None,
     ):
         self.agent_id = agent_id
         self.swarm_id = swarm_id or get_current_swarm_id()
@@ -61,9 +66,19 @@ class Harness:
             else:
                 pool = get_default_drive()
         self.pool = pool
+        self._dna_drive = dna_drive
         self.current_task: str | None = None
         self.pulled_dna: list[dict[str, Any]] = []
         self.outcomes: list[dict[str, Any]] = []
+
+    @property
+    def dna_drive(self) -> "DNADrive":
+        """Lazy per-agent DNA Drive used for explicit inheritance workflows."""
+        if self._dna_drive is None:
+            from agentdrive.dna import DNADrive
+
+            self._dna_drive = DNADrive(self.agent_id)
+        return self._dna_drive
 
     def pull_relevant_dna(self, task: str | None = None, top_k: int = 5) -> list[dict[str, Any]]:
         """Ask the Drive for the most useful DNA for the current (or given) task."""
@@ -71,6 +86,53 @@ class Harness:
         dna = self.pool.get_relevant_dna(task, top_k=top_k)
         self.pulled_dna = dna
         return dna
+
+    def publish_to_dna(self, genome: "Genome") -> str:
+        """Publish a proven Genome into this agent's forward-only DNA Drive."""
+        return self.dna_drive.publish(genome)
+
+    def pull_inherited_dna(
+        self,
+        *,
+        max_depth: int | None = None,
+        min_eval: float = 0.0,
+        include_own: bool = False,
+        top_k: int | None = None,
+    ) -> list[dict[str, Any]]:
+        """Pull ancestral DNA as harness-consumable packets.
+
+        This is explicit rather than folded into ``pull_relevant_dna`` so an
+        operator or orchestrator can choose when inherited context should enter
+        a run. Cross-lineage grant pulls should still route through quarantine.
+        """
+        inherited = self.dna_drive.pull_inherited(
+            max_depth=max_depth,
+            min_eval=min_eval,
+            include_own=include_own,
+        )
+        if top_k is not None:
+            inherited = inherited[:top_k]
+
+        packets: list[dict[str, Any]] = []
+        for item in inherited:
+            evals = item.payload.get("evaluations") or {}
+            score = 0.0
+            if isinstance(evals, dict):
+                vals = [v for v in evals.values() if isinstance(v, (int, float))]
+                score = max(vals) if vals else 0.0
+            packet = {
+                "genome_id": item.content_hash,
+                "content_hash": item.content_hash,
+                "framework": item.payload.get("framework") or {},
+                "top_reasoning": list((item.payload.get("reasoning_patterns") or {}).keys())[:5],
+                "score": score,
+                "source_agent": item.source_agent,
+                "lineage_depth": item.depth,
+                "inherited": True,
+            }
+            packets.append(packet)
+        self.pulled_dna = packets
+        return packets
 
     def inject_into_context(
         self, base_prompt: str, extra_instructions: str = "", use_framework_steps: bool = True
