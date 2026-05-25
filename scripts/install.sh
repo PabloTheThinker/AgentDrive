@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Savant Installer — production-grade installer
+# AgentDrive Installer — production-grade installer
 #
 # Usage (recommended):
 #   curl -fsSL https://vektraindustries.com/agentdrive/install | bash
@@ -9,7 +9,7 @@
 # Canonical source:
 #   https://raw.githubusercontent.com/PabloTheThinker/AgentDrive/main/scripts/install.sh
 #
-# This script installs the Savant Framework (The Living DNA Pool for AI Agent Swarms).
+# This script installs the AgentDrive (local-first agent-memory drive — content-addressed Genomes, CRDT siblings, P-384 trust circle).
 # It is safe to re-run at any time.
 #
 # Scoped for a modern Python package + TUI experience.
@@ -63,7 +63,7 @@ print_banner() {
     echo ""
     echo -e "${MAGENTA}${BOLD}"
     echo "┌─────────────────────────────────────────────────────────┐"
-    echo "│                  Savant Installer                       │"
+    echo "│                  AgentDrive Installer                       │"
     echo "├─────────────────────────────────────────────────────────┤"
     echo "│  The Living, Learning Ecosystem for AI Agent Swarms     │"
     echo "│  User-sovereign DNA pools • Professional TUI & CLI      │"
@@ -239,7 +239,7 @@ DEV_MODE=false
 CUSTOM_PYTHON=""
 
 show_help() {
-    echo "Savant Installer"
+    echo "AgentDrive Installer"
     echo ""
     echo "Usage: install.sh [OPTIONS]"
     echo ""
@@ -250,7 +250,7 @@ show_help() {
     echo "  --no-uv             Do not use uv even if available (use pip)"
     echo "  --python VERSION    Use a specific Python version (e.g. 3.12)"
     echo "  --dev               Install in editable mode (for contributors)"
-    echo "  --skip-launch       Do not offer to launch Savant after install"
+    echo "  --skip-launch       Do not offer to launch AgentDrive after install"
     echo ""
     echo "Examples:"
     echo "  curl -fsSL ... | bash -s -- --branch develop"
@@ -302,7 +302,7 @@ done
 
 SAVANT_REPO="https://github.com/PabloTheThinker/AgentDrive.git"  # Correct casing is important for GitHub raw / git+ URLs
 MIN_PYTHON="3.11"
-AGENTDRIVE_HOME="${AGENTDRIVE_HOME:-$HOME/.savant}"
+AGENTDRIVE_HOME="${AGENTDRIVE_HOME:-$HOME/.agentdrive}"
 
 if [ -n "$CUSTOM_PYTHON" ]; then
     MIN_PYTHON="$CUSTOM_PYTHON"
@@ -404,28 +404,28 @@ if command -v python3 >/dev/null 2>&1; then
     PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))' 2>/dev/null || echo "unknown")
 fi
 
-log_info "Starting Savant installation..."
+log_info "Starting AgentDrive installation..."
 
-# 3. Install Savant (venv + bash shim — avoids PEP 668)
+# 3. Install AgentDrive (venv + bash shim — avoids PEP 668)
 REF="main"
 if [ "$BRANCH" != "main" ]; then
     REF="$BRANCH"
 fi
 
-log_info "Installing Savant (branch: ${REF})..."
+log_info "Installing AgentDrive (branch: ${REF})..."
 
 # Paths
 VENV_DIR="$AGENTDRIVE_HOME/venv"
 SHIM_DIR="$HOME/.local/bin"
-SHIM_PATH="$SHIM_DIR/savant"
+SHIM_PATH="$SHIM_DIR/agentdrive"
 
-# Create savant home
+# Create agentdrive home
 mkdir -p "$AGENTDRIVE_HOME"
 
 if [ "$DEV_MODE" = true ]; then
     log_info "Development mode: installing from local checkout"
     if [ ! -d ".git" ]; then
-        log_warn "--dev was passed but not inside a Savant checkout. Falling back to remote install."
+        log_warn "--dev was passed but not inside an AgentDrive checkout. Falling back to remote install."
     else
         # Create venv, install editable from local source
         if [ -d "$VENV_DIR" ]; then rm -rf "$VENV_DIR"; fi
@@ -441,11 +441,11 @@ if [ "$DEV_MODE" = true ]; then
 #!/usr/bin/env bash
 unset PYTHONPATH
 unset PYTHONHOME
-exec "$VENV_DIR/bin/savant" "\$@"
+exec "$VENV_DIR/bin/agentdrive" "\$@"
 SHIMEOF
         chmod +x "$SHIM_PATH"
-        log_success "Savant installed in dev mode → $SHIM_PATH"
-        SAVANT_BIN="$VENV_DIR/bin/savant"
+        log_success "AgentDrive installed in dev mode → $SHIM_PATH"
+        SAVANT_BIN="$VENV_DIR/bin/agentdrive"
         # Skip normal install below
         SKIP_INSTALL=true
     fi
@@ -462,9 +462,9 @@ if command -v uv >/dev/null 2>&1; then
     log_info "Creating virtual environment with uv..."
     uv venv "$VENV_DIR" --python "$PYTHON_VERSION" 2>/dev/null || python3 -m venv "$VENV_DIR"
 
-    log_info "Installing Savant with uv..."
+    log_info "Installing AgentDrive with uv..."
     if VIRTUAL_ENV="$VENV_DIR" uv pip install --force-reinstall "git+${SAVANT_REPO}@${REF}"; then
-        log_success "Savant installed with uv"
+        log_success "AgentDrive installed with uv"
     else
         log_error "Installation failed."
         exit 1
@@ -473,9 +473,9 @@ else
     log_info "Creating virtual environment with python3 -m venv..."
     python3 -m venv "$VENV_DIR"
 
-    log_info "Installing Savant with pip..."
+    log_info "Installing AgentDrive with pip..."
     if "$VENV_DIR/bin/pip" install --upgrade --force-reinstall "git+${SAVANT_REPO}@${REF}"; then
-        log_success "Savant installed into virtual environment"
+        log_success "AgentDrive installed into virtual environment"
     else
         log_error "Installation failed."
         exit 1
@@ -488,11 +488,11 @@ cat > "$SHIM_PATH" <<SHIMEOF
 #!/usr/bin/env bash
 unset PYTHONPATH
 unset PYTHONHOME
-exec "$VENV_DIR/bin/savant" "\$@"
+exec "$VENV_DIR/bin/agentdrive" "\$@"
 SHIMEOF
 chmod +x "$SHIM_PATH"
-log_success "Created savant launcher → $SHIM_PATH"
-SAVANT_BIN="$VENV_DIR/bin/savant"
+log_success "Created agentdrive launcher → $SHIM_PATH"
+SAVANT_BIN="$VENV_DIR/bin/agentdrive"
 fi
 
 # 5. PATH setup — ensure ~/.local/bin is on PATH
@@ -522,7 +522,7 @@ if [[ ":$PATH:" != *":$USER_BIN_DIR:"* ]]; then
         if [[ -f "$rc" ]]; then
             if ! grep -q "$USER_BIN_DIR" "$rc" 2>/dev/null; then
                 echo "" >> "$rc"
-                echo "# Savant — ensure Savant CLI is on PATH" >> "$rc"
+                echo "# AgentDrive — ensure agentdrive CLI is on PATH" >> "$rc"
                 if [[ "$SHELL_NAME" == "fish" ]]; then
                     echo "fish_add_path $USER_BIN_DIR" >> "$rc"
                 else
@@ -536,15 +536,15 @@ if [[ ":$PATH:" != *":$USER_BIN_DIR:"* ]]; then
     export PATH="$USER_BIN_DIR:$PATH"
 fi
 
-# 6. Ensure Savant home directory exists
+# 6. Ensure AgentDrive home directory exists
 mkdir -p "$AGENTDRIVE_HOME"/{genomes,logs,cache,pool,swarms,reasoning}
 
 # 7. Final success messaging
-log_success "Savant is now installed."
+log_success "AgentDrive is now installed."
 
 echo
 echo -e "${BOLD}Next steps:${NC}"
-echo "  savant              Launch the professional TUI"
+echo "  agentdrive          Launch the AgentDrive TUI"
 echo "  agentdrive setup        Run the setup wizard"
 echo "  agentdrive drive status View your Drives"
 echo "  agentdrive update       Update to the latest version"
@@ -555,11 +555,11 @@ echo
 # 8. Offer to launch immediately
 launch_now=false
 if [[ -n "$GUM" ]]; then
-    if "$GUM" confirm "Launch Savant TUI now?" --default=true --affirmative="Yes, launch it" --negative="Later"; then
+    if "$GUM" confirm "Launch AgentDrive TUI now?" --default=true --affirmative="Yes, launch it" --negative="Later"; then
         launch_now=true
     fi
 else
-    if prompt_yes_no "Launch Savant now?" "yes"; then
+    if prompt_yes_no "Launch AgentDrive now?" "yes"; then
         launch_now=true
     fi
 fi
@@ -567,14 +567,14 @@ fi
 if [ "$launch_now" = true ]; then
     if [[ -n "$SAVANT_BIN" && -x "$SAVANT_BIN" ]]; then
         exec "$SAVANT_BIN"
-    elif command -v savant >/dev/null 2>&1; then
-        exec savant
+    elif command -v agentdrive >/dev/null 2>&1; then
+        exec agentdrive
     else
-        log_info "Please restart your terminal and run: savant"
+        log_info "Please restart your terminal and run: agentdrive"
     fi
 else
     echo
-    log_info "You can start Savant anytime by running: ${BOLD}savant${NC}"
+    log_info "You can start AgentDrive anytime by running: ${BOLD}agentdrive${NC}"
 fi
 
 exit 0
