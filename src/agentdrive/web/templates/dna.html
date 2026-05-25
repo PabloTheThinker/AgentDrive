@@ -80,7 +80,17 @@
   {% for g in grants %}
   <div class="panel-raised" style="padding: 12px; margin-bottom: 8px;">
     <div class="mono u-small" style="color: var(--primary);">{{ g.donor_id }} → {{ g.recipient_id }}</div>
-    <div class="item-meta" style="margin-top: 4px;">max_hops {{ g.max_hops }}  ·  min_eval {{ g.min_eval }}</div>
+    <div class="item-meta" style="margin-top: 4px;">min_eval {{ g.min_eval }}</div>
+    {% if g.grant_id %}
+    <div class="u-row" style="gap: 6px; margin-top: 8px;">
+      <form method="post" action="/dna/grants/{{ g.grant_id }}/pull" style="display: inline;">
+        <button class="btn btn-primary" type="submit" style="padding: 4px 10px; font-size: 11px;">Pull</button>
+      </form>
+      <form method="post" action="/dna/grants/{{ g.grant_id }}/revoke" style="display: inline;">
+        <button class="btn btn-ghost" type="submit" style="padding: 4px 10px; font-size: 11px; color: var(--danger);">Revoke</button>
+      </form>
+    </div>
+    {% endif %}
   </div>
   {% endfor %}
 </div>

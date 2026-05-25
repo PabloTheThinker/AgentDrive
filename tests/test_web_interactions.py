@@ -197,6 +197,69 @@ def test_dna_grant_issue_and_revoke(tmp_path: Path) -> None:
     assert r.status_code == 303
 
 
+def test_dna_grant_pull_routes_through_quarantine(tmp_path: Path) -> None:
+    """End-to-end: publish a Genome into agent-7's DNA Drive, issue a
+    grant agent-7 → agent-12, then POST /dna/grants/{id}/pull. Every
+    inherited Genome must land in the quarantine queue PENDING.
+    """
+    _clean_drives()
+    grants_db = get_agentdrive_home() / "grants.db"
+    if grants_db.exists():
+        grants_db.unlink()
+    quarantine_root = get_agentdrive_home() / "quarantine"
+    shutil.rmtree(quarantine_root, ignore_errors=True)
+
+    # Seed: write one payload into agent-7's DNA Drive content store.
+    from agentdrive.constants import get_agentdrive_home as _home
+    from agentdrive.drive.content_store import ContentStore
+
+    issuer_root = _home() / "dna" / "agent-7" / "drive"
+    issuer_root.mkdir(parents=True, exist_ok=True)
+    cs = ContentStore(issuer_root)
+    payload = {
+        "id": "shared-pattern",
+        "version": "0.1.0",
+        "framework": {"steps": [{"id": "x", "name": "X"}]},
+        "evaluations": {"reference": 0.91},
+    }
+    cs.put_payload(payload)
+
+    client = _make_client(tmp_path)
+    _login(client)
+
+    # Issue the grant via the web.
+    r = client.post(
+        "/dna/grants",
+        data={
+            "issuer": "agent-7",
+            "grantee": "agent-12",
+            "min_eval": "0.5",
+            "ttl_hours": "1",
+        },
+    )
+    assert r.status_code == 303
+
+    # Pull the grant_id.
+    from agentdrive.dna.grants import GrantStore
+
+    gs = GrantStore(db_path=grants_db)
+    with gs._conn() as c:  # noqa: SLF001
+        grant_id = list(c.execute("SELECT grant_id FROM grants WHERE revoked = 0"))[0][0]
+
+    # Run the pull.
+    r = client.post(f"/dna/grants/{grant_id}/pull")
+    assert r.status_code == 303
+    assert "pulled-" in r.headers["location"]
+    assert "into-quarantine" in r.headers["location"]
+
+    # Verify it landed in quarantine PENDING.
+    from agentdrive.quarantine import QuarantineStatus, get_default_quarantine
+
+    pending = get_default_quarantine().list(status=QuarantineStatus.PENDING)
+    assert len(pending) >= 1
+    assert any(e.source_peer.startswith("grant:agent-7") for e in pending)
+
+
 def test_dna_grant_rejects_bad_ids(tmp_path: Path) -> None:
     _clean_drives()
     client = _make_client(tmp_path)

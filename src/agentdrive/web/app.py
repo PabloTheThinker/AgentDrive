@@ -573,13 +573,31 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                             "depth": getattr(a, "depth", 0),
                         }
                     )
-                for g in getattr(drive, "active_grants", lambda: [])():
+                # Read real grants from GrantStore (the synthetic
+                # `drive.active_grants()` was a stub).
+                from agentdrive.dna.grants import GrantStore
+
+                gs = GrantStore(db_path=get_agentdrive_home() / "grants.db")
+                with gs._conn() as c:  # noqa: SLF001
+                    rows = c.execute(
+                        "SELECT grant_id, issuer, grantee, scope_json "
+                        "FROM grants WHERE revoked = 0 AND (issuer = ? OR grantee = ?) "
+                        "ORDER BY issued_at DESC LIMIT 50",
+                        (agent, agent),
+                    ).fetchall()
+                import json as _json
+
+                for grant_id, issuer, grantee, scope_json in rows:
+                    try:
+                        scope = _json.loads(scope_json or "{}")
+                    except Exception:
+                        scope = {}
                     grants.append(
                         {
-                            "donor_id": getattr(g, "donor_id", ""),
-                            "recipient_id": getattr(g, "recipient_id", ""),
-                            "max_hops": getattr(g, "max_hops", "—"),
-                            "min_eval": getattr(g, "min_eval", "—"),
+                            "grant_id": grant_id,
+                            "donor_id": issuer,
+                            "recipient_id": grantee,
+                            "min_eval": scope.get("min_eval", "—"),
                         }
                     )
             except Exception:  # noqa: BLE001 — keep the page rendering on partial-DNA-state
@@ -641,6 +659,77 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         except Exception as exc:  # noqa: BLE001
             return _redirect(f"/dna?agent={issuer}&error={exc.__class__.__name__}")
         return _redirect(f"/dna?agent={issuer}&info=grant-{grant.grant_id[:8]}")
+
+    @app.post("/dna/grants/{grant_id}/pull")
+    def pull_grant_route(
+        request: Request,
+        grant_id: str,
+        user: User = Depends(require_user),
+        _cap=Depends(require_cap("dna", "pull", resource_kind="grant", resource_id="root")),
+    ):
+        """Execute a lineage grant: pull every authorized Genome from the
+        issuer's DNA Drive and route every result through quarantine on
+        the grantee side — never auto-publish. The operator approves or
+        rejects each candidate separately via /peers.
+        """
+        import json as _json
+        import tempfile as _tempfile
+        from pathlib import Path as _Path
+
+        from agentdrive.dna.grants import GrantStore, pull_via_grant
+        from agentdrive.quarantine import get_default_quarantine
+
+        gs = GrantStore(db_path=get_agentdrive_home() / "grants.db")
+        grant = None
+        try:
+            with gs._conn() as c:  # noqa: SLF001
+                row = c.execute(
+                    "SELECT grant_id, issuer, grantee, scope_json, reducer, "
+                    "ttl_seconds, issued_at, issuer_pubkey, signature, revoked "
+                    "FROM grants WHERE grant_id = ?",
+                    (grant_id,),
+                ).fetchone()
+            if row is not None:
+                from agentdrive.dna.grants import LineageShareGrant
+
+                grant = LineageShareGrant.from_dict(
+                    {
+                        "grant_id": row[0],
+                        "issuer": row[1],
+                        "grantee": row[2],
+                        "scope": _json.loads(row[3]),
+                        "reducer": row[4],
+                        "ttl_seconds": row[5],
+                        "issued_at": row[6],
+                        "issuer_pubkey": row[7],
+                        "signature": row[8],
+                    }
+                )
+        except Exception:  # noqa: BLE001
+            grant = None
+        if grant is None:
+            return _redirect(f"/dna?error=unknown-grant-{grant_id[:8]}")
+
+        try:
+            inherited = pull_via_grant(grant, gs)
+        except Exception as exc:  # noqa: BLE001
+            return _redirect(f"/dna?agent={grant.grantee}&error=pull-{exc.__class__.__name__}")
+
+        q = get_default_quarantine()
+        submitted = 0
+        for g in inherited:
+            with _tempfile.TemporaryDirectory(prefix="ad-pull-") as tmp:
+                tmp_dir = _Path(tmp)
+                (tmp_dir / "manifest.json").write_text(
+                    _json.dumps(g.payload, indent=2, sort_keys=True),
+                    encoding="utf-8",
+                )
+                try:
+                    q.submit(tmp_dir, source_peer=f"grant:{grant.issuer}")
+                    submitted += 1
+                except Exception:  # noqa: BLE001
+                    continue
+        return _redirect(f"/dna?agent={grant.grantee}&info=pulled-{submitted}-into-quarantine")
 
     @app.post("/dna/grants/{grant_id}/revoke")
     def revoke_grant_route(
