@@ -162,7 +162,7 @@ The fix list above closed productization. The v2 architecture milestones from `A
 | M3 | Capability URIs + key-derivation tree | ✅ `cap/uri.py`, `cap/store.py`; 14/15 routes verify via `CapStore.verify_request` |
 | M4 | CRDT counters (G-Counter) + conflict copies | ✅ `drive/crdt.py`, `drive/conflict.py`, ingest wired with `AGENTDRIVE_M4_DISABLE` opt-out; 27 new tests |
 | M5 | P-384 trust circle + cross-device sync | ✅ `trust/` module (crypto/models/store), voucher admission, sealed sync envelopes, disk persistence; 17 new tests |
-| M6 | Promotion gates + tiered sync (finish) | ⏳ next |
+| M6 | Promotion gates + tiered sync (finish) | ✅ `promotion/` module (models/policy/service), `SwarmDrivePolicy.promotion_required` + `auto_approve_from`, `AgentDrive` upward ingest routes via `PromotionService`; 11 new tests |
 
 **M4 design calls (Pablo defaults):**
 - `crdt-set` is add-only (G-Set). OR-Set deferred — removals would require tombstones and bigger on-disk state. Easy to upgrade later.
@@ -175,3 +175,10 @@ The fix list above closed productization. The v2 architecture milestones from `A
 - Curve choice: **P-384** via `cryptography` (already a declared dep). One library gives ECDSA + ECDH + HKDF + AES-256-GCM. No Noise / NaCl pull-in for v1.
 - `device_id` = first 16 hex chars of `SHA-256(public_pem)`. Stable, derivable, no separate id registry.
 - Replay protection: voucher ids logged to `trust/nonces.log`; a voucher used once cannot be used again on the same device. Different devices fail key-binding instead (see `prepare_invitee_keypair`).
+
+**M6 design calls (Pablo defaults):**
+- `promotion_required=True`, `auto_approve_from="self"` — every upward write produces an auditable proposal, but self-originated proposals auto-approve so single-agent flows stay one logical step. Trusted-peer auto-approval is opt-in.
+- `PromotionRecord` is a separate artifact, not a Genome subtype. Smaller blast radius; existing Genome consumers don't grow a new case to handle.
+- Persistence: append-only JSONL at `<drive>/promotions/proposals.jsonl`. Status of a proposal is derived by replaying its records (latest decision wins).
+- `auto_ingest_from_children` is kept on `SwarmDrivePolicy` for config back-compat; with `promotion_required=True` it is now a no-op. Old configs continue to load.
+- v1 manual review is recorded but does **not** trigger a deferred parent ingest. That sweeper is a follow-up — for now, an operator runs `parent.ingest(genome, ...)` after approving.

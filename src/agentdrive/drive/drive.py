@@ -228,6 +228,68 @@ class AgentDrive:
             logger.warning(f"Failed to load ingest log {self.ingest_log_path}: {exc}")
             self._ingest_log = []
 
+    # ── v2 / M6: promotion gate for upward ingest ────────────────────────────
+    def _promote_to_parent(
+        self,
+        genome: Genome,
+        *,
+        source: str,
+        actor: str | None,
+    ) -> None:
+        """Route an upward write through the promotion service when policy demands it.
+
+        Falls back to the legacy direct ingest when the parent has no policy
+        attached or ``promotion_required`` is False — that preserves every
+        existing call site even before consumers know about promotions.
+        """
+        from agentdrive.drive.swarm_policy import SwarmDrivePolicy
+        from agentdrive.promotion import PromotionPolicy, PromotionService
+
+        parent = self.parent_pool
+        assert parent is not None  # guarded by the caller
+
+        swarm_policy = getattr(parent, "swarm_policy", None) or SwarmDrivePolicy()
+        promotion_policy = PromotionPolicy(
+            promotion_required=getattr(swarm_policy, "promotion_required", True),
+            auto_approve_from=getattr(swarm_policy, "auto_approve_from", "self"),
+        )
+
+        if not promotion_policy.promotion_required:
+            parent.ingest(
+                genome,
+                source=f"{source} (upward from child swarm={self.swarm_id} sub={self.subagent_id})",
+                actor=actor,
+            )
+            return
+
+        service = PromotionService(parent.drive_path)
+        proposer = actor or self.subagent_id or "self"
+        proposal = service.propose(
+            genome_content_hash=genome.manifest.content_hash,
+            target_tier="swarm",
+            author=proposer,
+            target_swarm=getattr(parent, "swarm_id", None),
+            rationale=f"upward from child swarm={self.swarm_id} sub={self.subagent_id}",
+        )
+        # Self-originated proposals on this Drive count as "self" for the
+        # auto-approve rule. Trusted-peer evaluation lives outside this hook
+        # (the caller is the proposer; trust circle is per-device).
+        if promotion_policy.should_auto_approve(
+            proposer_is_self=True, proposer_is_trusted=False
+        ):
+            service.review(
+                proposal.proposal_id,
+                decision="approve",
+                reviewer=f"auto:{proposer}",
+                rationale="auto-approve: auto_approve_from='self'",
+            )
+            parent.ingest(
+                genome,
+                source=f"{source} (promoted upward, proposal={proposal.proposal_id[:12]})",
+                actor=actor,
+            )
+        # else: proposal stays pending; ``PromotionService.list_pending`` surfaces it.
+
     # ── v2 / M4: CRDT merge + conflict-copy resolution ───────────────────────
     def _apply_m4_merge_or_conflict(
         self,
@@ -374,14 +436,14 @@ class AgentDrive:
         except Exception as exc:
             logger.warning(f"Failed to append to ingest log {self.ingest_log_path}: {exc}")
 
-        # Upward sharing for "full" policy: child contributions can propagate to parent pool
+        # Upward sharing for "full" policy: child contributions can propagate to parent pool.
+        # v2 / M6: when the parent policy requires promotion, route via
+        # PromotionService instead of direct ingest. Self-originated proposals
+        # auto-approve (matches the v1 single-agent flow); peer / cross-agent
+        # promotions stay pending until reviewed.
         if self.parent_pool and getattr(self, "sharing_policy", "selective") == "full":
             try:
-                self.parent_pool.ingest(
-                    genome,
-                    source=f"{source} (upward from child swarm={self.swarm_id} sub={self.subagent_id})",
-                    actor=actor,
-                )
+                self._promote_to_parent(genome, source=source, actor=actor)
             except Exception as exc:
                 logger.warning(f"Failed to upward-share ingest under full policy: {exc}")
 

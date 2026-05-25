@@ -17,6 +17,7 @@ from typing import Literal
 
 IsolationLevel = Literal["none", "swarm", "subagent"]
 SharingPolicy = Literal["none", "read", "selective", "full"]
+AutoApproveFrom = Literal["none", "self", "trusted-peer"]
 
 
 @dataclass(frozen=True)
@@ -49,7 +50,19 @@ class SwarmDrivePolicy:
     sibling_sharing: SharingPolicy = "read"
 
     # Automatically accept high-quality genomes discovered by children?
+    # DEPRECATED in v2 / M6: kept for config back-compat only. The new
+    # promotion gate is ``promotion_required`` + ``auto_approve_from``
+    # below. When ``promotion_required`` is True (the v2 default), every
+    # upward write routes through ``PromotionService``; this flag is ignored.
     auto_ingest_from_children: bool = True
+
+    # v2 / Milestone 6: explicit promotion of every cross-tier write. The
+    # parent Drive only ingests Genomes that arrive via an approved
+    # promotion record. Self-originated proposals auto-approve so existing
+    # single-agent flows stay one logical step; trusted-peer auto-approval
+    # is opt-in.
+    promotion_required: bool = True
+    auto_approve_from: AutoApproveFrom = "self"
 
     # Minimum quality score a genome must have to be shared across pool boundaries
     min_quality_for_sharing: float = 0.80
