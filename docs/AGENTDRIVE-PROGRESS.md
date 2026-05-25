@@ -136,15 +136,15 @@ That artifact — a short, readable, end-to-end cap resolver — is the thing th
 
 In order. Each item is small enough to be a single PR.
 
-| # | Item | Effort | Unblocks |
+| # | Item | Effort | Status |
 |---|---|---|---|
-| 1 | Audit capability enforcement across CLI, web, adapters, and snapshot paths | 1 day | validates the core security claim |
-| 2 | Build FastAPI web Phase 2 pages for Drive/Swarms/DNA/Snapshots/Capabilities/Peers | 1-2 days | replaces legacy `:8420` snapshot-only UI with one operator surface |
-| 3 | Trash stale rename artifacts if still tracked; keep package metadata ignored | 5 min | cleanliness |
-| 4 | Add `CODE_OF_CONDUCT.md` and `DEVELOPERS.md` with one-command bring-up | 1 hr | contributor onboarding |
-| 5 | Keep link-preserving naming cleanup moving through older Pool/Savant docs | 30 min | public naming coherence |
-| 6 | Build the 30-line cap resolver reference | 0.5 day | the AgentDrive moment |
-| 7 | `docker/docker-compose.yml` booting 1 default + 2 sub-agents + 1 peer | 1 day | self-host story |
-| 8 | Cut the PyPI release + tag-based release workflow | 1 day | installability |
+| 1 | Audit capability enforcement across CLI, web, adapters, and snapshot paths | 1 day | ✅ 14/15 routes verify via `CapStore.verify_request`; the one outlier (admin-only user approve) documented in `SECURITY-HARDENING.md` |
+| 2 | Build FastAPI web Phase 2 pages for Drive/Swarms/DNA/Snapshots/Capabilities/Peers | 1-2 days | ✅ All 6 pages backed by real engine calls (Phase 2 #1–#7) |
+| 3 | Trash stale rename artifacts if still tracked; keep package metadata ignored | 5 min | ✅ tree clean, `.gitignore` covers `.ruff_cache/` |
+| 4 | Add `CODE_OF_CONDUCT.md` and `DEVELOPERS.md` with one-command bring-up | 1 hr | ✅ + `AGENTS.md`, `.github/copilot-instructions.md`, `Makefile`, `scripts/dev-bringup.sh` |
+| 5 | Keep link-preserving naming cleanup moving through older Pool/Savant docs | 30 min | ✅ SWARM / SETTINGS / CONTRIBUTING reframed under AgentDrive |
+| 6 | Build the 30-line cap resolver reference | 0.5 day | ✅ `docs/CAP-RESOLVER.md` |
+| 7 | `docker/docker-compose.yml` booting 1 default + 2 sub-agents + 1 peer | 1 day | ✅ `docker/Dockerfile` + compose + `README.md` + `versions.md` |
+| 8 | Cut the PyPI release + tag-based release workflow | 1 day | ✅ `.github/workflows/release.yml` (Trusted Publishing, tag-driven, TestPyPI dry-run) |
 
-Items 1-5 are truth and hygiene. Items 6-8 are the productization sequence that makes the project feel coherent outside the local checkout.
+Items 1–5 are truth and hygiene. Items 6–8 are the productization sequence that makes the project feel coherent outside the local checkout.
