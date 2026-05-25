@@ -148,3 +148,23 @@ In order. Each item is small enough to be a single PR.
 | 8 | Cut the PyPI release + tag-based release workflow | 1 day | ✅ `.github/workflows/release.yml` (Trusted Publishing, tag-driven, TestPyPI dry-run) |
 
 Items 1–5 are truth and hygiene. Items 6–8 are the productization sequence that makes the project feel coherent outside the local checkout.
+
+---
+
+## 7. v2 architecture milestones
+
+The fix list above closed productization. The v2 architecture milestones from `AGENTDRIVE-V2.md` are tracked separately below.
+
+| # | Milestone | Status |
+|---|---|---|
+| M1 | Content-addressed Genome objects | ✅ `drive/content_store.py`, `manifest.supersedes` |
+| M2 | Shared swarm Drive (sibling-learning primitive) | ✅ `SwarmDrivePolicy` defaults `isolation_level="swarm"`, `sibling_sharing="read"` |
+| M3 | Capability URIs + key-derivation tree | ✅ `cap/uri.py`, `cap/store.py`; 14/15 routes verify via `CapStore.verify_request` |
+| M4 | CRDT counters (G-Counter) + conflict copies | ✅ `drive/crdt.py`, `drive/conflict.py`, ingest wired with `AGENTDRIVE_M4_DISABLE` opt-out; 27 new tests |
+| M5 | P-384 trust circle + cross-device sync | ⏳ next |
+| M6 | Promotion gates + tiered sync (finish) | ⏳ |
+
+**M4 design calls (Pablo defaults):**
+- `crdt-set` is add-only (G-Set). OR-Set deferred — removals would require tombstones and bigger on-disk state. Easy to upgrade later.
+- `merge_strategy` defaults to `"last-write"` so every existing Genome stays back-compat. The new fields are only included in the content hash when explicitly set (preserves pre-M4 hashes byte-for-byte).
+- Conflict suffix: `conflict-<sha8(version_vector)>-<sanitized_author>`. Deterministic so retrying the same losing write doesn't pile up duplicates.

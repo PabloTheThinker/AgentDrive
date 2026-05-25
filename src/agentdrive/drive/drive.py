@@ -41,6 +41,13 @@ if TYPE_CHECKING:
     from agentdrive.cap.store import SignedCap
 
 
+def _m4_disabled() -> bool:
+    """Env opt-out for the v2 / M4 CRDT + conflict-copy ingest logic."""
+    import os
+
+    return os.environ.get("AGENTDRIVE_M4_DISABLE", "").strip() in {"1", "true", "yes"}
+
+
 # --- Relevance scoring helpers (use style & logic from agentdrive.reasoning primitives) ---
 # _tokens mirrors causality.py for token carry / overlap detection
 # _jaccard mirrors patterns.py for intent/field or textual reasoning overlap scoring
@@ -221,6 +228,71 @@ class AgentDrive:
             logger.warning(f"Failed to load ingest log {self.ingest_log_path}: {exc}")
             self._ingest_log = []
 
+    # ── v2 / M4: CRDT merge + conflict-copy resolution ───────────────────────
+    def _apply_m4_merge_or_conflict(
+        self,
+        incoming: Genome,
+        actor: str | None,
+    ) -> tuple[Genome, str | None]:
+        """Reconcile an incoming write against any existing same-id Genome.
+
+        Returns ``(genome_to_save, event)`` where ``event`` is one of:
+
+        - ``None`` — no collision, normal write
+        - ``"crdt-merge"`` — strategies matched, state was merged into the latest
+        - ``"conflict-copy"`` — last-write collision with different content; the
+          returned genome is a conflict copy and the original is left untouched
+        """
+        from agentdrive.drive.conflict import emit_conflict_genome
+        from agentdrive.drive.crdt import merge_counters, merge_sets
+
+        try:
+            latest = self.registry.load(incoming.manifest.id)
+        except Exception:
+            latest = None
+        if latest is None:
+            return incoming, None
+
+        strategy = incoming.manifest.merge_strategy
+        latest_strategy = latest.manifest.merge_strategy
+
+        if strategy in ("crdt-counter", "crdt-set") and strategy == latest_strategy:
+            merged = incoming.model_copy(deep=True)
+            existing_state = latest.manifest.crdt_state or {}
+            incoming_state = incoming.manifest.crdt_state or {}
+            if strategy == "crdt-counter":
+                merged.manifest.crdt_state = merge_counters(existing_state, incoming_state)
+            else:
+                members = merge_sets(
+                    existing_state.get("members", []),
+                    incoming_state.get("members", []),
+                )
+                merged.manifest.crdt_state = {"members": members}
+            # Supersedes chain names both parents so the merge is auditable.
+            parents = [latest.manifest.content_hash]
+            for h in incoming.manifest.supersedes:
+                if h and h not in parents:
+                    parents.append(h)
+            merged.manifest.supersedes = parents
+            merged.manifest.content_hash = "sha256:pending"
+            merged.finalize(update_timestamp=False)
+            from agentdrive.genome.models import Genome  # avoid module-level cycle
+
+            return Genome.model_validate(merged.model_dump()), "crdt-merge"
+
+        if strategy == "last-write" and latest_strategy == "last-write":
+            if latest.manifest.content_hash and (
+                latest.manifest.content_hash == incoming.manifest.content_hash
+            ):
+                return incoming, None  # exact dedup, not a conflict
+            vector = {actor or "unknown": int(time.time() * 1000)}
+            conflict = emit_conflict_genome(latest, incoming, vector)
+            return conflict, "conflict-copy"
+
+        # Mixed-strategy or unsupported combinations fall through to normal write
+        # so back-compat is preserved.
+        return incoming, None
+
     def ingest(
         self,
         genome: Genome,
@@ -247,6 +319,13 @@ class AgentDrive:
             tag = f"sub:{subagent_id}"
             if not any(getattr(a, "id", None) == tag for a in (genome.manifest.authors or [])):
                 genome.manifest.authors.append(GenomeAuthor(type="agent", id=tag, name=tag))
+
+        # v2 / M4: CRDT merge or conflict-copy emission before the write. May
+        # mutate `genome` (crdt merge) or replace it with a conflict copy. The
+        # resulting `genome` is what we register, content-address, and log.
+        m4_event: str | None = None
+        if not _m4_disabled():
+            genome, m4_event = self._apply_m4_merge_or_conflict(genome, actor=actor)
 
         # Basic acceptance policy (can be made much smarter later)
         existing = self.registry.search(query=genome.manifest.id, limit=5)
@@ -278,12 +357,13 @@ class AgentDrive:
         entry: dict[str, Any] = {
             "timestamp": time.time(),
             "genome_id": genome.genome_id,
-            "source": source,
+            "source": source if not m4_event else f"{source} ({m4_event})",
             "actor": actor,
             "path": str(saved_path),
             "content_hash": put.hash,
             "deduped": put.existed,
             "subagent_id": subagent_id,
+            "m4_event": m4_event,
         }
         self._ingest_log.append(entry)
 

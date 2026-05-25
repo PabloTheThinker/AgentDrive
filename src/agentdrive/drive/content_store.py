@@ -100,12 +100,24 @@ def canonical_genome_payload(genome: Any) -> dict[str, Any]:
     Mirrors ``Genome.compute_content_hash`` so the same bytes get hashed in
     both places. If you change this, change that.
     """
-    return {
+    payload: dict[str, Any] = {
         "framework": getattr(genome, "framework", None) or {},
         "reasoning_patterns": getattr(genome, "reasoning_patterns", {}) or {},
         "tool_compositions": getattr(genome, "tool_compositions", {}) or {},
         "evaluations": getattr(genome, "evaluations", {}) or {},
     }
+    # v2 / M4: CRDT state is content — merging two siblings produces a new
+    # hash whose supersedes chain names both parents. Only included when
+    # explicitly set; "last-write" + null state is the historical default and
+    # MUST hash identically to a pre-M4 Genome (back-compat for stored hashes).
+    manifest = getattr(genome, "manifest", None)
+    if manifest is not None:
+        merge_strategy = getattr(manifest, "merge_strategy", "last-write")
+        crdt_state = getattr(manifest, "crdt_state", None)
+        if merge_strategy != "last-write" or crdt_state is not None:
+            payload["merge_strategy"] = merge_strategy
+            payload["crdt_state"] = crdt_state
+    return payload
 
 
 def genome_hash(genome: Any) -> str:

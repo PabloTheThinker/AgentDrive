@@ -104,6 +104,19 @@ class GenomeManifest(BaseModel):
         description="Content hashes (sha256:<hex>) of Genomes this one supersedes — the v2 lineage edge",
     )
 
+    # v2 / AgentDrive Milestone 4: merge strategy + CRDT state. The default
+    # ``last-write`` preserves v1 behavior — non-matching same-id writes will
+    # emit a conflict copy instead of clobbering. ``crdt-counter`` and
+    # ``crdt-set`` are add-only (G-Counter / G-Set); see drive/crdt.py.
+    merge_strategy: Literal["last-write", "crdt-counter", "crdt-set"] = Field(
+        default="last-write",
+        description="How sibling writes of the same Genome id are reconciled",
+    )
+    crdt_state: dict[str, Any] | None = Field(
+        default=None,
+        description="Actor-keyed CRDT state (counter: int per actor; set: list[str] under 'members')",
+    )
+
     @field_validator("id")
     @classmethod
     def validate_id(cls, v: str) -> str:
