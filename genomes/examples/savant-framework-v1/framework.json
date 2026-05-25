@@ -1,0 +1,216 @@
+{
+  "framework": {
+    "id": "savant-framework",
+    "version": "0.1.0",
+    "display_name": "Savant Cognition Framework",
+    "description": "A typed cognitive pass that takes a corpus of observations (and optionally a chat transcript) and produces a savant-style artifact: structural synthesis, anomalies, joins, contradictions, a reasoning trace, a causal graph, recognized work patterns, and a calibration update. Five layers run in order \u2014 observation, synthesis, detection, reasoning, learning \u2014 and every layer's output is schema-validated and audit-logged. No vagueness: every claim carries a count and a citation, every step has a started_at / finished_at, every artifact is reproducible.\n",
+    "category": "custom",
+    "tags": [
+      "savant",
+      "cognition",
+      "framework",
+      "anomaly",
+      "reasoning",
+      "calibration",
+      "patterns"
+    ],
+    "author": "pablothethinker",
+    "license": "CC-BY-4.0",
+    "inputs": [
+      {
+        "name": "observations",
+        "type": "array",
+        "items": "object",
+        "required": true,
+        "description": "Typed observation rows. Each row should carry kind, identity, state, summary, observed_at (epoch seconds), and optional details.\n"
+      },
+      {
+        "name": "transcript",
+        "type": "array",
+        "items": "object",
+        "required": false,
+        "description": "Optional chat transcript (role + content messages). When present the framework infers the implicit work pattern and matches it against the persistent pattern memory.\n"
+      },
+      {
+        "name": "prior_observations",
+        "type": "array",
+        "items": "object",
+        "required": false,
+        "description": "Optional prior-snapshot observations. Used as a baseline for identity-novel anomaly detection.\n"
+      },
+      {
+        "name": "calibration_topic",
+        "type": "string",
+        "required": false,
+        "description": "Topic under which the calibration store records this run. Defaults to \"savant-framework\".\n"
+      },
+      {
+        "name": "pattern_corpus",
+        "type": "string",
+        "required": false,
+        "description": "Pattern-memory corpus name. Defaults to \"default\".\n"
+      }
+    ],
+    "steps": [
+      {
+        "id": "observation__audit_inputs",
+        "type": "tool_call",
+        "agent": "ilo-core",
+        "inputs": [
+          "observations"
+        ],
+        "output": "audit"
+      },
+      {
+        "id": "synthesis__induce_schema",
+        "type": "tool_call",
+        "agent": "ilo-core",
+        "depends_on": [
+          "observation__audit_inputs"
+        ],
+        "inputs": [
+          "observations"
+        ],
+        "output": "induced_schema"
+      },
+      {
+        "id": "synthesis__synthesize_framework",
+        "type": "tool_call",
+        "agent": "ilo-core",
+        "depends_on": [
+          "observation__audit_inputs"
+        ],
+        "inputs": [
+          "observations"
+        ],
+        "output": "synthesis"
+      },
+      {
+        "id": "synthesis__infer_pattern",
+        "type": "tool_call",
+        "agent": "ilo-core",
+        "depends_on": [
+          "observation__audit_inputs"
+        ],
+        "inputs": [
+          "transcript"
+        ],
+        "output": "inferred_pattern"
+      },
+      {
+        "id": "detection__anomalies",
+        "type": "tool_call",
+        "agent": "ilo-core",
+        "depends_on": [
+          "synthesis__synthesize_framework"
+        ],
+        "inputs": [
+          "observations",
+          "prior_observations"
+        ],
+        "output": "anomalies"
+      },
+      {
+        "id": "detection__cross_domain_joins",
+        "type": "tool_call",
+        "agent": "ilo-core",
+        "depends_on": [
+          "synthesis__synthesize_framework"
+        ],
+        "inputs": [
+          "observations"
+        ],
+        "output": "joins"
+      },
+      {
+        "id": "detection__contradictions",
+        "type": "tool_call",
+        "agent": "ilo-core",
+        "depends_on": [
+          "synthesis__synthesize_framework"
+        ],
+        "inputs": [
+          "observations"
+        ],
+        "output": "contradictions"
+      },
+      {
+        "id": "reasoning__reconstruct_trace",
+        "type": "tool_call",
+        "agent": "ilo-core",
+        "depends_on": [
+          "detection__anomalies",
+          "detection__cross_domain_joins",
+          "detection__contradictions"
+        ],
+        "output": "reasoning_trace"
+      },
+      {
+        "id": "reasoning__mine_causality",
+        "type": "tool_call",
+        "agent": "ilo-core",
+        "depends_on": [
+          "reasoning__reconstruct_trace"
+        ],
+        "with": [
+          "reasoning_trace"
+        ],
+        "inputs": [
+          "observations"
+        ],
+        "output": "causality"
+      },
+      {
+        "id": "learning__recognize_pattern",
+        "type": "tool_call",
+        "agent": "ilo-core",
+        "depends_on": [
+          "synthesis__infer_pattern"
+        ],
+        "inputs": [
+          "transcript",
+          "pattern_corpus"
+        ],
+        "output": "pattern_matches"
+      },
+      {
+        "id": "learning__calibrate",
+        "type": "tool_call",
+        "agent": "ilo-core",
+        "depends_on": [
+          "reasoning__mine_causality"
+        ],
+        "inputs": [
+          "calibration_topic"
+        ],
+        "output": "calibration"
+      },
+      {
+        "id": "compose_artifact",
+        "type": "validate",
+        "agent": "ilo-core",
+        "depends_on": [
+          "observation__audit_inputs",
+          "synthesis__induce_schema",
+          "synthesis__synthesize_framework",
+          "synthesis__infer_pattern",
+          "detection__anomalies",
+          "detection__cross_domain_joins",
+          "detection__contradictions",
+          "reasoning__reconstruct_trace",
+          "reasoning__mine_causality",
+          "learning__recognize_pattern",
+          "learning__calibrate"
+        ]
+      }
+    ],
+    "output": {
+      "schema": "../../schemas/savant-framework-v0.1.json",
+      "formats": [
+        "markdown",
+        "json"
+      ],
+      "title_template": "Savant Cognition Pass \u2014 {{ observations | length }} observation(s)"
+    }
+  }
+}

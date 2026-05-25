@@ -1,0 +1,20 @@
+{
+  "id": "security-incident-postmortem",
+  "version": "1.0.0",
+  "content_hash": "sha256:pending",
+  "created": "2026-05-23T10:00:00",
+  "last_improved": "2026-05-23T12:00:00",
+  "authors": [
+    {"type": "human", "name": "Pablo Navarro"}
+  ],
+  "applicability": {
+    "domains": ["security", "reliability", "devops"],
+    "problem_signatures": ["production security incident", "need for structured postmortem"]
+  },
+  "dependencies": {"genomes": ["savant-framework@1.0.0"], "agent_capabilities": ["long_reasoning", "causal_analysis"]},
+  "evaluation_score": {
+    "reference_tasks": 0.87,
+    "human_preference": 0.92
+  },
+  "schema_version": "1.0"
+}

@@ -1,0 +1,97 @@
+framework:
+  id: skill-creator
+  version: 0.1.0
+  display_name: Skill Creator
+  description: 'Meta-framework that takes a free-form description of a domain skill
+    and emits a complete ILO framework draft: typed inputs, ordered steps, JSON Schema,
+    README, and a sample input. The output is a PR-ready directory the operator can
+    drop into the ilo-frameworks registry. This is the closing-the-loop framework
+    that lets ILO act as a framework creator.
+
+    '
+  category: codebase
+  tags:
+  - meta
+  - creator
+  - framework-from-description
+  - architect
+  author: pablothethinker
+  license: CC-BY-4.0
+  inputs:
+  - name: skill_description
+    type: string
+    required: true
+    description: "Plain-English description of the skill \u2014 what it analyses,\
+      \ what input it needs, what output it should produce.\n"
+  - name: proposed_id
+    type: string
+    required: true
+    description: kebab-case framework id (e.g. customer-discovery-synthesis).
+  - name: target_category
+    type: string
+    required: false
+    description: Optional category override (business|codebase|dataset|organization|custom).
+  - name: example_intake
+    type: object
+    required: false
+    description: Optional example intake that should validate against the new framework's
+      input schema.
+  steps:
+  - id: extract_inputs
+    type: reasoning
+    agent: ilo-core
+    inputs:
+    - skill_description
+    - example_intake
+    output: input_specification
+  - id: plan_steps
+    type: reasoning
+    agent: ilo-core
+    depends_on:
+    - extract_inputs
+    inputs:
+    - skill_description
+    with:
+    - input_specification
+    output: step_plan
+  - id: design_output_schema
+    type: reasoning
+    agent: ilo-core
+    depends_on:
+    - extract_inputs
+    - plan_steps
+    inputs:
+    - skill_description
+    with:
+    - input_specification
+    - step_plan
+    output: output_schema
+  - id: draft_readme
+    type: reasoning
+    agent: ilo-core
+    depends_on:
+    - extract_inputs
+    - plan_steps
+    - design_output_schema
+    inputs:
+    - skill_description
+    - proposed_id
+    with:
+    - input_specification
+    - step_plan
+    - output_schema
+    output: readme_draft
+  - id: compose_artifact
+    type: validate
+    agent: ilo-core
+    depends_on:
+    - extract_inputs
+    - plan_steps
+    - design_output_schema
+    - draft_readme
+  output:
+    schema: ../../schemas/skill-creator-v0.1.json
+    formats:
+    - markdown
+    - json
+    title_template: "Skill Creator \u2014 {{ proposed_id }}"

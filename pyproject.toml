@@ -1,0 +1,131 @@
+[build-system]
+requires = ["setuptools>=82.0.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentdrive"
+version = "0.1.0"
+description = "AgentDrive — local-first Drive for AI agents. Each agent and sub-agent owns its own persistent Drive of memory, patterns, and proven DNA. Powered by the Savant engine."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Pablo Navarro", email = "pablo@vektraindustries.com" }]
+license = { text = "MIT" }
+keywords = ["ai", "agents", "genomes", "evolution", "orchestration", "framework", "agentdrive", "drive"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Environment :: Console",
+    "Typing :: Typed",
+]
+dependencies = [
+    "pydantic>=2.13.4",
+    "pyyaml>=6.0.3",
+    "rich>=15.0.0",
+    "prompt_toolkit>=3.0.52",
+    "httpx>=0.27.0",
+    # v2 / Milestone 2c: Ed25519 signatures for lineage_share grants.
+    # Listed explicitly so fresh CI / pip installs don't fail on import.
+    "cryptography>=42.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0.3",
+    "pytest-cov",
+    "ruff",
+    "mypy",
+    "types-PyYAML",
+]
+test = [
+    "pytest>=9.0.3",
+    "pytest-cov",
+    # tests/test_chat_loop.py uses async def + @pytest.mark.asyncio.
+    # Required in CI; locally most devs have it system-wide.
+    "pytest-asyncio>=0.23.0",
+]
+
+[project.scripts]
+# AgentDrive product alias — same entrypoint, product-facing name.
+agentdrive = "agentdrive.cli:main"
+
+[project.entry-points."agentdrive.scanners"]
+# Example: framework = "agentdrive.scanners.framework:FrameworkScanner"
+# Register custom scanners here (plugins)
+
+[project.entry-points."agentdrive.workers"]
+# Example: external = "agentdrive.workers.adapters:ExternalAgentAdapter"
+# Adapters register themselves or via this
+
+[project.entry-points."agentdrive.orchestrator"]
+# Future pluggable strategies
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["savant*"]
+
+[tool.setuptools.package-data]
+savant = ["*.yaml", "*.json", "genomes/**/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+# Focused ruleset — bugs we genuinely want caught, not stylistic noise.
+# Pyflakes (F) covers undefined-name / unused-import / redefinition — real
+# correctness signals. Import-sort (I) keeps imports clean across PRs. We
+# deliberately skip the full pycodestyle (E) catalogue and pyupgrade (UP)
+# because they produce hundreds of low-value diffs across the legacy
+# codebase. Tighten later, milestone by milestone.
+select = ["F", "I"]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+# These files contain conditional / TYPE_CHECKING imports and lazy
+# inside-function imports that ruff's static analysis can't fully follow.
+# Quiet at file scope rather than littering # noqa across the codebase.
+"src/agentdrive/__init__.py" = ["F401", "F811"]
+"src/agentdrive/adapters/__init__.py" = ["F401", "F811", "F822"]
+"src/agentdrive/adapters/claude_code_adapter.py" = ["F821"]
+"src/agentdrive/cli.py" = ["F401"]
+"src/agentdrive/dna/grants.py" = ["F821"]
+"src/agentdrive/drive/swarm_manager.py" = ["F811"]
+"src/agentdrive/genomes_api.py" = ["F821"]
+"src/agentdrive/providers/__init__.py" = ["F401"]
+"src/agentdrive/reasoning/__init__.py" = ["F821"]
+"src/agentdrive/registry/__init__.py" = ["F401", "F811"]
+"src/agentdrive/tui/app.py" = ["F821"]
+"src/agentdrive/tui/components/__init__.py" = ["F401"]
+"tests/conftest.py" = ["F821"]
+"tests/test_genome_models.py" = ["F821"]
+"tests/test_registry.py" = ["F821"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-ra -q --strict-markers"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: integration tests that may require external agents",
+]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # relax for early stage
+ignore_missing_imports = true
+
