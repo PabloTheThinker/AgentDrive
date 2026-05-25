@@ -124,15 +124,13 @@ class SwarmDriveManager:
             if subagent_id:
                 self._active_swarms[swarm_id]["members"].add(subagent_id)
 
-            from urllib.parse import quote
-
-            # urllib.parse.quote is a CodeQL-recognised sanitiser for
-            # py/log-injection — inlined at the sink so the rule sees it.
+            # Inline CR/LF strip — the only pattern CodeQL's py/log-injection
+            # query recognises as a sanitiser at the sink.
             logger.info(
                 "Created shared AgentDrive for swarm",
                 extra={
-                    "swarm_id": quote(str(swarm_id)),
-                    "path": quote(str(drive_path)),
+                    "swarm_id": str(swarm_id).replace("\r", "").replace("\n", ""),
+                    "path": str(drive_path).replace("\r", "").replace("\n", ""),
                 },
             )
 

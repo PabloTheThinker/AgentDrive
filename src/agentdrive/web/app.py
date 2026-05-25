@@ -685,12 +685,13 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                     )
             except Exception:  # noqa: BLE001 — keep the page rendering on partial-DNA-state
                 import logging as _logging
-                from urllib.parse import quote as _quote
 
-                # quote() inlined as CodeQL-recognised py/log-injection sanitiser.
+                # Inline CR/LF strip — only pattern CodeQL py/log-injection accepts.
                 _logging.getLogger("agentdrive.web").exception(
                     "dna_page_partial_load_failed",
-                    extra={"agent_id": _quote(str(agent))},
+                    extra={
+                        "agent_id": str(agent).replace("\r", "").replace("\n", ""),
+                    },
                 )
 
         return templates.TemplateResponse(

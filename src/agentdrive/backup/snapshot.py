@@ -160,17 +160,14 @@ class SnapshotManager:
             json.dumps(asdict(entry), indent=2, sort_keys=True),
             encoding="utf-8",
         )
-        from urllib.parse import quote
-
-        # urllib.parse.quote is a CodeQL-recognised sanitiser for
-        # py/log-injection — inlined at the sink so the rule sees it.
+        # Inline CR/LF strip — only pattern CodeQL py/log-injection accepts.
         logger.info(
             "Snapshot taken",
             extra={
-                "agent_id": quote(str(self.agent_id)),
-                "snapshot_id": quote(str(sid)),
+                "agent_id": str(self.agent_id).replace("\r", "").replace("\n", ""),
+                "snapshot_id": str(sid).replace("\r", "").replace("\n", ""),
                 "hash_count": len(hashes),
-                "cadence_id": quote(str(cadence_id)),
+                "cadence_id": str(cadence_id).replace("\r", "").replace("\n", ""),
             },
         )
         # Enforce retention with a hard cap on deletes per pass so a
@@ -241,13 +238,11 @@ class SnapshotManager:
             except SnapshotError:  # pragma: no cover — pinned race
                 continue
         if deleted:
-            from urllib.parse import quote
-
-            # quote() inlined as CodeQL-recognised py/log-injection sanitiser.
+            # Inline CR/LF strip — only pattern CodeQL py/log-injection accepts.
             logger.info(
                 "Snapshot retention pruned",
                 extra={
-                    "agent_id": quote(str(self.agent_id)),
+                    "agent_id": str(self.agent_id).replace("\r", "").replace("\n", ""),
                     "deleted_count": len(deleted),
                 },
             )

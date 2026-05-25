@@ -342,17 +342,15 @@ class GrantStore:
                 ),
             )
 
-        from urllib.parse import quote
-
-        # urllib.parse.quote is a CodeQL-recognised sanitiser for
-        # py/log-injection. Inlined here (rather than via safe_for_log
-        # helper) so the rule sees the barrier directly at the sink.
+        # Inline CR/LF strip is the ONLY pattern CodeQL's py/log-injection
+        # query recognises as a sanitiser. Helpers (safe_for_log) and other
+        # encoders (urllib.parse.quote) don't satisfy the rule.
         logger.info(
             "Issued lineage_share grant",
             extra={
-                "grant_id": quote(str(grant.grant_id)),
-                "issuer": quote(str(issuer)),
-                "grantee": quote(str(grantee)),
+                "grant_id": str(grant.grant_id).replace("\r", "").replace("\n", ""),
+                "issuer": str(issuer).replace("\r", "").replace("\n", ""),
+                "grantee": str(grantee).replace("\r", "").replace("\n", ""),
                 "ttl_seconds": ttl_seconds,
             },
         )

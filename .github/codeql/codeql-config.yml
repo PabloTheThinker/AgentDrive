@@ -16,38 +16,18 @@ paths-ignore:
   - "docs/**"
   - "site/**"
 
-# Query-level filters. Each entry documents WHY the alert is suppressed so a
-# future operator can re-evaluate. Suppressions only apply where a runtime
-# sanitiser is in place; raw-input flows in unrelated code are still scanned.
-query-filters:
-  # Log Injection: every untrusted value flowing into ``logger.X(..., extra={})``
-  # in production code is wrapped with ``agentdrive.utils.log_safe.safe_for_log``
-  # which calls ``str.replace`` (strip CR/LF/NUL) followed by
-  # ``urllib.parse.quote`` (percent-encode). Both are CodeQL-recognised
-  # sanitisers individually, but the rule does not always trace through the
-  # helper across function boundaries. Runtime coverage proven by
-  # tests/test_log_safe.py.
-  - exclude:
-      id: py/log-injection
-      paths:
-        - "src/agentdrive/drive/swarm_manager.py"
-        - "src/agentdrive/backup/snapshot.py"
-        - "src/agentdrive/dna/grants.py"
-        - "src/agentdrive/web/app.py"
-        - "src/agentdrive/web/observability.py"
-        - "src/agentdrive/web/authz.py"
-        - "src/agentdrive/cap/store.py"
-
-  # URL redirection: web/app.py ``_redirect`` checks the parsed target against
-  # ``_ALLOWED_REDIRECT_PATHS`` (hard-coded allowlist), refuses any path with
-  # a scheme/netloc/CR/LF, percent-encodes the query via ``urllib.parse.quote``,
-  # and assembles the final URL via ``urllib.parse.urlunsplit``. Runtime
-  # coverage proven by tests/test_redirect_safety.py.
-  - exclude:
-      id: py/url-redirection
-      paths:
-        - "src/agentdrive/web/app.py"
-
-# Note: utils/safe_paths.py IS the path-traversal sanitiser. Lines inside
-# the helper unavoidably touch raw user input on the way to validation —
-# that's the whole point.
+# Note: ``query-filters`` does NOT support per-path filtering — that syntax
+# is invalid and silently ignored. Per-query, per-path suppression in CodeQL
+# requires either UI dismissal or a custom CodeQL query pack (out of scope).
+# Production code instead inlines the CR/LF strip pattern CodeQL recognises
+# directly:
+#
+#   str(value).replace("\r", "").replace("\n", "")  ← py/log-injection sanitiser
+#
+# applied at every ``logger.X(..., extra={})`` sink that receives untrusted
+# input. The ``agentdrive.utils.log_safe.safe_for_log`` helper is kept for
+# ergonomic use in non-flagged paths but is NOT recognised by the rule.
+#
+# ``utils/safe_paths.py`` IS the path-traversal sanitiser. Lines inside the
+# helper unavoidably touch raw user input on the way to validation — that's
+# the whole point.
