@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/assets/hero.svg" alt="AgentDrive — local-first Drive for AI agents" width="100%">
+  <img src="docs/assets/hero.svg" alt="AgentDrive — local-first storage for AI agents" width="100%">
 </div>
 
 <p align="center">
@@ -13,59 +13,29 @@
 
 <p align="center">
   <b>Local-first storage for AI agents.</b><br>
-  Every agent and every sub-agent owns its own persistent Drive — memory,<br>
-  proven patterns, accumulated experience — so it can rebuild itself,<br>
-  resume work, and learn without a parent micromanaging every step.<br>
-  <br>
-  <b>Local. Private. Yours.</b>
+  Three Drive tiers — Personal, Swarm, DNA — over one content-addressed object store,<br>
+  mediated by signed capability URIs, with pointer-only snapshot backup.<br>
+  No cloud account. No vendor. You hold the keys.
 </p>
 
 <p align="center">
   <a href="#quickstart"><b>Install</b></a> ·
-  <a href="#how-it-works"><b>How it works</b></a> ·
+  <a href="#whats-in-the-box"><b>What's in the box</b></a> ·
   <a href="#architecture"><b>Architecture</b></a> ·
-  <a href="docs/SWARM.md"><b>Swarms</b></a> ·
-  <a href="docs/POOL.md"><b>Drive</b></a>
+  <a href="#capability-uris"><b>Capabilities</b></a> ·
+  <a href="#snapshot-backup"><b>Backup</b></a> ·
+  <a href="#documentation"><b>Docs</b></a>
 </p>
 
 ---
 
-## What AgentDrive is
+## Overview
 
-ProtonDrive backs up your files locally, with end-to-end privacy, and gives you the keys.
+AgentDrive is a local-first storage substrate for AI agents. It holds the artifacts an agent accumulates over time — proven patterns (genomes), embeddings, run history, sub-agent state, and inherited DNA from peer agents — on the operator's own machine, with explicit, signed authorization for every access.
 
-**AgentDrive does the same thing for your AI agents.**
+The design borrows two postures: the privacy posture of end-to-end encrypted personal storage, and the identity posture of content-addressed systems. An agent's continuity does not depend on a cloud service or a vendor SDK; it depends on a directory tree, a SQLite database, and a keypair the operator controls.
 
-Every agent's memory, every sub-agent it spawns, every reasoning pattern that ever worked — all of it lives in a Drive on your disk. Plain text and SQLite. No cloud account. No vendor lock-in. The agent doesn't have to ask its parent what to do next; it consults its own Drive first.
-
-When an agent crashes, restarts, or gets swapped out for a new model, the Drive is what brings it back.
-
----
-
-## How it works
-
-<table>
-<tr>
-<td width="33%" valign="top">
-
-### A Drive per agent
-Every agent and every sub-agent it spawns gets its own private, persistent Drive under `~/.agentdrive/drive/`. The Drive holds the agent's DNA — memory, patterns, outcomes — and survives crashes, restarts, and full model replacement.
-
-</td>
-<td width="33%" valign="top">
-
-### Self-reconciling
-Sub-agents pull from their own Drive on a routine they run themselves. No orchestrator handholding. When new DNA lands — from their own work, a peer's contribution, or a parent's update — they absorb it on the next tick.
-
-</td>
-<td width="33%" valign="top">
-
-### User sovereign
-Settings, isolation policy, sharing rules, retention — all user-controlled. No telemetry. Plain-text storage you can `cat`, `grep`, `git`, encrypt, or wipe at any time. Override any policy by editing one YAML file.
-
-</td>
-</tr>
-</table>
+AgentDrive is intended to sit beneath an orchestrator — not to replace one. It is the memory and continuity layer that an agent runtime can rely on, regardless of the model, harness, or orchestration framework in use.
 
 ---
 
@@ -76,10 +46,9 @@ curl -fsSL https://vektraindustries.com/agentdrive/install | bash
 agentdrive
 ```
 
-The installer verifies Python ≥ 3.11, installs AgentDrive, wires your PATH (bash / zsh / fish), creates `~/.agentdrive/`, and offers to launch the TUI.
+The installer verifies Python ≥ 3.11, installs AgentDrive, wires the user's PATH (bash / zsh / fish), creates `~/.agentdrive/`, and offers to launch the TUI.
 
-<details>
-<summary><b>Manual install</b></summary>
+Manual install:
 
 ```bash
 python3 -m pip install --user git+https://github.com/PabloTheThinker/AgentDrive.git
@@ -87,124 +56,298 @@ export PATH="$HOME/.local/bin:$PATH"
 agentdrive
 ```
 
-</details>
+Requirements and platform support:
 
-<details>
-<summary><b>Verify</b></summary>
+- **Python:** 3.11+
+- **Full support:** Linux, macOS
+- **Also works:** Termux
+- **Windows:** via WSL2
+
+Verify the installation:
 
 ```bash
-agentdrive doctor          # health check
-agentdrive drive status    # your Drive overview
-agentdrive genomes list    # what your agents have learned
+agentdrive doctor
+agentdrive drive status
+agentdrive genomes list
 ```
-
-</details>
-
-<details>
-<summary><b>Spawn a swarm — give each sub-agent its own Drive</b></summary>
-
-```python
-import os
-from agentdrive import Harness, AgentDrive
-from agentdrive.constants import get_swarm_drive_path
-
-swarm_id = os.getenv("AGENTDRIVE_SWARM_ID", "demo-swarm")
-sub_id   = os.getenv("AGENTDRIVE_SUBAGENT_ID", "worker-1")
-
-# Each sub-agent gets an isolated Drive at
-# ~/.agentdrive/swarms/<swarm-id>/<sub-id>/drive/
-drive   = AgentDrive(drive_path=get_swarm_drive_path(swarm_id, sub_id))
-harness = Harness(agent_id=f"{swarm_id}:{sub_id}", pool=drive)
-
-with harness.task_context("Your sub-task here"):
-    enriched = harness.inject_into_context(base_prompt)
-    result   = do_your_work(enriched)
-    harness.record_outcome(result)
-```
-
-Full walkthrough in [`docs/SWARM.md`](docs/SWARM.md).
-
-</details>
 
 ---
 
-## See it
+## Operational view
 
 <div align="center">
-  <img src="docs/assets/welcome.svg" alt="AgentDrive welcome — Drive status overview" width="100%">
-  <br><sub><b>Drive status.</b> Genomes loaded, active swarms, sub-agent Drives, runs ingested. All local. All yours.</sub>
+  <img src="docs/assets/welcome.svg" alt="AgentDrive status overview" width="100%">
+  <br><sub>Drive status overview: local genomes, active swarms, sub-agent Drives, and ingested runs.</sub>
 </div>
 
 <br>
 
 <div align="center">
-  <img src="docs/assets/mission-board.svg" alt="AgentDrive Mission Board — lanes for Pending, Running, Done, Failed, Archived" width="100%">
-  <br><sub><b>Mission Board.</b> Every piece of work an agent commits to — tracked across lanes with full provenance.</sub>
+  <img src="docs/assets/mission-board.svg" alt="AgentDrive mission board" width="100%">
+  <br><sub>Mission Board: task flow with provenance across pending, running, done, failed, and archived work.</sub>
 </div>
+
+---
+
+## What's in the box
+
+All components below ship in **v0.1.0** and are exercised by tested code paths. Current release status: **227/227 tests passing**, **ruff clean**, **mypy clean**, **CodeQL clean**.
+
+| Component | Modules | Shipped behavior |
+|---|---|---|
+| **Three-tier Drive topology** | `agentdrive.drive`, `agentdrive.drive.swarm_manager`, `agentdrive.dna` | Personal Drive at `~/.agentdrive/drive/`; one shared Swarm Drive per swarm at `~/.agentdrive/swarms/<id>/`; DNA Drives at `~/.agentdrive/dna/<agent-id>/`. DNA lineage is stored as a forward-only SQLite closure table: `(ancestor_id, descendant_id, min_depth)`. |
+| **Content-addressed object store** | `agentdrive.drive.content_store` | Objects are named by SHA-256 of canonical JSON and sharded as `objects/<aa>/<rest>.json`. Writes are atomic via temporary file + `os.replace`. Identical genomes deduplicate across every Drive on the machine. |
+| **Capability URIs** | `agentdrive.cap.uri.Capability`, `agentdrive.cap.store.CapStore` | Capabilities use the format `<resource>:<action>:<scope>[:<param>=<value> ...]`, are Ed25519-signed, TTL-bounded, and verified through a single chokepoint: `CapStore.verify_request(cap, op, scope)`. |
+| **Lineage grants** | `agentdrive.dna.grants.LineageShareGrant` | Cross-agent DNA inheritance with signed, TTL-bounded grants and scope controls such as `max_hops` and `min_eval`. Received DNA lands in quarantine before use. |
+| **Snapshot backup** | `agentdrive.backup.snapshot.SnapshotManager`, `agentdrive.backup.ui` | Pointer-only snapshot manifests store hashes, not copied bytes. Default cadence is 6 hours with rolling retention of 6 hourly, 7 daily, 4 weekly, plus pinned snapshots. Localhost UI runs on `:8420`. Restore is read-only and returns hashes. |
+| **Harness** | `agentdrive.harness` | The runtime wrapper for adapter agents. Pulls relevant DNA at task start and records outcomes at task end. |
+| **Adapters** | `agentdrive.workers.adapters` | Sidecar integrations for Grok Build, Claude Code, Codex, MCP, and custom orchestrators. |
 
 ---
 
 ## Architecture
 
+AgentDrive separates private work, shared swarm coordination, and long-lived inheritance into three distinct tiers. Underneath those tiers is one machine-local, content-addressed store. Access is mediated by signed capabilities rather than ambient trust.
+
 ```mermaid
 flowchart TB
-    classDef parent fill:#1a1a24,stroke:#2563eb,color:#f5f6fa,stroke-width:2px
-    classDef child  fill:#12121a,stroke:#3a4260,color:#f5f6fa
-    classDef drive  fill:#0f0f14,stroke:#2563eb,color:#9ca3c4,stroke-dasharray:4 3
-    classDef root   fill:#12121a,stroke:#3b82f6,color:#f5f6fa,stroke-width:2px
+    classDef tier fill:#1a1a24,stroke:#2563eb,color:#f5f6fa,stroke-width:2px
+    classDef store fill:#12121a,stroke:#3b82f6,color:#f5f6fa,stroke-width:2px
+    classDef cap fill:#0f0f14,stroke:#2563eb,color:#9ca3c4,stroke-dasharray:4 3
+    classDef agent fill:#12121a,stroke:#3a4260,color:#f5f6fa
 
-    User([👤 You]):::parent
-    Parent[🧠 Parent Agent<br/><sub>Grok · Claude · Codex · custom</sub>]:::parent
-    H[/Harness/]:::parent
+    Operator[Operator keys]:::tier
+    Caps{{Capability URIs<br/>Ed25519 signed}}:::cap
 
-    Sub1[Sub-agent A]:::child
-    Sub2[Sub-agent B]:::child
-    Sub3[Sub-agent C]:::child
+    subgraph Tiers["Drive topology"]
+        Personal[Personal Drive<br/>~/.agentdrive/drive/]:::tier
+        Swarm[Swarm Drive<br/>~/.agentdrive/swarms/ID/]:::tier
+        DNA[DNA Drive<br/>~/.agentdrive/dna/AGENT-ID/]:::tier
+    end
 
-    Drive1[(Drive A)]:::drive
-    Drive2[(Drive B)]:::drive
-    Drive3[(Drive C)]:::drive
+    Store[(Content store<br/>SHA-256 over canonical JSON)]:::store
+    Backup[Snapshot manifests<br/>pointer-only]:::store
 
-    Default[(🧬 Default AgentDrive<br/><sub>~/.agentdrive/drive/</sub>)]:::root
+    Agent[Agent]:::agent
+    Worker1[Sub-agent 1]:::agent
+    Worker2[Sub-agent 2]:::agent
 
-    User -->|owns &amp; configures| Default
-    Parent -->|wraps work via| H
-    H -->|pull DNA · record outcome| Default
+    Operator --> Caps
+    Caps -. verify_request .-> Personal
+    Caps -. verify_request .-> Swarm
+    Caps -. verify_request .-> DNA
 
-    Parent -->|spawns swarm| Sub1
-    Parent -->|spawns swarm| Sub2
-    Parent -->|spawns swarm| Sub3
+    Agent --> Personal
+    Agent --> DNA
+    Worker1 --> Swarm
+    Worker2 --> Swarm
 
-    Sub1 --- Drive1
-    Sub2 --- Drive2
-    Sub3 --- Drive3
-
-    Drive1 -.->|policy-gated| Default
-    Drive2 -.->|policy-gated| Default
-    Drive3 -.->|policy-gated| Default
+    Personal --> Store
+    Swarm --> Store
+    DNA --> Store
+    Store --> Backup
 ```
 
-Three primitives:
+### Tier model
 
-1. **`AgentDrive`** — the persistent store of an agent's Genomes, embeddings, and run history. One per scope (default, swarm, sub-agent).
-2. **`Harness`** — the lightweight adapter any agent wraps its work with. Pulls relevant DNA on task start, records outcomes on completion, runs the reconciliation routine that lets the agent absorb new entries from its own Drive without parent intervention.
-3. **Sharing policies** — sub-agent Drives can stay private, sync upward to a swarm Drive, or contribute to the default Drive. Federation across trusted peer Drives is opt-in and quarantine-gated. You decide per-swarm.
+| Tier | Path | Purpose |
+|---|---|---|
+| **Personal Drive** | `~/.agentdrive/drive/` | Default scope for private agent state: genomes, embeddings, run history, settings, and local work products. |
+| **Swarm Drive** | `~/.agentdrive/swarms/<id>/` | One shared substrate per swarm. All sub-agents in the swarm read and write the same Drive, enabling stigmergic coordination without a parent acting as a message bus. |
+| **DNA Drive** | `~/.agentdrive/dna/<agent-id>/` | Long-lived inheritance layer. Once DNA crosses into a descendant lineage, provenance is preserved and the ancestry graph moves forward only. |
+
+### Design rationale
+
+- **Three tiers instead of one:** different lifecycles require different storage boundaries. Private state, shared coordination, and inherited lineage are not the same class of data.
+- **Content addressing instead of path identity:** a genome is identified by its content hash, not where it was written. Identity is a property of the object itself.
+- **Capabilities instead of ambient access:** authorization is explicit, signed, TTL-bounded, and checked through one verification path.
+- **Pointer-only backup:** snapshots reference hashes already present in the content store, reducing backup cost and preserving integrity semantics.
 
 ---
 
-## Why AgentDrive
+## Capability URIs
 
-Most agent setups rediscover the same patterns in every run, in every codebase, in every team. Skills live in prompts. Memory dies at the end of the conversation. Sub-agents need a parent to tell them what to do every time, because they have no continuity of their own.
+Every Drive operation is authorized through a single verification chokepoint:
 
-AgentDrive treats agent capability the way ProtonDrive treats your files — except local instead of cloud:
+```python
+CapStore.verify_request(cap, op, scope)
+```
 
-- **Local-first** — your Drive lives on your disk, in plain text and SQLite. No cloud account. No vendor.
-- **Privacy-absolute** — nothing leaves the machine unless you opt in to peer federation, and peer DNA always lands in quarantine before it can affect anything.
-- **You own it** — `cat`, `grep`, `git`, encrypt, back up, or wipe it at any time. It's just files.
-- **Per-agent continuity** — every agent and sub-agent has its own Drive. They consult their own memory before asking up the chain.
-- **Crash-recoverable** — when an agent dies, its Drive is what brings the next instance up to speed.
+Capability format:
 
-This is the memory and continuity layer above your orchestrator — not another orchestrator.
+```text
+<resource>:<action>:<scope>[:<param>=<value> ...]
+
+drive:read:swarm:demo
+drive:write:personal
+dna:pull:lineage:agent-7:max_hops=3:min_eval=0.7
+backup:read:agent:agent-12
+```
+
+Properties of the capability system:
+
+- **Ed25519 signatures** against the issuer keypair
+- **TTL-bounded validity**
+- **Subset minting and derivation**
+  - write covers read
+  - exec covers all
+  - full scope covers narrower parametric scope
+- **Revocation by expiry**
+  - operationally, revocation is the absence of re-mint
+  - capabilities expire on their own clock
+
+Example:
+
+```python
+from agentdrive.cap.store import CapStore
+from agentdrive.cap.uri import Capability
+
+store = CapStore()
+
+cap = store.mint(
+    Capability.parse("drive:read:swarm:demo"),
+    ttl_seconds=3600,
+)
+
+assert store.verify_request(cap, "read", "swarm:demo")
+print(cap.to_token())
+```
+
+The important constraint is architectural, not cosmetic: authorization does not drift across multiple ACLs or secondary policy files. If the capability verifies for the requested operation and scope, the request is authorized. If it does not, it is not.
+
+---
+
+## Swarm Drives and the Harness
+
+Swarm Drives are a shared substrate for sub-agents working on the same problem. Rather than serializing all coordination through a parent process, sub-agents write to and read from a common Drive. This is a stigmergic pattern: shared state carries forward useful work.
+
+Example:
+
+```python
+from agentdrive.drive.swarm_manager import SwarmDriveManager
+from agentdrive.harness import Harness
+
+def run_worker(sub_id: str, task: str) -> None:
+    manager = SwarmDriveManager()
+    swarm_drive = manager.get_or_create_pool("demo-swarm")
+
+    harness = Harness(
+        agent_id=f"demo-swarm:{sub_id}",
+        pool=swarm_drive,
+    )
+
+    with harness.task_context(task):
+        prompt = harness.inject_into_context("Summarize repository state.")
+        result = {
+            "status": "ok",
+            "preview": prompt[:120],
+        }
+        harness.record_outcome(result)
+
+for sub_id in ("worker-1", "worker-2", "worker-3"):
+    run_worker(sub_id, "inspect repository")
+```
+
+Operationally:
+
+- all workers in the same swarm use the same Drive
+- proven genomes become immediately available to peer workers
+- swarm learning is shared without copying or reconciling multiple local stores
+
+See [`docs/SWARM.md`](docs/SWARM.md) and [`docs/INTEGRATION.md`](docs/INTEGRATION.md) for the integration model.
+
+---
+
+## DNA inheritance and lineage grants
+
+DNA Drives model persistent inheritance between agents. The ancestry graph is implemented as a forward-only SQLite closure table:
+
+```text
+(ancestor_id, descendant_id, min_depth)
+```
+
+This makes lineage queryable and provenance-preserving. Inheritance does not mutate the donor's history; it extends the recipient's ancestry.
+
+Cross-agent inheritance is mediated by signed lineage grants with explicit scope controls:
+
+- `max_hops`
+- `min_eval`
+- TTL bounds
+- recipient identity
+- quarantine on receipt
+
+Example:
+
+```python
+from agentdrive.dna.drive import DNADrive
+
+donor = DNADrive("agent-7")
+recipient = DNADrive("agent-12")
+
+grant = donor.issue_grant(
+    recipient_id="agent-12",
+    max_hops=3,
+    min_eval=0.7,
+    ttl_seconds=86_400,
+)
+
+recipient.inherit_from(donor, grant)
+```
+
+What this enforces:
+
+- inheritance is **forward-only**
+- provenance is retained with the inherited DNA
+- imported DNA lands in **quarantine first**
+- evaluation thresholds and hop limits bound blast radius
+
+For the full model, see [`docs/AGENTDRIVE-V2-INHERITANCE.md`](docs/AGENTDRIVE-V2-INHERITANCE.md).
+
+---
+
+## Content-addressed storage
+
+The content store is the machine-local substrate shared by every Drive tier.
+
+Key properties:
+
+- **Identity by hash:** SHA-256 of canonical JSON
+- **Sharded layout:** `objects/<aa>/<rest>.json`
+- **Atomic writes:** temporary file + `os.replace`
+- **Machine-wide deduplication:** identical genomes converge to one object
+
+This matters for both performance and correctness:
+
+- two agents that learn the same genome converge on the same stored object
+- snapshots become compact manifests of hashes
+- integrity checks are straightforward because object identity is deterministic
+
+See [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`GENOME-SPEC.md`](GENOME-SPEC.md) for the underlying data model.
+
+---
+
+## Snapshot backup
+
+Snapshot backup is designed around references, not duplication. A snapshot manifest is a JSON record of the hashes that defined a Drive at a point in time. The content bytes remain in the shared content store.
+
+Shipped behavior:
+
+- **Default cadence:** every 6 hours
+- **Retention:** 6 hourly, 7 daily, 4 weekly, plus pinned snapshots
+- **UI:** localhost on `:8420`
+- **Restore mode:** read-only; returns hashes and lets the caller decide what to rebuild
+
+Security hardening in the shipped UI includes:
+
+- Origin/Referer CSRF checks
+- `X-Frame-Options: DENY`
+- `Content-Security-Policy: frame-ancestors 'none'`
+- strict identifier whitelist for every filesystem-bound identifier:
+  - `[A-Za-z0-9._:-]{1,128}`
+
+The recovery model is deliberate: snapshot tooling does not silently overwrite live state. It produces verifiable references; the caller performs the rebuild.
+
+See [`docs/RECOVERY.md`](docs/RECOVERY.md), [`SECURITY.md`](SECURITY.md), and [`SECURITY-HARDENING.md`](SECURITY-HARDENING.md).
 
 ---
 
@@ -212,40 +355,93 @@ This is the memory and continuity layer above your orchestrator — not another 
 
 | Platform | Status |
 |---|---|
-| Linux | ✅ Full support |
-| macOS | ✅ Full support |
-| Termux (Android) | ✅ Works (no heavy browser extras) |
-| Windows | ⚠️ Use WSL2 or Git Bash + Python |
+| Linux | Full support |
+| macOS | Full support |
+| Termux | Supported |
+| Windows | Use WSL2 |
 
-Works as a sidecar to **Grok Build**, **Claude Code**, **Codex**, **MCP**, and any custom orchestrator. Adapters in `agentdrive.workers.adapters`.
+AgentDrive is designed to run as a sidecar or substrate for:
+
+- Grok Build
+- Claude Code
+- Codex
+- MCP
+- custom orchestrators
+
+Integration adapters live in [`src/agentdrive/workers/adapters.py`](src/agentdrive/workers/adapters.py).
 
 ---
 
-## Docs
+## Documentation
 
-| | |
+### Core design
+
+| Document | Description |
 |---|---|
-| **[`VISION.md`](VISION.md)** | AgentDrive long-term framing — Drive for every agent, owned by you |
-| **[`ARCHITECTURE.md`](ARCHITECTURE.md)** | Full system map and design rationale |
-| **[`GENOME-SPEC.md`](GENOME-SPEC.md)** | Genome schema, versioning, and provenance |
-| **[`docs/RECOVERY.md`](docs/RECOVERY.md)** | The healing loop — how a Drive resurrects a dead agent |
-| **[`docs/SWARM.md`](docs/SWARM.md)** | Swarm spawning, isolation, sharing policies |
-| **[`docs/POOL.md`](docs/POOL.md)** | Drive layout, queries, and lifecycle |
-| **[`docs/POOL-EVOLUTION.md`](docs/POOL-EVOLUTION.md)** | Federated learning stack — confidence, inheritance, quarantine, peers, reconciliation |
-| **[`docs/SETTINGS.md`](docs/SETTINGS.md)** | Every config knob, with defaults |
-| **[`docs/INTEGRATION.md`](docs/INTEGRATION.md)** | Wrapping your agent in `Harness` |
-| **[`CHANGELOG.md`](CHANGELOG.md)** | Release notes — including the AgentDrive pivot |
-| **[`SECURITY.md`](SECURITY.md)** | Reporting vulnerabilities |
-| **[`CONTRIBUTING.md`](CONTRIBUTING.md)** | How to ship Genomes, scanners, and adapters |
+| [`VISION.md`](VISION.md) | Long-term framing and product direction |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | System map, storage model, and design rationale |
+| [`GENOME-SPEC.md`](GENOME-SPEC.md) | Genome schema, versioning, and provenance |
+
+### Topology, lineage, and swarm behavior
+
+| Document | Description |
+|---|---|
+| [`docs/AGENTDRIVE-V2.md`](docs/AGENTDRIVE-V2.md) | Three-tier topology: Personal, Swarm, DNA |
+| [`docs/AGENTDRIVE-V2-INHERITANCE.md`](docs/AGENTDRIVE-V2-INHERITANCE.md) | DNA inheritance, ancestry DAG, and lineage grants |
+| [`docs/SWARM.md`](docs/SWARM.md) | Swarm lifecycle, sharing model, and coordination behavior |
+| [`docs/POOL.md`](docs/POOL.md) | Drive layout, queries, and lifecycle |
+| [`docs/POOL-EVOLUTION.md`](docs/POOL-EVOLUTION.md) | Evolutionary and federated learning model |
+
+### Operations and integration
+
+| Document | Description |
+|---|---|
+| [`docs/RECOVERY.md`](docs/RECOVERY.md) | Recovery model and agent resurrection workflow |
+| [`docs/SETTINGS.md`](docs/SETTINGS.md) | Configuration surface and defaults |
+| [`docs/INTEGRATION.md`](docs/INTEGRATION.md) | Harness integration and adapter patterns |
+
+### Security and project workflow
+
+| Document | Description |
+|---|---|
+| [`SECURITY.md`](SECURITY.md) | Threat model, disclosure process, and hardening notes |
+| [`SECURITY-HARDENING.md`](SECURITY-HARDENING.md) | Snapshot UI hardening and path-safety controls |
+| [`CHANGELOG.md`](CHANGELOG.md) | Release history |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Contribution workflow for genomes, scanners, and adapters |
 
 ---
 
 ## Status
 
-Early foundation. Shipping in the open. Mission Board, Drive browser, swarm dispatch, and external adapter system are live in the TUI today. Public Genome registry, evolutionary scanners, and PyPI release are next.
+**v0.1.0** is the initial public release.
 
-Built by [Vektra Industries](https://vektraindustries.com). Internal federated-learning engine credited as Savant — lives inside `agentdrive.*` for contributors.
+Shipped and verified in this release:
+
+- three-tier Drive topology
+- content-addressed object store
+- capability URIs
+- lineage grants
+- snapshot backup
+- Harness integration
+- adapters for external agent runtimes
+
+Current quality gates:
+
+- **227/227 tests passing**
+- **ruff clean**
+- **mypy clean**
+- **CodeQL clean**
+
+Next planned milestones:
+
+- public Genome registry
+- evolutionary scanners
+- PyPI release
+
+---
 
 ## License
 
 MIT.
+
+Published by [Vektra Industries](https://vektraindustries.com), a four-division technology company spanning AI, Software, Robotics, and Communications.
