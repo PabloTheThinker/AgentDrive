@@ -124,9 +124,14 @@ class SwarmDriveManager:
             if subagent_id:
                 self._active_swarms[swarm_id]["members"].add(subagent_id)
 
+            from agentdrive.utils.log_safe import safe_for_log
+
             logger.info(
                 "Created shared AgentDrive for swarm",
-                extra={"swarm_id": swarm_id, "path": str(drive_path)},
+                extra={
+                    "swarm_id": safe_for_log(swarm_id),
+                    "path": safe_for_log(drive_path),
+                },
             )
 
             pool._provenance = {
@@ -231,12 +236,14 @@ class SwarmDriveManager:
         Respects current sharing policies.
         """
         # Real implementation would check policies, provenance, quality, user approval, etc.
+        from agentdrive.utils.log_safe import safe_for_log
+
         logger.info(
             "DNA merge proposed",
             extra={
-                "from": f"{source_swarm}:{source_subagent}",
-                "to": f"{target_swarm}:{target_subagent}",
-                "genome": genome_id,
+                "from": safe_for_log(f"{source_swarm}:{source_subagent}"),
+                "to": safe_for_log(f"{target_swarm}:{target_subagent}"),
+                "genome": safe_for_log(genome_id),
             },
         )
         # For now we just log — the actual merge logic lives in the evolutionary engine

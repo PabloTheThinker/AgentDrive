@@ -342,12 +342,14 @@ class GrantStore:
                 ),
             )
 
+        from agentdrive.utils.log_safe import safe_for_log
+
         logger.info(
             "Issued lineage_share grant",
             extra={
-                "grant_id": grant.grant_id,
-                "issuer": issuer,
-                "grantee": grantee,
+                "grant_id": safe_for_log(grant.grant_id),
+                "issuer": safe_for_log(issuer),
+                "grantee": safe_for_log(grantee),
                 "ttl_seconds": ttl_seconds,
             },
         )

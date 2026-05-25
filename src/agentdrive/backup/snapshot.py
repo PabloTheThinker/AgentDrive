@@ -160,13 +160,15 @@ class SnapshotManager:
             json.dumps(asdict(entry), indent=2, sort_keys=True),
             encoding="utf-8",
         )
+        from agentdrive.utils.log_safe import safe_for_log
+
         logger.info(
             "Snapshot taken",
             extra={
-                "agent_id": self.agent_id,
-                "snapshot_id": sid,
+                "agent_id": safe_for_log(self.agent_id),
+                "snapshot_id": safe_for_log(sid),
                 "hash_count": len(hashes),
-                "cadence_id": cadence_id,
+                "cadence_id": safe_for_log(cadence_id),
             },
         )
         # Enforce retention with a hard cap on deletes per pass so a
@@ -237,9 +239,14 @@ class SnapshotManager:
             except SnapshotError:  # pragma: no cover — pinned race
                 continue
         if deleted:
+            from agentdrive.utils.log_safe import safe_for_log
+
             logger.info(
                 "Snapshot retention pruned",
-                extra={"agent_id": self.agent_id, "deleted_count": len(deleted)},
+                extra={
+                    "agent_id": safe_for_log(self.agent_id),
+                    "deleted_count": len(deleted),
+                },
             )
         return deleted
 

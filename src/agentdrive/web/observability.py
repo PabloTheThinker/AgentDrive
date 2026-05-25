@@ -135,6 +135,11 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         request.state.request_id = request_id
         start = time.perf_counter()
         client_ip = (request.client.host if request.client else "?") or "?"
+        from agentdrive.utils.log_safe import safe_for_log
+
+        safe_method = safe_for_log(request.method)
+        safe_path = safe_for_log(request.url.path)
+        safe_client = safe_for_log(client_ip)
         try:
             response = await call_next(request)
         except Exception:  # pragma: no cover — bubbled to error boundary
@@ -142,9 +147,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 "request errored",
                 extra={
                     "request_id": request_id,
-                    "method": request.method,
-                    "path": request.url.path,
-                    "client_ip": client_ip,
+                    "method": safe_method,
+                    "path": safe_path,
+                    "client_ip": safe_client,
                 },
             )
             raise
@@ -153,11 +158,11 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             "request",
             extra={
                 "request_id": request_id,
-                "method": request.method,
-                "path": request.url.path,
+                "method": safe_method,
+                "path": safe_path,
                 "status": response.status_code,
                 "latency_ms": latency_ms,
-                "client_ip": client_ip,
+                "client_ip": safe_client,
             },
         )
         response.headers["x-request-id"] = request_id
@@ -283,14 +288,16 @@ class OriginCSRFMiddleware(BaseHTTPMiddleware):
             except Exception:
                 ok = False
         if not ok:
+            from agentdrive.utils.log_safe import safe_for_log
+
             request_id = getattr(request.state, "request_id", None)
             _logger.warning(
                 "csrf_rejected",
                 extra={
                     "request_id": request_id,
-                    "path": request.url.path,
-                    "method": request.method,
-                    "client_ip": client_ip(request),
+                    "path": safe_for_log(request.url.path),
+                    "method": safe_for_log(request.method),
+                    "client_ip": safe_for_log(client_ip(request)),
                 },
             )
             return JSONResponse(
@@ -310,10 +317,12 @@ def install_error_boundary(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def _on_exception(request: Request, exc: Exception):  # noqa: ANN001
+        from agentdrive.utils.log_safe import safe_for_log
+
         request_id = getattr(request.state, "request_id", None)
         _logger.exception(
             "unhandled exception",
-            extra={"request_id": request_id, "path": request.url.path},
+            extra={"request_id": request_id, "path": safe_for_log(request.url.path)},
         )
         return JSONResponse(
             status_code=500,

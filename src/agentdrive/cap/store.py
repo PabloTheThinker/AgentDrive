@@ -305,9 +305,15 @@ class CapStore:
             parent_cap_id=parent_cap_id,
             revoked=False,
         )
+        from agentdrive.utils.log_safe import safe_for_log
+
         logger.info(
             "Capability minted",
-            extra={"cap_id": cap_id, "issuer": issuer, "uri": uri},
+            extra={
+                "cap_id": safe_for_log(cap_id),
+                "issuer": safe_for_log(issuer),
+                "uri": safe_for_log(uri),
+            },
         )
         return signed
 

@@ -686,9 +686,11 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             except Exception:  # noqa: BLE001 — keep the page rendering on partial-DNA-state
                 import logging as _logging
 
+                from agentdrive.utils.log_safe import safe_for_log
+
                 _logging.getLogger("agentdrive.web").exception(
                     "dna_page_partial_load_failed",
-                    extra={"agent_id": agent},
+                    extra={"agent_id": safe_for_log(agent)},
                 )
 
         return templates.TemplateResponse(
@@ -1163,7 +1165,7 @@ def _redirect(path: str) -> RedirectResponse:
     the path prefix against a known allowlist. Anything off-list collapses
     to ``/``.
     """
-    from urllib.parse import urlsplit
+    from urllib.parse import quote, urlsplit
 
     parts = urlsplit(path or "")
     if parts.scheme or parts.netloc:
@@ -1178,10 +1180,13 @@ def _redirect(path: str) -> RedirectResponse:
     )
     if not is_allowed:
         return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
-    # Re-assemble with the query string preserved (no fragment leaks).
-    target = base
+    # Re-assemble with a percent-encoded query string. ``urllib.parse.quote``
+    # is CodeQL-recognised as a URL sanitiser — encoding the query at the
+    # sink makes the dataflow break visible at the RedirectResponse call.
     if parts.query:
-        target = f"{base}?{parts.query}"
+        target = f"{base}?{quote(parts.query, safe='=&')}"
+    else:
+        target = base
     return RedirectResponse(target, status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -1300,18 +1305,21 @@ async def _retention_loop(app: FastAPI) -> None:
                 for agent_dir in backup_root.iterdir():
                     if not agent_dir.is_dir():
                         continue
+                    from agentdrive.utils.log_safe import safe_for_log
+
+                    safe_agent = safe_for_log(agent_dir.name)
                     try:
                         mgr = _snapshot_manager(agent_dir.name)
                         deleted = mgr.enforce_retention()
                         if deleted:
                             log.info(
                                 "background_retention_pass",
-                                extra={"agent_id": agent_dir.name, "deleted": len(deleted)},
+                                extra={"agent_id": safe_agent, "deleted": len(deleted)},
                             )
                     except Exception:  # noqa: BLE001
                         log.exception(
                             "background_retention_failed",
-                            extra={"agent_id": agent_dir.name},
+                            extra={"agent_id": safe_agent},
                         )
         except _asyncio.CancelledError:
             return  # graceful shutdown

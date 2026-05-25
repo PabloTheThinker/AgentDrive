@@ -85,7 +85,9 @@ def _append_audit(record: dict[str, Any]) -> None:
         with path.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(record, separators=(",", ":")) + "\n")
     except Exception:  # pragma: no cover
-        _logger.exception("audit_log_write_failed", extra={"record": str(record)})
+        from agentdrive.utils.log_safe import safe_for_log
+
+        _logger.exception("audit_log_write_failed", extra={"record": safe_for_log(record)})
 
 
 # ── cap resolution helpers ────────────────────────────────────────────
