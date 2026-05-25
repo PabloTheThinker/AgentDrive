@@ -114,15 +114,18 @@ class SnapshotManager:
         *,
         cadence_seconds: int = DEFAULT_CADENCE_SECONDS,
     ):
+        import os.path
+
         from agentdrive.utils.safe_paths import safe_join
 
         self.agent_id = _validate_id("agent_id", agent_id)
         self.drive_path = Path(drive_path)
         self.backup_root = Path(backup_root)
-        # safe_join validates the joined path resolves *inside* backup_root.
-        # CodeQL recognises Path.relative_to as a path-traversal sanitizer;
-        # safe_join wraps that pattern in one place.
-        self.agent_backups = safe_join(self.backup_root, self.agent_id)
+        # safe_join validates with os.path.realpath + commonpath (CodeQL's
+        # documented py/path-injection sanitizer). The extra realpath wrap
+        # at the sink keeps the dataflow break visible at the mkdir site.
+        validated = safe_join(self.backup_root, self.agent_id)
+        self.agent_backups = Path(os.path.realpath(os.fspath(validated)))
         self.agent_backups.mkdir(parents=True, exist_ok=True)
         self.cadence_seconds = cadence_seconds
         self._content_store = ContentStore(self.drive_path)

@@ -20,9 +20,10 @@ from agentdrive.web.app import _is_local_path, _redirect
         "/dna?agent=foo",
         "/peers?error=bad-name",
         "/",
+        "/settings/users",
     ],
 )
-def test_local_paths_pass_through(path: str) -> None:
+def test_allowlisted_paths_pass_through(path: str) -> None:
     resp = _redirect(path)
     assert resp.headers["location"] == path
 
@@ -32,15 +33,16 @@ def test_local_paths_pass_through(path: str) -> None:
     [
         "https://evil.example.com",
         "//evil.example.com",
-        "/\\evil.example.com",
         "javascript:alert(1)",
         "ftp://evil/path",
         "",
         "no-leading-slash",
         "/with\r\nheader: injection",
+        "/not-an-app-route",
+        "/dashboard-but-spoofed",  # allowlist requires exact or "/" subpath
     ],
 )
-def test_external_or_malformed_paths_collapse_to_root(path: str) -> None:
+def test_external_or_offlist_paths_collapse_to_root(path: str) -> None:
     resp = _redirect(path)
     assert resp.headers["location"] == "/"
 

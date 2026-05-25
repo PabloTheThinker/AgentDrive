@@ -565,12 +565,16 @@ class Quarantine:
         # must NOT silently flip to APPROVED — the rejection was an operator
         # decision and stands until they explicitly resubmit.
         if entry.status != QuarantineStatus.PENDING:
-            # Truncate quarantine_id in logs — it's the authorization handle
-            # for approve(), so the full value belongs in the audit log
-            # (``_append_log``) but not in operational stdout.
+            # Hash the quarantine_id before logging — it's the authorization
+            # handle for approve(), so the raw value belongs only in the
+            # audit log (``_append_log``), not operational stdout. The
+            # ``hashlib.sha256`` boundary breaks CodeQL's secret-log taint.
+            import hashlib
+
+            id_digest = hashlib.sha256(quarantine_id.encode()).hexdigest()[:12]
             logger.warning(
-                "approve blocked: entry %s status=%s",
-                quarantine_id[:8] + "…",
+                "approve blocked: entry sha256:%s status=%s",
+                id_digest,
                 entry.status.value,
             )
             self._append_log("approve_blocked", entry)

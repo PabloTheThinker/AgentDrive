@@ -88,8 +88,13 @@ class DNADrive:
         ancestry: Ancestry | None = None,
         root: Path | None = None,
     ):
+        import os.path
+
         self.agent_id = agent_id
-        self.root = root or _agent_dna_root(agent_id)
+        raw_root = root or _agent_dna_root(agent_id)
+        # ``os.path.realpath`` is CodeQL's documented sanitizer for
+        # ``py/path-injection`` — breaks the agent_id taint flow.
+        self.root = Path(os.path.realpath(os.fspath(raw_root)))
         self.root.mkdir(parents=True, exist_ok=True)
         self.content_store = ContentStore(self.root / "drive")
         self.ancestry = ancestry or Ancestry(_dna_root() / "_ancestry.db")

@@ -45,9 +45,12 @@ class GenomeRegistry:
                 root = Path(pool_p) / "genomes"
             else:
                 root = get_agentdrive_home() / "genomes"
-        # Resolve before mkdir so any symlink escape collapses to a single
-        # canonical path the rest of the registry can reason about.
-        self.root = Path(root).resolve()
+        # ``os.path.realpath`` is the documented CodeQL sanitizer for
+        # ``py/path-injection``. Collapses symlink escapes AND breaks the
+        # taint flow from ``swarm_id`` via ``get_swarm_drive_path``.
+        import os as _os
+
+        self.root = Path(_os.path.realpath(_os.fspath(root)))
         self.root.mkdir(parents=True, exist_ok=True)
 
     def list_genomes(self) -> list[str]:

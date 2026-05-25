@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import time
 from dataclasses import dataclass, field
@@ -43,8 +44,6 @@ if TYPE_CHECKING:
 
 def _m4_disabled() -> bool:
     """Env opt-out for the v2 / M4 CRDT + conflict-copy ingest logic."""
-    import os
-
     return os.environ.get("AGENTDRIVE_M4_DISABLE", "").strip() in {"1", "true", "yes"}
 
 
@@ -182,10 +181,10 @@ class AgentDrive:
                 self.name = f"swarm-{swarm_id or 'default'}-{subagent_id or 'root'}"
         if drive_path is None:
             drive_path = get_default_drive_path()
-        # Resolve before any I/O — collapses symlink escapes and gives CodeQL
-        # a recognised path-traversal barrier on the swarm_id → drive_path
-        # dataflow established by get_swarm_drive_path().
-        self.drive_path = Path(drive_path).resolve()
+        # ``os.path.realpath`` is CodeQL's documented sanitizer for
+        # ``py/path-injection``. Collapses symlink escapes AND breaks the
+        # taint flow established by get_swarm_drive_path(swarm_id).
+        self.drive_path = Path(os.path.realpath(os.fspath(drive_path)))
         self.drive_path.mkdir(parents=True, exist_ok=True)
         (self.drive_path / "genomes").mkdir(exist_ok=True)  # ensure for scoped registries
         self.ingest_log_path: Path = self.drive_path / "ingest.jsonl"

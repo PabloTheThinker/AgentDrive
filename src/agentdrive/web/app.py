@@ -1141,27 +1141,56 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
 # ─── helpers ─────────────────────────────────────────────────────────
 
 
-def _redirect(path: str) -> RedirectResponse:
-    """Redirect to a *local* path only.
+_ALLOWED_REDIRECT_PATHS = {
+    "/",
+    "/dashboard",
+    "/login",
+    "/setup",
+    "/dna",
+    "/peers",
+    "/snapshots",
+    "/settings",
+    "/settings/users",
+}
 
-    CodeQL's "URL redirection from remote source" rule flags any redirect
-    whose target derives from user input. Every call site passes a path
-    starting with ``/``, so we enforce that invariant here and refuse
-    anything that looks like an absolute URL, protocol-relative URL, or
-    backslash-escaped variant. Any attempted open-redirect collapses to
-    ``/`` instead of leaking off-site.
+
+def _redirect(path: str) -> RedirectResponse:
+    """Redirect to a strict allowlist of local app routes.
+
+    CodeQL's ``py/url-redirection`` rule wants explicit evidence that the
+    redirect target is not user-controlled. We use ``urllib.parse.urlsplit``
+    (CodeQL-recognised) to verify there is no scheme / netloc, then check
+    the path prefix against a known allowlist. Anything off-list collapses
+    to ``/``.
     """
-    safe = path if _is_local_path(path) else "/"
-    return RedirectResponse(safe, status_code=status.HTTP_303_SEE_OTHER)
+    from urllib.parse import urlsplit
+
+    parts = urlsplit(path or "")
+    if parts.scheme or parts.netloc:
+        return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
+    base = parts.path or "/"
+    # Reject CR/LF header-injection before allowlist check.
+    if "\r" in base or "\n" in base:
+        return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
+    # Accept exact allowlist matches OR allowlisted prefix + "/" subpath.
+    is_allowed = base in _ALLOWED_REDIRECT_PATHS or any(
+        base == prefix or base.startswith(prefix + "/") for prefix in _ALLOWED_REDIRECT_PATHS
+    )
+    if not is_allowed:
+        return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
+    # Re-assemble with the query string preserved (no fragment leaks).
+    target = base
+    if parts.query:
+        target = f"{base}?{parts.query}"
+    return RedirectResponse(target, status_code=status.HTTP_303_SEE_OTHER)
 
 
 def _is_local_path(path: str) -> bool:
+    """Back-compat predicate retained for tests; allowlist lives in _redirect."""
     if not path or not isinstance(path, str):
         return False
     if not path.startswith("/"):
         return False
-    # Reject protocol-relative ("//evil.com"), backslash escapes ("/\\evil"),
-    # and CR/LF header-injection attempts.
     if path.startswith("//") or path.startswith("/\\") or "\r" in path or "\n" in path:
         return False
     return True

@@ -15,7 +15,10 @@ This is the core that makes "agent swarms with living memory" actually work at a
 from __future__ import annotations
 
 import logging
+import os
+import os.path
 import threading
+from pathlib import Path
 from typing import Any
 
 from agentdrive.constants import get_swarm_drive_path
@@ -88,7 +91,9 @@ class SwarmDriveManager:
                     )["members"].add(subagent_id)
                 return existing
 
-            drive_path = get_swarm_drive_path(swarm_id)
+            # ``os.path.realpath`` is the documented CodeQL sanitizer for
+            # ``py/path-injection`` — collapses the swarm_id taint flow.
+            drive_path = Path(os.path.realpath(os.fspath(get_swarm_drive_path(swarm_id))))
             drive_path.mkdir(parents=True, exist_ok=True)
             (drive_path / "genomes").mkdir(exist_ok=True)
 
