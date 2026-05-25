@@ -1,14 +1,15 @@
-# Savant Pool & Swarm Settings — Complete User Reference
+# AgentDrive Pool & Swarm Settings — Complete User Reference
 
-> Part of the Savant engine — the open-source substrate behind AgentDrive. See [README](../README.md).
+> AgentDrive is the product; the Pool primitive below is exposed by the
+> underlying Savant engine. See [README](../README.md).
 
-All user-controllable behavior for the Savant Pool system lives under the `pool:` section of your Savant configuration (`~/.savant/config.yaml` or `$SAVANT_HOME/config.yaml`).
+All user-controllable behavior for the Pool lives under the `pool:` section of your AgentDrive configuration (`~/.agentdrive/config.yaml` or `$AGENTDRIVE_HOME/config.yaml`).
 
-**Core principle**: The pool starts empty. You (the owner) are the sole authority. Any connected AI (Grok, Claude, Codex, local agents) must respect and can be instructed to read/write these settings on your behalf.
+**Core principle**: The pool starts empty. You (the operator) are the sole authority. Any connected AI (Grok, Claude, Codex, local agents) must respect and can be instructed to read/write these settings on your behalf.
 
 ## Configuration Location & Format
 
-File: `~/.savant/config.yaml`
+File: `~/.agentdrive/config.yaml` (override with `$AGENTDRIVE_HOME/config.yaml`)
 
 ```yaml
 pool:

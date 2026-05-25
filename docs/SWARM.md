@@ -1,6 +1,7 @@
-# Savant Swarms — Per-Sub-Agent DNA Pools & Collective Growth
+# AgentDrive Swarms — Per-Sub-Agent DNA Pools & Collective Growth
 
-> Part of the Savant engine — the open-source substrate behind AgentDrive. See [README](../README.md).
+> AgentDrive is the product; the swarm primitives below are exposed by the
+> underlying Savant engine. See [README](../README.md).
 
 When any AI system — Grok’s build tools, Claude Code, Codex, custom orchestrators, or your own agent code — spawns sub-agents, each child can (and should) receive its own **isolated Savant Pool**.
 
