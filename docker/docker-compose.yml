@@ -1,0 +1,103 @@
+# AgentDrive — self-host demo
+#
+# Boots a complete AgentDrive deployment on a single host:
+#
+#   * parent      — the default Drive (port 8421)
+#   * subagent-a  — a sub-agent Drive bound to the parent's swarm (port 8431)
+#   * subagent-b  — a second sub-agent Drive (port 8432)
+#   * peer        — a simulated remote operator, registered as a peer of parent
+#                   (port 8441)
+#
+# All four services share a virtual network ("driveswarm") and store their
+# state in named volumes so a "docker compose down && up" preserves data.
+# Tear down volumes for a clean slate: `docker compose down -v`.
+#
+# Image tags are pinned by date below — track docker/versions.md.
+
+x-base: &base
+  build:
+    context: ..
+    dockerfile: docker/Dockerfile
+  image: agentdrive:0.1.0
+  restart: unless-stopped
+  networks: [driveswarm]
+  environment:
+    AGENTDRIVE_TRUST_PROXY: "0"
+    AGENTDRIVE_SECURE_COOKIES: "0"
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request,os;urllib.request.urlopen(f'http://127.0.0.1:{os.environ[\"PORT\"]}/healthz').read()"]
+    interval: 30s
+    timeout: 5s
+    start_period: 20s
+    retries: 3
+
+services:
+  parent:
+    <<: *base
+    container_name: agentdrive-parent
+    environment:
+      AGENTDRIVE_TRUST_PROXY: "0"
+      AGENTDRIVE_SECURE_COOKIES: "0"
+      PORT: "8421"
+      AGENTDRIVE_ROLE: "parent"
+    ports:
+      - "127.0.0.1:8421:8421"
+    volumes:
+      - parent-data:/var/lib/agentdrive
+
+  subagent-a:
+    <<: *base
+    container_name: agentdrive-subagent-a
+    environment:
+      AGENTDRIVE_TRUST_PROXY: "0"
+      AGENTDRIVE_SECURE_COOKIES: "0"
+      PORT: "8431"
+      AGENTDRIVE_ROLE: "subagent"
+      AGENTDRIVE_PARENT_URL: "http://parent:8421"
+    ports:
+      - "127.0.0.1:8431:8431"
+    volumes:
+      - subagent-a-data:/var/lib/agentdrive
+    depends_on:
+      parent:
+        condition: service_healthy
+
+  subagent-b:
+    <<: *base
+    container_name: agentdrive-subagent-b
+    environment:
+      AGENTDRIVE_TRUST_PROXY: "0"
+      AGENTDRIVE_SECURE_COOKIES: "0"
+      PORT: "8432"
+      AGENTDRIVE_ROLE: "subagent"
+      AGENTDRIVE_PARENT_URL: "http://parent:8421"
+    ports:
+      - "127.0.0.1:8432:8432"
+    volumes:
+      - subagent-b-data:/var/lib/agentdrive
+    depends_on:
+      parent:
+        condition: service_healthy
+
+  peer:
+    <<: *base
+    container_name: agentdrive-peer
+    environment:
+      AGENTDRIVE_TRUST_PROXY: "0"
+      AGENTDRIVE_SECURE_COOKIES: "0"
+      PORT: "8441"
+      AGENTDRIVE_ROLE: "peer"
+    ports:
+      - "127.0.0.1:8441:8441"
+    volumes:
+      - peer-data:/var/lib/agentdrive
+
+networks:
+  driveswarm:
+    driver: bridge
+
+volumes:
+  parent-data:
+  subagent-a-data:
+  subagent-b-data:
+  peer-data:
