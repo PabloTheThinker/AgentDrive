@@ -565,9 +565,12 @@ class Quarantine:
         # must NOT silently flip to APPROVED — the rejection was an operator
         # decision and stands until they explicitly resubmit.
         if entry.status != QuarantineStatus.PENDING:
+            # Truncate quarantine_id in logs — it's the authorization handle
+            # for approve(), so the full value belongs in the audit log
+            # (``_append_log``) but not in operational stdout.
             logger.warning(
                 "approve blocked: entry %s status=%s",
-                quarantine_id,
+                quarantine_id[:8] + "…",
                 entry.status.value,
             )
             self._append_log("approve_blocked", entry)

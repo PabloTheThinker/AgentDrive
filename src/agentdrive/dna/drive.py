@@ -51,7 +51,11 @@ def _dna_root() -> Path:
 
 
 def _agent_dna_root(agent_id: str) -> Path:
-    return _dna_root() / agent_id
+    from agentdrive.utils.safe_paths import safe_join
+
+    # ``agent_id`` is untrusted (peer-supplied, manifest-derived). safe_join
+    # validates the resolved path stays under the dna root before any I/O.
+    return safe_join(_dna_root(), agent_id)
 
 
 class DNADrive:

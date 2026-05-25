@@ -45,7 +45,9 @@ class GenomeRegistry:
                 root = Path(pool_p) / "genomes"
             else:
                 root = get_agentdrive_home() / "genomes"
-        self.root = Path(root)
+        # Resolve before mkdir so any symlink escape collapses to a single
+        # canonical path the rest of the registry can reason about.
+        self.root = Path(root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
 
     def list_genomes(self) -> list[str]:

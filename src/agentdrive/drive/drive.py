@@ -182,7 +182,10 @@ class AgentDrive:
                 self.name = f"swarm-{swarm_id or 'default'}-{subagent_id or 'root'}"
         if drive_path is None:
             drive_path = get_default_drive_path()
-        self.drive_path = Path(drive_path)
+        # Resolve before any I/O — collapses symlink escapes and gives CodeQL
+        # a recognised path-traversal barrier on the swarm_id → drive_path
+        # dataflow established by get_swarm_drive_path().
+        self.drive_path = Path(drive_path).resolve()
         self.drive_path.mkdir(parents=True, exist_ok=True)
         (self.drive_path / "genomes").mkdir(exist_ok=True)  # ensure for scoped registries
         self.ingest_log_path: Path = self.drive_path / "ingest.jsonl"

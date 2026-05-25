@@ -163,8 +163,12 @@ def get_swarm_drive_path(swarm_id: str, subagent_id: str | None = None) -> Path:
     and filter via ``DriveQuery`` instead. Sub-agent membership is tracked in
     ``SwarmDriveManager.list_active_swarms()``.
     """
+    from agentdrive.utils.safe_paths import safe_join
+
     sid = swarm_id or "default"
-    return get_swarms_dir() / sid / "drive"
+    # Untrusted ``swarm_id`` is a tagged input source for CodeQL — validate
+    # the joined path stays under the swarms root before any I/O happens.
+    return safe_join(get_swarms_dir(), sid, "drive")
 
 
 # Version and identifiers

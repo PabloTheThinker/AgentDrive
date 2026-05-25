@@ -114,19 +114,15 @@ class SnapshotManager:
         *,
         cadence_seconds: int = DEFAULT_CADENCE_SECONDS,
     ):
+        from agentdrive.utils.safe_paths import safe_join
+
         self.agent_id = _validate_id("agent_id", agent_id)
         self.drive_path = Path(drive_path)
         self.backup_root = Path(backup_root)
-        self.agent_backups = self.backup_root / self.agent_id
-        # After joining, double-check the resolved path is genuinely a
-        # descendant of backup_root. Defends against future regressions
-        # in the validator and surfaces symlink escapes.
-        resolved = self.agent_backups.resolve()
-        if not str(resolved).startswith(str(self.backup_root.resolve())):
-            raise ValueError(
-                f"agent_id {agent_id!r} resolved outside backup_root — "
-                f"path traversal attempt blocked"
-            )
+        # safe_join validates the joined path resolves *inside* backup_root.
+        # CodeQL recognises Path.relative_to as a path-traversal sanitizer;
+        # safe_join wraps that pattern in one place.
+        self.agent_backups = safe_join(self.backup_root, self.agent_id)
         self.agent_backups.mkdir(parents=True, exist_ok=True)
         self.cadence_seconds = cadence_seconds
         self._content_store = ContentStore(self.drive_path)

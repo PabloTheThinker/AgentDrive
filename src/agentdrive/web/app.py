@@ -1142,7 +1142,29 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
 
 
 def _redirect(path: str) -> RedirectResponse:
-    return RedirectResponse(path, status_code=status.HTTP_303_SEE_OTHER)
+    """Redirect to a *local* path only.
+
+    CodeQL's "URL redirection from remote source" rule flags any redirect
+    whose target derives from user input. Every call site passes a path
+    starting with ``/``, so we enforce that invariant here and refuse
+    anything that looks like an absolute URL, protocol-relative URL, or
+    backslash-escaped variant. Any attempted open-redirect collapses to
+    ``/`` instead of leaking off-site.
+    """
+    safe = path if _is_local_path(path) else "/"
+    return RedirectResponse(safe, status_code=status.HTTP_303_SEE_OTHER)
+
+
+def _is_local_path(path: str) -> bool:
+    if not path or not isinstance(path, str):
+        return False
+    if not path.startswith("/"):
+        return False
+    # Reject protocol-relative ("//evil.com"), backslash escapes ("/\\evil"),
+    # and CR/LF header-injection attempts.
+    if path.startswith("//") or path.startswith("/\\") or "\r" in path or "\n" in path:
+        return False
+    return True
 
 
 def _login_page(
