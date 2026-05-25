@@ -29,6 +29,7 @@ from agentdrive.web.auth import (
     is_signup_disabled,
     secure_cookie_enabled,
 )
+from agentdrive.web.authz import require_cap
 from agentdrive.web.observability import (
     LoginRateLimiter,
     OriginCSRFMiddleware,
@@ -75,11 +76,17 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
 
     def require_user(request: Request) -> User:
         user = current_user(request)
-        if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_303_SEE_OTHER, headers={"Location": "/login"}
-            )
-        return user
+        if user is not None:
+            return user
+        # Non-browser callers present an Authorization: Bearer <cap_id> header
+        # instead of a session cookie. require_cap (later in the dependency
+        # chain) is what actually validates the cap — but require_user has
+        # to let the request through so cap enforcement gets a chance to
+        # decide. Synthesise a sentinel User to keep route handlers happy.
+        auth = request.headers.get("authorization") or ""
+        if auth.lower().startswith("bearer "):
+            return User(id=0, username="bearer-principal", role="user", disabled=False)
+        raise HTTPException(status_code=status.HTTP_303_SEE_OTHER, headers={"Location": "/login"})
 
     def require_admin(request: Request) -> User:
         user = require_user(request)
@@ -380,6 +387,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         request: Request,
         genome_json: Annotated[str, Form()],
         user: User = Depends(require_user),
+        _cap=Depends(require_cap("drive", "write", resource_kind="agent", resource_id="personal")),
     ):
         import json as _json
         import re as _re
@@ -494,6 +502,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         request: Request,
         swarm_id: Annotated[str, Form()],
         user: User = Depends(require_user),
+        _cap=Depends(require_cap("swarm", "write", resource_kind="root", resource_id="root")),
     ):
         from agentdrive.drive.swarm_manager import SwarmDriveManager
 
@@ -603,6 +612,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         min_eval: Annotated[float, Form()] = 0.7,
         ttl_hours: Annotated[int, Form()] = 24,
         user: User = Depends(require_user),
+        _cap=Depends(require_cap("dna", "issue", resource_kind="grant", resource_id="root")),
     ):
         """Issue an Ed25519-signed lineage grant from one agent to another.
 
@@ -637,6 +647,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         request: Request,
         grant_id: str,
         user: User = Depends(require_user),
+        _cap=Depends(require_cap("dna", "revoke", resource_kind="grant", resource_id="root")),
     ):
         from agentdrive.dna.grants import GrantStore
 
@@ -669,6 +680,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         request: Request,
         uri: Annotated[str, Form()],
         user: User = Depends(require_user),
+        _cap=Depends(require_cap("cap", "mint", resource_kind="store", resource_id="root")),
     ):
         from agentdrive.cap.store import CapStore
         from agentdrive.cap.uri import parse_uri
@@ -708,6 +720,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         request: Request,
         cap_id: str,
         user: User = Depends(require_user),
+        _cap=Depends(require_cap("cap", "revoke", resource_kind="store", resource_id="root")),
     ):
         from agentdrive.cap.store import CapStore
 
@@ -757,6 +770,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         public_key: Annotated[str, Form()] = "",
         trust: Annotated[str, Form()] = "review",
         user: User = Depends(require_user),
+        _cap=Depends(require_cap("peer", "write", resource_kind="registry", resource_id="root")),
     ):
         import re as _re
 
@@ -784,6 +798,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         request: Request,
         quarantine_id: str,
         user: User = Depends(require_user),
+        _cap=Depends(require_cap("peer", "review", resource_kind="quarantine", resource_id="root")),
     ):
         from agentdrive.quarantine import get_default_quarantine
 
@@ -807,6 +822,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         quarantine_id: str,
         reason: Annotated[str, Form()] = "rejected by operator",
         user: User = Depends(require_user),
+        _cap=Depends(require_cap("peer", "review", resource_kind="quarantine", resource_id="root")),
     ):
         from agentdrive.quarantine import get_default_quarantine
 
@@ -831,6 +847,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         request: Request,
         agent_id: Annotated[str, Form()] = "personal",
         user: User = Depends(require_user),
+        _cap=Depends(require_cap("backup", "write", resource_kind="agent", resource_id="personal")),
     ):
         manager = _snapshot_manager(agent_id)
         try:
@@ -848,6 +865,9 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         snapshot_id: str,
         pinned: Annotated[str, Form()] = "true",
         user: User = Depends(require_user),
+        _cap=Depends(
+            require_cap("backup", "write", resource_kind="agent", resource_id_arg="agent_id")
+        ),
     ):
         manager = _snapshot_manager(agent_id)
         try:
@@ -864,6 +884,9 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         agent_id: str,
         snapshot_id: str,
         user: User = Depends(require_user),
+        _cap=Depends(
+            require_cap("backup", "write", resource_kind="agent", resource_id_arg="agent_id")
+        ),
     ):
         manager = _snapshot_manager(agent_id)
         try:
@@ -895,6 +918,9 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         agent_id: str,
         snapshot_id: str,
         user: User = Depends(require_user),
+        _cap=Depends(
+            require_cap("backup", "read", resource_kind="agent", resource_id_arg="agent_id")
+        ),
     ):
         manager = _snapshot_manager(agent_id)
         try:
