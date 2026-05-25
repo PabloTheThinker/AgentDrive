@@ -1165,7 +1165,7 @@ def _redirect(path: str) -> RedirectResponse:
     the path prefix against a known allowlist. Anything off-list collapses
     to ``/``.
     """
-    from urllib.parse import quote, urlsplit
+    from urllib.parse import quote, urlsplit, urlunsplit
 
     parts = urlsplit(path or "")
     if parts.scheme or parts.netloc:
@@ -1180,13 +1180,12 @@ def _redirect(path: str) -> RedirectResponse:
     )
     if not is_allowed:
         return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
-    # Re-assemble with a percent-encoded query string. ``urllib.parse.quote``
-    # is CodeQL-recognised as a URL sanitiser — encoding the query at the
-    # sink makes the dataflow break visible at the RedirectResponse call.
-    if parts.query:
-        target = f"{base}?{quote(parts.query, safe='=&')}"
-    else:
-        target = base
+    # Re-assemble via ``urlunsplit`` (CodeQL-recognised URL composition) with
+    # a percent-encoded query. Both ``quote`` and ``urlunsplit`` are barriers
+    # ``py/url-redirection`` knows about, so the dataflow break is visible at
+    # the RedirectResponse call site.
+    safe_query = quote(parts.query, safe="=&") if parts.query else ""
+    target = urlunsplit(("", "", base, safe_query, ""))
     return RedirectResponse(target, status_code=status.HTTP_303_SEE_OTHER)
 
 
