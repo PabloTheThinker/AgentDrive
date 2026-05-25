@@ -216,6 +216,31 @@ print(cap.to_token())
 
 The important constraint is architectural, not cosmetic: authorization does not drift across multiple ACLs or secondary policy files. If the capability verifies for the requested operation and scope, the request is authorized. If it does not, it is not.
 
+### Worked example — handing a cap to a sub-agent
+
+When an operator wants a sub-agent (Claude Code, Codex, custom SDK) to write into Personal Drive, they mint a scoped cap and pass the `cap_id` as a Bearer token. The daemon verifies on every request through one chokepoint.
+
+```bash
+# 1. Operator mints a write-cap via the dashboard (or the API).
+curl -b session_cookie.txt \
+  -d 'uri=drive:write:agent:personal' \
+  https://agentdrive.local/capabilities
+
+# Response renders the new cap with its UUID, e.g.:
+#   cap_id 4a454bca-2a68-4d4a-bd79-c6b4eb84ef3f
+
+# 2. The operator hands that cap_id to a sub-agent runtime.
+
+# 3. The sub-agent — no session cookie — calls the same daemon with
+#    Authorization: Bearer <cap_id>. The daemon verifies the cap
+#    matches drive:write:agent:personal and authorizes the import.
+curl -H "Authorization: Bearer 4a454bca-2a68-4d4a-bd79-c6b4eb84ef3f" \
+  --data-urlencode 'genome_json={"id":"learned-pattern","version":"0.1.0", ...}' \
+  https://agentdrive.local/personal/import
+```
+
+A `drive:read:…` cap on the same call gets a `403 cap_denied` instead. Every allow / deny is appended to `~/.agentdrive/audit.log` in JSONL with the `cap_id`, the requested scope, and the decision — so an operator can trace exactly which agent did what with which cap.
+
 ---
 
 ## Swarm Drives and the Harness

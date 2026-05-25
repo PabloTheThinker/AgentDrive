@@ -31,6 +31,31 @@ def test_healthz_works_without_auth_or_users(tmp_path: Path) -> None:
     assert "has_users" not in body
 
 
+def test_metrics_exposes_prometheus_counters(tmp_path: Path) -> None:
+    """The /metrics endpoint is auth-bypass and returns text-format
+    counters that a Prometheus scraper can parse.
+    """
+    client = _make_client(tmp_path)
+    r = client.get("/metrics")
+    assert r.status_code == 200
+    assert "text/plain" in r.headers["content-type"]
+    body = r.text
+    expected_metrics = [
+        "agentdrive_uptime_seconds",
+        "agentdrive_genomes_total",
+        "agentdrive_snapshots_total",
+        "agentdrive_capabilities_active",
+        "agentdrive_swarms_total",
+        "agentdrive_peers_total",
+        "agentdrive_quarantine_pending",
+    ]
+    for name in expected_metrics:
+        assert name in body, f"missing metric {name}"
+        # Every metric should have a HELP and TYPE line (prometheus convention).
+        assert f"# HELP {name}" in body, f"missing HELP for {name}"
+        assert f"# TYPE {name}" in body, f"missing TYPE for {name}"
+
+
 def test_healthz_carries_request_id(tmp_path: Path) -> None:
     client = _make_client(tmp_path)
     r = client.get("/healthz")

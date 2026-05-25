@@ -108,6 +108,65 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
 
     # ── auth routes ───────────────────────────────────────────────────
 
+    @app.get("/metrics")
+    def metrics(request: Request):
+        """Prometheus text-format counters.
+
+        Auth-bypass on purpose so a scraper can hit the endpoint without
+        a session — same threat-model as ``/healthz``. The exposed numbers
+        are deliberately non-sensitive: counts of genomes, snapshots,
+        active capabilities, peers, quarantine entries, uptime.
+        Operators wire this into Prometheus / Grafana / Datadog as the
+        single observability surface.
+        """
+        from fastapi.responses import Response as _PlainResponse
+
+        uptime_s = round(time.time() - app.state.started_at, 1)
+
+        # Cheap counts: every store either reports zero on missing-disk
+        # or has its own list method. We swallow per-source errors so
+        # one bad store doesn't take the metrics endpoint down.
+        def _safe_int(fn) -> int:  # noqa: ANN001
+            try:
+                return int(fn())
+            except Exception:  # noqa: BLE001
+                return 0
+
+        peers_count = _safe_int(lambda: len(_list_peers_and_quarantine()[0]))
+        quarantine_count = _safe_int(lambda: len(_list_peers_and_quarantine()[1]))
+        genome_count = _safe_int(_genome_count)
+        snapshot_count = _safe_int(lambda: _snapshot_count("personal"))
+        caps_count = _safe_int(lambda: len(_list_caps()))
+        swarms_count = _safe_int(lambda: len(_list_swarms()))
+
+        lines = [
+            "# HELP agentdrive_uptime_seconds Daemon uptime",
+            "# TYPE agentdrive_uptime_seconds counter",
+            f"agentdrive_uptime_seconds {uptime_s}",
+            "# HELP agentdrive_genomes_total Genomes in Personal Drive registry",
+            "# TYPE agentdrive_genomes_total gauge",
+            f"agentdrive_genomes_total {genome_count}",
+            "# HELP agentdrive_snapshots_total Snapshots stored on disk",
+            "# TYPE agentdrive_snapshots_total gauge",
+            f'agentdrive_snapshots_total{{agent="personal"}} {snapshot_count}',
+            "# HELP agentdrive_capabilities_active Active (non-revoked) capabilities",
+            "# TYPE agentdrive_capabilities_active gauge",
+            f"agentdrive_capabilities_active {caps_count}",
+            "# HELP agentdrive_swarms_total Swarm Drives on disk",
+            "# TYPE agentdrive_swarms_total gauge",
+            f"agentdrive_swarms_total {swarms_count}",
+            "# HELP agentdrive_peers_total Federated peers configured",
+            "# TYPE agentdrive_peers_total gauge",
+            f"agentdrive_peers_total {peers_count}",
+            "# HELP agentdrive_quarantine_pending Quarantine entries awaiting operator review",
+            "# TYPE agentdrive_quarantine_pending gauge",
+            f"agentdrive_quarantine_pending {quarantine_count}",
+        ]
+        return _PlainResponse(
+            content="\n".join(lines) + "\n",
+            media_type="text/plain; version=0.0.4",
+        )
+
     @app.get("/healthz")
     def healthz(request: Request):
         """Liveness probe. Returns 200 once the app object is fully wired.
