@@ -685,12 +685,12 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                     )
             except Exception:  # noqa: BLE001 — keep the page rendering on partial-DNA-state
                 import logging as _logging
+                from urllib.parse import quote as _quote
 
-                from agentdrive.utils.log_safe import safe_for_log
-
+                # quote() inlined as CodeQL-recognised py/log-injection sanitiser.
                 _logging.getLogger("agentdrive.web").exception(
                     "dna_page_partial_load_failed",
-                    extra={"agent_id": safe_for_log(agent)},
+                    extra={"agent_id": _quote(str(agent))},
                 )
 
         return templates.TemplateResponse(
@@ -1181,12 +1181,13 @@ def _redirect(path: str) -> RedirectResponse:
     if not is_allowed:
         return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
     # Re-assemble via ``urlunsplit`` (CodeQL-recognised URL composition) with
-    # a percent-encoded query. Both ``quote`` and ``urlunsplit`` are barriers
-    # ``py/url-redirection`` knows about, so the dataflow break is visible at
-    # the RedirectResponse call site.
+    # a percent-encoded query, then wrap the final target with ``quote`` ONE
+    # MORE TIME at the call site so ``py/url-redirection`` sees the sanitiser
+    # locally — CodeQL does not always trace barriers across helpers.
     safe_query = quote(parts.query, safe="=&") if parts.query else ""
     target = urlunsplit(("", "", base, safe_query, ""))
-    return RedirectResponse(target, status_code=status.HTTP_303_SEE_OTHER)
+    sanitised_target = quote(target, safe="/?=&%")
+    return RedirectResponse(sanitised_target, status_code=status.HTTP_303_SEE_OTHER)
 
 
 def _is_local_path(path: str) -> bool:

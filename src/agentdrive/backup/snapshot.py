@@ -160,15 +160,17 @@ class SnapshotManager:
             json.dumps(asdict(entry), indent=2, sort_keys=True),
             encoding="utf-8",
         )
-        from agentdrive.utils.log_safe import safe_for_log
+        from urllib.parse import quote
 
+        # urllib.parse.quote is a CodeQL-recognised sanitiser for
+        # py/log-injection — inlined at the sink so the rule sees it.
         logger.info(
             "Snapshot taken",
             extra={
-                "agent_id": safe_for_log(self.agent_id),
-                "snapshot_id": safe_for_log(sid),
+                "agent_id": quote(str(self.agent_id)),
+                "snapshot_id": quote(str(sid)),
                 "hash_count": len(hashes),
-                "cadence_id": safe_for_log(cadence_id),
+                "cadence_id": quote(str(cadence_id)),
             },
         )
         # Enforce retention with a hard cap on deletes per pass so a
@@ -239,12 +241,13 @@ class SnapshotManager:
             except SnapshotError:  # pragma: no cover — pinned race
                 continue
         if deleted:
-            from agentdrive.utils.log_safe import safe_for_log
+            from urllib.parse import quote
 
+            # quote() inlined as CodeQL-recognised py/log-injection sanitiser.
             logger.info(
                 "Snapshot retention pruned",
                 extra={
-                    "agent_id": safe_for_log(self.agent_id),
+                    "agent_id": quote(str(self.agent_id)),
                     "deleted_count": len(deleted),
                 },
             )

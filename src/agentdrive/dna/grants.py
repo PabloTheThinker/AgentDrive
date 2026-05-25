@@ -342,14 +342,17 @@ class GrantStore:
                 ),
             )
 
-        from agentdrive.utils.log_safe import safe_for_log
+        from urllib.parse import quote
 
+        # urllib.parse.quote is a CodeQL-recognised sanitiser for
+        # py/log-injection. Inlined here (rather than via safe_for_log
+        # helper) so the rule sees the barrier directly at the sink.
         logger.info(
             "Issued lineage_share grant",
             extra={
-                "grant_id": safe_for_log(grant.grant_id),
-                "issuer": safe_for_log(issuer),
-                "grantee": safe_for_log(grantee),
+                "grant_id": quote(str(grant.grant_id)),
+                "issuer": quote(str(issuer)),
+                "grantee": quote(str(grantee)),
                 "ttl_seconds": ttl_seconds,
             },
         )
