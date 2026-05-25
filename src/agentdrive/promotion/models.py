@@ -31,7 +31,9 @@ class PromotionRecord(BaseModel):
 
     proposal_id: str = Field(..., min_length=8, description="Stable id for the proposal lifecycle")
     genome_content_hash: str = Field(..., description="The Genome being promoted (sha256:<hex>)")
-    target_tier: PromotionTier = Field(..., description="The tier this proposal lifts the Genome to")
+    target_tier: PromotionTier = Field(
+        ..., description="The tier this proposal lifts the Genome to"
+    )
     target_swarm: str | None = Field(
         default=None,
         description="Specific swarm id when target_tier='swarm', else None",

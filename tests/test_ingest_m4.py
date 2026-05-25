@@ -158,6 +158,37 @@ def test_identical_last_write_is_dedup_not_conflict() -> None:
     assert conflict_ids == []
 
 
+def test_improvement_source_bypasses_conflict_copy() -> None:
+    """Re-ingesting the same id with new content under source='improvement' is
+    intentional supersession (the harness improvement loop), not a sibling
+    race. Conflict-copy emission must skip these or the pool fills with
+    spurious ``*-conflict-*-unknown`` entries."""
+    drive = AgentDrive()
+    drive.ingest(_lw_genome("plan", {"steps": ["a"]}, author="sub:a"), source="seed", actor="sub:a")
+    drive.ingest(
+        _lw_genome("plan", {"steps": ["improved"]}, author="sub:a"),
+        source="improvement",
+        actor="sub:a",
+    )
+    all_ids = {name.split("/", 1)[0] for name in drive.registry.list_genomes()}
+    assert "plan" in all_ids
+    assert not any(n.startswith("plan-conflict-") for n in all_ids)
+
+
+def test_declared_supersedes_bypasses_conflict_copy() -> None:
+    """If the incoming Genome lists the existing content hash in
+    ``manifest.supersedes``, it's a declared successor — not a conflict."""
+    drive = AgentDrive()
+    drive.ingest(_lw_genome("plan", {"steps": ["a"]}, author="sub:a"), source="seed", actor="sub:a")
+    existing = drive.registry.load("plan")
+    assert existing is not None
+    successor = _lw_genome("plan", {"steps": ["b"]}, author="sub:b")
+    successor.manifest.supersedes = [existing.manifest.content_hash]
+    drive.ingest(successor, source="upgrade", actor="sub:b")
+    all_ids = {name.split("/", 1)[0] for name in drive.registry.list_genomes()}
+    assert not any(n.startswith("plan-conflict-") for n in all_ids)
+
+
 def test_m4_disabled_via_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """When AGENTDRIVE_M4_DISABLE=1, last-write collisions skip the conflict
     copy emission — the registry just overwrites (v1 behavior)."""

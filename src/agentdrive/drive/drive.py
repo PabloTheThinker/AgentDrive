@@ -274,9 +274,7 @@ class AgentDrive:
         # Self-originated proposals on this Drive count as "self" for the
         # auto-approve rule. Trusted-peer evaluation lives outside this hook
         # (the caller is the proposer; trust circle is per-device).
-        if promotion_policy.should_auto_approve(
-            proposer_is_self=True, proposer_is_trusted=False
-        ):
+        if promotion_policy.should_auto_approve(proposer_is_self=True, proposer_is_trusted=False):
             service.review(
                 proposal.proposal_id,
                 decision="approve",
@@ -291,10 +289,19 @@ class AgentDrive:
         # else: proposal stays pending; ``PromotionService.list_pending`` surfaces it.
 
     # ── v2 / M4: CRDT merge + conflict-copy resolution ───────────────────────
+    _M4_INTENTIONAL_SUPERSESSION_SOURCES = (
+        "improvement",
+        "evolution",
+        "promotion",
+        "ultimate",
+        "promoted",
+    )
+
     def _apply_m4_merge_or_conflict(
         self,
         incoming: Genome,
         actor: str | None,
+        source: str = "",
     ) -> tuple[Genome, str | None]:
         """Reconcile an incoming write against any existing same-id Genome.
 
@@ -304,6 +311,12 @@ class AgentDrive:
         - ``"crdt-merge"`` — strategies matched, state was merged into the latest
         - ``"conflict-copy"`` — last-write collision with different content; the
           returned genome is a conflict copy and the original is left untouched
+
+        Conflict-copy is suppressed when the write declares itself an
+        intentional supersession — either via a known source label
+        (``improvement``, ``evolution``, ``promotion``, …) or by listing the
+        existing content hash in ``manifest.supersedes``. Those paths are
+        legitimate version progression, not sibling races.
         """
         from agentdrive.drive.conflict import emit_conflict_genome
         from agentdrive.drive.crdt import merge_counters, merge_sets
@@ -347,6 +360,16 @@ class AgentDrive:
                 latest.manifest.content_hash == incoming.manifest.content_hash
             ):
                 return incoming, None  # exact dedup, not a conflict
+
+            # Intentional supersession bypass: improvement / evolution / etc.
+            source_norm = (source or "").strip().lower()
+            if any(source_norm.startswith(s) for s in self._M4_INTENTIONAL_SUPERSESSION_SOURCES):
+                return incoming, None
+
+            # Declared supersession bypass: incoming names the existing as parent.
+            if latest.manifest.content_hash in (incoming.manifest.supersedes or []):
+                return incoming, None
+
             vector = {actor or "unknown": int(time.time() * 1000)}
             conflict = emit_conflict_genome(latest, incoming, vector)
             return conflict, "conflict-copy"
@@ -387,7 +410,7 @@ class AgentDrive:
         # resulting `genome` is what we register, content-address, and log.
         m4_event: str | None = None
         if not _m4_disabled():
-            genome, m4_event = self._apply_m4_merge_or_conflict(genome, actor=actor)
+            genome, m4_event = self._apply_m4_merge_or_conflict(genome, actor=actor, source=source)
 
         # Basic acceptance policy (can be made much smarter later)
         existing = self.registry.search(query=genome.manifest.id, limit=5)
