@@ -57,6 +57,30 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
     app.state.login_limiter = LoginRateLimiter(max_attempts=5, window_s=60)
     app.state.started_at = time.time()
 
+    # ── background retention sweep ──────────────────────────────────
+    # Inline take() does a bounded prune (50 deletes/pass) so a 10k
+    # backlog can't stall a web request. The full retention pass runs
+    # here on a 5-minute cadence in the asyncio loop and chews through
+    # the rest until the policy is met. A lock prevents overlapping
+    # passes if a tick fires while one is still running.
+    import asyncio as _asyncio
+
+    app.state.retention_lock = _asyncio.Lock()
+
+    @app.on_event("startup")
+    async def _start_retention_loop():  # noqa: ANN202
+        app.state.retention_task = _asyncio.create_task(_retention_loop(app))
+
+    @app.on_event("shutdown")
+    async def _stop_retention_loop():  # noqa: ANN202
+        task = getattr(app.state, "retention_task", None)
+        if task is not None:
+            task.cancel()
+            try:
+                await task
+            except (_asyncio.CancelledError, Exception):  # noqa: BLE001
+                pass
+
     # Order matters: request logging wraps everything (so the error
     # boundary's response and the CSRF rejection both carry a
     # request_id). CSRF check runs on every non-safe method.
@@ -1166,8 +1190,13 @@ def _render_snapshots(
 ) -> HTMLResponse:
     manager = _snapshot_manager(agent_id)
     snaps: list[dict[str, Any]] = []
+    # Render at most this many manifests at once. The full list still
+    # lives on disk; retention + background sweep keep it bounded, but
+    # the page itself never parses more than this on a single request.
+    page_limit = int(os.environ.get("AGENTDRIVE_SNAPSHOT_PAGE_LIMIT", "50"))
     try:
-        for s in manager.list_snapshots():
+        all_snaps = manager.list_snapshots()  # newest first
+        for s in all_snaps[:page_limit]:
             snaps.append(
                 {
                     "snapshot_id": s.snapshot_id,
@@ -1197,6 +1226,46 @@ def _render_snapshots(
         },
         status_code=status_code,
     )
+
+
+async def _retention_loop(app: FastAPI) -> None:
+    """Sweep retention every 5 minutes across every agent_id we know.
+
+    Sleeps if another pass is in flight (the lock is in app.state).
+    Failures in one agent don't stop the sweep — we log and continue.
+    """
+    import asyncio as _asyncio
+    import logging as _logging
+
+    log = _logging.getLogger("agentdrive.web.retention")
+    interval_s = float(os.environ.get("AGENTDRIVE_RETENTION_INTERVAL_S", "300"))
+    backup_root = get_agentdrive_home() / "backups"
+    while True:
+        try:
+            await _asyncio.sleep(interval_s)
+            if not backup_root.exists():
+                continue
+            async with app.state.retention_lock:
+                for agent_dir in backup_root.iterdir():
+                    if not agent_dir.is_dir():
+                        continue
+                    try:
+                        mgr = _snapshot_manager(agent_dir.name)
+                        deleted = mgr.enforce_retention()
+                        if deleted:
+                            log.info(
+                                "background_retention_pass",
+                                extra={"agent_id": agent_dir.name, "deleted": len(deleted)},
+                            )
+                    except Exception:  # noqa: BLE001
+                        log.exception(
+                            "background_retention_failed",
+                            extra={"agent_id": agent_dir.name},
+                        )
+        except _asyncio.CancelledError:
+            return  # graceful shutdown
+        except Exception:  # noqa: BLE001
+            log.exception("retention_loop_unexpected")
 
 
 def _snapshot_manager(agent_id: str) -> SnapshotManager:

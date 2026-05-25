@@ -195,6 +195,31 @@ def test_personal_import_rejects_oversize_payload(tmp_path: Path) -> None:
     assert "1 MiB" in r.text or "exceeds" in r.text.lower()
 
 
+def test_snapshot_retention_respects_max_deletes_per_pass(tmp_path: Path) -> None:
+    """Inline-on-take retention is now bounded by max_deletes_per_pass
+    so a 10k-snapshot backlog can't stall the request that triggered
+    the take.
+    """
+    drive_path = tmp_path / "drive"
+    drive_path.mkdir()
+    (drive_path / "objects").mkdir()
+    backup_root = tmp_path / "backups"
+    mgr = SnapshotManager(
+        agent_id="bounded-test",
+        drive_path=drive_path,
+        backup_root=backup_root,
+    )
+    # Seed 25 snapshots above the policy ceiling.
+    for _ in range(25):
+        mgr.take(cadence_id="scheduled")
+        time.sleep(0.01)
+
+    # Now ask retention to delete at most 3 per pass.
+    deleted = mgr.enforce_retention(max_deletes_per_pass=3)
+    # We capped at 3; any more would be a contract break.
+    assert len(deleted) <= 3, f"expected <= 3 deletes, got {len(deleted)}"
+
+
 def test_snapshot_retention_keeps_pinned_and_recents(tmp_path: Path) -> None:
     drive_path = tmp_path / "drive"
     drive_path.mkdir()

@@ -170,10 +170,11 @@ class SnapshotManager:
                 "cadence_id": cadence_id,
             },
         )
-        # Enforce retention immediately after a successful take so the
-        # backup tree never drifts above the configured policy. Pinned
-        # snapshots and the one we just wrote are always preserved.
-        self.enforce_retention(keep_recent=entry)
+        # Enforce retention with a hard cap on deletes per pass so a
+        # 10k-snapshot backlog can't stall the request that triggered
+        # the take. A background loop (web app) runs full retention
+        # periodically; the inline pass here is the safety net.
+        self.enforce_retention(keep_recent=entry, max_deletes_per_pass=50)
         return entry
 
     def enforce_retention(
@@ -181,6 +182,7 @@ class SnapshotManager:
         *,
         keep_recent: SnapshotEntry | None = None,
         policy: dict[str, int] | None = None,
+        max_deletes_per_pass: int | None = None,
     ) -> list[str]:
         """Apply the rolling retention policy. Returns deleted snapshot ids.
 
@@ -225,6 +227,11 @@ class SnapshotManager:
         for s in all_snaps:
             if s.snapshot_id in keep_ids:
                 continue
+            if max_deletes_per_pass is not None and len(deleted) >= max_deletes_per_pass:
+                # Caller asked us to bound the work this pass; the next
+                # pass picks up the rest. Used inline-on-take to keep
+                # web latency predictable.
+                break
             try:
                 self.delete(s.snapshot_id)
                 deleted.append(s.snapshot_id)
