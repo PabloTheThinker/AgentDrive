@@ -50,7 +50,7 @@ class GenomeRegistry:
         # taint flow from ``swarm_id`` via ``get_swarm_drive_path``.
         import os as _os
 
-        self.root = Path(_os.path.realpath(_os.fspath(root)))
+        self.root = Path(_os.path.realpath(_os.fspath(Path(root))))
         self.root.mkdir(parents=True, exist_ok=True)
 
     def list_genomes(self) -> list[str]:
@@ -95,10 +95,18 @@ class GenomeRegistry:
         """Hardened save: use clean hierarchical <root>/<id>/<version>/ layout.
         Legacy flat names still loadable via enhanced load/list.
         """
+        import os as _os
+
+        from agentdrive.utils.safe_paths import safe_join
+
         genome.finalize()
         gid = genome.manifest.id
         ver = genome.manifest.version
-        target = self.root / gid / ver
+        # ``gid``/``ver`` are pydantic-regex-validated upstream, but CodeQL
+        # doesn't trace through validators — wrap with safe_join +
+        # os.path.realpath so the sink (mkdir) sees a recognised sanitiser.
+        validated = safe_join(self.root, gid, ver)
+        target = Path(_os.path.realpath(_os.fspath(validated)))
         target.mkdir(parents=True, exist_ok=True)
         genome.save(target)
         return target

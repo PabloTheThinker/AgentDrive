@@ -247,17 +247,29 @@ def create_scoped_pool(
 
     # Compute directories consistently with constants.get_swarm_drive_path
     # but also give each scope its own GenomeRegistry root.
-    if swarm_id:
-        base = get_swarms_dir() / swarm_id
-    else:
-        base = get_swarms_dir() / "default"
+    import os.path
 
-    if subagent_id:
-        base = base / subagent_id
+    from agentdrive.utils.safe_paths import safe_join
+
+    # safe_join validates that swarm_id / subagent_id stay under the swarms
+    # root (rejects "../", absolute paths, symlink escapes). The sink-side
+    # realpath wrap below gives CodeQL's py/path-injection query a visible
+    # sanitiser barrier at the mkdir call site.
+    swarms_root = get_swarms_dir()
+    if swarm_id and subagent_id:
+        base = safe_join(swarms_root, swarm_id, subagent_id)
+    elif swarm_id:
+        base = safe_join(swarms_root, swarm_id)
+    elif subagent_id:
+        base = safe_join(swarms_root, "default", subagent_id)
+    else:
+        base = safe_join(swarms_root, "default")
 
     genomes_root = Path(registry_root) if registry_root else (base / "genomes")
     drive_path = base / "pool"  # matches get_swarm_drive_path semantics
 
+    genomes_root = Path(os.path.realpath(os.fspath(genomes_root)))
+    drive_path = Path(os.path.realpath(os.fspath(drive_path)))
     genomes_root.mkdir(parents=True, exist_ok=True)
     drive_path.mkdir(parents=True, exist_ok=True)
 
