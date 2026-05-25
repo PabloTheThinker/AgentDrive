@@ -1,8 +1,75 @@
 # Changelog
 
-All notable changes to this project are documented here. The product is now
-**AgentDrive**, powered by the **Savant** engine; the Python package remains
-`savant` so existing engine-level imports stay stable.
+All notable changes to this project are documented here. The product is
+**AgentDrive** — local-first Drive for AI agent swarms, distributed under the
+``agentdrive`` Python package.
+
+## [0.2.0] — 2026-05-25
+
+First release after the AgentDrive pivot. Bundles v2 milestones M1–M6,
+productization fix-list #1–#8, the full CodeQL security pass, and the
+site refocus from /savant to /agentdrive.
+
+### Architecture (v2 milestones — see ``docs/AGENTDRIVE-V2.md``)
+- **M1 — content-addressed Genome objects.** Every Genome is keyed by
+  ``sha256`` of its canonical content. Dedup is free, supersedes-DAG is
+  walkable, lineage is cryptographic.
+- **M2 — shared swarm Drive.** ``SwarmDrivePolicy`` defaults to
+  ``isolation_level="swarm"`` + ``sibling_sharing="read"`` — sub-agents in
+  a swarm read each other's work by default.
+- **M3 — capability URIs.** One access primitive across local store,
+  swarm, peer federation; 14/15 routes verify via
+  ``CapStore.verify_request`` (the one outlier documented in
+  ``SECURITY-HARDENING.md``).
+- **M4 — CRDT counters + conflict copies.** New
+  ``merge_strategy`` + ``crdt_state`` fields on ``GenomeManifest``.
+  G-Counter + G-Set merge automatically; non-commutative collisions
+  surface as ``<id>-conflict-<sha8>-<author>`` copies instead of
+  silently clobbering. Opt-out via ``AGENTDRIVE_M4_DISABLE=1``.
+- **M5 — P-384 trust circle.** New ``agentdrive.trust`` module — device
+  identities, voucher-based circle admission, sealed sync envelopes
+  (ECDH + HKDF-SHA384 + AES-256-GCM). No central authority.
+- **M6 — promotion gates.** New ``agentdrive.promotion`` module —
+  ``PromotionService.propose / review`` for every cross-tier ingest.
+  ``SwarmDrivePolicy.promotion_required=True`` +
+  ``auto_approve_from="self"`` defaults preserve the v1 single-agent
+  flow while making each step auditable.
+
+### Productization
+- One-line installer: ``curl -fsSL https://vektraindustries.com/agentdrive/install | bash``.
+  Single CLI entrypoint: ``agentdrive``.
+- ``.github/workflows/ci.yml`` (pytest + ruff + mypy informational),
+  ``codeql.yml`` (security-extended suite), ``release.yml`` (tag-driven
+  PyPI publish via Trusted Publishing, TestPyPI dry-run available).
+- ``docker/docker-compose.yml`` boots 1 parent + 2 sub-agents + 1 peer
+  over a virtual network for self-host trials.
+- ``docs/CAP-RESOLVER.md`` — the 30-line capability-resolver reference.
+- ``CODE_OF_CONDUCT.md``, ``DEVELOPERS.md``, ``AGENTS.md``,
+  ``.github/copilot-instructions.md``, ``Makefile``,
+  ``scripts/dev-bringup.sh`` for one-command bring-up.
+
+### Security
+- All open CodeQL findings closed across two passes (path traversal,
+  log injection, open redirect, secret logging).
+- ``agentdrive.utils.safe_paths.safe_join`` —
+  ``os.path.realpath`` + ``os.path.commonpath`` sanitiser at every
+  filesystem boundary.
+- ``agentdrive.utils.log_safe.safe_for_log`` —
+  ``str.replace`` + ``urllib.parse.quote`` sanitiser at every
+  structured-log boundary.
+- ``web/app.py:_redirect`` — strict allowlist + ``urlunsplit``
+  composition, refuses any path outside the known app routes.
+- ``.github/codeql/codeql-config.yml`` — security-extended suite,
+  documented query-filters for false-positive paths where the runtime
+  sanitiser is in place.
+
+### Tests
+- 374 passing (vs. the 0.1.0 baseline of ~221).
+- Three end-to-end canaries (``healing_loop``, ``federation``,
+  ``failure_modes``) all exit 0.
+- Ruff + ruff-format clean across ``src/`` and ``tests/``.
+
+---
 
 ## [Unreleased] — AgentDrive pivot
 

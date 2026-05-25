@@ -1,4 +1,4 @@
-"""Smoke tests for the Savant CLI entry point."""
+"""Smoke tests for the AgentDrive CLI entry point."""
 
 import subprocess
 import sys
@@ -13,7 +13,11 @@ def test_cli_version():
         timeout=10,
     )
     assert result.returncode == 0
-    assert "Savant" in result.stdout or "0.1.0" in result.stdout
+    # Accept either product name (rebrand carried-through) plus the current
+    # major.minor — bump intentionally drops the version pin from the test so
+    # the smoke test survives patch bumps.
+    assert "AgentDrive" in result.stdout or "Savant" in result.stdout
+    assert "0." in result.stdout  # any 0.x version
 
 
 def test_cli_doctor_runs(isolated_savant_home):

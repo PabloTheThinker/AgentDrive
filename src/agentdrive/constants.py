@@ -172,7 +172,7 @@ def get_swarm_drive_path(swarm_id: str, subagent_id: str | None = None) -> Path:
 
 
 # Version and identifiers
-SAVANT_VERSION = "0.1.0"  # Keep in sync with __init__.py and pyproject
+SAVANT_VERSION = "0.2.0"  # Keep in sync with __init__.py and pyproject
 
 # Default config keys (used by config.py)
 DEFAULT_SAVANT_HOME_NAME = ".agentdrive"

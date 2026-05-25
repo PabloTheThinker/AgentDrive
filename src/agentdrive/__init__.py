@@ -8,7 +8,7 @@ capabilities ("DNA" / Genomes) across an open, versioned, evolutionary system â€
 designed for real, structured, improvable agent intelligence.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 # Core public API
 from agentdrive.constants import get_current_subagent_id, get_current_swarm_id, using_swarm
