@@ -136,6 +136,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         if store.has_users():
             return _redirect("/login")
         return templates.TemplateResponse(
+            request,
             "auth.html",
             {
                 "request": request,
@@ -170,6 +171,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             user = store.create_user(username, password, role="admin")
         except ValueError as exc:
             return templates.TemplateResponse(
+                request,
                 "auth.html",
                 {
                     "request": request,
@@ -241,6 +243,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                 request, templates, info="Signup disabled. Ask the admin.", status_code=403
             )
         return templates.TemplateResponse(
+            request,
             "auth.html",
             {
                 "request": request,
@@ -268,6 +271,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             store.create_user(username, password, role="pending")
         except ValueError as exc:
             return templates.TemplateResponse(
+                request,
                 "auth.html",
                 {
                     "request": request,
@@ -293,6 +297,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
     @app.get("/dashboard", response_class=HTMLResponse)
     def dashboard(request: Request, user: User = Depends(require_user)):
         return templates.TemplateResponse(
+            request,
             "dashboard.html",
             {
                 "request": request,
@@ -304,7 +309,11 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                 "metrics": [
                     {"label": "Personal genomes", "value": _genome_count(), "delta": None},
                     {"label": "Active swarms", "value": "0", "delta": None},
-                    {"label": "Snapshots", "value": str(_snapshot_count(user.username)), "delta": None},
+                    {
+                        "label": "Snapshots",
+                        "value": str(_snapshot_count(user.username)),
+                        "delta": None,
+                    },
                     {"label": "Capabilities issued", "value": "0", "delta": None},
                 ],
                 "activity": [],
@@ -314,9 +323,27 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                     {"label": "Capability keystore", "value": "✓ healthy", "color": "accent"},
                 ],
                 "shortcuts": [
-                    {"title": "Personal Drive", "meta": str(get_default_drive_path()), "href": "/personal", "icon": "drive", "color": "accent"},
-                    {"title": "Swarm Drives", "meta": "shared substrates", "href": "/swarms", "icon": "swarm", "color": "warm"},
-                    {"title": "DNA Lineage", "meta": "ancestry + grants", "href": "/dna", "icon": "dna", "color": "success"},
+                    {
+                        "title": "Personal Drive",
+                        "meta": str(get_default_drive_path()),
+                        "href": "/personal",
+                        "icon": "drive",
+                        "color": "accent",
+                    },
+                    {
+                        "title": "Swarm Drives",
+                        "meta": "shared substrates",
+                        "href": "/swarms",
+                        "icon": "swarm",
+                        "color": "warm",
+                    },
+                    {
+                        "title": "DNA Lineage",
+                        "meta": "ancestry + grants",
+                        "href": "/dna",
+                        "icon": "dna",
+                        "color": "success",
+                    },
                 ],
             },
         )
@@ -330,6 +357,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
     ):
         rows = _list_genome_rows()
         return templates.TemplateResponse(
+            request,
             "personal.html",
             {
                 "request": request,
@@ -355,11 +383,13 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
     ):
         import json as _json
         import re as _re
+
         from agentdrive.genome.models import Genome
 
         if len(genome_json.encode("utf-8")) > GENOME_JSON_MAX_BYTES:
             rows = _list_genome_rows()
             return templates.TemplateResponse(
+                request,
                 "personal.html",
                 {
                     "request": request,
@@ -387,6 +417,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         except Exception as exc:
             rows = _list_genome_rows()
             return templates.TemplateResponse(
+                request,
                 "personal.html",
                 {
                     "request": request,
@@ -410,6 +441,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         except Exception as exc:
             rows = _list_genome_rows()
             return templates.TemplateResponse(
+                request,
                 "personal.html",
                 {
                     "request": request,
@@ -424,6 +456,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             )
         rows = _list_genome_rows()
         return templates.TemplateResponse(
+            request,
             "personal.html",
             {
                 "request": request,
@@ -444,6 +477,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         error: str | None = None,
     ):
         return templates.TemplateResponse(
+            request,
             "swarms.html",
             {
                 "request": request,
@@ -466,6 +500,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         cleaned = swarm_id.strip()
         if not cleaned or not all(c.isalnum() or c in "-_." for c in cleaned):
             return templates.TemplateResponse(
+                request,
                 "swarms.html",
                 {
                     "request": request,
@@ -481,6 +516,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             mgr.get_or_create_pool(cleaned)
         except Exception as exc:
             return templates.TemplateResponse(
+                request,
                 "swarms.html",
                 {
                     "request": request,
@@ -492,6 +528,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                 status_code=400,
             )
         return templates.TemplateResponse(
+            request,
             "swarms.html",
             {
                 "request": request,
@@ -538,12 +575,14 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                     )
             except Exception:  # noqa: BLE001 — keep the page rendering on partial-DNA-state
                 import logging as _logging
+
                 _logging.getLogger("agentdrive.web").exception(
                     "dna_page_partial_load_failed",
                     extra={"agent_id": agent},
                 )
 
         return templates.TemplateResponse(
+            request,
             "dna.html",
             {
                 "request": request,
@@ -564,6 +603,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         error: str | None = None,
     ):
         return templates.TemplateResponse(
+            request,
             "capabilities.html",
             {
                 "request": request,
@@ -588,6 +628,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             capability = parse_uri(uri.strip())
         except Exception as exc:
             return templates.TemplateResponse(
+                request,
                 "capabilities.html",
                 {
                     "request": request,
@@ -602,6 +643,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         cap_store = CapStore(db_path=store_path)
         signed = cap_store.mint(issuer=user.username, capability=capability)
         return templates.TemplateResponse(
+            request,
             "capabilities.html",
             {
                 "request": request,
@@ -625,6 +667,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         revoked = cap_store.revoke(cap_id)
         msg = f"Revoked {cap_id[:8]}…" if revoked else f"Capability {cap_id[:8]}… not found."
         return templates.TemplateResponse(
+            request,
             "capabilities.html",
             {
                 "request": request,
@@ -638,6 +681,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
     @app.get("/peers", response_class=HTMLResponse)
     def peers_page(request: Request, user: User = Depends(require_user)):
         return templates.TemplateResponse(
+            request,
             "peers.html",
             {
                 "request": request,
@@ -710,9 +754,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                 user,
                 templates,
                 agent_id=agent_id,
-                error=(
-                    f"Snapshot {snapshot_id} is pinned. Unpin it before deleting."
-                ),
+                error=(f"Snapshot {snapshot_id} is pinned. Unpin it before deleting."),
                 status_code=409,
             )
         try:
@@ -739,6 +781,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             )
         prefixed = [h if h.startswith("sha256:") else f"sha256:{h}" for h in hashes]
         return templates.TemplateResponse(
+            request,
             "restore.html",
             {
                 "request": request,
@@ -755,6 +798,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
     @app.get("/settings/users", response_class=HTMLResponse)
     def users_page(request: Request, user: User = Depends(require_admin)):
         return templates.TemplateResponse(
+            request,
             "users.html",
             {
                 "request": request,
@@ -765,9 +809,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         )
 
     @app.post("/settings/users/{user_id}/approve")
-    def approve_user_route(
-        user_id: int, request: Request, user: User = Depends(require_admin)
-    ):
+    def approve_user_route(user_id: int, request: Request, user: User = Depends(require_admin)):
         store.approve_user(user_id)
         return _redirect("/settings/users")
 
@@ -791,6 +833,7 @@ def _login_page(
     status_code: int = 200,
 ) -> HTMLResponse:
     return templates.TemplateResponse(
+        request,
         "auth.html",
         {
             "request": request,
@@ -840,6 +883,7 @@ def _render_snapshots(
         snaps = []
     pinned_count = sum(1 for s in snaps if s["pinned"])
     return templates.TemplateResponse(
+        request,
         "snapshots.html",
         {
             "request": request,
@@ -983,9 +1027,7 @@ def _list_genome_rows() -> list[dict[str, Any]]:
         version = getattr(manifest, "version", "") or ""
         gid = getattr(manifest, "id", None) or getattr(genome, "genome_id", name)
         content_hash = (
-            getattr(manifest, "content_hash", None)
-            or getattr(genome, "content_hash", None)
-            or ""
+            getattr(manifest, "content_hash", None) or getattr(genome, "content_hash", None) or ""
         )
         if not content_hash:
             try:

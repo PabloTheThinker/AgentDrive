@@ -66,11 +66,29 @@ class _JsonFormatter(logging.Formatter):
         for key, value in record.__dict__.items():
             # Skip the boilerplate attrs Python attaches to every record.
             if key in {
-                "args", "asctime", "created", "exc_info", "exc_text",
-                "filename", "funcName", "levelname", "levelno", "lineno",
-                "message", "module", "msecs", "msg", "name", "pathname",
-                "process", "processName", "relativeCreated", "stack_info",
-                "thread", "threadName", "taskName",
+                "args",
+                "asctime",
+                "created",
+                "exc_info",
+                "exc_text",
+                "filename",
+                "funcName",
+                "levelname",
+                "levelno",
+                "lineno",
+                "message",
+                "module",
+                "msecs",
+                "msg",
+                "name",
+                "pathname",
+                "process",
+                "processName",
+                "relativeCreated",
+                "stack_info",
+                "thread",
+                "threadName",
+                "taskName",
             }:
                 continue
             if isinstance(value, (str, int, float, bool, type(None))):
@@ -79,9 +97,7 @@ class _JsonFormatter(logging.Formatter):
                 payload[key] = repr(value)
         if record.exc_info:
             payload["exc_type"] = record.exc_info[0].__name__ if record.exc_info[0] else None
-            payload["exc_msg"] = (
-                str(record.exc_info[1]) if record.exc_info[1] else None
-            )
+            payload["exc_msg"] = str(record.exc_info[1]) if record.exc_info[1] else None
         return json.dumps(payload, separators=(",", ":"))
 
 

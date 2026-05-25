@@ -62,7 +62,7 @@ def test_capabilities_mint_and_revoke(tmp_path: Path) -> None:
     # Pull cap_id from the form action attribute.
     import re
 
-    m = re.search(r'/capabilities/([a-f0-9-]{36})/revoke', r.text)
+    m = re.search(r"/capabilities/([a-f0-9-]{36})/revoke", r.text)
     assert m, "expected revoke form action with cap_id UUID"
     cap_id = m.group(1)
 
