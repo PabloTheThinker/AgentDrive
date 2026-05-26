@@ -88,8 +88,8 @@ with no deprecation aliases (the project has no production users yet).
 - `agentdrive.tui.views.pool_view` → `agentdrive.tui.views.drive_view`
 
 **Classes**
-- `Agent DrivePool` → `AgentDrive`
-- `Agent DriveSwarmPoolManager` → `SwarmDriveManager`
+- `AgentDrivePool` → `AgentDrive`
+- `AgentDriveSwarmPoolManager` → `SwarmDriveManager`
 - `SwarmPoolPolicy` → `SwarmDrivePolicy`
 - `PoolSettings` → `DriveSettings`
 - `PoolSettingsManager` → `DriveSettingsManager`
@@ -129,7 +129,7 @@ with no deprecation aliases (the project has no production users yet).
 
 Two names for the same concept made the system feel incoherent: people typed
 `agentdrive pool` but read about "AgentDrive" in the README, and sub-agents had
-`Agent DrivePool` instances while the docs talked about Drives. The pivot collapses
+`AgentDrivePool` instances while the docs talked about Drives. The pivot collapses
 the dual naming — Agent Drive is the engine credit only, AgentDrive is the
 primitive, the binary, the product. The ProtonDrive parallel ("your agents,
 your memory, your control") gives the system a mental model people understand
@@ -147,7 +147,7 @@ What moved is the product surface above them.
 The Python package itself is now `agentdrive`. The default user-home directory
 is `~/.agentdrive/`. Environment variables follow the same flip. This is the
 second half of the AgentDrive pivot — Level A renamed the primitive
-(`Agent DrivePool` → `AgentDrive`); Level B brings the package, paths, and env
+(`AgentDrivePool` → `AgentDrive`); Level B brings the package, paths, and env
 into the same name.
 
 ### Renamed
@@ -182,8 +182,8 @@ into the same name.
 
 ### Kept (engine credit)
 
-- `Agent DriveHarness` class name retained — it remains the engine adapter that
-  agents wrap their work with. Importable as `from agentdrive import Agent DriveHarness`.
+- `AgentDriveHarness` class name retained — it remains the engine adapter that
+  agents wrap their work with. Importable as `from agentdrive import AgentDriveHarness`.
 - `agentdrive` brand mentions in docstrings/README where they refer to the federated
   learning substrate that powers AgentDrive.
 
@@ -195,11 +195,11 @@ into the same name.
 - `scripts/test_failure_modes.py` → 15/15 probes passed
 - CLI smoke: `python3 -m agentdrive.cli --help` resolves, `drive` verb wired, log header shows `AgentDrive v0.1.0`.
 
-## [Unreleased] — Final naming pass: Agent DriveHarness → Harness + README rewrite
+## [Unreleased] — Final naming pass: AgentDriveHarness → Harness + README rewrite
 
 ### Renamed
 
-- `Agent DriveHarness` → `Harness` everywhere — code, tests, docs, README.
+- `AgentDriveHarness` → `Harness` everywhere — code, tests, docs, README.
   Imported as `from agentdrive import Harness`. No deprecation alias.
 - This closes the last lingering "Agent Drive" name on the public API surface.
   `agentdrive` references that remain are intentional engine credit and live
@@ -213,7 +213,7 @@ into the same name.
 - Quickstart and swarm example use the renamed `Harness` import so any
   copy/paste actually runs.
 - Architecture diagram updated to label the adapter `Harness` instead of
-  `Agent DriveHarness`.
+  `AgentDriveHarness`.
 - Docs table updated: `INTEGRATION.md` description now reads
   "Wrapping your agent in `Harness`".
 

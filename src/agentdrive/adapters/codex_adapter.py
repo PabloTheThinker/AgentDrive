@@ -17,8 +17,8 @@ User instruction for a Codex-powered session:
     "Whenever you create helper agents, sub-solvers, or parallel workers for
      this task, give them access to the AgentDrive using the Codex adapter:
 
-     from agentdrive.adapters.codex_adapter import CodexAgent DriveAdapter
-     adapter = CodexAgent DriveAdapter()
+     from agentdrive.adapters.codex_adapter import CodexAgentDriveAdapter
+     adapter = CodexAgentDriveAdapter()
      adapter.activate(swarm_id='codex-experiment-042')
 
      Then every worker you instantiate should receive a scoped pool via
@@ -39,19 +39,19 @@ from typing import Any
 
 from agentdrive.adapters.base import (
     AgentDrive,
-    Agent DriveAdapterBase,
-    Agent DriveContext,
+    AgentDriveAdapterBase,
+    AgentDriveContext,
 )
 
 logger = logging.getLogger(__name__)
 
 
-class CodexAgent DriveAdapter(Agent DriveAdapterBase):
+class CodexAgentDriveAdapter(AgentDriveAdapterBase):
     """Adapter for Codex-style / OpenAI agent runtimes.
 
     Typical usage pattern inside a Codex loop:
 
-        adapter = CodexAgent DriveAdapter()
+        adapter = CodexAgentDriveAdapter()
         adapter.activate(swarm_id="my-codex-swarm")
 
         def my_create_worker(prompt, **kwargs):
@@ -63,22 +63,22 @@ class CodexAgent DriveAdapter(Agent DriveAdapterBase):
 
     def __init__(self, swarm_id: str | None = None, **kwargs: Any):
         super().__init__(name="codex", default_swarm_id=swarm_id, **kwargs)
-        self._last_context: Agent DriveContext | None = None
+        self._last_context: AgentDriveContext | None = None
 
     def get_name(self) -> str:
         return "codex"
 
     def activate(self, swarm_id: str | None = None, **options: Any) -> None:
         super().activate(swarm_id=swarm_id, **options)
-        logger.info("CodexAgent DriveAdapter activated for OpenAI/Codex-style agents.")
+        logger.info("CodexAgentDriveAdapter activated for OpenAI/Codex-style agents.")
 
-    def get_context_for_child(self, subagent_id: str | None = None) -> Agent DriveContext:
-        """Return a Agent DriveContext dict that can be serialized into a child worker."""
+    def get_context_for_child(self, subagent_id: str | None = None) -> AgentDriveContext:
+        """Return a AgentDriveContext dict that can be serialized into a child worker."""
         swarm, _ = self.detect_context().swarm_id, None
         if not swarm:
             swarm = self._default_swarm or "codex-default"
         sub = subagent_id or f"codex-worker-{id(self) % 10000:04d}"
-        ctx = Agent DriveContext(
+        ctx = AgentDriveContext(
             swarm_id=swarm,
             subagent_id=sub,
             parent_agent_id=os.environ.get("AGENTDRIVE_SUBAGENT_ID"),
@@ -144,6 +144,6 @@ After successful work, record outcomes so the Drive (and future agents) improve.
 
 
 # Make import nice
-CodexAgent DriveAdapter = CodexAgent DriveAdapter  # explicit
+CodexAgentDriveAdapter = CodexAgentDriveAdapter  # explicit
 
-__all__ = ["CodexAgent DriveAdapter"]
+__all__ = ["CodexAgentDriveAdapter"]

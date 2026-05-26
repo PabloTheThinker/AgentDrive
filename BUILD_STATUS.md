@@ -52,7 +52,7 @@ We are building this as one team.
 ## Final Polish Pass (Main Thread, 6% credits remaining)
 - Added beautiful first-run guidance in the Pool TUI view.
 - Created high-visibility end-to-end swarm DNA demo (`examples/agentdrive_swarm_dna_demo.py`) that shows parent + children with private pools growing real DNA.
-- Refined GrokBuildAgent DriveAdapter activation text for even smoother "set and forget" experience.
+- Refined GrokBuildAgentDriveAdapter activation text for even smoother "set and forget" experience.
 - Verified the demo runs cleanly and the full loop (TUI + CLI + harness + manager + adapters) is production-feeling.
 
 The system is now at a high professional level:

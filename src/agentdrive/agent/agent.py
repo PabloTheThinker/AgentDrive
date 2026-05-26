@@ -1,8 +1,8 @@
 """
-Agent DriveAgent — the framework as the agent's body.
+AgentDriveAgent — the framework as the agent's body.
 
 Composes:
-- Agent DriveLLM       (the model = the agent's voice)
+- AgentDriveLLM       (the model = the agent's voice)
 - Harness   (the Drive = the agent's lived experience / memory)
 - AgentSession    (the conversation persistence)
 
@@ -33,7 +33,7 @@ from agentdrive.events import (
 )
 from agentdrive.harness.harness import Harness
 from agentdrive.providers.base import load_config_provider
-from agentdrive.providers.llm import Agent DriveLLM
+from agentdrive.providers.llm import AgentDriveLLM
 
 logger = logging.getLogger(__name__)
 
@@ -59,12 +59,12 @@ class TurnResult:
     error: str | None = None
 
 
-class Agent DriveAgent:
+class AgentDriveAgent:
     """
     Conversational agent backed by the AgentDrive.
 
     Usage:
-        agent = Agent DriveAgent(agent_id="my-agent")
+        agent = AgentDriveAgent(agent_id="my-agent")
         for chunk in agent.send("Hello"):
             print(chunk, end="")
     """
@@ -95,7 +95,7 @@ class Agent DriveAgent:
             subagent_id=subagent_id,
         )
         self.session = session or AgentSession(agent_id=agent_id)
-        self._llm: Agent DriveLLM | None = None
+        self._llm: AgentDriveLLM | None = None
         self._last_pulled: list[dict[str, Any]] = []
 
     # ─────────────────────────────────────────────────────────────────
@@ -103,12 +103,12 @@ class Agent DriveAgent:
     # ─────────────────────────────────────────────────────────────────
 
     @property
-    def llm(self) -> Agent DriveLLM | None:
+    def llm(self) -> AgentDriveLLM | None:
         if self._llm is None:
             cfg = load_config_provider()
             if cfg and cfg[0]:
                 try:
-                    self._llm = Agent DriveLLM()
+                    self._llm = AgentDriveLLM()
                 except Exception:
                     self._llm = None
         return self._llm
@@ -244,7 +244,7 @@ class Agent DriveAgent:
         history = self.session.history_for_llm(max_turns=self.history_turns)
 
         # The current user message is now the last element of history;
-        # Agent DriveLLM.stream() expects history to NOT include the current prompt.
+        # AgentDriveLLM.stream() expects history to NOT include the current prompt.
         history_for_llm = history[:-1] if history and history[-1]["role"] == "user" else history
 
         # 3. Stream
@@ -314,7 +314,7 @@ class Agent DriveAgent:
             pass
 
         # Emit MessageComplete before returning so subscribers can finalize
-        # the streaming row. Tokens/cost are not reported by Agent DriveLLM today;
+        # the streaming row. Tokens/cost are not reported by AgentDriveLLM today;
         # pass 0/0.0 rather than skipping the event.
         try:
             emit(

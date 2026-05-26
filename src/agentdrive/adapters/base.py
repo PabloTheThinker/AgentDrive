@@ -1,5 +1,5 @@
 """
-Agent DriveAdapter — Base Protocol and Implementation for Multi-Model Pool Integration.
+AgentDriveAdapter — Base Protocol and Implementation for Multi-Model Pool Integration.
 
 This is the universal contract that every model-specific adapter (Grok, Claude, Codex, ...)
 must satisfy. It abstracts:
@@ -57,14 +57,14 @@ from agentdrive.registry import GenomeRegistry
 logger = logging.getLogger(__name__)
 
 
-class Agent DriveAdapter(Protocol):
+class AgentDriveAdapter(Protocol):
     """Protocol defining the integration surface for any AI model / agent runtime.
 
     Implementations:
-    - Agent DriveAdapterBase (universal fallback)
-    - GrokBuildAgent DriveAdapter (Grok build system + spawn_subagent)
-    - ClaudeCodeAgent DriveAdapter
-    - CodexAgent DriveAdapter
+    - AgentDriveAdapterBase (universal fallback)
+    - GrokBuildAgentDriveAdapter (Grok build system + spawn_subagent)
+    - ClaudeCodeAgentDriveAdapter
+    - CodexAgentDriveAdapter
     """
 
     def get_name(self) -> str:
@@ -107,7 +107,7 @@ class Agent DriveAdapter(Protocol):
 
 
 @dataclass
-class Agent DriveContext:
+class AgentDriveContext:
     """Lightweight carrier of swarm identity that can be passed to children."""
 
     swarm_id: str | None = None
@@ -126,7 +126,7 @@ class Agent DriveContext:
         return env
 
 
-class Agent DriveAdapterBase:
+class AgentDriveAdapterBase:
     """Concrete base implementation. Safe default for any model.
 
     Model-specific adapters should subclass and override:
@@ -145,15 +145,15 @@ class Agent DriveAdapterBase:
         self._default_swarm = default_swarm_id
         self._default_sub = default_subagent_id
         self._activated = False
-        logger.debug("Agent DriveAdapterBase initialized (%s)", name)
+        logger.debug("AgentDriveAdapterBase initialized (%s)", name)
 
     def get_name(self) -> str:
         return self._name
 
-    def detect_context(self) -> Agent DriveContext:
+    def detect_context(self) -> AgentDriveContext:
         """Detect current swarm/sub from environment (or internal defaults)."""
         swarm, sub = detect_swarm_context()
-        return Agent DriveContext(
+        return AgentDriveContext(
             swarm_id=swarm or self._default_swarm,
             subagent_id=sub or self._default_sub,
         )
@@ -190,7 +190,7 @@ class Agent DriveAdapterBase:
 
         self._activated = True
         logger.info(
-            "Agent DriveAdapterBase activated (swarm=%s, sub=%s)",
+            "AgentDriveAdapterBase activated (swarm=%s, sub=%s)",
             self._default_swarm,
             self._default_sub,
         )
@@ -311,9 +311,9 @@ def create_harness(
 
 
 __all__ = [
-    "Agent DriveAdapter",
-    "Agent DriveAdapterBase",
-    "Agent DriveContext",
+    "AgentDriveAdapter",
+    "AgentDriveAdapterBase",
+    "AgentDriveContext",
     "detect_swarm_context",
     "create_scoped_pool",
     "get_agentdrive_pool",

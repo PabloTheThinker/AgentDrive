@@ -75,7 +75,7 @@ future extension):
   the example genome uses similar logic — can be re-implemented on top
   of these primitives)
 - framework_runner.py (the full 5-layer agentdrive pass; now easy to rebuild
-  using the 8 primitives above + a new Agent DrivePass orchestrator)
+  using the 8 primitives above + a new AgentDrivePass orchestrator)
 - inferencer.py, schema.py, calibration.py, joins.py, layers.py, etc.
   (valuable but lower priority for the core "reasoning for DNA" mandate;
   inferencer can be added when transcript-based scanners land)
@@ -143,7 +143,7 @@ This keeps scanners thin and delegates all structural rigor to the
 reasoning package.
 
 The primitives remain directly callable for power users and for
-re-building higher-level composers (e.g. a Agent DrivePass or domain
+re-building higher-level composers (e.g. a AgentDrivePass or domain
 postmortems).
 
 ============================================================================

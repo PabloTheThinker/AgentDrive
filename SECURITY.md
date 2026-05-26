@@ -40,7 +40,7 @@ We aim to respond within 48 hours and will coordinate a fix + disclosure timelin
    - Dependencies in `pyproject.toml`
 
 3. **Agent Execution Surface**
-   - Agent DriveHarness + genome execution can run user-provided (or pool-sourced) code.
+   - AgentDriveHarness + genome execution can run user-provided (or pool-sourced) code.
    - Pools can contain arbitrary reasoning patterns and tool compositions.
 
 4. **Data at Rest**

@@ -33,11 +33,11 @@ Every time a parent spawns a child:
 
 ```python
 from agentdrive.constants import get_swarm_pool_path
-from agentdrive.pool.pool import Agent DrivePool
+from agentdrive.pool.pool import AgentDrivePool
 from agentdrive.pool.settings import get_effective_pool_settings
 
 pool_dir = get_swarm_pool_path(swarm_id, subagent_id)
-pool = Agent DrivePool(pool_dir=pool_dir, name=f"swarm-{swarm_id}-{subagent_id}")
+pool = AgentDrivePool(pool_dir=pool_dir, name=f"swarm-{swarm_id}-{subagent_id}")
 
 settings = get_effective_pool_settings(swarm_id, subagent_id)
 ```
@@ -51,19 +51,19 @@ The pool directory is created on first use: `~/.agentdrive/swarms/<swarm_id>/<su
 ### Current Implementation Status
 
 - Full path helpers and per-swarm settings storage exist (`constants.py`, `pool/settings.py`).
-- `Agent DrivePool` accepts custom `pool_dir`.
+- `AgentDrivePool` accepts custom `pool_dir`.
 - `PoolSettingsManager` supports global + per-swarm overrides.
 - TUI and CLI recognize swarms (`pool_view.py`, `agentdrive pool swarms` planned).
 - Full auto-wiring of `get_default_pool()` + harness to read env vars and select the correct directory is the next integration step (see `MISSION_PLAN.md`).
 
-Until the final wiring, external integrators explicitly pass the scoped `Agent DrivePool` or `pool_dir` when creating harnesses/adapters for sub-agents.
+Until the final wiring, external integrators explicitly pass the scoped `AgentDrivePool` or `pool_dir` when creating harnesses/adapters for sub-agents.
 
 ## DNA as Memory + Patterns for Sub-Agents
 
 Each sub-agent’s pool contains Genomes that encode:
 
 - **Frameworks** it discovered or successfully applied.
-- **Reasoning patterns** mined from its own trajectories (via `Agent DriveRunScanner` + reasoning engine: causality, contradictions, anomalies, synthesis).
+- **Reasoning patterns** mined from its own trajectories (via `AgentDriveRunScanner` + reasoning engine: causality, contradictions, anomalies, synthesis).
 - **Tool compositions** and guardrail sequences that worked for *its* tasks.
 - **Self-evaluations** and micro-patterns it surfaced during reflection.
 
@@ -133,14 +133,14 @@ Minimal manual example (until auto-env wiring is complete):
 ```python
 import os
 from agentdrive import Harness, get_swarm_pool_path
-from agentdrive.pool.pool import Agent DrivePool
+from agentdrive.pool.pool import AgentDrivePool
 from agentdrive.pool.settings import get_effective_pool_settings
 
 swarm_id = os.environ.get("AGENTDRIVE_SWARM_ID", "demo-swarm-001")
 sub_id   = os.environ.get("AGENTDRIVE_SUBAGENT_ID", "worker-1")
 
 pool_dir = get_swarm_pool_path(swarm_id, sub_id)
-pool = Agent DrivePool(pool_dir=pool_dir)
+pool = AgentDrivePool(pool_dir=pool_dir)
 
 settings = get_effective_pool_settings(swarm_id)
 print("Effective settings for this sub-agent:", settings)

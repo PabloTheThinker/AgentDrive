@@ -1,8 +1,8 @@
 """
-Agent DriveLLM — lightweight chat completion client for any configured provider.
+AgentDriveLLM — lightweight chat completion client for any configured provider.
 
 Usage:
-    llm = Agent DriveLLM()
+    llm = AgentDriveLLM()
     reply = llm.chat("What does this code do?")
 
     # Or with system prompt and history:
@@ -29,7 +29,7 @@ from agentdrive.providers.base import ProviderProfile, get, load_config_provider
 logger = logging.getLogger(__name__)
 
 
-class Agent DriveLLM:
+class AgentDriveLLM:
     """Lightweight LLM client using the configured provider."""
 
     def __init__(self, provider_name: str | None = None, model: str | None = None):

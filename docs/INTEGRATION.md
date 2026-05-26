@@ -17,7 +17,7 @@ Any Python-based agent or sub-agent can directly use:
 - `Harness` — the simplest participation wrapper (pull DNA → adapt → record).
 - `RichAgentAdapter` / `ExternalWorkerAdapter` — canonical reference implementation showing a rich, tool-using, trajectory-emitting agent.
 - `AgentDrive`, `DriveQuery`, and `GenomeRegistry` for direct control.
-- `Agent DriveRunScanner` (and custom scanners) to turn raw trajectories into new Genomes.
+- `AgentDriveRunScanner` (and custom scanners) to turn raw trajectories into new Genomes.
 
 See:
 - `src/agentdrive/harness/harness.py`

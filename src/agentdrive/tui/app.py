@@ -35,7 +35,7 @@ from agentdrive.tui.skin_engine import skin
 from agentdrive.tui.views.drive_view import register_drive_view
 
 
-class Agent DriveTUI:
+class AgentDriveTUI:
     """Production-grade interactive TUI for Agent Drive genome management and orchestration."""
 
     def __init__(self):
@@ -991,7 +991,7 @@ class Agent DriveTUI:
             self.console.print(f"[agentdrive.warn]Pool view:[/] {e}")
 
     def _scan_runs(self, args: list[str]) -> None:
-        """Real DNA extraction using Agent DriveRunScanner + reasoning primitives.
+        """Real DNA extraction using AgentDriveRunScanner + reasoning primitives.
         Produces a live candidate Genome from simulated or provided run data.
         """
         from agentdrive.tui.chrome import (
@@ -1090,13 +1090,13 @@ class Agent DriveTUI:
         )
         steps.start()
         try:
-            from agentdrive.scanners import Agent DriveRunScanner
+            from agentdrive.scanners import AgentDriveRunScanner
 
             steps.advance(
                 f"{len(sample_run.get('observations', []))} obs · {len(sample_run.get('claims', []))} claims"
             )
 
-            scanner = Agent DriveRunScanner(actor=f"tui-scan-{target[:8]}")
+            scanner = AgentDriveRunScanner(actor=f"tui-scan-{target[:8]}")
             candidates = scanner.scan(sample_run)
             if not candidates:
                 steps.fail("scanner returned 0 candidates")
@@ -1249,9 +1249,9 @@ class Agent DriveTUI:
         # Lazy import + create Harness for the session (before steps) so base TUI launch never pulls harness/pool
         harness = None
         try:
-            from agentdrive.harness.harness import Harness as _Agent DriveHarness
+            from agentdrive.harness.harness import Harness as _AgentDriveHarness
 
-            harness = _Agent DriveHarness(
+            harness = _AgentDriveHarness(
                 agent_id=f"tui-{g.manifest.id[:16]}-{int(time.time()) % 100000}"
             )
         except Exception as imp_err:
@@ -1287,9 +1287,9 @@ class Agent DriveTUI:
         # Ensure we have a harness for the session (created in caller _run_work or here as fallback)
         if harness is None:
             try:
-                from agentdrive.harness.harness import Harness as _Agent DriveHarness
+                from agentdrive.harness.harness import Harness as _AgentDriveHarness
 
-                harness = _Agent DriveHarness(
+                harness = _AgentDriveHarness(
                     agent_id=f"tui-{genome.manifest.id[:16]}-{int(time.time()) % 100000}"
                 )
             except Exception:
@@ -1766,5 +1766,5 @@ class Agent DriveTUI:
 
 def launch_tui() -> None:
     """Launch the professional AgentDrive TUI."""
-    app = Agent DriveTUI()
+    app = AgentDriveTUI()
     app.run()

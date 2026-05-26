@@ -1462,7 +1462,7 @@ class DriveView:
             self.console.print()
 
 
-# Integration hook for main Agent DriveTUI (called from app.py __init__)
+# Integration hook for main AgentDriveTUI (called from app.py __init__)
 def register_drive_view(tui: Any) -> None:
     """Attach a (stateful) DriveView instance to the TUI for dedicated global+swarm DNA management."""
     tui.pool_view = DriveView(tui)

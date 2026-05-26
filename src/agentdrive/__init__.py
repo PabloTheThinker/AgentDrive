@@ -87,8 +87,8 @@ from agentdrive import (
 # Provider system — connect any AI model to Agent Drive
 from agentdrive import providers as providers
 from agentdrive.adapters import (
-    Agent DriveAdapter,
-    Agent DriveAdapterBase,
+    AgentDriveAdapter,
+    AgentDriveAdapterBase,
     activate_for_claude,
     activate_for_grok_build,
     get_agentdrive_adapter,
@@ -97,7 +97,7 @@ from agentdrive.adapters import (
 )
 
 # Agent Drive Agent — the framework as a conversational AI agent
-from agentdrive.agent import AGENTDRIVE_IDENTITY, AgentSession, Indicator, Agent DriveAgent, Turn, TurnResult
+from agentdrive.agent import AGENTDRIVE_IDENTITY, AgentSession, Indicator, AgentDriveAgent, Turn, TurnResult
 from agentdrive.config import (
     ensure_agentdrive_home,
     get_config_value,
@@ -113,11 +113,11 @@ from agentdrive.constants import (
     get_agentdrive_config_path,
 )
 from agentdrive.exceptions import (
-    Agent DriveConfigError,
-    Agent DriveError,
-    Agent DriveRegistryError,
-    Agent DriveScanError,
-    Agent DriveWorkerError,
+    AgentDriveConfigError,
+    AgentDriveError,
+    AgentDriveRegistryError,
+    AgentDriveScanError,
+    AgentDriveWorkerError,
 )
 
 # Reasoning primitives for DNA extraction and Genome enrichment
@@ -161,11 +161,11 @@ __all__ = [
     "setup_logging",
     "get_logger",
     # Errors
-    "Agent DriveError",
-    "Agent DriveConfigError",
-    "Agent DriveRegistryError",
-    "Agent DriveWorkerError",
-    "Agent DriveScanError",
+    "AgentDriveError",
+    "AgentDriveConfigError",
+    "AgentDriveRegistryError",
+    "AgentDriveWorkerError",
+    "AgentDriveScanError",
     # Workers / Adapters (key extension point)
     "Worker",
     "ExternalAgentAdapter",
@@ -182,15 +182,15 @@ __all__ = [
     # Multi-model adapters — the core of "use your AgentDrive for this swarm"
     "providers",
     "adapters",
-    "Agent DriveAdapter",
-    "Agent DriveAdapterBase",
+    "AgentDriveAdapter",
+    "AgentDriveAdapterBase",
     "get_agentdrive_adapter",
     "get_scoped_pool",
     "get_agentdrive_pool",
     "activate_for_grok_build",
     "activate_for_claude",
     # Agent Drive Agent (framework-as-body conversational agent)
-    "Agent DriveAgent",
+    "AgentDriveAgent",
     "AgentSession",
     "Turn",
     "Indicator",

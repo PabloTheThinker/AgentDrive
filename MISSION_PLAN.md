@@ -34,7 +34,7 @@ The system must be:
 
 2. **Swarm Pool Core** (subagent)
    - Implement full per-swarm / per-subagent pool isolation in `pool/pool.py` + registry
-   - Add `Agent DriveSwarmPoolManager`
+   - Add `AgentDriveSwarmPoolManager`
    - Support `swarm_id` + `subagent_id` scoping with automatic directory creation
    - Implement sharing policies (none / read / selective / full)
    - Wire into `get_default_pool()` and harness so spawned sub-agents automatically get their own pool
@@ -58,7 +58,7 @@ The system must be:
 
 5. **Adapters & Multi-Model Bridge** (subagent)
    - Create `src/agentdrive/adapters/` package
-   - Base `Agent DriveAdapter` protocol
+   - Base `AgentDriveAdapter` protocol
    - MCP server for pool access (stdio + HTTP)
    - Grok Build System adapter (tie into how Grok spawns subagents via spawn_subagent)
    - Example adapters for Claude Code and Codex

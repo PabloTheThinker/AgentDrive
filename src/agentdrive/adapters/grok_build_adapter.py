@@ -20,10 +20,10 @@ spawn, participate in the AgentDrive ecosystem. At the very beginning of your
 thinking or code, execute:
 
     from agentdrive.adapters.grok_build_adapter import (
-        GrokBuildAgent DriveAdapter,
+        GrokBuildAgentDriveAdapter,
         get_agentdrive_instructions_for_grok,
     )
-    adapter = GrokBuildAgent DriveAdapter()
+    adapter = GrokBuildAgentDriveAdapter()
     adapter.activate_for_current_session(swarm_id='task-2026-05-23-my-mission')
 
 All future calls you make to spawn_subagent (or equivalent internal agent
@@ -61,8 +61,8 @@ from collections.abc import Callable
 from typing import Any
 
 from agentdrive.adapters.base import (
-    Agent DriveAdapterBase,
-    Agent DriveContext,
+    AgentDriveAdapterBase,
+    AgentDriveContext,
     detect_swarm_context,
 )
 from agentdrive.drive.drive import AgentDrive
@@ -84,8 +84,8 @@ Use the AgentDrive system for all work in this swarm (id: {swarm_id}).
 
 Activation (execute immediately):
 
-from agentdrive.adapters.grok_build_adapter import GrokBuildAgent DriveAdapter
-adapter = GrokBuildAgent DriveAdapter()
+from agentdrive.adapters.grok_build_adapter import GrokBuildAgentDriveAdapter
+adapter = GrokBuildAgentDriveAdapter()
 adapter.activate_for_current_session(swarm_id="{swarm_id}")
 
 From this point forward, every time you would call spawn_subagent(...), the
@@ -112,7 +112,7 @@ while keeping isolation exactly as the user configured in their Agent Drive sett
 # ------------------------------------------------------------------
 
 
-class GrokBuildAgent DriveAdapter(Agent DriveAdapterBase):
+class GrokBuildAgentDriveAdapter(AgentDriveAdapterBase):
     """Adapter specialized for the Grok build / agent spawning runtime.
 
     It knows how to locate and wrap `spawn_subagent` (and similar entry points)
@@ -144,7 +144,7 @@ class GrokBuildAgent DriveAdapter(Agent DriveAdapterBase):
 
         self._patch_spawn_subagent()
         self._activated = True
-        logger.info("GrokBuildAgent DriveAdapter fully activated (swarm=%s)", self._swarm_id)
+        logger.info("GrokBuildAgentDriveAdapter fully activated (swarm=%s)", self._swarm_id)
 
     def activate_for_current_session(self, swarm_id: str, **options: Any) -> None:
         """Convenient alias used in the copy-paste instructions."""
@@ -234,7 +234,7 @@ class GrokBuildAgent DriveAdapter(Agent DriveAdapterBase):
             )
 
             # Build context + env patch
-            ctx = Agent DriveContext(
+            ctx = AgentDriveContext(
                 swarm_id=swarm_id,
                 subagent_id=subagent_id,
                 parent_agent_id=os.environ.get("AGENTDRIVE_SUBAGENT_ID") or "grok-parent",
@@ -357,7 +357,7 @@ spawn_subagent: Callable | None = None  # will be set by first activation if pat
 
 
 __all__ = [
-    "GrokBuildAgent DriveAdapter",
+    "GrokBuildAgentDriveAdapter",
     "get_agentdrive_instructions_for_grok",
     "spawn_subagent",
 ]

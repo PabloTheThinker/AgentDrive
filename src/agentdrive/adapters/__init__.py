@@ -23,7 +23,7 @@ ready-to-paste instruction text for the user to give their AI.
 Public API (recommended entry points):
     from agentdrive.adapters import (
         get_agentdrive_adapter,
-        Agent DriveAdapter,
+        AgentDriveAdapter,
         activate_for_grok_build,
         get_scoped_pool,
     )
@@ -44,8 +44,8 @@ from agentdrive.drive.drive import AgentDrive
 from agentdrive.drive.settings import DriveSettings, get_effective_drive_settings
 
 from .base import (
-    Agent DriveAdapter,
-    Agent DriveAdapterBase,
+    AgentDriveAdapter,
+    AgentDriveAdapterBase,
     create_scoped_pool,
     detect_swarm_context,
     get_agentdrive_pool,
@@ -54,38 +54,38 @@ from .base import (
 
 
 # Model-specific adapters (import lazily to avoid heavy deps at top level)
-def get_agentdrive_adapter(model: str = "auto") -> Agent DriveAdapter:
+def get_agentdrive_adapter(model: str = "auto") -> AgentDriveAdapter:
     """Factory: return the best adapter for the given model family.
 
     model: "grok" | "grok-build" | "claude" | "claude-code" | "codex" | "auto"
     """
     model = (model or "auto").lower()
     if model in ("grok", "grok-build", "grok_build"):
-        from .grok_build_adapter import GrokBuildAgent DriveAdapter
+        from .grok_build_adapter import GrokBuildAgentDriveAdapter
 
-        return GrokBuildAgent DriveAdapter()
+        return GrokBuildAgentDriveAdapter()
     if model in ("claude", "claude-code", "claude_code"):
-        from .claude_code_adapter import ClaudeCodeAgent DriveAdapter
+        from .claude_code_adapter import ClaudeCodeAgentDriveAdapter
 
-        return ClaudeCodeAgent DriveAdapter()
+        return ClaudeCodeAgentDriveAdapter()
     if model in ("codex", "openai-codex"):
-        from .codex_adapter import CodexAgent DriveAdapter
+        from .codex_adapter import CodexAgentDriveAdapter
 
-        return CodexAgent DriveAdapter()
+        return CodexAgentDriveAdapter()
     # default / auto
-    from .base import Agent DriveAdapterBase
+    from .base import AgentDriveAdapterBase
 
-    return Agent DriveAdapterBase()
+    return AgentDriveAdapterBase()
 
 
-def activate_for_grok_build(swarm_id: str | None = None, **kwargs) -> Agent DriveAdapter:
+def activate_for_grok_build(swarm_id: str | None = None, **kwargs) -> AgentDriveAdapter:
     """One-liner for Grok Build users: call this after user says 'use AgentDrive'.
 
     Returns the activated adapter. Automatically patches spawn_subagent if possible.
     """
-    from .grok_build_adapter import GrokBuildAgent DriveAdapter, get_agentdrive_instructions_for_grok
+    from .grok_build_adapter import GrokBuildAgentDriveAdapter, get_agentdrive_instructions_for_grok
 
-    adapter = GrokBuildAgent DriveAdapter(swarm_id=swarm_id, **kwargs)
+    adapter = GrokBuildAgentDriveAdapter(swarm_id=swarm_id, **kwargs)
     adapter.activate()
     # Print user-friendly instructions the model can surface if needed
     # (models often echo this back to confirm)
@@ -93,17 +93,17 @@ def activate_for_grok_build(swarm_id: str | None = None, **kwargs) -> Agent Driv
     return adapter
 
 
-def activate_for_claude(swarm_id: str | None = None, **kwargs) -> Agent DriveAdapter:
-    from .claude_code_adapter import ClaudeCodeAgent DriveAdapter
+def activate_for_claude(swarm_id: str | None = None, **kwargs) -> AgentDriveAdapter:
+    from .claude_code_adapter import ClaudeCodeAgentDriveAdapter
 
-    adapter = ClaudeCodeAgent DriveAdapter(swarm_id=swarm_id, **kwargs)
+    adapter = ClaudeCodeAgentDriveAdapter(swarm_id=swarm_id, **kwargs)
     adapter.activate()
     return adapter
 
 
 __all__ = [
-    "Agent DriveAdapter",
-    "Agent DriveAdapterBase",
+    "AgentDriveAdapter",
+    "AgentDriveAdapterBase",
     "get_agentdrive_adapter",
     "get_scoped_pool",
     "get_agentdrive_pool",

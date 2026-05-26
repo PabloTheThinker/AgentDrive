@@ -1,5 +1,5 @@
 """
-Agent DriveRunScanner — DNA extraction from agent trajectories and runs.
+AgentDriveRunScanner — DNA extraction from agent trajectories and runs.
 
 Takes a rich agent run/trajectory/engagement (JSON or dict with conversations,
 observations, ledger, claims, etc.) from Agent Drive workers or compatible external
@@ -28,7 +28,7 @@ from agentdrive.reasoning import (
 from .base import BaseScanner
 
 
-class Agent DriveRunScanner(BaseScanner):
+class AgentDriveRunScanner(BaseScanner):
     """
     Scanner specialized for Agent Drive and compatible external agent run data.
 
@@ -167,4 +167,4 @@ class Agent DriveRunScanner(BaseScanner):
 
 
 # Also export a convenience alias for backward compatibility during transition
-RichRunScanner = Agent DriveRunScanner  # Rich external workers and Agent Drive workers use the same scanner
+RichRunScanner = AgentDriveRunScanner  # Rich external workers and Agent Drive workers use the same scanner

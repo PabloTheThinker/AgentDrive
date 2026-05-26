@@ -39,7 +39,7 @@ Settings live in `~/.agentdrive/config.yaml` and can be overridden per-swarm or 
 
 Agent Drive provides clean adapters (MCP server, stdio, HTTP) so:
 
-- Grok build system / Claude Code / Codex / any model can be told: "use Agent DrivePool for your sub-agents".
+- Grok build system / Claude Code / Codex / any model can be told: "use AgentDrivePool for your sub-agents".
 - Each spawned sub-agent gets `AGENTDRIVE_SWARM_ID` + `AGENTDRIVE_SUBAGENT_ID` environment or context, automatically scoping its pool.
 
 See `adapters/` and `docs/INTEGRATION.md` (coming soon).

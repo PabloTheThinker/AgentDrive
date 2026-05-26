@@ -106,7 +106,7 @@ when a second adapter demands it. Build the protocol on demand, not on spec.
 
 ## 5. If we pivot — the migration shape
 
-**Survives:** `agentdrive.events`, `Agent DrivePool`, `Harness`, encounter
+**Survives:** `agentdrive.events`, `AgentDrivePool`, `Harness`, encounter
 confidence, inheritance manifests, quarantine, peer registry, reconciliation,
 genome schema, swarm isolation, Mission Board data model, CLI subcommands.
 

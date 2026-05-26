@@ -38,7 +38,7 @@ from rich.padding import Padding
 from rich.panel import Panel
 from rich.text import Text
 
-from agentdrive.agent import Indicator, Agent DriveAgent
+from agentdrive.agent import Indicator, AgentDriveAgent
 from agentdrive.chat_loop import ChatLoop
 from agentdrive.constants import get_agentdrive_home
 from agentdrive.tui.chrome import (
@@ -130,7 +130,7 @@ class ChatView:
         self.skin = getattr(tui, "skin", None)
         self.palette = Palette(self.skin)
         self.agent_id = agent_id
-        self.agent = Agent DriveAgent(agent_id=agent_id)
+        self.agent = AgentDriveAgent(agent_id=agent_id)
         self.indicator_style = "unicode"
         self.show_reasoning_hints = False
         self._last_user_message: str | None = None

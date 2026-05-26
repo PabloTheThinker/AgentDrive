@@ -155,7 +155,7 @@ The `PoolSettingsManager` and `get_effective_pool_settings(swarm_id)` provide th
 
 ## How the Pool Grows
 
-1. **Ingestion** — Scanners (e.g. `Agent DriveRunScanner`, `RichRunScanner`) analyze instrumented trajectories and produce candidate Genomes → `drive.ingest()`.
+1. **Ingestion** — Scanners (e.g. `AgentDriveRunScanner`, `RichRunScanner`) analyze instrumented trajectories and produce candidate Genomes → `drive.ingest()`.
 2. **Harness Contributions** — Every harness-wrapped run on success can auto-propose deltas.
 3. **Explicit Proposals** — `pool.propose_improvement()` from humans or agents.
 4. **Fork/Merge/Evolve** — Registry + evolutionary engine operations (CLI/TUI/orchestrator).

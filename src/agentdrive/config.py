@@ -25,7 +25,7 @@ from agentdrive.constants import (
     get_agentdrive_config_path,
 )
 from agentdrive.exceptions import (
-    Agent DriveConfigError,
+    AgentDriveConfigError,
 )
 
 logger = logging.getLogger(__name__)
@@ -250,7 +250,7 @@ def save_config(config: dict[str, Any]) -> Path:
         except Exception as e:
             if tmp.exists():
                 tmp.unlink(missing_ok=True)
-            raise Agent DriveConfigError(f"Failed to save config: {e}") from e
+            raise AgentDriveConfigError(f"Failed to save config: {e}") from e
 
 
 def get_config_value(key: str, default: Any = None) -> Any:

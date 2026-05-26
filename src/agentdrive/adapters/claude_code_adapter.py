@@ -15,8 +15,8 @@ How the user instructs Claude:
      started with `python -m agentdrive.adapters.mcp_server`) or activate the
      Python adapter if you have direct execution:
 
-     from agentdrive.adapters.claude_code_adapter import ClaudeCodeAgent DriveAdapter
-     adapter = ClaudeCodeAgent DriveAdapter()
+     from agentdrive.adapters.claude_code_adapter import ClaudeCodeAgentDriveAdapter
+     adapter = ClaudeCodeAgentDriveAdapter()
      adapter.activate(swarm_id='claude-research-swarm')
 
      Then always pull DNA with get_scoped_pool() before big tasks and record
@@ -36,12 +36,12 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from agentdrive.adapters.base import AgentDrive, Agent DriveAdapterBase
+from agentdrive.adapters.base import AgentDrive, AgentDriveAdapterBase
 
 logger = logging.getLogger(__name__)
 
 
-class ClaudeCodeAgent DriveAdapter(Agent DriveAdapterBase):
+class ClaudeCodeAgentDriveAdapter(AgentDriveAdapterBase):
     """Lightweight adapter for Claude Code / Cursor / Claude Desktop users.
 
     In most cases you will not need to instantiate this at all — just run the
@@ -60,7 +60,7 @@ class ClaudeCodeAgent DriveAdapter(Agent DriveAdapterBase):
     def activate(self, swarm_id: str | None = None, **options: Any) -> None:
         super().activate(swarm_id=swarm_id, **options)
         logger.info(
-            "ClaudeCodeAgent DriveAdapter activated. "
+            "ClaudeCodeAgentDriveAdapter activated. "
             "If you have MCP access, prefer connecting the Agent Drive MCP server "
             "(python -m agentdrive.adapters.mcp_server) — it gives Claude native tools "
             "for pool_query, get_dna, record_outcome, etc."
@@ -94,6 +94,6 @@ class ClaudeCodeAgent DriveAdapter(Agent DriveAdapterBase):
 # Backwards-compatible alias from the pre-rename era. Both names resolve to
 # the same class; keeping the old import path working without forcing
 # downstream callers to update.
-ClaudeAgent DriveAdapter = ClaudeCodeAgent DriveAdapter
+ClaudeAgentDriveAdapter = ClaudeCodeAgentDriveAdapter
 
-__all__ = ["ClaudeCodeAgent DriveAdapter", "ClaudeAgent DriveAdapter"]
+__all__ = ["ClaudeCodeAgentDriveAdapter", "ClaudeAgentDriveAdapter"]

@@ -59,9 +59,9 @@ except ImportError:
 
 def _get_adapter():
     """Return a universal adapter (no model-specific patching needed for MCP)."""
-    from agentdrive.adapters.base import Agent DriveAdapterBase
+    from agentdrive.adapters.base import AgentDriveAdapterBase
 
-    return Agent DriveAdapterBase(name="mcp")
+    return AgentDriveAdapterBase(name="mcp")
 
 
 def _get_pool(swarm_id: str | None = None, subagent_id: str | None = None):

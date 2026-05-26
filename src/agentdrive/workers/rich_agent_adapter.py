@@ -276,7 +276,7 @@ class RichAgentAdapter:
             )
 
             # (In a production integration the raw trajectory would also be
-            #  fed to Agent DriveRunScanner to auto-extract a new/improved Genome.)
+            #  fed to AgentDriveRunScanner to auto-extract a new/improved Genome.)
 
         # End of harness context
 

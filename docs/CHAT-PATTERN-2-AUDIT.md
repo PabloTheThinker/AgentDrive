@@ -60,7 +60,7 @@ blocking, callback-based streaming via `on_chunk`. See
 (post-turn) at 512–542.
 
 **Where the session saves:** **Not in chat.py.** Persistence is owned by
-`Agent DriveAgent.send()` internally; chat.py never calls a save method. The only
+`AgentDriveAgent.send()` internally; chat.py never calls a save method. The only
 read of session state is `self.agent.session.turns` (lines 330, 351, 650, 848).
 
 ---
@@ -116,7 +116,7 @@ region stays on screen after the turn, which is correct and must be preserved.
 Instance state held on `ChatView` (constructor 110–149):
 
 - `self.tui`, `self.console`, `self.skin`, `self.palette` — UI handles.
-- `self.agent_id`, `self.agent` (`Agent DriveAgent`) — owns session + pool + LLM.
+- `self.agent_id`, `self.agent` (`AgentDriveAgent`) — owns session + pool + LLM.
 - `self.indicator_style` (default `"unicode"`) — mutated by `/indicator`.
 - `self.show_reasoning_hints` (bool) — mutated by `/reasoning`.
 - `self._last_user_message` (Optional[str]) — used by `/retry` (840–852);

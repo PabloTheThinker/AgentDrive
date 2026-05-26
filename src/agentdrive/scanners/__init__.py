@@ -6,6 +6,6 @@ systems) and extracts reusable reasoning patterns, frameworks, and improvements.
 """
 
 from .base import BaseScanner
-from .rich_run_scanner import RichRunScanner, Agent DriveRunScanner
+from .rich_run_scanner import RichRunScanner, AgentDriveRunScanner
 
-__all__ = ["BaseScanner", "Agent DriveRunScanner", "RichRunScanner"]
+__all__ = ["BaseScanner", "AgentDriveRunScanner", "RichRunScanner"]
