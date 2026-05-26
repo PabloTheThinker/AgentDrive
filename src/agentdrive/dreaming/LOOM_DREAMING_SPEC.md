@@ -1,7 +1,7 @@
 Codex usage: in=1617 out=22188
-# Grid Dreaming — Refined Concept
+# Loom Dreaming — Refined Concept
 
-Grid Dreaming is Agent Drive’s substrate-wide reflection cycle: an append-only, offline-biased process that consolidates signals from the whole Grid, stress-tests what it learned, and turns the strongest structures into three kinds of waking-state artifacts: durable memory, evolved genomes, and reusable reasoning patterns. The key architectural shift from OpenClaw is that dreaming is no longer “workspace memory maintenance”; it is a substrate self-modeling mechanism.
+Loom Dreaming is Agent Drive’s substrate-wide reflection cycle: an append-only, offline-biased process that consolidates signals from the whole Grid, stress-tests what it learned, and turns the strongest structures into three kinds of waking-state artifacts: durable memory, evolved genomes, and reusable reasoning patterns. The key architectural shift from OpenClaw is that dreaming is no longer “workspace memory maintenance”; it is a substrate self-modeling mechanism.
 
 ## 1) Common signal model
 
@@ -138,7 +138,7 @@ Outputs are not just pass/fail. Each candidate gets:
 - contradiction refs
 - reason for demotion or quarantine
 
-This makes REM biologically useful: the Grid doesn’t merely fantasize; it tests its fantasies against internal threat models.
+This makes REM biologically useful: the Loom doesn’t merely fantasize; it tests its fantasies against internal threat models.
 
 ## 5) Three-lane promotion
 
@@ -218,7 +218,7 @@ The design should therefore launch with strict staging, narrow commit thresholds
 
 ```python
 """
-dreaming — public surface for Grid Dreaming.
+dreaming — public surface for Loom Dreaming.
 
 Design goals:
 - Expose a small orchestration surface without hiding raw primitives.
@@ -1304,7 +1304,7 @@ class DeepPhase:
 
 ```python
 """
-engine — top-level Grid Dreaming orchestrator.
+engine — top-level Loom Dreaming orchestrator.
 
 Design goals:
 - Thread sleep detection, phase execution, checkpointing, and narrative together.
@@ -1337,7 +1337,7 @@ from agentdrive.genome.models import Genome
 
 @dataclass
 class DreamEngineConfig:
-    """Runtime configuration for Grid Dreaming orchestration."""
+    """Runtime configuration for Loom Dreaming orchestration."""
 
     paths: DreamPaths = field(default_factory=DreamPaths)
     ingestion: IngestionConfig = field(default_factory=IngestionConfig)
@@ -1372,7 +1372,7 @@ class DreamEngine:
         self.deep_phase = DeepPhase(weights=self.config.weights, config=self.config.phase)
 
     def run_if_idle(self) -> str | None:
-        """Run Grid Dreaming only if a sleep window can be opened safely."""
+        """Run Loom Dreaming only if a sleep window can be opened safely."""
         window = detect_sleep_window(self.config.dilation)
         if window is None and not self.config.force_when_idle_unknown:
             return None
