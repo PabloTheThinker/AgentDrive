@@ -1,4 +1,4 @@
-"""Unit tests for ``savant.tui.subagent_tree``."""
+"""Unit tests for ``agentdrive.tui.subagent_tree``."""
 
 from __future__ import annotations
 

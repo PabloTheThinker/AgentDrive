@@ -1,9 +1,9 @@
 """Reasoning reconstructor — walk the ledger, surface the chain of thought.
 
-Core foundational reasoning primitive in Savant for extracting patterns
+Core foundational reasoning primitive in Agent Drive for extracting patterns
 from agent runs into Genomes.
 
-Savant / DNA Scanner role:
+Agent Drive / DNA Scanner role:
 - Given ledger entries (or any run trace data shaped like LedgerEntry),
   `reconstruct_trace` produces a typed `ReasoningTrace` with ordered
   `TraceStep`s, counts moved, citations, failures, durations.

@@ -1,5 +1,5 @@
 """
-Built-in provider profiles for Savant.
+Built-in provider profiles for Agent Drive.
 Each profile defines connection settings, env var names, and model lists.
 """
 

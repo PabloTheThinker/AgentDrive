@@ -1,8 +1,8 @@
 """
-Savant Reasoning Primitives — first-class components for DNA extraction
+Agent Drive Reasoning Primitives — first-class components for DNA extraction
 and Genome enrichment.
 
-These are the core structural-cognition primitives powering Savant scanners,
+These are the core structural-cognition primitives powering Agent Drive scanners,
 Genome synthesis, and evolutionary improvement. (Detailed technical history
 of the reasoning layer is recorded in ARCHITECTURE.md.)
 
@@ -74,8 +74,8 @@ future extension):
 - postmortem_runner.py (domain-specific composer for security incidents;
   the example genome uses similar logic — can be re-implemented on top
   of these primitives)
-- framework_runner.py (the full 5-layer savant pass; now easy to rebuild
-  using the 8 primitives above + a new SavantPass orchestrator)
+- framework_runner.py (the full 5-layer agentdrive pass; now easy to rebuild
+  using the 8 primitives above + a new Agent DrivePass orchestrator)
 - inferencer.py, schema.py, calibration.py, joins.py, layers.py, etc.
   (valuable but lower priority for the core "reasoning for DNA" mandate;
   inferencer can be added when transcript-based scanners land)
@@ -84,11 +84,11 @@ Design decisions for the port:
 - All code is 1:1 faithful in algorithms, dataclasses, and output shapes.
 - Internal imports updated to relative (e.g. causality imports from .reasoning).
 - Default storage paths use ~/.agentdrive/reasoning/...
-  (ledger/, patterns/, etc.) and made overridable via SAVANT_REASONING_ROOT
+  (ledger/, patterns/, etc.) and made overridable via AGENTDRIVE_REASONING_ROOT
   env var.
-- Agent strings use "savant-core".
-- Full docstrings updated with Savant/Genome/DNA scanner context while
-  preserving the original "savant-like" voice and precision.
+- Agent strings use "agentdrive-core".
+- Full docstrings updated with Agent Drive/Genome/DNA scanner context while
+  preserving the original "agentdrive-like" voice and precision.
 - No new runtime dependencies; pure stdlib + the dataclasses already used.
 - Each module is independently importable and testable.
 
@@ -143,7 +143,7 @@ This keeps scanners thin and delegates all structural rigor to the
 reasoning package.
 
 The primitives remain directly callable for power users and for
-re-building higher-level composers (e.g. a SavantPass or domain
+re-building higher-level composers (e.g. a Agent DrivePass or domain
 postmortems).
 
 ============================================================================
@@ -152,7 +152,7 @@ postmortems).
 from __future__ import annotations
 
 # Re-export all public symbols from the 8 modules so "import agentdrive.reasoning"
-# gives the full savant experience (and scanners don't have to know the file layout).
+# gives the full agentdrive experience (and scanners don't have to know the file layout).
 from .anomaly import (
     Anomaly,
     detect_anomalies,
@@ -246,4 +246,4 @@ __all__ = [
 
 # Convenience: also expose the package version / identity for genomes that
 # record which reasoning primitives produced them.
-REASONING_PRIMITIVES_VERSION = "savant-reasoning-0.1.0"
+REASONING_PRIMITIVES_VERSION = "agentdrive-reasoning-0.1.0"

@@ -1,9 +1,9 @@
 # AgentDrive Swarms — Per-Sub-Agent DNA Pools & Collective Growth
 
 > AgentDrive is the product; the swarm primitives below are exposed by the
-> underlying Savant engine. See [README](../README.md).
+> underlying Agent Drive engine. See [README](../README.md).
 
-When any AI system — Grok’s build tools, Claude Code, Codex, custom orchestrators, or your own agent code — spawns sub-agents, each child can (and should) receive its own **isolated Savant Pool**.
+When any AI system — Grok’s build tools, Claude Code, Codex, custom orchestrators, or your own agent code — spawns sub-agents, each child can (and should) receive its own **isolated Agent Drive Pool**.
 
 This is the foundation of true swarm intelligence: every sub-agent grows its own private DNA (memory + reasoning patterns) while the collective can still benefit under explicit, user-controlled sharing rules.
 
@@ -27,22 +27,22 @@ Every time a parent spawns a child:
 
 1. The parent (or the spawning runtime) assigns a `swarm_id` (e.g., the parent mission or conversation ID) and a unique `subagent_id`.
 2. The child is launched with environment or context:
-   - `SAVANT_SWARM_ID`
-   - `SAVANT_SUBAGENT_ID`
-3. Savant code (adapters, harness factory, or pool constructor) uses these to instantiate a scoped pool:
+   - `AGENTDRIVE_SWARM_ID`
+   - `AGENTDRIVE_SUBAGENT_ID`
+3. Agent Drive code (adapters, harness factory, or pool constructor) uses these to instantiate a scoped pool:
 
 ```python
-from savant.constants import get_swarm_pool_path
-from savant.pool.pool import SavantPool
-from savant.pool.settings import get_effective_pool_settings
+from agentdrive.constants import get_swarm_pool_path
+from agentdrive.pool.pool import Agent DrivePool
+from agentdrive.pool.settings import get_effective_pool_settings
 
 pool_dir = get_swarm_pool_path(swarm_id, subagent_id)
-pool = SavantPool(pool_dir=pool_dir, name=f"swarm-{swarm_id}-{subagent_id}")
+pool = Agent DrivePool(pool_dir=pool_dir, name=f"swarm-{swarm_id}-{subagent_id}")
 
 settings = get_effective_pool_settings(swarm_id, subagent_id)
 ```
 
-The pool directory is created on first use: `~/.savant/swarms/<swarm_id>/<subagent_id>/pool/`.
+The pool directory is created on first use: `~/.agentdrive/swarms/<swarm_id>/<subagent_id>/pool/`.
 
 - Starts empty (no contamination from parent or siblings).
 - Grows only with this sub-agent’s own high-quality work.
@@ -51,19 +51,19 @@ The pool directory is created on first use: `~/.savant/swarms/<swarm_id>/<subage
 ### Current Implementation Status
 
 - Full path helpers and per-swarm settings storage exist (`constants.py`, `pool/settings.py`).
-- `SavantPool` accepts custom `pool_dir`.
+- `Agent DrivePool` accepts custom `pool_dir`.
 - `PoolSettingsManager` supports global + per-swarm overrides.
-- TUI and CLI recognize swarms (`pool_view.py`, `savant pool swarms` planned).
+- TUI and CLI recognize swarms (`pool_view.py`, `agentdrive pool swarms` planned).
 - Full auto-wiring of `get_default_pool()` + harness to read env vars and select the correct directory is the next integration step (see `MISSION_PLAN.md`).
 
-Until the final wiring, external integrators explicitly pass the scoped `SavantPool` or `pool_dir` when creating harnesses/adapters for sub-agents.
+Until the final wiring, external integrators explicitly pass the scoped `Agent DrivePool` or `pool_dir` when creating harnesses/adapters for sub-agents.
 
 ## DNA as Memory + Patterns for Sub-Agents
 
 Each sub-agent’s pool contains Genomes that encode:
 
 - **Frameworks** it discovered or successfully applied.
-- **Reasoning patterns** mined from its own trajectories (via `SavantRunScanner` + reasoning engine: causality, contradictions, anomalies, synthesis).
+- **Reasoning patterns** mined from its own trajectories (via `Agent DriveRunScanner` + reasoning engine: causality, contradictions, anomalies, synthesis).
 - **Tool compositions** and guardrail sequences that worked for *its* tasks.
 - **Self-evaluations** and micro-patterns it surfaced during reflection.
 
@@ -105,7 +105,7 @@ The TUI Pool view provides a first-class “Swarm Overview” showing every sub-
 1. User (or Grok) starts a complex mission: “Refactor the payment service and write full security + reliability analysis.”
 2. Grok spawns 4 sub-agents with distinct roles, each receiving `swarm_id="mission-xyz-2026-05"` and unique subagent ids.
 3. Each sub-agent:
-   - Gets empty private pool under `~/.savant/swarms/mission-xyz-2026-05/<sub-id>/pool/`
+   - Gets empty private pool under `~/.agentdrive/swarms/mission-xyz-2026-05/<sub-id>/pool/`
    - Begins work using Harness + RichAgentAdapter (or equivalent for its model).
    - Discovers specialized patterns (e.g., one finds a novel contradiction-detection heuristic for financial code).
 4. High-quality sub-agent runs auto-ingest into its private pool and, if policy allows, propose upward.
@@ -121,7 +121,7 @@ The TUI Pool view provides a first-class “Swarm Overview” showing every sub-
 - **No more “amnesia” across sub-agents**: Each keeps its hard-won expertise.
 - **Controlled compounding**: You decide how much cross-pollination occurs.
 - **Auditability**: Full ingest logs + provenance in every Genome.
-- **Portability**: Move `~/.savant/swarms/` between machines; sub-agents resume with their DNA intact.
+- **Portability**: Move `~/.agentdrive/swarms/` between machines; sub-agents resume with their DNA intact.
 - **Multi-model swarms**: A Grok-spawned sub-agent, a Claude sub-agent, and a local Codex worker can all participate in the same swarm family using their respective adapters.
 
 ## Getting Started with Swarms (Quickstart)
@@ -132,15 +132,15 @@ Minimal manual example (until auto-env wiring is complete):
 
 ```python
 import os
-from savant import Harness, get_swarm_pool_path
-from savant.pool.pool import SavantPool
-from savant.pool.settings import get_effective_pool_settings
+from agentdrive import Harness, get_swarm_pool_path
+from agentdrive.pool.pool import Agent DrivePool
+from agentdrive.pool.settings import get_effective_pool_settings
 
-swarm_id = os.environ.get("SAVANT_SWARM_ID", "demo-swarm-001")
-sub_id   = os.environ.get("SAVANT_SUBAGENT_ID", "worker-1")
+swarm_id = os.environ.get("AGENTDRIVE_SWARM_ID", "demo-swarm-001")
+sub_id   = os.environ.get("AGENTDRIVE_SUBAGENT_ID", "worker-1")
 
 pool_dir = get_swarm_pool_path(swarm_id, sub_id)
-pool = SavantPool(pool_dir=pool_dir)
+pool = Agent DrivePool(pool_dir=pool_dir)
 
 settings = get_effective_pool_settings(swarm_id)
 print("Effective settings for this sub-agent:", settings)
@@ -151,10 +151,10 @@ harness = Harness(agent_id=f"{swarm_id}:{sub_id}", pool=pool)
 
 Instruct any parent agent:
 
-> “When you spawn sub-agents for this mission, assign each a unique SAVANT_SUBAGENT_ID under swarm_id ‘payment-refactor-2026’, attach the Harness with the corresponding scoped pool, and set isolation_level=subagent with selective upward proposals.”
+> “When you spawn sub-agents for this mission, assign each a unique AGENTDRIVE_SUBAGENT_ID under swarm_id ‘payment-refactor-2026’, attach the Harness with the corresponding scoped pool, and set isolation_level=subagent with selective upward proposals.”
 
-The Savant system makes swarm-scale, self-improving, user-sovereign agent collectives practical today.
+The Agent Drive system makes swarm-scale, self-improving, user-sovereign agent collectives practical today.
 
 ---
 
-**Savant Swarms turn every spawned child from a disposable worker into a lifelong learning citizen of your personal intelligence ecosystem.**
+**Agent Drive Swarms turn every spawned child from a disposable worker into a lifelong learning citizen of your personal intelligence ecosystem.**

@@ -1,15 +1,15 @@
 """
-Savant CLI - Production-grade command line interface.
+Agent Drive CLI - Production-grade command line interface.
 
-Just typing `savant` launches the full interactive TUI experience.
+Just typing `agentdrive` launches the full interactive TUI experience.
 
 Subcommand structure:
-  savant                    # Default: launch the TUI
+  agentdrive                    # Default: launch the TUI
   agentdrive setup              # Full interactive setup wizard (strongly recommended first time)
   agentdrive setup swarm        # Only reconfigure Swarm & Sub-Agent DNA policies
   agentdrive tui
   agentdrive web
-  savant onboard            # Lightweight first-run consent flow
+  agentdrive onboard            # Lightweight first-run consent flow
   agentdrive doctor
   agentdrive drive ...
 
@@ -36,7 +36,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from agentdrive import (
-    SAVANT_VERSION,
+    AGENTDRIVE_VERSION,
     GenomeRegistry,
     get_agentdrive_home,
     get_config_value,
@@ -60,13 +60,13 @@ logger = get_logger("agentdrive.cli")
 
 def _print_banner() -> None:
     console.print(
-        "[bold cyan]Savant[/] — The Living, Learning Ecosystem for AI Agents\n"
-        f"[dim]v{SAVANT_VERSION}  •  {get_agentdrive_home()}[/]\n"
+        "[bold cyan]Agent Drive[/] — The Living, Learning Ecosystem for AI Agents\n"
+        f"[dim]v{AGENTDRIVE_VERSION}  •  {get_agentdrive_home()}[/]\n"
     )
 
 
 def cmd_version(args: argparse.Namespace) -> int:
-    console.print(f"AgentDrive {SAVANT_VERSION}")
+    console.print(f"AgentDrive {AGENTDRIVE_VERSION}")
     return 0
 
 
@@ -98,7 +98,7 @@ def cmd_web(args: argparse.Namespace) -> int:
 def cmd_genomes(args: argparse.Namespace) -> int:
     setup_logging()
     reg = GenomeRegistry()
-    # All logic lives in savant.genomes_api; this function is presentation only.
+    # All logic lives in agentdrive.genomes_api; this function is presentation only.
     from agentdrive import genomes_api
 
     if args.subcommand == "list" or not args.subcommand:
@@ -118,7 +118,7 @@ def cmd_genomes(args: argparse.Namespace) -> int:
             console.print()
             console.print(
                 info_line(
-                    f"No genomes registered yet. Run [agentdrive.genome]savant scan <dir>[/] "
+                    f"No genomes registered yet. Run [agentdrive.genome]agentdrive scan <dir>[/] "
                     f"or drop genomes into [agentdrive.genome]{reg.root}[/].",
                     palette=p,
                 )
@@ -149,7 +149,7 @@ def cmd_genomes(args: argparse.Namespace) -> int:
 
     if args.subcommand == "info":
         if not args.id:
-            console.print("[red]Usage: savant genomes info <genome-id>[/]")
+            console.print("[red]Usage: agentdrive genomes info <genome-id>[/]")
             return 1
         info = genomes_api.get_genome(args.id, registry=reg)
         if info is None:
@@ -229,11 +229,11 @@ def _run_doctor() -> int:
                 "Doctor",
                 [
                     ("home", f"[agentdrive.genome]{home}[/]"),
-                    ("version", f"v{SAVANT_VERSION}"),
+                    ("version", f"v{AGENTDRIVE_VERSION}"),
                 ],
                 palette=p,
             ),
-            title="◆ Savant health check",
+            title="◆ Agent Drive health check",
             palette=p,
         )
     )
@@ -493,7 +493,7 @@ def cmd_config(args: argparse.Namespace) -> int:
         console.print(
             section_panel(
                 Group(*blocks),
-                title="Savant Config",
+                title="Agent Drive Config",
                 palette=p,
             )
         )
@@ -690,7 +690,7 @@ def cmd_pool(args: argparse.Namespace) -> int:
             )
         console.print(table)
         console.print(
-            f"[dim]Returned {len(genomes)} genomes. Use 'savant genomes info <id>' for details.[/]"
+            f"[dim]Returned {len(genomes)} genomes. Use 'agentdrive genomes info <id>' for details.[/]"
         )
         return 0
 
@@ -811,7 +811,7 @@ def cmd_pool(args: argparse.Namespace) -> int:
 
 
 def cmd_quarantine(args: argparse.Namespace) -> int:
-    """Handler for the `savant quarantine` subcommand group.
+    """Handler for the `agentdrive quarantine` subcommand group.
 
     Trust-gated holding area: list / show / validate / approve / reject / hold
     candidate genomes received from sub-agents or peer pools.
@@ -990,7 +990,7 @@ def cmd_quarantine(args: argparse.Namespace) -> int:
 
 
 def cmd_peers(args: argparse.Namespace) -> int:
-    """Handler for the `savant peers` subcommand group.
+    """Handler for the `agentdrive peers` subcommand group.
 
     Federated peer registry — add / remove / list / set trust / sync.
     Every byte pulled from a peer routes through quarantine; `peers sync`
@@ -1150,7 +1150,7 @@ def cmd_peers(args: argparse.Namespace) -> int:
             console.print(
                 info_line(
                     f"{result.submitted} candidate(s) placed in quarantine — "
-                    f"review with 'savant quarantine list'.",
+                    f"review with 'agentdrive quarantine list'.",
                     palette=p,
                 )
             )
@@ -1168,12 +1168,12 @@ def cmd_peers(args: argparse.Namespace) -> int:
 
 
 def cmd_models(args: argparse.Namespace) -> int:
-    """Handler for the `savant models` subcommand group.
+    """Handler for the `agentdrive models` subcommand group.
 
     AgentDrive local LLM backends — list (v1).  Reads
     ``~/.agentdrive/local_models.yaml`` (creating a default scaffold on first
     run), probes each spec in parallel for reachability, and renders the
-    result through the existing chrome (matching ``savant peers list``).
+    result through the existing chrome (matching ``agentdrive peers list``).
     """
     setup_logging()
     from concurrent.futures import ThreadPoolExecutor
@@ -1250,10 +1250,10 @@ def cmd_models(args: argparse.Namespace) -> int:
 
 
 def cmd_reconcile(args: argparse.Namespace) -> int:
-    """Handler for the `savant reconcile` subcommand group.
+    """Handler for the `agentdrive reconcile` subcommand group.
 
     Runs a one-shot pool reconciliation pass, or shows the persisted state.
-    Heavy lifting lives in ``savant.reconciliation``; this surface only
+    Heavy lifting lives in ``agentdrive.reconciliation``; this surface only
     renders the report through the existing chrome.
     """
     setup_logging()
@@ -1336,7 +1336,7 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
             console.print(
                 info_line(
                     f"No reconciliation state at [agentdrive.genome]{state_path}[/]. "
-                    f"Run `savant reconcile run` first.",
+                    f"Run `agentdrive reconcile run` first.",
                     palette=p,
                 )
             )
@@ -1385,9 +1385,9 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
     if not args.yes:
         ok = confirm_prompt(
             console,
-            title="Uninstall Savant?",
+            title="Uninstall Agent Drive?",
             body=(
-                f"This will remove the savant venv at [agentdrive.genome]{get_agentdrive_home() / 'venv'}[/] "
+                f"This will remove the agentdrive venv at [agentdrive.genome]{get_agentdrive_home() / 'venv'}[/] "
                 f"and the [agentdrive.genome]~/.local/bin/agentdrive[/] shim."
             ),
             default_yes=False,
@@ -1396,7 +1396,7 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
         )
         if not ok:
             console.print()
-            console.print(info_line("Cancelled. Savant is still installed.", palette=p))
+            console.print(info_line("Cancelled. Agent Drive is still installed.", palette=p))
             return 0
 
     venv_dir = get_agentdrive_home() / "venv"
@@ -1414,7 +1414,7 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
     else:
         remove_data = confirm_prompt(
             console,
-            title="Also remove all Savant data?",
+            title="Also remove all Agent Drive data?",
             body=(
                 f"This will delete [agentdrive.genome]{get_agentdrive_home()}[/] "
                 f"including all pools, genomes, sessions, and the mission board.\n"
@@ -1432,7 +1432,7 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
             console.print(ok_line(f"Removed data at [agentdrive.genome]{home}[/]", palette=p))
 
     console.print()
-    console.print(ok_line("Savant uninstalled.", palette=p))
+    console.print(ok_line("Agent Drive uninstalled.", palette=p))
     return 0
 
 
@@ -1445,13 +1445,13 @@ def cmd_clean(args: argparse.Namespace) -> int:
 
     home = get_agentdrive_home()
     if not home.exists():
-        console.print(warn_line("No Savant data found.", palette=p))
+        console.print(warn_line("No Agent Drive data found.", palette=p))
         return 0
 
     if args.all and not getattr(args, "yes", False):
         ok = confirm_prompt(
             console,
-            title="Clean ALL Savant data including genomes?",
+            title="Clean ALL Agent Drive data including genomes?",
             body=(
                 f"This will delete cache/, pool/, logs/, reasoning/, "
                 f"AND [agentdrive.warn]genomes/[/] under [agentdrive.genome]{home}[/].\n"
@@ -1480,7 +1480,7 @@ def cmd_clean(args: argparse.Namespace) -> int:
             console.print(ok_line(f"Cleaned [agentdrive.genome]{genomes_dir}[/]", palette=p))
 
     console.print()
-    console.print(ok_line("Savant data cleaned.", palette=p))
+    console.print(ok_line("Agent Drive data cleaned.", palette=p))
     return 0
 
 
@@ -1530,7 +1530,7 @@ def _fetch_recent_commits(branch: str = "main", limit: int = 5) -> list[dict]:
 
 
 def _verify_installed_version(venv_pip: Path) -> str | None:
-    """Return the version of savant installed in the venv."""
+    """Return the version of agentdrive installed in the venv."""
     try:
         out = subprocess.run(
             [str(venv_pip), "show", "agentdrive"],
@@ -1547,7 +1547,7 @@ def _verify_installed_version(venv_pip: Path) -> str | None:
 
 
 def cmd_reinstall(args: argparse.Namespace) -> int:
-    """Reinstall Savant from the same source into the venv.
+    """Reinstall Agent Drive from the same source into the venv.
 
     Same flow as ``cmd_update`` but skips the up-to-date short-circuit so it
     always force-reinstalls — used after corruption or to recover from a bad
@@ -1581,9 +1581,9 @@ def _run_update_flow(args: argparse.Namespace, force: bool) -> int:
         return 1
 
     # ─── Pre-flight panel ────────────────────────────────────────────
-    current_version = _verify_installed_version(venv_pip) if venv_pip.exists() else SAVANT_VERSION
+    current_version = _verify_installed_version(venv_pip) if venv_pip.exists() else AGENTDRIVE_VERSION
     pre = Group(
-        Text.from_markup("[bold cyan]◆ Savant update[/]"),
+        Text.from_markup("[bold cyan]◆ Agent Drive update[/]"),
         Text.from_markup(f"  [dim]source[/]  {_REPO_HTTPS}"),
         Text.from_markup(f"  [dim]branch[/]  {branch}"),
         Text.from_markup(f"  [dim]current[/] v{current_version or '?'}"),
@@ -1602,7 +1602,7 @@ def _run_update_flow(args: argparse.Namespace, force: bool) -> int:
             "Install upgrade",
             "Verify installation",
         ],
-        title="Updating Savant",
+        title="Updating Agent Drive",
     )
     steps.start()
 
@@ -1708,7 +1708,7 @@ def _run_update_flow(args: argparse.Namespace, force: bool) -> int:
     rows.append(Text(""))
     rows.append(
         Text.from_markup(
-            "  [dim]restart any open[/] [cyan]savant[/] [dim]TUI for changes to take effect[/]"
+            "  [dim]restart any open[/] [cyan]agentdrive[/] [dim]TUI for changes to take effect[/]"
         )
     )
     console.print(Panel(Group(*rows), border_style="green", padding=(1, 2)))
@@ -1716,7 +1716,7 @@ def _run_update_flow(args: argparse.Namespace, force: bool) -> int:
 
 
 def _is_same_revision(current_version: str, remote_sha: str) -> bool:
-    """Heuristic: if SAVANT_VERSION embeds the remote SHA, treat as up-to-date.
+    """Heuristic: if AGENTDRIVE_VERSION embeds the remote SHA, treat as up-to-date.
 
     Until we wire commit-tagged dev versions, this is conservative:
     just compare the trimmed SHA against the version trailer.
@@ -1930,7 +1930,7 @@ def cmd_demo_swarm(args: argparse.Namespace) -> int:
     setup_logging()
 
     palette = Palette(skin)
-    tree = SubagentTree(root_id="orchestrator", root_label="savant orchestrator")
+    tree = SubagentTree(root_id="orchestrator", root_label="agentdrive orchestrator")
 
     # Subscribe the tree to the default bus so any emission updates state.
     token = default_bus.subscribe(tree.apply)
@@ -2048,7 +2048,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="agentdrive",
         description="AgentDrive — local-first Drive for AI agents",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""First run:  savant                    (guided onboarding + TUI)
+        epilog="""First run:  agentdrive                    (guided onboarding + TUI)
 Setup:     agentdrive setup              (full wizard, all sections)
 TUI:       agentdrive tui                (launch directly)
 Web:       agentdrive web                (http://127.0.0.1:8421)
@@ -2064,12 +2064,12 @@ Provider & model:
   agentdrive model set <model-id>
 
 Genomes & config:
-  savant genomes list             agentdrive config show
+  agentdrive genomes list             agentdrive config show
   agentdrive config get <key>         agentdrive config set <key> <value>
-  savant scan /path/to/run
+  agentdrive scan /path/to/run
 
 Self-manage:
-  savant update        savant reinstall        savant clean        savant uninstall
+  agentdrive update        agentdrive reinstall        agentdrive clean        agentdrive uninstall
 
   AGENTDRIVE_HOME=/tmp/test agentdrive doctor          (isolated test environment)
 """,
@@ -2260,7 +2260,7 @@ Self-manage:
 
     pe_add = pe_subs.add_parser("add", help="Register a peer")
     pe_add.add_argument("peer_id")
-    pe_add.add_argument("address", help="file:///path, https://..., or savant://host")
+    pe_add.add_argument("address", help="file:///path, https://..., or agentdrive://host")
     pe_add.add_argument(
         "--trust",
         default="untrusted",
@@ -2334,7 +2334,7 @@ Self-manage:
 def main() -> None:
     # Very early defensive setup (robust CLI bootstrap)
     if "--version" in sys.argv:
-        print(f"AgentDrive {SAVANT_VERSION}")
+        print(f"AgentDrive {AGENTDRIVE_VERSION}")
         sys.exit(0)
 
     parser = build_parser()

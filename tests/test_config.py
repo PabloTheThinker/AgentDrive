@@ -1,12 +1,12 @@
-"""Tests for savant.config and constants (isolated home)"""
+"""Tests for agentdrive.config and constants (isolated home)"""
 
 from agentdrive.config import get_config_value, load_config, set_config_value
 from agentdrive.constants import get_agentdrive_home
 
 
-def test_home_is_isolated(isolated_savant_home):
+def test_home_is_isolated(isolated_agentdrive_home):
     home = get_agentdrive_home()
-    assert str(home) == str(isolated_savant_home)
+    assert str(home) == str(isolated_agentdrive_home)
     assert home.exists()
 
 

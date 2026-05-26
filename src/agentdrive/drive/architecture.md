@@ -1,6 +1,6 @@
-# Savant Swarm Pool Architecture — Professional Design
+# Agent Drive Swarm Pool Architecture — Professional Design
 
-This document captures the **professional, high-grade** architecture for the Savant Swarm DNA Pool system.
+This document captures the **professional, high-grade** architecture for the Agent Drive Swarm DNA Pool system.
 
 ## Core Philosophy (Professional Subagent Excellence)
 
@@ -13,7 +13,7 @@ Mature agent systems handle sub-agents with exceptional rigor:
 - Parent only ever sees the summary, never the child's raw intermediate state
 - Global observability + control (pause, interrupt, status)
 
-Savant applies the exact same level of care to **DNA (memory + patterns)** instead of just tool execution.
+Agent Drive applies the exact same level of care to **DNA (memory + patterns)** instead of just tool execution.
 
 ## Key Components
 
@@ -99,6 +99,6 @@ The child starts with an **empty** pool and grows its own unique DNA. The parent
 - **Composable**: Parent and children can still benefit from each other when the user allows it.
 - **Professional error handling & logging** (matching high standards).
 
-This is the foundation that lets Savant turn "I spawned 7 sub-agents" into "I spawned 7 sub-agents that each developed deep, reusable expertise and the swarm as a whole became significantly smarter."
+This is the foundation that lets Agent Drive turn "I spawned 7 sub-agents" into "I spawned 7 sub-agents that each developed deep, reusable expertise and the swarm as a whole became significantly smarter."
 
 The implementation in `swarm_manager.py` + `swarm_policy.py` + `settings.py` is the professional heart of this system.

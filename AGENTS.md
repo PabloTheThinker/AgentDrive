@@ -7,7 +7,7 @@ If you're a human contributor, [`CONTRIBUTING.md`](CONTRIBUTING.md) + [`DEVELOPE
 ## What this project is
 
 - **Product:** AgentDrive — "RAID for AI agents." A local-first system that decomposes successful agent runs into typed, versioned **genomes** so agent capability survives the death of any individual process.
-- **Engine:** Savant. Open-source, MIT-licensed Python framework. Imported as `agentdrive` at the top of the public API; the internal modules retain `savant` naming in a few legacy spots.
+- **Engine:** Agent Drive. Open-source, MIT-licensed Python framework. Imported as `agentdrive` at the top of the public API; the internal modules retain `agentdrive` naming in a few legacy spots.
 - **Posture:** Local-first. Privacy-absolute. No cloud control plane, no telemetry, no shared cache. Federation is opt-in, pull-only, and routes every foreign genome through quarantine.
 
 Read [`VISION.md`](VISION.md) for the full framing before making non-trivial changes.

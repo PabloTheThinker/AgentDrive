@@ -1,5 +1,5 @@
 """
-Savant Harness — The execution adapter for participating in the AgentDrive.
+Agent Drive Harness — The execution adapter for participating in the AgentDrive.
 
 Any agent (rich external or custom) can use `Harness` to:
 - Pull relevant DNA from the Drive for a task

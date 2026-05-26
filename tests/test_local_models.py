@@ -1,4 +1,4 @@
-"""Tests for ``savant.local_models`` — the AgentDrive local-model adapter layer.
+"""Tests for ``agentdrive.local_models`` — the AgentDrive local-model adapter layer.
 
 HTTP is mocked at the ``httpx`` boundary via ``unittest.mock`` — no test
 touches a real Ollama / LM Studio / vLLM endpoint.

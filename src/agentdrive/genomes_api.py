@@ -1,8 +1,8 @@
 """
-savant.genomes_api — Pattern 5: one code path for genome operations.
+agentdrive.genomes_api — Pattern 5: one code path for genome operations.
 
 Pure-logic layer that returns typed data structures. No console.print, no Rich,
-no UI. Both the CLI subcommands (`savant genomes ...`) and the chat slash
+no UI. Both the CLI subcommands (`agentdrive genomes ...`) and the chat slash
 commands (`/genomes`, `/genome <id>`, etc.) route through here so the *logic*
 stays single-sourced while each surface owns its own *presentation*.
 
@@ -187,7 +187,7 @@ def search_genomes(
     """Run a pool query and return typed matches.
 
     Wraps `AgentDrive.query(DriveQuery(...))`. Both the CLI's
-    `savant pool query` and the chat `/genome-search` (future) go through here.
+    `agentdrive pool query` and the chat `/genome-search` (future) go through here.
     """
     q = DriveQuery(
         task_description=query or "",
@@ -223,7 +223,7 @@ def search_genomes(
 def list_inheritance_manifests(swarm_id: str | None = None) -> list[InheritanceManifest]:
     """Return every inheritance manifest on disk, optionally filtered by swarm.
 
-    Thin wrapper around ``savant.inheritance.list_manifests`` so UI layers
+    Thin wrapper around ``agentdrive.inheritance.list_manifests`` so UI layers
     have a single typed entry point through ``genomes_api``.
     """
     from agentdrive.inheritance import InheritanceManifest, list_manifests  # noqa: F401

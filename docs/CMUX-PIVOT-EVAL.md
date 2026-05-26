@@ -1,4 +1,4 @@
-# Savant — cmux-style pivot evaluation
+# Agent Drive — cmux-style pivot evaluation
 
 **Status:** draft for Pablo's review. No code touched. No commits.
 **Date:** 2026-05-24
@@ -22,17 +22,17 @@ no provenance.** Stated philosophy: *primitive-first* — provide the building
 blocks, let developers build workflows. Stack: Swift 81%, Python 10%,
 TypeScript 4%. macOS-only.
 
-## 2. What Savant currently is
+## 2. What Agent Drive currently is
 
-Savant is a Python agent-DNA-pool framework: every agent and sub-agent gets a
+Agent Drive is a Python agent-DNA-pool framework: every agent and sub-agent gets a
 private, persistent, file-on-disk pool of typed, versioned **Genomes**
-extracted from successful runs, with isolation under `~/.savant/swarms/`. The
+extracted from successful runs, with isolation under `~/.agentdrive/swarms/`. The
 pool-evolution stack already shipped (or specced and partially built) covers
 encounter-graded per-genome confidence, inheritance manifests on sub-agent
 hand-off, trust-gated quarantine of foreign DNA via a sandboxed evaluator,
 opt-in federated peer registry, and a background reconciliation routine that
 continuously absorbs new DNA through the trust gate. The reframe is explicit:
-Savant is becoming a **federated learning organism**, not a lookup library.
+Agent Drive is becoming a **federated learning organism**, not a lookup library.
 Current UI is a Rich + prompt_toolkit chat surface plus a Mission Board.
 Python 3.11+, Linux/macOS/Termux/WSL, MIT, local-first.
 
@@ -40,7 +40,7 @@ Python 3.11+, Linux/macOS/Termux/WSL, MIT, local-first.
 
 ### Option A — Full pivot
 
-Rebuild Savant's user-facing layer as a cmux-style multiplexer. Wins:
+Rebuild Agent Drive's user-facing layer as a cmux-style multiplexer. Wins:
 parallel agents become legible and demoable. Loses: the federated-learning
 moat goes invisible or vestigial; Python is the wrong stack for native
 terminal rendering; we enter a crowded category (tmux, zellij, cmux, Warp,
@@ -60,7 +60,7 @@ Risk: shell work is endless and will try to eat the roadmap.
 
 Stay on Rich + prompt_toolkit; pursue the existing UX-PROPOSAL plan. Safe.
 Preserves focus on the moat. Cost: invisibility — a stronger orchestrator
-could bolt on lightweight memory later and reduce Savant to a backend
+could bolt on lightweight memory later and reduce Agent Drive to a backend
 without a front door.
 
 **Recommendation: Option B, executed as integration-not-clone.** See §7.
@@ -72,12 +72,12 @@ all three sides and propose a fourth path if one existed. Verdict:
 
 > Option 1 is seductive and wrong. Option 2 is the strongest strategic fit.
 > Option 3 is defensible but leaves growth on the table. The best execution
-> is a third path: do not clone cmux; integrate with shells and keep Savant
+> is a third path: do not clone cmux; integrate with shells and keep Agent Drive
 > as the memory/control substrate.
 
 On the full pivot:
 
-> If you do this, Savant stops being Savant. You gain a better shell and
+> If you do this, Agent Drive stops being Agent Drive. You gain a better shell and
 > lose the only thing that is hard to copy.
 
 On the layered fit — and the right framing:
@@ -87,7 +87,7 @@ On the layered fit — and the right framing:
 
 On the third path — integrate instead of clone:
 
-> Make Savant headless first. Ship a control-plane protocol (Unix socket
+> Make Agent Drive headless first. Ship a control-plane protocol (Unix socket
 > or local HTTP/JSON-RPC, first-class event model). Build adapters, not
 > a renderer — cmux adapter, tmux adapter, Claude Code / Codex / Aider /
 > OpenCode hooks. Build an observability console (Mission Board, lineage
@@ -97,7 +97,7 @@ On the third path — integrate instead of clone:
 
 **My reaction:** agree on substance, disagree on sequencing. Codex's
 "headless first, adapters second, console third" is right architecturally but
-understates Pablo's current pain — Savant already feels invisible, and
+understates Pablo's current pain — Agent Drive already feels invisible, and
 shipping a protocol without a felt UX upgrade trades elegance for another
 quarter of users not seeing the pool grow. Invert: ship the observability
 console (UX-PROPOSAL Patterns 3+4 — pool ribbon + live sub-agent tree) on
@@ -106,7 +106,7 @@ when a second adapter demands it. Build the protocol on demand, not on spec.
 
 ## 5. If we pivot — the migration shape
 
-**Survives:** `savant.events`, `SavantPool`, `Harness`, encounter
+**Survives:** `agentdrive.events`, `Agent DrivePool`, `Harness`, encounter
 confidence, inheritance manifests, quarantine, peer registry, reconciliation,
 genome schema, swarm isolation, Mission Board data model, CLI subcommands.
 
@@ -117,7 +117,7 @@ landing surface; chat is a pane on top. The event bus (Pattern 1) becomes
 source-of-truth for an eventual control-plane protocol over a local socket.
 
 **Thrown away:** the current single-window prompt_toolkit composer as the
-*only* surface, the one-terminal-equals-one-Savant-session assumption, and
+*only* surface, the one-terminal-equals-one-Agent Drive-session assumption, and
 the polite turn-taking model.
 
 **Honest cost:** Option B is a 2-week visible rebuild on top of the ~5 days
@@ -155,16 +155,16 @@ extract the protocol when the second adapter demands it.**
 
 Concretely: finish UX-PROPOSAL Patterns 1+2+3+4 (event bus, keep-typing,
 pool activity ribbon, live sub-agent tree) on the current Rich stack. That
-gives Savant visible parallelism, visible learning, and an event vocabulary
+gives Agent Drive visible parallelism, visible learning, and an event vocabulary
 suitable for later protocol extraction. Then — *only* if a real cmux/tmux
 adapter user materializes — promote the event bus to a Unix-socket JSON-RPC
-control plane and ship a cmux adapter. Do not build a Savant-branded
+control plane and ship a cmux adapter. Do not build a Agent Drive-branded
 multiplexer. Do not rewrite in Swift. Do not become a terminal company.
 
 **Open question Pablo has to answer to lock this in:** does the umbrella
-product brand change? If Savant remains the umbrella, §6 is dead and the
+product brand change? If Agent Drive remains the umbrella, §6 is dead and the
 naming work is just for an eventual shell adapter. If the federated-learning
-substrate gets a new umbrella name (Axon / Lattice / Mycel) and "Savant"
+substrate gets a new umbrella name (Axon / Lattice / Mycel) and "Agent Drive"
 narrows to the Python framework / chat surface, then §6 is the live
 decision and the next move is picking one and updating ARCHITECTURE.md +
 VISION.md accordingly.

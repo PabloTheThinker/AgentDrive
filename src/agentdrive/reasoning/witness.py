@@ -1,21 +1,21 @@
 """Numeric witness — every claim must carry a count + timestamp + source + citation.
 
-Core reasoning primitive in Savant for witnessing/validating numeric claims
+Core reasoning primitive in Agent Drive for witnessing/validating numeric claims
 in DNA extraction and Genome enrichment.
 
-Savant usage:
+Agent Drive usage:
 - Scanners use `witness_claim` and `audit_vagueness` when extracting
   numeric assertions from agent run logs, traces, or outputs.
 - Ensures that `reasoning_patterns` in a Genome contain only high-signal,
   citable, non-vague claims.
 - Feeds directly into contradictions detector and ledger entries.
-- Part of the "savant-like precision": vague language is rejected at
+- Part of the "agentdrive-like precision": vague language is rejected at
   extraction time.
 
 Preserved: Citation, NumericClaim, VaguenessReport, audit_vagueness,
 witness_claim, witness_many.
 
-Adapted: default paths and docs point to Savant; no behavior change.
+Adapted: default paths and docs point to Agent Drive; no behavior change.
 """
 
 from __future__ import annotations

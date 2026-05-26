@@ -1,6 +1,6 @@
-# Security Policy for Savant
+# Security Policy for Agent Drive
 
-Savant gives AI agents persistent memory and the ability to evolve. Security is critical because the installer runs with user privileges and the framework can execute arbitrary agent code.
+Agent Drive gives AI agents persistent memory and the ability to evolve. Security is critical because the installer runs with user privileges and the framework can execute arbitrary agent code.
 
 ## Supported Versions
 
@@ -40,7 +40,7 @@ We aim to respond within 48 hours and will coordinate a fix + disclosure timelin
    - Dependencies in `pyproject.toml`
 
 3. **Agent Execution Surface**
-   - SavantHarness + genome execution can run user-provided (or pool-sourced) code.
+   - Agent DriveHarness + genome execution can run user-provided (or pool-sourced) code.
    - Pools can contain arbitrary reasoning patterns and tool compositions.
 
 4. **Data at Rest**
@@ -57,14 +57,14 @@ We aim to respond within 48 hours and will coordinate a fix + disclosure timelin
 
 ## Installer Security Recommendations for Users
 
-The safest ways to install Savant (in order):
+The safest ways to install Agent Drive (in order):
 
 1. **Review the script first** (strongly recommended for first-time users):
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/PabloTheThinker/AgentDrive/main/scripts/install.sh -o savant-install.sh
+   curl -fsSL https://raw.githubusercontent.com/PabloTheThinker/AgentDrive/main/scripts/install.sh -o agentdrive-install.sh
    # Review the file
-   less savant-install.sh
-   bash savant-install.sh
+   less agentdrive-install.sh
+   bash agentdrive-install.sh
    ```
 
 2. Use the branded URL only after you trust the project:
@@ -100,7 +100,7 @@ ecosystem and by lessons learned the hard way.
 
 Thank you for helping keep the agent ecosystem trustworthy.
 
-— The Savant Maintainers
+— The Agent Drive Maintainers
 
 ---
 

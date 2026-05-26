@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Savant Release Helper
+# Agent Drive Release Helper
 # Professional, safe release workflow
 #
 # Usage:

@@ -1,17 +1,17 @@
 """
-AgentDrive Mission Board — a Savant-native kanban for mission lifecycles.
+AgentDrive Mission Board — a Agent Drive-native kanban for mission lifecycles.
 
-While other terminal agents track tasks as ephemeral inline todos, the Savant
+While other terminal agents track tasks as ephemeral inline todos, the Agent Drive
 board treats *missions* as first-class persistent artifacts. Each mission
 card carries its genome lineage, outcome metrics, swarm scope, and pool
-contributions, and flows through lanes that map directly onto how Savant
+contributions, and flows through lanes that map directly onto how Agent Drive
 agents actually do work:
 
     Pending → Running → Done | Failed → Archived
 
 Use cases:
 - A user planning a multi-step run can stage missions as Pending cards.
-- A live `savant run` pushes its mission card through Running → Done|Failed
+- A live `agentdrive run` pushes its mission card through Running → Done|Failed
   with outcome metadata captured straight from the harness.
 - A swarm of sub-agents claim cards from Pending and report Done back to the
   shared board.

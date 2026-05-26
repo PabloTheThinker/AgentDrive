@@ -7,7 +7,7 @@ like to an operator.
 
 Run::
 
-    cd ~/savant && python3 scripts/test_healing_loop.py
+    cd ~/agentdrive && python3 scripts/test_healing_loop.py
 """
 
 from __future__ import annotations

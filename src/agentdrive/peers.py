@@ -1,6 +1,6 @@
-"""Federated peer registry — opt-in trusted peer Savants.
+"""Federated peer registry — opt-in trusted peer Agent Drives.
 
-Operators register other Savant instances they trust. The registry is the
+Operators register other Agent Drive instances they trust. The registry is the
 public face of proposal #6 in ``docs/POOL-EVOLUTION.md``. A `sync_peer`
 operation walks a peer's address through the matching `PeerAdapter`,
 collects new genome directories produced since the last sync, and routes
@@ -14,14 +14,14 @@ bypass validation in v1.
 Public key handling is a v1 placeholder. The ``public_key`` field
 persists alongside each peer entry, but no signature verification runs
 yet. Real ed25519 verification lands when the trust store ships
-(see ``SignatureValid`` in ``savant.quarantine``).
+(see ``SignatureValid`` in ``agentdrive.quarantine``).
 
 Adapter scope (v1):
     - ``LocalFilePeerAdapter`` (``file://`` and bare paths) — walks
       another AGENTDRIVE_HOME-like directory's ``genomes/`` tree. Enough to
       demo federation between two homes on the same machine.
 
-Adapters for ``https://`` and ``savant://`` schemes are intentionally
+Adapters for ``https://`` and ``agentdrive://`` schemes are intentionally
 out of scope here. They plug in by subclassing ``PeerAdapter``, setting
 ``SCHEME``, and registering via ``register_adapter``.
 
@@ -86,7 +86,7 @@ def _utc_now_iso() -> str:
 
 @dataclass
 class PeerEntry:
-    """One registered peer Savant.
+    """One registered peer Agent Drive.
 
     ``public_key`` is a placeholder slot in v1: it persists and round-trips
     but is not used for signature verification yet.
@@ -321,7 +321,7 @@ def _parse_file_address(address: str) -> Path | None:
         if parsed.netloc and parsed.netloc not in ("", "localhost"):
             return None
         return Path(parsed.path)
-    if address.startswith(("https://", "http://", "savant://")):
+    if address.startswith(("https://", "http://", "agentdrive://")):
         return None
     # Bare path is acceptable (operator typed a directory).
     return Path(address)
@@ -432,7 +432,7 @@ def _address_scheme(address: str) -> str:
         return "https"
     if address.startswith("http://"):
         return "http"
-    if address.startswith("savant://"):
+    if address.startswith("agentdrive://"):
         return "agentdrive"
     if "://" in address:
         # Unknown scheme (ftp://, gopher://, typos). Surface the literal
@@ -471,7 +471,7 @@ def sync_peer(
     ``Quarantine.submit()``. There is no code path in this function that
     calls ``target_pool.ingest`` — that argument is accepted only so the
     later approve step (an explicit operator action via
-    ``savant quarantine approve``) can route into the right pool.
+    ``agentdrive quarantine approve``) can route into the right pool.
 
     Emits ``PeerSyncStarted`` once at the top, ``PeerSyncCompleted`` once
     on exit (even on errors). Per-candidate failures are accumulated in
@@ -501,7 +501,7 @@ def sync_peer(
         return result
 
     # Lazy import keeps the module import cheap and dodges any chance of
-    # circular deps with savant.quarantine.
+    # circular deps with agentdrive.quarantine.
     from agentdrive.quarantine import get_default_quarantine
 
     quarantine = get_default_quarantine()

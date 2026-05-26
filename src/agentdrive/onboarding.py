@@ -1,8 +1,8 @@
 """
 AgentDrive Onboarding — polished first-run experience.
 
-When a user types `savant` for the first time, they get a guided,
-step-by-step flow that explains Savant, detects their environment,
+When a user types `agentdrive` for the first time, they get a guided,
+step-by-step flow that explains Agent Drive, detects their environment,
 sets up their pool, and gets them to the TUI.
 
 Renders against the unified chrome primitives so it feels like part of
@@ -17,8 +17,8 @@ from typing import Any
 from rich.console import Group
 from rich.text import Text
 
-from agentdrive.config import ensure_savant_home, get_agentdrive_home, load_config, save_config
-from agentdrive.constants import SAVANT_VERSION
+from agentdrive.config import ensure_agentdrive_home, get_agentdrive_home, load_config, save_config
+from agentdrive.constants import AGENTDRIVE_VERSION
 from agentdrive.drive.drive import get_default_drive
 from agentdrive.tui.chrome import (
     Glyphs,
@@ -64,7 +64,7 @@ def _detect_environment() -> dict[str, Any]:
 
         avail = list_available()
         if avail:
-            env["savant_providers"] = [p.display_name for p in avail]
+            env["agentdrive_providers"] = [p.display_name for p in avail]
     except Exception:
         pass
 
@@ -83,8 +83,8 @@ def _env_rows(env: dict[str, Any]) -> list[TreeRow]:
         items.append(("Anthropic API key", True))
     if env.get("claude_cli"):
         items.append(("Claude CLI", True))
-    for p in env.get("savant_providers") or []:
-        items.append((f"{p} (Savant)", True))
+    for p in env.get("agentdrive_providers") or []:
+        items.append((f"{p} (Agent Drive)", True))
 
     if not items:
         return [
@@ -115,7 +115,7 @@ def _print_step(current: int, total: int, title: str, description: str = "") -> 
 
 
 def run_onboarding() -> bool:
-    """Run the first-time Savant onboarding experience.
+    """Run the first-time Agent Drive onboarding experience.
 
     Returns True if onboarding completed successfully.
     """
@@ -136,8 +136,8 @@ def run_onboarding() -> bool:
     # ── Welcome panel ────────────────────────────────────────────────
     hero = Text()
     hero.append(f"{Glyphs.DIAMOND} ", style=PALETTE.accent)
-    hero.append("SAVANT", style=PALETTE.title + " bold")
-    hero.append(f"  v{SAVANT_VERSION}", style=PALETTE.muted)
+    hero.append("AGENTDRIVE", style=PALETTE.title + " bold")
+    hero.append(f"  v{AGENTDRIVE_VERSION}", style=PALETTE.muted)
 
     tagline = Text(
         "The Living, Learning Ecosystem for AI Agents",
@@ -163,8 +163,8 @@ def run_onboarding() -> bool:
 
     proceed = confirm_prompt(
         console,
-        title="Set up Savant now?",
-        body=f"This takes ~30 seconds. You can re-run setup any time with [{PALETTE.accent}]savant setup[/].",
+        title="Set up Agent Drive now?",
+        body=f"This takes ~30 seconds. You can re-run setup any time with [{PALETTE.accent}]agentdrive setup[/].",
         default_yes=True,
         palette=PALETTE,
     )
@@ -172,15 +172,15 @@ def run_onboarding() -> bool:
         console.print()
         console.print(
             info_line(
-                f"Onboarding skipped. Run [{PALETTE.accent}]savant setup[/] anytime.",
+                f"Onboarding skipped. Run [{PALETTE.accent}]agentdrive setup[/] anytime.",
                 palette=PALETTE,
             )
         )
         return False
 
     # ── Step 1: Home directory ────────────────────────────────────────
-    _print_step(1, TOTAL_STEPS, "Home directory", "Savant stores your data, config, and DNA here.")
-    ensure_savant_home()
+    _print_step(1, TOTAL_STEPS, "Home directory", "Agent Drive stores your data, config, and DNA here.")
+    ensure_agentdrive_home()
     console.print(
         ok_line(
             f"Ready at [agentdrive.genome]{home}[/]",
@@ -219,7 +219,7 @@ def run_onboarding() -> bool:
     consent = confirm_prompt(
         console,
         title="Allow automatic private pools for sub-agents?",
-        body=f"Sharing rules are off by default. You change them in [{PALETTE.accent}]savant setup swarm[/].",
+        body=f"Sharing rules are off by default. You change them in [{PALETTE.accent}]agentdrive setup swarm[/].",
         default_yes=True,
         palette=PALETTE,
     )
@@ -264,9 +264,9 @@ def run_onboarding() -> bool:
                     [
                         ("agentdrive", "open the agent chat"),
                         ("agentdrive provider set", "connect an AI model"),
-                        ("savant pool status", "check pool health"),
-                        ("savant doctor", "full system health check"),
-                        ("savant setup", "re-run any setup section"),
+                        ("agentdrive pool status", "check pool health"),
+                        ("agentdrive doctor", "full system health check"),
+                        ("agentdrive setup", "re-run any setup section"),
                     ],
                     palette=PALETTE,
                     key_width=20,
@@ -300,13 +300,13 @@ def init_minimal_config() -> None:
     """Materialize a minimal config + home layout for non-interactive use.
 
     Called when there's no TTY (CI, pipes, IDE shells) so commands like
-    `savant doctor` or `savant pool status` can run cleanly without firing
+    `agentdrive doctor` or `agentdrive pool status` can run cleanly without firing
     the onboarding flow on every invocation.
 
-    Leaves `onboarded: false` so `savant doctor` still nudges the user
-    toward `savant setup` when they next sit down at a real terminal.
+    Leaves `onboarded: false` so `agentdrive doctor` still nudges the user
+    toward `agentdrive setup` when they next sit down at a real terminal.
     """
-    ensure_savant_home()
+    ensure_agentdrive_home()
     cfg = {
         "onboarded": False,
         "agentdrive": {"log_level": "INFO"},

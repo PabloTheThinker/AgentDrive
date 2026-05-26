@@ -1,5 +1,5 @@
 """
-Savant MCP Server — Universal bridge exposing AgentDrive operations to any MCP-capable AI.
+Agent Drive MCP Server — Universal bridge exposing AgentDrive operations to any MCP-capable AI.
 
 This server lets Claude Code, Cursor, Codex, Grok clients, Windsurf, etc. talk to the
 user's AgentDrives using the standard Model Context Protocol (MCP) without any
@@ -11,21 +11,21 @@ Transports supported (via FastMCP):
     - streamable-http
 
 Run directly:
-    python -m savant.adapters.mcp_server
-    python -m savant.adapters.mcp_server --transport streamable-http --port 9876
+    python -m agentdrive.adapters.mcp_server
+    python -m agentdrive.adapters.mcp_server --transport streamable-http --port 9876
 
-Or via the Savant CLI (once wired):
-    savant mcp serve
+Or via the Agent Drive CLI (once wired):
+    agentdrive mcp serve
 
 Once running, the client AI is given tools such as:
-    savant_pool_query, savant_get_dna, savant_pool_stats, savant_list_swarms,
-    savant_ingest_summary, savant_get_settings, etc.
+    agentdrive_pool_query, agentdrive_get_dna, agentdrive_pool_stats, agentdrive_list_swarms,
+    agentdrive_ingest_summary, agentdrive_get_settings, etc.
 
 Any model the user tells "use your AgentDrive for this swarm" can be pointed at
 this MCP server (via its MCP config) and will immediately have live access to the
 DNA pool for pulling relevant genomes and (with write tools) contributing back.
 
-Security: the server only ever operates on the *user's local* Savant data.
+Security: the server only ever operates on the *user's local* Agent Drive data.
 The user remains fully in control via ~/.agentdrive/config.yaml (DriveSettings).
 """
 
@@ -53,15 +53,15 @@ except ImportError:
 
 
 # ---------------------------------------------------------------------------
-# Core Savant imports (inside functions to keep module import light)
+# Core Agent Drive imports (inside functions to keep module import light)
 # ---------------------------------------------------------------------------
 
 
 def _get_adapter():
     """Return a universal adapter (no model-specific patching needed for MCP)."""
-    from agentdrive.adapters.base import SavantAdapterBase
+    from agentdrive.adapters.base import Agent DriveAdapterBase
 
-    return SavantAdapterBase(name="mcp")
+    return Agent DriveAdapterBase(name="mcp")
 
 
 def _get_pool(swarm_id: str | None = None, subagent_id: str | None = None):
@@ -99,7 +99,7 @@ def create_mcp_server() -> FastMCP:
     """Build the FastMCP instance and register all AgentDrive tools."""
     if not _MCP_SERVER_AVAILABLE:
         raise ImportError(
-            "Savant MCP server requires the 'mcp' package.\n"
+            "Agent Drive MCP server requires the 'mcp' package.\n"
             f"Install with: {sys.executable} -m pip install 'mcp'"
         )
 
@@ -114,24 +114,24 @@ def create_mcp_server() -> FastMCP:
             "improvements back. All data belongs to the local user and respects their "
             "isolation / sharing policies.\n\n"
             "Recommended flow for any agent:\n"
-            "1. savant_pool_query or savant_get_dna_for_task\n"
+            "1. agentdrive_pool_query or agentdrive_get_dna_for_task\n"
             "2. Use the returned DNA to inform your reasoning / frameworks\n"
-            "3. After high-quality work: savant_record_outcome (or ingest)\n"
-            "Sub-agents automatically see their scoped pool when the parent sets SAVANT_* env vars."
+            "3. After high-quality work: agentdrive_record_outcome (or ingest)\n"
+            "Sub-agents automatically see their scoped pool when the parent sets AGENTDRIVE_* env vars."
         ),
     )
 
     # --- Read tools ---
 
     @mcp.tool()
-    def savant_pool_status() -> str:
+    def agentdrive_pool_status() -> str:
         """Current status of the active (possibly scoped) AgentDrive."""
         pool = adapter.get_scoped_pool()
         stats = pool.get_pool_stats()
         return json.dumps(stats, indent=2, default=str)
 
     @mcp.tool()
-    def savant_pool_query(
+    def agentdrive_pool_query(
         task_description: str,
         limit: int = 8,
         min_score: float = 0.0,
@@ -167,14 +167,14 @@ def create_mcp_server() -> FastMCP:
         return json.dumps({"count": len(packets), "results": packets}, indent=2, default=str)
 
     @mcp.tool()
-    def savant_get_dna_for_task(task: str, top_k: int = 5) -> str:
+    def agentdrive_get_dna_for_task(task: str, top_k: int = 5) -> str:
         """Primary 'pull DNA' call. Returns ready-to-inject packets with explanations."""
         pool = adapter.get_scoped_pool()
         packets = pool.get_dna_for_task(task, top_k=top_k)
         return json.dumps({"task": task, "dna_packets": packets}, indent=2, default=str)
 
     @mcp.tool()
-    def savant_list_swarms() -> str:
+    def agentdrive_list_swarms() -> str:
         """Discover all swarm-isolated pools that exist on this machine."""
         from agentdrive.constants import get_swarms_dir
 
@@ -189,7 +189,7 @@ def create_mcp_server() -> FastMCP:
         return json.dumps({"swarms": swarms, "swarms_dir": str(swarms_dir)}, indent=2)
 
     @mcp.tool()
-    def savant_get_swarm_pool(swarm_id: str, subagent_id: str | None = None) -> str:
+    def agentdrive_get_swarm_pool(swarm_id: str, subagent_id: str | None = None) -> str:
         """Status + recent activity for one specific swarm/sub-agent pool."""
         pool = _get_pool(swarm_id, subagent_id)
         stats = pool.get_pool_stats()
@@ -197,7 +197,7 @@ def create_mcp_server() -> FastMCP:
         return json.dumps({"stats": stats, "recent_ingest": history}, indent=2, default=str)
 
     @mcp.tool()
-    def savant_get_settings(swarm_id: str | None = None) -> str:
+    def agentdrive_get_settings(swarm_id: str | None = None) -> str:
         """User-controlled DriveSettings (isolation, auto-ingest, sharing policy)."""
         settings = adapter.get_settings(swarm_id)
         return json.dumps(settings.to_dict(), indent=2)
@@ -205,7 +205,7 @@ def create_mcp_server() -> FastMCP:
     # --- Write / contribution tools (respect settings) ---
 
     @mcp.tool()
-    def savant_record_outcome(
+    def agentdrive_record_outcome(
         task: str,
         outcome: dict[str, Any],
         swarm_id: str | None = None,
@@ -233,7 +233,7 @@ def create_mcp_server() -> FastMCP:
         )
 
     @mcp.tool()
-    def savant_ingest_genome(
+    def agentdrive_ingest_genome(
         genome_dict: dict[str, Any],
         source: str = "mcp",
         swarm_id: str | None = None,
@@ -241,7 +241,7 @@ def create_mcp_server() -> FastMCP:
     ) -> str:
         """Directly ingest a (partial) genome dict into the chosen pool.
 
-        For full genomes prefer using the Python API or savant CLI; this accepts
+        For full genomes prefer using the Python API or agentdrive CLI; this accepts
         a simplified manifest + framework for quick contributions from MCP clients.
         """
         from agentdrive.genome.models import Genome, GenomeManifest
@@ -261,11 +261,11 @@ def create_mcp_server() -> FastMCP:
             )
         except Exception as exc:
             return json.dumps(
-                {"error": str(exc), "hint": "Use full Python Savant API for complex genomes."}
+                {"error": str(exc), "hint": "Use full Python Agent Drive API for complex genomes."}
             )
 
     @mcp.tool()
-    def savant_propose_improvement(
+    def agentdrive_propose_improvement(
         genome_id: str,
         notes: str,
         new_patterns: dict[str, Any] | None = None,
@@ -293,10 +293,10 @@ def run_mcp_server(
     port: int = 9876,
     verbose: bool = False,
 ) -> None:
-    """Start the Savant MCP server."""
+    """Start the Agent Drive MCP server."""
     if not _MCP_SERVER_AVAILABLE:
         print(
-            "Error: Savant MCP server requires the 'mcp' package.\n"
+            "Error: Agent Drive MCP server requires the 'mcp' package.\n"
             f"Install with: {sys.executable} -m pip install 'mcp'",
             file=sys.stderr,
         )
@@ -307,7 +307,7 @@ def run_mcp_server(
     else:
         logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 
-    logger.info("Starting Savant MCP server (transport=%s)", transport)
+    logger.info("Starting Agent Drive MCP server (transport=%s)", transport)
 
     server = create_mcp_server()
 
@@ -324,7 +324,7 @@ def run_mcp_server(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Savant MCP Server exposing Pool DNA to any MCP client"
+        description="Agent Drive MCP Server exposing Pool DNA to any MCP client"
     )
     parser.add_argument(
         "--transport",

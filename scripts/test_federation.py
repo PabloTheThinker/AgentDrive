@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""End-to-end federation demo: three SAVANT_HOMEs proving the trust gate.
+"""End-to-end federation demo: three AGENTDRIVE_HOMEs proving the trust gate.
 
 Runs through the full peer/quarantine/inheritance flow without shelling out
-to the ``savant`` CLI — all calls hit the Python API directly. The goal is
+to the ``agentdrive`` CLI — all calls hit the Python API directly. The goal is
 to demonstrate, in practice (not just in unit tests), that the quarantine
 gate is unbypassable: every byte that crosses an instance boundary lands in
 quarantine, regardless of the peer's trust label.
@@ -396,7 +396,7 @@ def render_validation_table(
 
 
 def phase_setup(workdir: Path) -> dict:
-    divider("PHASE 1: SETUP — three isolated SAVANT_HOMEs")
+    divider("PHASE 1: SETUP — three isolated AGENTDRIVE_HOMEs")
     homes = {
         "A": workdir / f"fed-A-{os.getpid()}",
         "B": workdir / f"fed-B-{os.getpid()}",
@@ -690,7 +690,7 @@ def main() -> int:
     CONSOLE.print()
     CONSOLE.print(Panel(
         "[bold cyan]Vektra Federation Deep-Test[/]\n\n"
-        "Three SAVANT_HOMEs · peer trust gate · quarantine inversion · "
+        "Three AGENTDRIVE_HOMEs · peer trust gate · quarantine inversion · "
         "inheritance routing\n"
         "Hard contract under test: [bold]nothing crosses an instance "
         "boundary without quarantine.[/]",

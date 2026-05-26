@@ -1,4 +1,4 @@
-# AgentDrive / Savant — Project Status
+# AgentDrive / Agent Drive — Project Status
 
 **Date:** 2026-05-25
 **Audit scope:** docs, public naming, site truth, and local quality-gate wording.
@@ -8,22 +8,22 @@
 
 ## 1. Product / engine split
 
-AgentDrive is the public product name. Savant remains acceptable where it is
+AgentDrive is the public product name. Agent Drive remains acceptable where it is
 describing the internal engine, older design notes, or Python object names that
-still exist in historical examples. Public copy should not pitch "Savant" as the
+still exist in historical examples. Public copy should not pitch "Agent Drive" as the
 product unless the page is explicitly about engine internals.
 
 Current public-facing state:
 
-- `README.md` leads with AgentDrive and describes Savant only as an internal
+- `README.md` leads with AgentDrive and describes Agent Drive only as an internal
   engine concern where relevant.
 - `site/index.html` is AgentDrive-facing and should avoid overstating unbuilt
   surfaces.
-- `agentdrive` is the product CLI entrypoint in `pyproject.toml`; older `savant`
+- `agentdrive` is the product CLI entrypoint in `pyproject.toml`; older `agentdrive`
   command references in docs should be treated as legacy/internal unless
   confirmed still intentional.
 - `docs/POOL.md`, `docs/POOL-EVOLUTION.md`, and `docs/INTEGRATION.md` may keep
-  Savant terminology where they explain the engine pool model, but product
+  Agent Drive terminology where they explain the engine pool model, but product
   framing should point back to AgentDrive.
 
 ## 2. Current verification
@@ -61,8 +61,8 @@ code.
   legacy snapshot controls.
 - **Package hygiene.** Confirm stale rename artifacts are not tracked and keep
   generated package metadata ignored.
-- **Naming cleanup.** Older docs still contain Savant-first language. Keep
-  Savant where it means the engine; reduce it where it reads like public product
+- **Naming cleanup.** Older docs still contain Agent Drive-first language. Keep
+  Agent Drive where it means the engine; reduce it where it reads like public product
   branding.
 - **Docker/self-host demo.** Still absent unless added in another branch.
 - **PyPI/release.** Do not claim `pip install agentdrive` works from PyPI until
@@ -75,5 +75,5 @@ code.
 1. Build the `agentdrive web` Phase 2 dashboard pages and route snapshot control
    through the new FastAPI surface.
 2. Audit capability checks across CLI, web, adapters, and snapshot paths.
-3. Continue link-preserving naming cleanup in older Pool/Savant docs.
+3. Continue link-preserving naming cleanup in older Pool/Agent Drive docs.
 4. Add Docker/self-host and PyPI release paths only when they are real.

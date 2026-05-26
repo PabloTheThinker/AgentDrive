@@ -1,9 +1,9 @@
 """
-Base Worker and Agent Adapter interfaces for Savant.
+Base Worker and Agent Adapter interfaces for Agent Drive.
 
 These abstractions allow any capable external or rich agent to be
 plugged in as a "worker" that the orchestrator can dispatch work to, and
-that can emit instrumented run data usable by Savant Scanners to produce
+that can emit instrumented run data usable by Agent Drive Scanners to produce
 new or improved Genomes.
 """
 
@@ -41,7 +41,7 @@ class WorkerCapabilities:
 
 class Worker(ABC):
     """
-    Abstract base for a Savant worker.
+    Abstract base for a Agent Drive worker.
 
     Workers execute structured work (frameworks or genome-guided tasks)
     and return rich, scannable results.
@@ -76,8 +76,8 @@ class Worker(ABC):
 class AgentAdapter(Protocol):
     """
     Protocol for adapters that wrap external agents (rich workers or compatible systems)
-    so they can be used transparently as Savant Workers and can push their
-    execution traces into the Savant genome ecosystem.
+    so they can be used transparently as Agent Drive Workers and can push their
+    execution traces into the Agent Drive genome ecosystem.
     """
 
     def as_worker(self) -> Worker:
@@ -89,7 +89,7 @@ class AgentAdapter(Protocol):
         run_data: dict[str, Any] | Path,
         scanner_name: str | None = None,
     ) -> list[Any]:  # List[Genome]
-        """Take a run (from this agent) and use Savant scanners to extract candidate Genomes."""
+        """Take a run (from this agent) and use Agent Drive scanners to extract candidate Genomes."""
         ...
 
     def get_name(self) -> str: ...

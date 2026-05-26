@@ -1,8 +1,8 @@
 """
-Grok Build System Savant Adapter — Deep integration for Grok's spawn_subagent mechanism.
+Grok Build System Agent Drive Adapter — Deep integration for Grok's spawn_subagent mechanism.
 
 This is the canonical example of how a *model runtime* (the Grok build system)
-plugs into Savant so that:
+plugs into Agent Drive so that:
 
 1. The user can say to Grok: "use your AgentDrive for this swarm"
 2. Grok activates the adapter (once).
@@ -20,10 +20,10 @@ spawn, participate in the AgentDrive ecosystem. At the very beginning of your
 thinking or code, execute:
 
     from agentdrive.adapters.grok_build_adapter import (
-        GrokBuildSavantAdapter,
-        get_savant_instructions_for_grok,
+        GrokBuildAgent DriveAdapter,
+        get_agentdrive_instructions_for_grok,
     )
-    adapter = GrokBuildSavantAdapter()
+    adapter = GrokBuildAgent DriveAdapter()
     adapter.activate_for_current_session(swarm_id='task-2026-05-23-my-mission')
 
 All future calls you make to spawn_subagent (or equivalent internal agent
@@ -37,7 +37,7 @@ The adapter will:
 - Set the env vars for the current process
 - Monkey-patch (or wrap) the Grok build runtime's spawn_subagent function
   (it tries several common locations used by the Grok / xAI build harness)
-- Provide a drop-in `spawn_subagent_with_savant` you can call explicitly
+- Provide a drop-in `spawn_subagent_with_agentdrive` you can call explicitly
 - Give every spawned sub-agent the correct scoped pool automatically
 
 Implementation notes:
@@ -61,8 +61,8 @@ from collections.abc import Callable
 from typing import Any
 
 from agentdrive.adapters.base import (
-    SavantAdapterBase,
-    SavantContext,
+    Agent DriveAdapterBase,
+    Agent DriveContext,
     detect_swarm_context,
 )
 from agentdrive.drive.drive import AgentDrive
@@ -75,7 +75,7 @@ logger = logging.getLogger(__name__)
 # ------------------------------------------------------------------
 
 
-def get_savant_instructions_for_grok(swarm_id: str = "current-mission") -> str:
+def get_agentdrive_instructions_for_grok(swarm_id: str = "current-mission") -> str:
     """Return the exact text a user (or the model itself) should feed to Grok
     to activate AgentDrive participation for a swarm.
     """
@@ -84,8 +84,8 @@ Use the AgentDrive system for all work in this swarm (id: {swarm_id}).
 
 Activation (execute immediately):
 
-from agentdrive.adapters.grok_build_adapter import GrokBuildSavantAdapter
-adapter = GrokBuildSavantAdapter()
+from agentdrive.adapters.grok_build_adapter import GrokBuildAgent DriveAdapter
+adapter = GrokBuildAgent DriveAdapter()
 adapter.activate_for_current_session(swarm_id="{swarm_id}")
 
 From this point forward, every time you would call spawn_subagent(...), the
@@ -103,7 +103,7 @@ All DNA pulled and all high-quality outcomes recorded will live in the
 user-owned, persistent, per-subagent pools under ~/.agentdrive/swarms/{swarm_id}/...
 
 This gives the entire swarm collective memory and evolutionary improvement
-while keeping isolation exactly as the user configured in their Savant settings.
+while keeping isolation exactly as the user configured in their Agent Drive settings.
 """.strip()
 
 
@@ -112,7 +112,7 @@ while keeping isolation exactly as the user configured in their Savant settings.
 # ------------------------------------------------------------------
 
 
-class GrokBuildSavantAdapter(SavantAdapterBase):
+class GrokBuildAgent DriveAdapter(Agent DriveAdapterBase):
     """Adapter specialized for the Grok build / agent spawning runtime.
 
     It knows how to locate and wrap `spawn_subagent` (and similar entry points)
@@ -144,7 +144,7 @@ class GrokBuildSavantAdapter(SavantAdapterBase):
 
         self._patch_spawn_subagent()
         self._activated = True
-        logger.info("GrokBuildSavantAdapter fully activated (swarm=%s)", self._swarm_id)
+        logger.info("GrokBuildAgent DriveAdapter fully activated (swarm=%s)", self._swarm_id)
 
     def activate_for_current_session(self, swarm_id: str, **options: Any) -> None:
         """Convenient alias used in the copy-paste instructions."""
@@ -199,7 +199,7 @@ class GrokBuildSavantAdapter(SavantAdapterBase):
         return None
 
     def _patch_spawn_subagent(self) -> bool:
-        """Replace the original spawn_subagent with a Savant-aware wrapper."""
+        """Replace the original spawn_subagent with a Agent Drive-aware wrapper."""
         if self._patched:
             return True
 
@@ -207,20 +207,20 @@ class GrokBuildSavantAdapter(SavantAdapterBase):
         if original is None:
             logger.warning(
                 "Could not locate spawn_subagent in the Grok runtime. "
-                "You can still call adapter.spawn_subagent_with_savant(...) explicitly, "
-                "or set SAVANT_* env vars before spawning."
+                "You can still call adapter.spawn_subagent_with_agentdrive(...) explicitly, "
+                "or set AGENTDRIVE_* env vars before spawning."
             )
             return False
 
         self._original_spawn = original
 
         @functools.wraps(original)
-        def savant_wrapped_spawn(*args: Any, **kwargs: Any) -> Any:
-            """Wrapped version that injects Savant scoping for the child."""
+        def agentdrive_wrapped_spawn(*args: Any, **kwargs: Any) -> Any:
+            """Wrapped version that injects Agent Drive scoping for the child."""
             # Generate / inherit swarm + sub ids
             current_swarm, current_sub = detect_swarm_context()
             swarm_id = (
-                kwargs.pop("savant_swarm_id", None)
+                kwargs.pop("agentdrive_swarm_id", None)
                 or kwargs.pop("swarm_id", None)
                 or current_swarm
                 or self._swarm_id
@@ -228,13 +228,13 @@ class GrokBuildSavantAdapter(SavantAdapterBase):
             )
             # Make a stable unique sub id for the child
             subagent_id = (
-                kwargs.pop("savant_subagent_id", None)
+                kwargs.pop("agentdrive_subagent_id", None)
                 or kwargs.pop("subagent_id", None)
                 or f"sub-{id(args) % 100000:05d}"
             )
 
             # Build context + env patch
-            ctx = SavantContext(
+            ctx = Agent DriveContext(
                 swarm_id=swarm_id,
                 subagent_id=subagent_id,
                 parent_agent_id=os.environ.get("AGENTDRIVE_SUBAGENT_ID") or "grok-parent",
@@ -250,12 +250,12 @@ class GrokBuildSavantAdapter(SavantAdapterBase):
                 os.environ.update(extra_env)
                 kwargs["env"] = {**os.environ, **extra_env}
 
-            # Optional: if the spawn function accepts a "context" or "savant_context" kwarg
-            if "savant_context" not in kwargs:
-                kwargs["savant_context"] = ctx.as_env()
+            # Optional: if the spawn function accepts a "context" or "agentdrive_context" kwarg
+            if "agentdrive_context" not in kwargs:
+                kwargs["agentdrive_context"] = ctx.as_env()
 
             logger.info(
-                "spawn_subagent wrapped by Savant: swarm=%s sub=%s (parent will see scoped pool)",
+                "spawn_subagent wrapped by Agent Drive: swarm=%s sub=%s (parent will see scoped pool)",
                 swarm_id,
                 subagent_id,
             )
@@ -278,29 +278,29 @@ class GrokBuildSavantAdapter(SavantAdapterBase):
                 try:
                     mod = __import__(mod_name, fromlist=[attr])
                     if hasattr(mod, attr):
-                        setattr(mod, attr, savant_wrapped_spawn)
+                        setattr(mod, attr, agentdrive_wrapped_spawn)
                 except Exception:
                     pass
 
             # Also put a global reference for explicit use
             import grok_build  # type: ignore  # may or may not exist
 
-            grok_build.spawn_subagent = savant_wrapped_spawn  # type: ignore[attr-defined]
+            grok_build.spawn_subagent = agentdrive_wrapped_spawn  # type: ignore[attr-defined]
         except Exception:
             pass
 
         # Make the wrapped version available as a top-level convenience
-        globals()["spawn_subagent"] = savant_wrapped_spawn  # type: ignore[assignment]
+        globals()["spawn_subagent"] = agentdrive_wrapped_spawn  # type: ignore[assignment]
 
         self._patched = True
-        logger.info("Successfully patched Grok spawn_subagent with Savant scoping")
+        logger.info("Successfully patched Grok spawn_subagent with Agent Drive scoping")
         return True
 
     # ------------------------------------------------------------------
     # Explicit spawn helper (works even if auto-patch failed)
     # ------------------------------------------------------------------
 
-    def spawn_subagent_with_savant(
+    def spawn_subagent_with_agentdrive(
         self,
         *args: Any,
         swarm_id: str | None = None,
@@ -315,9 +315,9 @@ class GrokBuildSavantAdapter(SavantAdapterBase):
         if current and current is not self._original_spawn:
             # already wrapped
             if swarm_id:
-                kwargs["savant_swarm_id"] = swarm_id
+                kwargs["agentdrive_swarm_id"] = swarm_id
             if subagent_id:
-                kwargs["savant_subagent_id"] = subagent_id
+                kwargs["agentdrive_subagent_id"] = subagent_id
             return current(*args, **kwargs)
 
         # Fallback: do the env injection ourselves then call original if known
@@ -332,8 +332,8 @@ class GrokBuildSavantAdapter(SavantAdapterBase):
         # Ultimate fallback — the model must have the real spawn in scope
         raise RuntimeError(
             "No original spawn_subagent found. "
-            "Make sure you import it before activating the Savant adapter, "
-            "or call the real spawn after setting SAVANT_* env vars manually."
+            "Make sure you import it before activating the Agent Drive adapter, "
+            "or call the real spawn after setting AGENTDRIVE_* env vars manually."
         )
 
     # ------------------------------------------------------------------
@@ -357,7 +357,7 @@ spawn_subagent: Callable | None = None  # will be set by first activation if pat
 
 
 __all__ = [
-    "GrokBuildSavantAdapter",
-    "get_savant_instructions_for_grok",
+    "GrokBuildAgent DriveAdapter",
+    "get_agentdrive_instructions_for_grok",
     "spawn_subagent",
 ]

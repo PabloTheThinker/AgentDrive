@@ -1,7 +1,7 @@
 """Standalone async chat loop with queued turns + bypass slash/shell handlers.
 
 Implements Pattern 2 from docs/UX-PROPOSAL.md ("keep typing while the agent
-works"). The recipe is the one validated by /tmp/savant-spike/spike.py:
+works"). The recipe is the one validated by /tmp/agentdrive-spike/spike.py:
 
 * single asyncio event loop
 * ``prompt_toolkit.PromptSession.prompt_async`` for the composer

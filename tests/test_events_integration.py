@@ -78,7 +78,7 @@ def test_pool_ingest_emits_event(clean_bus: None) -> None:
 
 def test_message_delta_emits_during_send(clean_bus: None) -> None:
     """agent.send() should emit one MessageDelta per chunk in order."""
-    from agentdrive.agent.agent import SavantAgent
+    from agentdrive.agent.agent import Agent DriveAgent
 
     chunks = ["abc", "def", "ghi"]
 
@@ -89,7 +89,7 @@ def test_message_delta_emits_during_send(clean_bus: None) -> None:
         def stream(self, **kwargs):
             yield from chunks
 
-    agent = SavantAgent(agent_id="evt-test-agent")
+    agent = Agent DriveAgent(agent_id="evt-test-agent")
     # Bypass the lazy llm property by setting the cached field directly.
     agent._llm = FakeLLM()  # type: ignore[assignment]
 

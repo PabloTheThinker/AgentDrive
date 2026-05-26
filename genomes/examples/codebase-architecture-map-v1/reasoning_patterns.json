@@ -1,4 +1,4 @@
 {
-  "extraction_note": "High-quality port of codebase-architecture-map using savant reasoning.",
-  "primitives_version": "savant-reasoning-0.1.0"
+  "extraction_note": "High-quality port of codebase-architecture-map using agentdrive reasoning.",
+  "primitives_version": "agentdrive-reasoning-0.1.0"
 }

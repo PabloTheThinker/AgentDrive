@@ -1,7 +1,7 @@
-# Savant Skills — design + first 12 skill brainstorm
+# Agent Drive Skills — design + first 12 skill brainstorm
 
 **Status:** draft for Pablo's review. Nothing built yet.
-**Premise:** A savant is someone with exceptional, narrow-domain prodigy. The product should embrace that literally — each skill is a *savant*: a small, focused, world-class capability in one specific thing. The agent doesn't try to be good at everything; it consults the right savant for the task.
+**Premise:** A agentdrive is someone with exceptional, narrow-domain prodigy. The product should embrace that literally — each skill is a *agentdrive*: a small, focused, world-class capability in one specific thing. The agent doesn't try to be good at everything; it consults the right agentdrive for the task.
 
 This is the the reference CLI Phase-3 move (Jan→Feb 2026 in their arc): the moment the product stops being "an agent" and becomes "a thing you extend."
 
@@ -9,7 +9,7 @@ This is the the reference CLI Phase-3 move (Jan→Feb 2026 in their arc): the mo
 
 ## How skills relate to existing pieces
 
-Savant already has **Genomes** — full reusable capability units with manifests, scanners, evaluation scores. A Genome is a `species`-level capability ("incident postmortem author", "SOC2 evidence tracer"). Heavy. Versioned. Promoted to "production-grade" via the promotion mechanic.
+Agent Drive already has **Genomes** — full reusable capability units with manifests, scanners, evaluation scores. A Genome is a `species`-level capability ("incident postmortem author", "SOC2 evidence tracer"). Heavy. Versioned. Promoted to "production-grade" via the promotion mechanic.
 
 Skills are **lighter**: a directory of `SKILL.md` files with YAML frontmatter + a single prompt-fragment body. No manifest, no version, no evaluation pipeline. They compose into the active genome at runtime — the agent picks the most-relevant 1-3 skills for the task and appends them to its system prompt.
 
@@ -24,7 +24,7 @@ A skill can be **promoted into a Genome** once it earns enough outcomes (the pro
 ## On-disk shape
 
 ```
-~/.savant/skills/
+~/.agentdrive/skills/
   regex-architect/
     SKILL.md
     examples/
@@ -52,10 +52,10 @@ when_to_call: user wants to write/read/audit a regex, or the model is about
   to ship a regex without sample inputs
 ---
 
-## How this savant thinks
+## How this agentdrive thinks
 
 Always start with examples, never the pattern. For any non-trivial regex,
-the savant asks for at least three positive samples and at least two
+the agentdrive asks for at least three positive samples and at least two
 negative samples (cases that MUST not match). The output is always:
 
 1. The pattern in its simplest correct form.
@@ -69,16 +69,16 @@ negative samples (cases that MUST not match). The output is always:
 
 ## Surfaces the skill touches
 
-- **Discovery**: `savant skills list` / `savant skills info <name>` / `/skills` in chat.
+- **Discovery**: `agentdrive skills list` / `agentdrive skills info <name>` / `/skills` in chat.
 - **Composition**: at the start of each turn, after `pull_relevant_dna` matches genomes, a second pass matches skills by tag + intent + when_to_call against the user message + the active genome's domains. Top 1-3 skill fragments get injected into the system prompt.
 - **Invocation**: `/skill <name>` forces a specific skill onto the next turn.
 - **Suggestion**: the LLM is told which skills exist; the model can suggest "this might be a job for the `regex-architect` skill."
-- **Ribbon**: new event `SkillInvoked(skill_name, reason)` — fires a thin ribbon during chat like the existing pool events. Lets the user see *which savant the agent is consulting*.
-- **Authorship**: `savant skills new <name>` scaffolds a SKILL.md with frontmatter template.
+- **Ribbon**: new event `SkillInvoked(skill_name, reason)` — fires a thin ribbon during chat like the existing pool events. Lets the user see *which agentdrive the agent is consulting*.
+- **Authorship**: `agentdrive skills new <name>` scaffolds a SKILL.md with frontmatter template.
 
 ---
 
-## First 12 skills to ship (the seed savant library)
+## First 12 skills to ship (the seed agentdrive library)
 
 Picked for **narrow + universally useful**. Each is something the model is already capable of but does inconsistently. The skill enforces the consistent way.
 
@@ -97,17 +97,17 @@ Picked for **narrow + universally useful**. Each is something the model is alrea
 | **prompt-distiller** | Takes a verbose prompt and produces the minimum-tokens version that preserves intent | Useful for cost work AND for prompt review |
 | **test-gap-finder** | Reads a function + its existing tests and lists the cases NOT covered, ranked by risk | Higher-leverage than asking the model to "write more tests" |
 
-These are deliberately *not* deep-domain (no "lawyer", no "doctor" — those need domain genomes with real evidence pipelines). They're the kind of small, universal savants every operator wants on call.
+These are deliberately *not* deep-domain (no "lawyer", no "doctor" — those need domain genomes with real evidence pipelines). They're the kind of small, universal agentdrives every operator wants on call.
 
 ---
 
 ## Build order
 
-1. **Loader + registry** (~half day). `savant.skills` module: load `~/.savant/skills/*/SKILL.md`, parse YAML frontmatter, expose `list_skills() / get_skill(name) / search_skills(query)`.
+1. **Loader + registry** (~half day). `agentdrive.skills` module: load `~/.agentdrive/skills/*/SKILL.md`, parse YAML frontmatter, expose `list_skills() / get_skill(name) / search_skills(query)`.
 2. **Composition into system prompt** (~half day). Hook in `agent.send` after `pull_relevant_dna`. Rank top 3 by tag/intent/keyword match. Inject as a `## Skills available for this turn` block.
-3. **Slash + CLI + events** (~half day). `/skills`, `/skill <name>`, `/skill ?` for help. `savant skills list/info/new`. `SkillInvoked` event + chat ribbon. Genome-side: shared code path so CLI and slash route through one function (the same pattern Pattern 5 established for genomes).
+3. **Slash + CLI + events** (~half day). `/skills`, `/skill <name>`, `/skill ?` for help. `agentdrive skills list/info/new`. `SkillInvoked` event + chat ribbon. Genome-side: shared code path so CLI and slash route through one function (the same pattern Pattern 5 established for genomes).
 4. **Ship the first 12 skills** (~half day per ~3 skills, so ~2 days). Each one gets its own `SKILL.md` with at least one worked example in `examples/`.
-5. **Promotion path** (~quarter day). Add a `savant skills promote <name>` that converts a high-outcome skill into a real Genome scaffold. Doesn't auto-ingest; produces a directory the user can review and `savant scan` into the registry.
+5. **Promotion path** (~quarter day). Add a `agentdrive skills promote <name>` that converts a high-outcome skill into a real Genome scaffold. Doesn't auto-ingest; produces a directory the user can review and `agentdrive scan` into the registry.
 
 **Total: ~4–5 dev-days.** Demoable after step 2.
 
@@ -115,7 +115,7 @@ These are deliberately *not* deep-domain (no "lawyer", no "doctor" — those nee
 
 ## Open questions for Pablo
 
-1. **Naming.** "Skill" is what the reference CLI calls it and what most agents call it. Want to keep "Skill" (clear, conventional) or rename to something Savant-native like "savant" (each skill literally IS a savant)? My instinct: keep "Skill" in the *code* but in user-facing copy treat them as savants — `/skills` lists "the savants on your bench". Costs nothing, embraces the metaphor.
+1. **Naming.** "Skill" is what the reference CLI calls it and what most agents call it. Want to keep "Skill" (clear, conventional) or rename to something Agent Drive-native like "agentdrive" (each skill literally IS a agentdrive)? My instinct: keep "Skill" in the *code* but in user-facing copy treat them as agentdrives — `/skills` lists "the agentdrives on your bench". Costs nothing, embraces the metaphor.
 2. **Are the 12 above the right first set?** Anything obvious I missed, anything you'd cut?
 3. **Auto-compose vs explicit only.** Should the agent automatically inject the top-matched skills, or only when the user invokes `/skill <name>`? Auto-compose is more "magic"; explicit-only is more predictable. Recommendation: ship explicit-only first, add auto-compose behind a config flag once we see what users actually want.
-4. **Where does promotion fit?** Skills → Genomes is a natural ladder. Want me to wire the `savant skills promote` path in this round, or defer until skills have proven themselves with real use?
+4. **Where does promotion fit?** Skills → Genomes is a natural ladder. Want me to wire the `agentdrive skills promote` path in this round, or defer until skills have proven themselves with real use?

@@ -1,4 +1,4 @@
-# Vision — Savant and AgentDrive
+# Vision — Agent Drive and AgentDrive
 
 ## Premise
 
@@ -8,9 +8,9 @@ Agents fail. They crash, hang, miss deadlines, drift from the signature of the w
 
 RAID survived a generation of unreliable drives by refusing to keep capability in one place. Mirrored blocks and parity stripes meant the array could lose a drive without losing the data — the surviving members carried enough information to rebuild the failed one. AgentDrive applies the same discipline to agent capability. Every successful run is decomposed into typed, versioned **Genomes** that mirror the reasoning, tool composition, and evaluation criteria that made the run work. When an agent dies, the surviving genomes in the pool — graded by confidence, ranked by encounter history — carry enough information to rebuild it. Mirroring genomes is to AgentDrive what mirroring blocks is to RAID.
 
-## What Savant is. What AgentDrive is.
+## What Agent Drive is. What AgentDrive is.
 
-**Savant** is the engine: a Python framework that defines the genome schema, runs the DNA pool, scores confidence, ferries inheritance manifests across swarms, quarantines foreign DNA, registers trusted peers, and runs the reconciliation loop. It is open-source, MIT-licensed, and stays as it is. **AgentDrive** is the product layered on top — "RAID for AI agents" packaged for operators who need agents that survive production. The relationship in marketing copy: *AgentDrive — powered by Savant.* Engine is the substrate; product is the experience.
+**Agent Drive** is the engine: a Python framework that defines the genome schema, runs the DNA pool, scores confidence, ferries inheritance manifests across swarms, quarantines foreign DNA, registers trusted peers, and runs the reconciliation loop. It is open-source, MIT-licensed, and stays as it is. **AgentDrive** is the product layered on top — "RAID for AI agents" packaged for operators who need agents that survive production. The relationship in marketing copy: *AgentDrive — powered by Agent Drive.* Engine is the substrate; product is the experience.
 
 ## The healing loop
 
@@ -22,7 +22,7 @@ The pool lives at `$AGENTDRIVE_HOME` on the operator's machine. The healing loop
 
 ## What this unlocks
 
-Operators run agents at production scale knowing failures auto-heal. Teams pool genomes across instances and watch capability compound across the deployment instead of evaporating with each crashed process. The cost of a single agent dying drops from "rerun the mission and hope" to "the pool rebuilt it before anyone noticed." Multiply across a fleet and the curve flips: every failure becomes a training signal, every peer's promoted genome becomes a hardening pass, and the system gets more reliable with use rather than less. That is the shift Savant makes possible and AgentDrive makes operational.
+Operators run agents at production scale knowing failures auto-heal. Teams pool genomes across instances and watch capability compound across the deployment instead of evaporating with each crashed process. The cost of a single agent dying drops from "rerun the mission and hope" to "the pool rebuilt it before anyone noticed." Multiply across a fleet and the curve flips: every failure becomes a training signal, every peer's promoted genome becomes a hardening pass, and the system gets more reliable with use rather than less. That is the shift Agent Drive makes possible and AgentDrive makes operational.
 
 ---
 

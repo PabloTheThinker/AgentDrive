@@ -1,5 +1,5 @@
 """
-Savant Swarm Pool Manager — Professional manager for per-agent DNA pools in swarms.
+Agent Drive Swarm Pool Manager — Professional manager for per-agent DNA pools in swarms.
 
 Design goals (professional subagent handling):
 - Every spawned sub-agent gets its own isolated, persistent AgentDrive by default.

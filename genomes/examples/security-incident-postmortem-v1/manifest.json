@@ -11,7 +11,7 @@
     "domains": ["security", "reliability", "devops"],
     "problem_signatures": ["production security incident", "need for structured postmortem"]
   },
-  "dependencies": {"genomes": ["savant-framework@1.0.0"], "agent_capabilities": ["long_reasoning", "causal_analysis"]},
+  "dependencies": {"genomes": ["agentdrive-framework@1.0.0"], "agent_capabilities": ["long_reasoning", "causal_analysis"]},
   "evaluation_score": {
     "reference_tasks": 0.87,
     "human_preference": 0.92

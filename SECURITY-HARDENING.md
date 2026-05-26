@@ -1,6 +1,6 @@
-# Savant Security Hardening Summary
+# Agent Drive Security Hardening Summary
 
-This document records the security improvements made to the Savant project so it can be safely recommended to many users.
+This document records the security improvements made to the Agent Drive project so it can be safely recommended to many users.
 
 **Date:** May 2026 (last mission sprint)
 **Status:** Production baseline achieved
@@ -9,7 +9,7 @@ This document records the security improvements made to the Savant project so it
 
 ## 1. Installer Hardening (Highest Priority)
 
-The `curl | bash` path is the primary way new users install Savant. It was the biggest risk.
+The `curl | bash` path is the primary way new users install Agent Drive. It was the biggest risk.
 
 ### Changes Made
 
@@ -112,7 +112,7 @@ We publish the SHA256 of `install.sh` in every GitHub release.
 
 ---
 
-**This baseline means Savant can now be responsibly recommended to a wider audience without the high risk of supply-chain or installer-based compromise that has affected other projects.**
+**This baseline means Agent Drive can now be responsibly recommended to a wider audience without the high risk of supply-chain or installer-based compromise that has affected other projects.**
 
 The 1% credits "last mission" focused on the highest-leverage security controls for a project whose primary onboarding method is `curl | bash`.
 ---

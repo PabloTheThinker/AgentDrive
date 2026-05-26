@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Professional changelog generator for Savant (uses git-cliff when available).
+# Professional changelog generator for Agent Drive (uses git-cliff when available).
 #
 # Usage:
 #   ./scripts/generate_changelog.sh                    # regenerate full changelog

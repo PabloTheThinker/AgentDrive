@@ -1,5 +1,5 @@
 """
-Savant Swarm Pool Policies — Professional, user-controlled rules for DNA sharing in agent swarms.
+Agent Drive Swarm Pool Policies — Professional, user-controlled rules for DNA sharing in agent swarms.
 
 Professional approach to subagent isolation with clear delegation controls,
 depth limits, approval callbacks, and config-driven behavior.

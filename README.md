@@ -475,7 +475,7 @@ Next planned milestones:
 
 - FastAPI web Phase 2+ pages for Drive, Swarms, DNA, Snapshots, Capabilities, and Peers
 - capability enforcement hardening across every user-facing path
-- public naming cleanup where legacy Savant wording is still only historical/internal
+- public naming cleanup where legacy Agent Drive wording is still only historical/internal
 - public Genome registry
 - evolutionary scanners
 - Docker/self-host demo

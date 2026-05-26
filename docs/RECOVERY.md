@@ -1,7 +1,7 @@
 # Recovery — the AgentDrive healing loop
 
 **Status:** reference doc. Describes behavior composed from modules
-already shipped in the Savant engine: `reconciliation`, `confidence`,
+already shipped in the Agent Drive engine: `reconciliation`, `confidence`,
 `inheritance`, `quarantine`, and the genome registry.
 
 AgentDrive is RAID for AI agents. This doc is the deep dive on the
@@ -40,7 +40,7 @@ Each step names the module and event that drive it.
 ### 2.1 Death detected → `ReconciliationRunner`
 
 The background `ReconciliationRunner` (see
-[`src/savant/reconciliation.py`](../src/savant/reconciliation.py)) runs
+[`src/agentdrive/reconciliation.py`](../src/agentdrive/reconciliation.py)) runs
 on its configured `interval_s` and on every `SubagentDone(ok=False)`.
 When the run finishes, it emits `ReconciliationCompleted`. If anything
 changed since the previous pass, it additionally emits
@@ -53,11 +53,11 @@ sub-agent shows up here as either a missing expected manifest or a
 The orchestrator calls `pool.query` against the task signature of the
 dead work. The result set is filtered to genomes whose persisted
 `ConfidenceRating.stars` is ≥ 3 (see
-[`src/savant/confidence.py`](../src/savant/confidence.py)). Three stars
+[`src/agentdrive/confidence.py`](../src/agentdrive/confidence.py)). Three stars
 is the default eligibility floor for recovery work because it requires
 both a real encounter history (≥ 25 encounters) and a real success rate
 (≥ 75%) under the default `ConfidenceRule`. Operators can lower the
-floor in `~/.savant/settings.yaml` for non-critical fleets.
+floor in `~/.agentdrive/settings.yaml` for non-critical fleets.
 
 ### 2.3 Repair swarm dispatched → three `SubagentSpawn` events
 
@@ -65,13 +65,13 @@ The top three matches are handed to three fresh sub-agents — one genome
 per sub-agent. Each spawn fires a `SubagentSpawn` event carrying the
 swarm id, sub-agent id, and the genome id being applied. The three run
 in parallel under the same swarm scope so their pools live side by side
-under `~/.savant/swarms/<swarm_id>/<subagent_id>/`.
+under `~/.agentdrive/swarms/<swarm_id>/<subagent_id>/`.
 
 ### 2.4 Outputs collected → `InheritanceManifest`
 
 When each repair sub-agent finishes, it writes an `InheritanceManifest`
-to `~/.savant/inheritance/<swarm_id>/<subagent_id>.json` (see
-[`src/savant/inheritance.py`](../src/savant/inheritance.py)). The
+to `~/.agentdrive/inheritance/<swarm_id>/<subagent_id>.json` (see
+[`src/agentdrive/inheritance.py`](../src/agentdrive/inheritance.py)). The
 manifest enumerates: genomes pulled, genomes created (if the sub-agent
 extracted any new DNA from its run), outcomes logged, and total
 duration. `SubagentDone` fires; the inheritance hook automatically
@@ -100,7 +100,7 @@ If every candidate fails:
 - The original task is wrapped and submitted via `quarantine.submit`
   with `source_peer="recovery:<task_id>"`. It lands in the quarantine
   ledger as `PENDING` for operator review and surfaces in
-  `savant quarantine list`. `QuarantineSubmitted` fires.
+  `agentdrive quarantine list`. `QuarantineSubmitted` fires.
 
 ## 3. Genome-as-snapshot
 
@@ -122,7 +122,7 @@ the work looked like when it worked*.
 ## 4. Cross-instance recovery
 
 When the local pool does not contain a viable ≥3-star match, the
-`PeerRegistry` (see [`src/savant/peers.py`](../src/savant/peers.py)) is
+`PeerRegistry` (see [`src/agentdrive/peers.py`](../src/agentdrive/peers.py)) is
 consulted. The registry walks each trusted peer through its matching
 `PeerAdapter` and collects candidate genome directories. Every single
 candidate routes through `quarantine.submit` — there is no fast path
@@ -136,10 +136,10 @@ and becomes eligible for recovery work on subsequent failures.
 
 **Survives:**
 
-- The session state on disk under `~/.savant/sessions/<id>/`
+- The session state on disk under `~/.agentdrive/sessions/<id>/`
 - Any partial outputs the dead sub-agent flushed before death
-- The full audit trail in `~/.savant/quarantine/log.jsonl` and the
-  reconciliation state at `$SAVANT_HOME/reconciliation.json`
+- The full audit trail in `~/.agentdrive/quarantine/log.jsonl` and the
+  reconciliation state at `$AGENTDRIVE_HOME/reconciliation.json`
 - The inheritance manifest of every repair sub-agent
 - `ConfidenceRating` sidecars on every involved genome — including the
   one that died, because its failure is a real signal
@@ -163,12 +163,12 @@ and becomes eligible for recovery work on subsequent failures.
 - **Upstream data corruption.** If the input to the original task was
   bad, the genomes pulled to repair it will fail validation against
   the same bad input. AgentDrive heals capability, not inputs.
-- **Loss of `$SAVANT_HOME`.** If the operator's pool directory itself
+- **Loss of `$AGENTDRIVE_HOME`.** If the operator's pool directory itself
   is destroyed — disk failure, accidental `rm -rf`, encrypted
   ransomware on the host — the healing loop has nothing to heal from.
   This is the RAID-controller-fails analogy: redundancy at the genome
   level does not protect against destruction at the substrate level.
-  Snapshot `$SAVANT_HOME` accordingly.
+  Snapshot `$AGENTDRIVE_HOME` accordingly.
 - **Adversarial peer genomes.** The quarantine validators catch
   schema, size, executable, and prompt-injection patterns. They do
   not catch a sufficiently subtle behavioral attack from a peer the

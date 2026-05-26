@@ -1,4 +1,4 @@
-"""Tests for savant.genome.models"""
+"""Tests for agentdrive.genome.models"""
 
 from datetime import UTC, datetime
 

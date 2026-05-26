@@ -1,4 +1,4 @@
-"""Typed event bus for Savant.
+"""Typed event bus for Agent Drive.
 
 Decouples backend state changes (chat, pool, harness, sub-agents) from the
 TUI. Producers emit dataclass events; subscribers render or record them.
@@ -217,7 +217,7 @@ class QuarantineRejected(Event):
 
 @dataclass
 class PeerAdded(Event):
-    """A federated peer Savant was registered."""
+    """A federated peer Agent Drive was registered."""
 
     peer_id: str = ""
     address: str = ""
@@ -226,7 +226,7 @@ class PeerAdded(Event):
 
 @dataclass
 class PeerRemoved(Event):
-    """A federated peer Savant was unregistered."""
+    """A federated peer Agent Drive was unregistered."""
 
     peer_id: str = ""
 

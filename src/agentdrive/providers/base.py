@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 
 import httpx
 
-from agentdrive.constants import get_savant_env_path
+from agentdrive.constants import get_agentdrive_env_path
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ def _read_env_value(var: str) -> str | None:
     val = os.environ.get(var, "")
     if val:
         return val
-    env_path = get_savant_env_path()
+    env_path = get_agentdrive_env_path()
     if env_path.exists():
         try:
             for line in env_path.read_text().splitlines():
@@ -89,7 +89,7 @@ def _read_env_value(var: str) -> str | None:
 
 
 def write_env_var(var: str, value: str) -> None:
-    env_path = get_savant_env_path()
+    env_path = get_agentdrive_env_path()
     env_path.parent.mkdir(parents=True, exist_ok=True)
     lines = []
     found = False

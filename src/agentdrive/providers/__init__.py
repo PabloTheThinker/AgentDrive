@@ -1,5 +1,5 @@
 """
-Savant Provider System — connect any AI model to your AgentDrive.
+Agent Drive Provider System — connect any AI model to your AgentDrive.
 
 Provides:
 - Provider profiles (OpenAI, Anthropic, OpenRouter, local models, etc.)

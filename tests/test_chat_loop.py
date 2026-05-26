@@ -1,4 +1,4 @@
-"""Tests for the standalone ``savant.chat_loop`` module.
+"""Tests for the standalone ``agentdrive.chat_loop`` module.
 
 Tests drive the loop via a small ``_FakeComposer`` harness that replaces
 ``ChatLoop._get_input``. The harness lets each test script a sequence of

@@ -73,15 +73,15 @@ def clean_bus() -> Iterator[None]:
 
 
 def test_submit_creates_entry_and_copies_genome_dir(
-    isolated_savant_home: Path, tmp_path: Path
+    isolated_agentdrive_home: Path, tmp_path: Path
 ) -> None:
     src = _make_valid_genome_dir(tmp_path)
     q = Quarantine()
 
-    entry = q.submit(src, source_peer="savant://peer-alpha")
+    entry = q.submit(src, source_peer="agentdrive://peer-alpha")
 
     assert entry.quarantine_id
-    assert entry.source_peer == "savant://peer-alpha"
+    assert entry.source_peer == "agentdrive://peer-alpha"
     assert entry.status == QuarantineStatus.PENDING
     assert entry.genome_id == "vetted-capability@1.0.0"
     assert entry.sha256 and len(entry.sha256) == 64
@@ -92,12 +92,12 @@ def test_submit_creates_entry_and_copies_genome_dir(
     assert entry.genome_dir != src
 
     # Entry persisted to disk under entries/.
-    entry_file = isolated_savant_home / "quarantine" / "entries" / f"{entry.quarantine_id}.json"
+    entry_file = isolated_agentdrive_home / "quarantine" / "entries" / f"{entry.quarantine_id}.json"
     assert entry_file.is_file()
 
 
 def test_two_submissions_with_same_content_dedupe_via_sha256(
-    isolated_savant_home: Path, tmp_path: Path
+    isolated_agentdrive_home: Path, tmp_path: Path
 ) -> None:
     src = _make_valid_genome_dir(tmp_path)
     q = Quarantine()
@@ -116,7 +116,7 @@ def test_two_submissions_with_same_content_dedupe_via_sha256(
 
 
 def test_validate_runs_all_rules_and_records_reasons(
-    isolated_savant_home: Path, tmp_path: Path
+    isolated_agentdrive_home: Path, tmp_path: Path
 ) -> None:
     src = _make_valid_genome_dir(tmp_path)
     q = Quarantine()
@@ -178,7 +178,7 @@ def test_size_limit_rule_rejects_oversized_dir(tmp_path: Path) -> None:
 
 
 def test_approve_ingests_into_pool_only_if_validation_passes(
-    isolated_savant_home: Path, tmp_path: Path
+    isolated_agentdrive_home: Path, tmp_path: Path
 ) -> None:
     # Bad candidate: missing manifest fields → validation fails.
     bad_dir = tmp_path / "bad"
@@ -210,7 +210,7 @@ def test_approve_ingests_into_pool_only_if_validation_passes(
     assert any("quarantine:approved" in e.get("source", "") for e in pool.get_ingest_history())
 
 
-def test_reject_marks_entry_and_does_not_ingest(isolated_savant_home: Path, tmp_path: Path) -> None:
+def test_reject_marks_entry_and_does_not_ingest(isolated_agentdrive_home: Path, tmp_path: Path) -> None:
     src = _make_valid_genome_dir(tmp_path)
     pool = AgentDrive(registry=GenomeRegistry())
     q = Quarantine()
@@ -225,7 +225,7 @@ def test_reject_marks_entry_and_does_not_ingest(isolated_savant_home: Path, tmp_
     assert pool.get_pool_stats()["ingest_events"] == 0
 
 
-def test_hold_keeps_entry_quarantined_status(isolated_savant_home: Path, tmp_path: Path) -> None:
+def test_hold_keeps_entry_quarantined_status(isolated_agentdrive_home: Path, tmp_path: Path) -> None:
     src = _make_valid_genome_dir(tmp_path)
     q = Quarantine()
     entry = q.submit(src, source_peer="peer-q")
@@ -244,7 +244,7 @@ def test_hold_keeps_entry_quarantined_status(isolated_savant_home: Path, tmp_pat
 
 
 def test_audit_log_jsonl_records_every_transition(
-    isolated_savant_home: Path, tmp_path: Path
+    isolated_agentdrive_home: Path, tmp_path: Path
 ) -> None:
     src = _make_valid_genome_dir(tmp_path)
     pool = AgentDrive(registry=GenomeRegistry())
@@ -261,7 +261,7 @@ def test_audit_log_jsonl_records_every_transition(
     e3 = q.submit(src3, source_peer="peer-3")
     q.hold(e3.quarantine_id, reason="pending key check")
 
-    log_path = isolated_savant_home / "quarantine" / "log.jsonl"
+    log_path = isolated_agentdrive_home / "quarantine" / "log.jsonl"
     assert log_path.is_file()
     lines = [json.loads(l) for l in log_path.read_text().splitlines() if l.strip()]
     actions = [l["action"] for l in lines]
@@ -276,7 +276,7 @@ def test_audit_log_jsonl_records_every_transition(
         assert "timestamp" in line
 
 
-def test_list_filters_by_status(isolated_savant_home: Path, tmp_path: Path) -> None:
+def test_list_filters_by_status(isolated_agentdrive_home: Path, tmp_path: Path) -> None:
     pool = AgentDrive(registry=GenomeRegistry())
     q = Quarantine()
 
@@ -305,7 +305,7 @@ def test_list_filters_by_status(isolated_savant_home: Path, tmp_path: Path) -> N
 
 
 def test_quarantine_events_emitted_at_each_transition(
-    isolated_savant_home: Path, tmp_path: Path, clean_bus: None
+    isolated_agentdrive_home: Path, tmp_path: Path, clean_bus: None
 ) -> None:
     captured: list[Event] = []
     default_bus.subscribe(
@@ -342,14 +342,14 @@ def test_quarantine_events_emitted_at_each_transition(
     assert approved.genome_id == "event-good@1.0.0"
 
 
-def test_submit_dedup_under_concurrent_threads(isolated_savant_home):
+def test_submit_dedup_under_concurrent_threads(isolated_agentdrive_home):
     """Concurrent submits of the same content must collapse to one entry."""
     import threading
 
     from agentdrive.quarantine import Quarantine
 
     q = Quarantine()
-    src = isolated_savant_home / "candidate_dir"
+    src = isolated_agentdrive_home / "candidate_dir"
     src.mkdir(parents=True)
     (src / "manifest.yaml").write_text("id: dup-form\nversion: 1.0.0\n")
 
@@ -373,14 +373,14 @@ def test_submit_dedup_under_concurrent_threads(isolated_savant_home):
     assert len(pending) == 1
 
 
-def test_approve_blocked_when_entry_not_pending(isolated_savant_home):
+def test_approve_blocked_when_entry_not_pending(isolated_agentdrive_home):
     """A REJECTED entry must NOT be silently re-approved on a clean revalidate."""
     from agentdrive.drive.drive import AgentDrive
     from agentdrive.quarantine import Quarantine, QuarantineStatus
     from agentdrive.registry import GenomeRegistry
 
     q = Quarantine()
-    src = isolated_savant_home / "candidate"
+    src = isolated_agentdrive_home / "candidate"
     src.mkdir(parents=True)
     (src / "manifest.yaml").write_text("id: g\nversion: 1.0.0\n")
     entry = q.submit(src, source_peer="x")
@@ -393,7 +393,7 @@ def test_approve_blocked_when_entry_not_pending(isolated_savant_home):
     assert reloaded.status == QuarantineStatus.REJECTED
 
     # Now try to approve. Must return False without touching the pool.
-    pool = AgentDrive(registry=GenomeRegistry(root=isolated_savant_home / "genomes"))
+    pool = AgentDrive(registry=GenomeRegistry(root=isolated_agentdrive_home / "genomes"))
     assert q.approve(entry.quarantine_id, pool) is False
 
     # Status must remain REJECTED, NOT flip to APPROVED.

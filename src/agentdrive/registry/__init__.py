@@ -1,5 +1,5 @@
 """
-Savant Genome Registry.
+Agent Drive Genome Registry.
 
 Production-ready local-first registry for versioned, searchable, forkable Agent Genomes (DNA).
 
@@ -11,7 +11,7 @@ Production-ready local-first registry for versioned, searchable, forkable Agent 
 - Delegates full load/save (with normalization, content hashing, structured files) to Genome model
 - Used by: TUI, scanners, evolution engine, orchestrator, programmatic users
 
-See savant.genome.models.Genome for the DNA primitive itself.
+See agentdrive.genome.models.Genome for the DNA primitive itself.
 """
 
 from pathlib import Path
@@ -21,7 +21,7 @@ from agentdrive.genome.models import Genome, GenomeAuthor
 
 
 class GenomeRegistry:
-    """Production-ready local Genome registry for the Savant evolutionary ecosystem.
+    """Production-ready local Genome registry for the Agent Drive evolutionary ecosystem.
 
     Supports hierarchical + legacy flat storage, full search/filter by applicability,
     versioning, forking with provenance, and delegates rich Genome load/save/hashing.

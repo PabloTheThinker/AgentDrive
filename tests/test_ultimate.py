@@ -146,7 +146,7 @@ def test_check_promotion_idempotent_when_already_ultimate(
 
 
 def test_promote_writes_sidecar_and_survives_restart(
-    registry: GenomeRegistry, isolated_savant_home: Path
+    registry: GenomeRegistry, isolated_agentdrive_home: Path
 ) -> None:
     g = _seed_genome(score=0.92)
     registry.save(g)
@@ -233,7 +233,7 @@ def test_genomes_api_list_includes_ultimate_flag(registry: GenomeRegistry) -> No
 
 
 def test_promotion_blocked_by_low_confidence_stars(
-    isolated_savant_home, registry, clean_bus
+    isolated_agentdrive_home, registry, clean_bus
 ) -> None:
     """A genome must NOT promote until confidence stars have caught up.
 

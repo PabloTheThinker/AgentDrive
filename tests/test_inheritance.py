@@ -103,7 +103,7 @@ def _build_manifest(swarm_id: str, subagent_id: str, created: list[str]) -> Inhe
 # ─────────────────────────────────────────────────────────────────────
 
 
-def test_manifest_round_trips_to_disk(isolated_savant_home: Path) -> None:
+def test_manifest_round_trips_to_disk(isolated_agentdrive_home: Path) -> None:
     swarm = "swarm-A"
     sub = "sub-001"
     manifest = _build_manifest(swarm, sub, ["learned-genome"])
@@ -200,7 +200,7 @@ def test_inheritance_received_event_fires_on_subagent_done(
     registry: GenomeRegistry,
     clean_bus: None,
     inheritance_bus_subscribed: None,
-    isolated_savant_home: Path,
+    isolated_agentdrive_home: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     parent_pool = AgentDrive(registry=registry)

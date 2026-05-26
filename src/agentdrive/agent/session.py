@@ -43,7 +43,7 @@ class Turn:
 
 
 class AgentSession:
-    """A single conversation with the Savant Agent. Persists to JSONL."""
+    """A single conversation with the Agent Drive Agent. Persists to JSONL."""
 
     def __init__(
         self,

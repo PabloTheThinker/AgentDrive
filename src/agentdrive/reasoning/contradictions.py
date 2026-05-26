@@ -1,14 +1,14 @@
 """Contradiction detector — flag NumericClaims that disagree.
 
-Core reasoning primitive in Savant for detecting contradictions in claims
+Core reasoning primitive in Agent Drive for detecting contradictions in claims
 and observations during DNA extraction and Genome enrichment.
 
-In Savant context:
+In Agent Drive context:
 - Used by DNA Scanners to detect inconsistencies in run data / claims
   extracted from agent executions.
 - Populates `genome.reasoning_patterns["contradictions"]` for audit and
   evolutionary selection (contradiction-free genomes are preferred).
-- Maintains the savant-like zero-tolerance for vagueness and inconsistency.
+- Maintains the agentdrive-like zero-tolerance for vagueness and inconsistency.
 
 Original design preserved: offline heuristics, normalized templates,
 citation back to sources. No LLM.

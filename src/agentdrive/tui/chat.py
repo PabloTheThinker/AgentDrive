@@ -1,10 +1,10 @@
 """
-Savant Chat — premium streaming TUI for talking to your Savant Agent.
+Agent Drive Chat — premium streaming TUI for talking to your Agent Drive Agent.
 
 The AgentDrive is the agent's body, the configured LLM is the voice,
 the AgentDrive is the lived memory. Every turn grows the Drive.
 
-Layout principles (mirrored across every Savant surface via chrome.py):
+Layout principles (mirrored across every Agent Drive surface via chrome.py):
 - Messages render with a role glyph + label, no decorative boxes.
 - Nested content uses tree stems (├─ └─ │).
 - One blank line between turns. No internal padding.
@@ -38,7 +38,7 @@ from rich.padding import Padding
 from rich.panel import Panel
 from rich.text import Text
 
-from agentdrive.agent import Indicator, SavantAgent
+from agentdrive.agent import Indicator, Agent DriveAgent
 from agentdrive.chat_loop import ChatLoop
 from agentdrive.constants import get_agentdrive_home
 from agentdrive.tui.chrome import (
@@ -122,15 +122,15 @@ CHAT_HELP_SECTIONS = [
 
 
 class ChatView:
-    """The polished Savant chat experience."""
+    """The polished Agent Drive chat experience."""
 
-    def __init__(self, tui: Any, agent_id: str = "savant-agent"):
+    def __init__(self, tui: Any, agent_id: str = "agentdrive-agent"):
         self.tui = tui
         self.console = tui.console
         self.skin = getattr(tui, "skin", None)
         self.palette = Palette(self.skin)
         self.agent_id = agent_id
-        self.agent = SavantAgent(agent_id=agent_id)
+        self.agent = Agent DriveAgent(agent_id=agent_id)
         self.indicator_style = "unicode"
         self.show_reasoning_hints = False
         self._last_user_message: str | None = None
@@ -148,7 +148,7 @@ class ChatView:
         # PoolMatch handler. Tuple of (genome_id, top_score).
         self._active_form: tuple[str, float] | None = None
 
-        history_file = get_agentdrive_home() / ".savant_chat_history"
+        history_file = get_agentdrive_home() / ".agentdrive_chat_history"
 
         # Multi-line composer: Enter submits, Shift+Enter / Ctrl+Enter / Alt+Enter
         # inserts a newline. Backslash-Enter also inserts a newline (works on
@@ -353,7 +353,7 @@ class ChatView:
         # when real multi-agent dispatch ships; today these ribbons let
         # the user feel swarm activity when external orchestrators emit
         # SubagentSpawn / SubagentTool / SubagentTokens / SubagentDone
-        # events on the default bus. `savant demo-swarm` proves the
+        # events on the default bus. `agentdrive demo-swarm` proves the
         # rendering on a scripted simulation.
         def _ribbon_subagent_spawn(ev: SubagentSpawn) -> None:
             self.console.print(
@@ -511,7 +511,7 @@ class ChatView:
         # Logo + tagline
         logo = Text()
         logo.append(f"{Glyphs.DIAMOND} ", style=p.accent)
-        logo.append("SAVANT", style=p.title + " bold")
+        logo.append("AGENTDRIVE", style=p.title + " bold")
         logo.append("  Agent", style=p.accent)
 
         tagline = Text(
@@ -763,7 +763,7 @@ class ChatView:
 
         header = Text()
         header.append(f"{Glyphs.ASSISTANT} ", style=p.title + " bold")
-        header.append("Savant", style="bold")
+        header.append("Agent Drive", style="bold")
         header.append(f"  {ts}", style=p.muted)
         header.append(f"  ·  {model_label}", style=p.muted)
 
@@ -1016,7 +1016,7 @@ class ChatView:
         self.console.print(
             section_panel(
                 *section_groups,
-                title="Savant Chat · commands",
+                title="Agent Drive Chat · commands",
                 palette=p,
             )
         )
@@ -1371,7 +1371,7 @@ class ChatView:
         self.console.print()
         self._print_status_rule()
 
-    # ─── Pattern 5: genome surface (shares savant.genomes_api with CLI) ───
+    # ─── Pattern 5: genome surface (shares agentdrive.genomes_api with CLI) ───
 
     def _cmd_genomes(self, arg: str = "") -> None:
         """Chat-native listing of registered genomes. Logic via genomes_api;

@@ -1,9 +1,9 @@
 """
-Savant Workers and Agent Adapters.
+Agent Drive Workers and Agent Adapters.
 
 Provides the Worker interface and pluggable adapters so that external agents
 (custom agents, rich workers, ACP/MCP agents) can act as execution workers for the
-Savant orchestrator and can contribute high-quality runs for genome extraction.
+Agent Drive orchestrator and can contribute high-quality runs for genome extraction.
 """
 
 from .adapters import ExternalAgentAdapter, get_default_adapter

@@ -1,5 +1,5 @@
 """
-ReasoningEngine — the primary clean integration point for Savant DNA
+ReasoningEngine — the primary clean integration point for Agent Drive DNA
 Scanners and the Evolutionary Engine.
 
 This class wires the core reasoning primitives into high-level,
@@ -12,9 +12,9 @@ Design goals:
 - Output shapes are directly consumable by Genome.reasoning_patterns
   and Genome.provenance (dicts of primitives, serializable).
 - Remains 100% compatible with calling the raw primitives when needed.
-- Future: can grow calibration, joins, full savant-pass composition, etc.
+- Future: can grow calibration, joins, full agentdrive-pass composition, etc.
 
-No new magic — just disciplined composition + Savant/Genome idioms.
+No new magic — just disciplined composition + Agent Drive / Genome idioms.
 """
 
 from __future__ import annotations
@@ -50,7 +50,7 @@ class ExtractionResult:
 
 class ReasoningEngine:
     """
-    High-level orchestrator for all Savant reasoning primitives.
+    High-level orchestrator for all Agent Drive reasoning primitives.
 
     Typical lifecycle for a DNA Scanner:
 
@@ -90,7 +90,7 @@ class ReasoningEngine:
         self,
         genome_id: str,
         *,
-        actor: str = "savant-reasoning-engine",
+        actor: str = "agentdrive-reasoning-engine",
         ledger_root: Path | None = None,
         pattern_corpus: str = "genomes",
     ) -> None:

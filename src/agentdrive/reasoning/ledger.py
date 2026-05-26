@@ -1,9 +1,9 @@
 """Audit-first ledger — write the claim before you act.
 
-Core reasoning primitive in Savant for auditable claims and operations in
+Core reasoning primitive in Agent Drive for auditable claims and operations in
 Genomes and scanners.
 
-Savant role for DNA extraction and Genome enrichment:
+Agent Drive role for DNA extraction and Genome enrichment:
 - Every scanner pass, pattern extraction, anomaly run, causal analysis,
   or evolutionary proposal can (and should) be auditable via Ledger.
 - `genome.provenance["ledger_refs"]` or per-genome ledgers record the
@@ -17,7 +17,7 @@ Savant role for DNA extraction and Genome enrichment:
 
 Preserved in full: LedgerEntry, Ledger class, log_entry, audited decorator,
 record context, tail, finalize, etc. Thread-safe appends. Only path
-constants and docs updated for Savant.
+constants and docs updated for Agent Drive.
 
 This is the audit ledger primitive for genomes.
 """
@@ -40,8 +40,8 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-_SAVANT_REASONING_ROOT = Path.home() / ".agentdrive" / "reasoning"
-_DEFAULT_ROOT = _SAVANT_REASONING_ROOT / "ledger"
+_AGENTDRIVE_REASONING_ROOT = Path.home() / ".agentdrive" / "reasoning"
+_DEFAULT_ROOT = _AGENTDRIVE_REASONING_ROOT / "ledger"
 _LOCK = threading.Lock()
 
 
@@ -91,7 +91,7 @@ class LedgerEntry:
 
 
 class Ledger:
-    """Append-only jsonl ledger keyed to UTC day. Savant-adapted for genomes."""
+    """Append-only jsonl ledger keyed to UTC day. Agent Drive-adapted for genomes."""
 
     def __init__(self, root: Path | None = None, actor: str = "agentdrive") -> None:
         self.root = root or _DEFAULT_ROOT
@@ -187,7 +187,7 @@ def log_entry(
     root: Path | None = None,
     actor: str = "agentdrive",
 ) -> LedgerEntry:
-    """Convenience: one-shot append to the default Savant reasoning ledger."""
+    """Convenience: one-shot append to the default Agent Drive reasoning ledger."""
     return Ledger(root=root, actor=actor).log_entry(
         operation=operation,
         summary=summary,

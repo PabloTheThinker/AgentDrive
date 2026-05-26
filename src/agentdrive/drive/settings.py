@@ -5,7 +5,7 @@ This module gives the user (and any AI the user instructs) full control over how
 
 All settings are persisted in `~/.agentdrive/config.yaml` (or AGENTDRIVE_HOME equivalent) under the `pool:` section.
 
-The user is always sovereign: the Drive starts empty, and every policy can be changed by the owner at any time — including by telling Grok, Claude, Codex, etc. "Use these Savant pool settings for this swarm."
+The user is always sovereign: the Drive starts empty, and every policy can be changed by the owner at any time — including by telling Grok, Claude, Codex, etc. "Use these Agent Drive pool settings for this swarm."
 
 """
 
@@ -50,15 +50,15 @@ class DriveSettings:
 class DriveSettingsManager:
     """User-controlled settings for AgentDrives (global + per-swarm overrides)."""
 
-    def __init__(self, savant_home: Path | None = None):
-        # load_config uses current AGENTDRIVE_HOME (respects overrides); savant_home param kept for future
-        if savant_home is not None:
+    def __init__(self, agentdrive_home: Path | None = None):
+        # load_config uses current AGENTDRIVE_HOME (respects overrides); agentdrive_home param kept for future
+        if agentdrive_home is not None:
             from agentdrive.constants import (
                 reset_agentdrive_home_override,
                 set_agentdrive_home_override,
             )
 
-            tok = set_agentdrive_home_override(savant_home)
+            tok = set_agentdrive_home_override(agentdrive_home)
             try:
                 self.config = load_config()
             finally:
@@ -117,7 +117,7 @@ class DriveSettingsManager:
             "You are using the AgentDrive system. The user owns all settings. "
             "Current effective pool rules are stored in the user's config. "
             "If the user tells you to change isolation, auto-ingest, sharing policy, etc., "
-            "you must update the Savant pool settings on their behalf using the provided API or CLI."
+            "you must update the Agent Drive pool settings on their behalf using the provided API or CLI."
         )
 
 

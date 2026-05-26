@@ -3,6 +3,6 @@
     "Extract inputs first, then steps, then output schema, finally docs.",
     "Meta-frameworks close the loop for self-improving registry."
   ],
-  "extraction_note": "Seeded skill-creator example using Savant reasoning primitives (synthesizer).",
-  "primitives_version": "savant-reasoning-0.1.0"
+  "extraction_note": "Seeded skill-creator example using Agent Drive reasoning primitives (synthesizer).",
+  "primitives_version": "agentdrive-reasoning-0.1.0"
 }

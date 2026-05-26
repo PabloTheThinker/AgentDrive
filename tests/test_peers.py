@@ -98,7 +98,7 @@ def clean_bus() -> Iterator[None]:
 # ─────────────────────────────────────────────────────────────────────
 
 
-def test_add_persists_entry_to_disk(isolated_savant_home: Path) -> None:
+def test_add_persists_entry_to_disk(isolated_agentdrive_home: Path) -> None:
     reg = PeerRegistry()
     entry = reg.add("alpha", "file:///tmp/peer-alpha", notes="machine in basement")
 
@@ -108,7 +108,7 @@ def test_add_persists_entry_to_disk(isolated_savant_home: Path) -> None:
     assert entry.notes == "machine in basement"
     assert entry.last_sync_iso is None
 
-    on_disk = isolated_savant_home / "peers" / "alpha.json"
+    on_disk = isolated_agentdrive_home / "peers" / "alpha.json"
     assert on_disk.is_file()
     payload = json.loads(on_disk.read_text(encoding="utf-8"))
     assert payload["peer_id"] == "alpha"
@@ -116,19 +116,19 @@ def test_add_persists_entry_to_disk(isolated_savant_home: Path) -> None:
     assert payload["trust_level"] == "untrusted"
 
 
-def test_remove_deletes_entry(isolated_savant_home: Path) -> None:
+def test_remove_deletes_entry(isolated_agentdrive_home: Path) -> None:
     reg = PeerRegistry()
     reg.add("beta", "file:///tmp/peer-beta")
     assert reg.get("beta") is not None
     assert reg.remove("beta") is True
     assert reg.get("beta") is None
-    assert not (isolated_savant_home / "peers" / "beta.json").exists()
+    assert not (isolated_agentdrive_home / "peers" / "beta.json").exists()
     # Removing again is a no-op (returns False), not an error.
     assert reg.remove("beta") is False
 
 
 def test_set_trust_updates_level_and_emits_event(
-    isolated_savant_home: Path, clean_bus: None
+    isolated_agentdrive_home: Path, clean_bus: None
 ) -> None:
     captured: list[Event] = []
     default_bus.subscribe(captured.append, event_types=(PeerTrustChanged,))
@@ -158,7 +158,7 @@ def test_set_trust_updates_level_and_emits_event(
         reg.set_trust("gamma", "ultra-trusted")
 
 
-def test_list_returns_all_peers(isolated_savant_home: Path) -> None:
+def test_list_returns_all_peers(isolated_agentdrive_home: Path) -> None:
     reg = PeerRegistry()
     assert reg.list() == []
 
@@ -179,7 +179,7 @@ def test_list_returns_all_peers(isolated_savant_home: Path) -> None:
 
 
 def test_local_file_adapter_finds_new_genomes_since_iso(
-    isolated_savant_home: Path, tmp_path: Path
+    isolated_agentdrive_home: Path, tmp_path: Path
 ) -> None:
     peer_home = _make_peer_home(tmp_path, "cap-one", "cap-two")
 
@@ -209,7 +209,7 @@ def test_local_file_adapter_finds_new_genomes_since_iso(
     assert {p.name for p in all_found} == {"cap-one", "cap-two"}
 
 
-def test_get_adapter_for_resolves_file_scheme(isolated_savant_home: Path) -> None:
+def test_get_adapter_for_resolves_file_scheme(isolated_agentdrive_home: Path) -> None:
     peer_file = PeerEntry(peer_id="x", address="file:///tmp/foo")
     peer_bare = PeerEntry(peer_id="y", address="/tmp/foo")
     peer_https = PeerEntry(peer_id="z", address="https://example.com")
@@ -226,7 +226,7 @@ def test_get_adapter_for_resolves_file_scheme(isolated_savant_home: Path) -> Non
 
 
 def test_sync_peer_submits_each_genome_to_quarantine(
-    isolated_savant_home: Path, tmp_path: Path
+    isolated_agentdrive_home: Path, tmp_path: Path
 ) -> None:
     peer_home = _make_peer_home(tmp_path, "g-one", "g-two", "g-three")
 
@@ -255,7 +255,7 @@ def test_sync_peer_submits_each_genome_to_quarantine(
 
 
 def test_sync_peer_never_calls_pool_ingest_directly(
-    isolated_savant_home: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    isolated_agentdrive_home: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """The load-bearing assertion: the quarantine gate is unbypassable.
 
@@ -323,7 +323,7 @@ def test_sync_peer_never_calls_pool_ingest_directly(
 
 
 def test_sync_peer_emits_started_and_completed_events(
-    isolated_savant_home: Path, tmp_path: Path, clean_bus: None
+    isolated_agentdrive_home: Path, tmp_path: Path, clean_bus: None
 ) -> None:
     captured: list[Event] = []
     default_bus.subscribe(
@@ -351,7 +351,7 @@ def test_sync_peer_emits_started_and_completed_events(
     assert completed.duration_ms >= 0
 
 
-def test_sync_updates_last_sync_iso(isolated_savant_home: Path, tmp_path: Path) -> None:
+def test_sync_updates_last_sync_iso(isolated_agentdrive_home: Path, tmp_path: Path) -> None:
     peer_home = _make_peer_home(tmp_path, "only-one")
     reg = PeerRegistry()
     reg.add("syncer", f"file://{peer_home}")
@@ -371,7 +371,7 @@ def test_sync_updates_last_sync_iso(isolated_savant_home: Path, tmp_path: Path) 
 
 
 def test_sync_handles_adapter_errors_per_candidate(
-    isolated_savant_home: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    isolated_agentdrive_home: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """One bad candidate must not abort the whole sync."""
     peer_home = _make_peer_home(tmp_path, "ok-one", "ok-two")
@@ -406,7 +406,7 @@ def test_sync_handles_adapter_errors_per_candidate(
 
 
 def test_sync_peer_unknown_peer_returns_error_not_crash(
-    isolated_savant_home: Path,
+    isolated_agentdrive_home: Path,
 ) -> None:
     reg = PeerRegistry()
     pool = AgentDrive(registry=GenomeRegistry())
@@ -415,7 +415,7 @@ def test_sync_peer_unknown_peer_returns_error_not_crash(
     assert any("unknown peer" in e for e in result.errors)
 
 
-def test_unknown_scheme_does_not_silently_fall_to_local_file(isolated_savant_home):
+def test_unknown_scheme_does_not_silently_fall_to_local_file(isolated_agentdrive_home):
     """ftp:// (and any unknown scheme) must NOT be coerced into LocalFilePeerAdapter."""
     from agentdrive.peers import PeerRegistry, _address_scheme, sync_peer
 

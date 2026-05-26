@@ -389,7 +389,7 @@ class DriveView:
             self.console.print()
             self.console.print(
                 info_line(
-                    f"Tip: run [{p.accent}]PYTHONPATH=src python3 examples/savant_swarm_dna_demo.py[/]"
+                    f"Tip: run [{p.accent}]PYTHONPATH=src python3 examples/agentdrive_swarm_dna_demo.py[/]"
                     f" then [{p.accent}]swarms[/] to see your first swarm.",
                     palette=p,
                 )
@@ -451,7 +451,7 @@ class DriveView:
         else:
             empty = Text.from_markup(
                 f"[{p.muted}]No swarms discovered. Use[/] [{p.accent}]create-swarm <id>[/]"
-                f" [{p.muted}]or spawn sub-agents with Savant adapters.[/]"
+                f" [{p.muted}]or spawn sub-agents with Agent Drive adapters.[/]"
             )
             sections.append(empty)
 
@@ -1224,7 +1224,7 @@ class DriveView:
                         palette=p,
                     ),
                     Text.from_markup(
-                        f"  [{p.muted}]Swarms are created when using Savant adapters with swarm ids,[/]\n"
+                        f"  [{p.muted}]Swarms are created when using Agent Drive adapters with swarm ids,[/]\n"
                         f"  [{p.muted}]or via[/] [{p.accent}]create-swarm <id>[/]\n"
                         f"  [{p.muted}]then[/] [{p.accent}]switch <id>[/] [{p.muted}]to enter the private pool.[/]"
                     ),
@@ -1462,7 +1462,7 @@ class DriveView:
             self.console.print()
 
 
-# Integration hook for main SavantTUI (called from app.py __init__)
+# Integration hook for main Agent DriveTUI (called from app.py __init__)
 def register_drive_view(tui: Any) -> None:
     """Attach a (stateful) DriveView instance to the TUI for dedicated global+swarm DNA management."""
     tui.pool_view = DriveView(tui)

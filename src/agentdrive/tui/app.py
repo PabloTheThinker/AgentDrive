@@ -4,7 +4,7 @@ AgentDrive Professional TUI Application
 High-quality terminal interface for the AgentDrive.
 Focus: precision, clarity, trust, and powerful genome-aware workflows.
 
-Savant is an independent, open-source framework for agent DNA (memory + patterns).
+Agent Drive is an independent, open-source framework for agent DNA (memory + patterns).
 It gives every agent — and every swarm of sub-agents — its own persistent,
 user-controlled living pool of experience that starts empty and grows with use.
 """
@@ -35,8 +35,8 @@ from agentdrive.tui.skin_engine import skin
 from agentdrive.tui.views.drive_view import register_drive_view
 
 
-class SavantTUI:
-    """Production-grade interactive TUI for Savant genome management and orchestration."""
+class Agent DriveTUI:
+    """Production-grade interactive TUI for Agent Drive genome management and orchestration."""
 
     def __init__(self):
         self.skin = skin
@@ -48,9 +48,9 @@ class SavantTUI:
         self._cancel_event = threading.Event()
 
         # Prompt toolkit session with persistent history
-        savant_home = self.registry.root.parent
-        savant_home.mkdir(parents=True, exist_ok=True)
-        self._history_file = savant_home / ".savant_tui_history"
+        agentdrive_home = self.registry.root.parent
+        agentdrive_home.mkdir(parents=True, exist_ok=True)
+        self._history_file = agentdrive_home / ".agentdrive_tui_history"
         self.session: PromptSession = PromptSession(
             history=FileHistory(str(self._history_file)),
             completer=None,  # set dynamically per prompt for fresh genome list
@@ -183,7 +183,7 @@ class SavantTUI:
         """Main REPL loop — premium feel with completion, history, clean interrupts."""
         self.skin.print_banner("AgentDrive")
 
-        # Dedicated first-launch Savant Welcome Screen
+        # Dedicated first-launch Agent Drive Welcome Screen
         # Shown once after onboarding — distinct from the reusable setup wizard.
         try:
             from agentdrive.config import load_config, save_config
@@ -210,7 +210,7 @@ class SavantTUI:
         self._print_quick_help()
 
         # First-class chat is the default landing — drop straight into talking
-        # to your Savant Agent. /back from chat returns to the command REPL.
+        # to your Agent Drive Agent. /back from chat returns to the command REPL.
         try:
             self._show_chat()
         except Exception as exc:
@@ -232,7 +232,7 @@ class SavantTUI:
                     sel = f" ({short})"
 
                 status_str = self._get_status_context()
-                prompt_text = f"savant{sel} {status_str} ❯ "
+                prompt_text = f"agentdrive{sel} {status_str} ❯ "
                 line = self.session.prompt(
                     prompt_text,
                     default="",
@@ -287,17 +287,17 @@ class SavantTUI:
 
             from agentdrive.drive.drive import get_default_drive
 
-            savant_home = Path.home() / ".agentdrive"
+            agentdrive_home = Path.home() / ".agentdrive"
             pool = get_default_drive()
             pstats = pool.get_pool_stats()
             ingest_count = pstats.get("ingest_events", 0)
             swarm_count = (
-                len(list((savant_home / "swarms").glob("*")))
-                if (savant_home / "swarms").exists()
+                len(list((agentdrive_home / "swarms").glob("*")))
+                if (agentdrive_home / "swarms").exists()
                 else 0
             )
         except Exception:
-            savant_home = Path.home() / ".agentdrive"
+            agentdrive_home = Path.home() / ".agentdrive"
             ingest_count = 0
             swarm_count = 0
 
@@ -315,7 +315,7 @@ class SavantTUI:
 
         hero = Text()
         hero.append(f"{Glyphs.DIAMOND} ", style=p.accent)
-        hero.append("SAVANT", style=p.title + " bold")
+        hero.append("AGENTDRIVE", style=p.title + " bold")
         hero.append("  —  The Living, Learning Ecosystem for AI Agents", style=p.accent)
 
         tagline = Text(
@@ -328,7 +328,7 @@ class SavantTUI:
             Section(
                 "Environment",
                 [
-                    ("home", f"[agentdrive.genome]{savant_home}[/]"),
+                    ("home", f"[agentdrive.genome]{agentdrive_home}[/]"),
                     ("provider", provider_v),
                     (
                         "drive",
@@ -991,7 +991,7 @@ class SavantTUI:
             self.console.print(f"[agentdrive.warn]Pool view:[/] {e}")
 
     def _scan_runs(self, args: list[str]) -> None:
-        """Real DNA extraction using SavantRunScanner + reasoning primitives.
+        """Real DNA extraction using Agent DriveRunScanner + reasoning primitives.
         Produces a live candidate Genome from simulated or provided run data.
         """
         from agentdrive.tui.chrome import (
@@ -1014,7 +1014,7 @@ class SavantTUI:
                 Section(
                     "Scan",
                     [
-                        ("scanner", "[agentdrive.framework]savant-run[/]"),
+                        ("scanner", "[agentdrive.framework]agentdrive-run[/]"),
                         ("target", f"[agentdrive.genome]{target}[/]"),
                     ],
                     palette=p,
@@ -1028,7 +1028,7 @@ class SavantTUI:
         # Build realistic sample run data (from worker telemetry or external agent run)
         sample_run = {
             "timestamp": datetime.utcnow().isoformat(),
-            "model": "savant-demo-model",
+            "model": "agentdrive-demo-model",
             "observations": [
                 {
                     "kind": "event",
@@ -1090,13 +1090,13 @@ class SavantTUI:
         )
         steps.start()
         try:
-            from agentdrive.scanners import SavantRunScanner
+            from agentdrive.scanners import Agent DriveRunScanner
 
             steps.advance(
                 f"{len(sample_run.get('observations', []))} obs · {len(sample_run.get('claims', []))} claims"
             )
 
-            scanner = SavantRunScanner(actor=f"tui-scan-{target[:8]}")
+            scanner = Agent DriveRunScanner(actor=f"tui-scan-{target[:8]}")
             candidates = scanner.scan(sample_run)
             if not candidates:
                 steps.fail("scanner returned 0 candidates")
@@ -1107,7 +1107,7 @@ class SavantTUI:
             steps.advance(f"{len(candidates)} candidate(s)")
 
             cand = candidates[0]
-            cand.manifest.id = "extracted-savant-patterns"
+            cand.manifest.id = "extracted-agentdrive-patterns"
             cand.manifest.version = "0.1.0-scanned"
             cand.finalize()
             steps.advance(f"{cand.genome_id}")
@@ -1249,9 +1249,9 @@ class SavantTUI:
         # Lazy import + create Harness for the session (before steps) so base TUI launch never pulls harness/pool
         harness = None
         try:
-            from agentdrive.harness.harness import Harness as _SavantHarness
+            from agentdrive.harness.harness import Harness as _Agent DriveHarness
 
-            harness = _SavantHarness(
+            harness = _Agent DriveHarness(
                 agent_id=f"tui-{g.manifest.id[:16]}-{int(time.time()) % 100000}"
             )
         except Exception as imp_err:
@@ -1287,9 +1287,9 @@ class SavantTUI:
         # Ensure we have a harness for the session (created in caller _run_work or here as fallback)
         if harness is None:
             try:
-                from agentdrive.harness.harness import Harness as _SavantHarness
+                from agentdrive.harness.harness import Harness as _Agent DriveHarness
 
-                harness = _SavantHarness(
+                harness = _Agent DriveHarness(
                     agent_id=f"tui-{genome.manifest.id[:16]}-{int(time.time()) % 100000}"
                 )
             except Exception:
@@ -1766,5 +1766,5 @@ class SavantTUI:
 
 def launch_tui() -> None:
     """Launch the professional AgentDrive TUI."""
-    app = SavantTUI()
+    app = Agent DriveTUI()
     app.run()

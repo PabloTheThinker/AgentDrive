@@ -2,7 +2,7 @@
 
 Data model + Rich renderer for a swarm of sub-agents emitting
 ``SubagentSpawn`` / ``SubagentTool`` / ``SubagentTokens`` / ``SubagentDone``
-events on the Savant event bus.
+events on the Agent Drive event bus.
 
 This module is intentionally renderer-only. It does not subscribe to the
 bus, does not own a ``rich.live.Live``, and never touches the chat surface.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple version bumper for Savant.
+Simple version bumper for Agent Drive.
 
 Usage:
     python scripts/bump_version.py patch   # 0.1.0 -> 0.1.1

@@ -1,14 +1,14 @@
 """
-SavantRunScanner — DNA extraction from agent trajectories and runs.
+Agent DriveRunScanner — DNA extraction from agent trajectories and runs.
 
 Takes a rich agent run/trajectory/engagement (JSON or dict with conversations,
-observations, ledger, claims, etc.) from Savant workers or compatible external
-agents, and uses Savant's reasoning primitives (synthesizer, witness, causality,
+observations, ledger, claims, etc.) from Agent Drive workers or compatible external
+agents, and uses Agent Drive's reasoning primitives (synthesizer, witness, causality,
 contradictions, anomaly, patterns, ledger, reasoning) via the ReasoningEngine
 to produce one or more candidate Genomes.
 
 This is the canonical implementation of the DNA Scanner interface for the
-Savant ecosystem.
+Agent Drive ecosystem.
 """
 
 from __future__ import annotations
@@ -28,9 +28,9 @@ from agentdrive.reasoning import (
 from .base import BaseScanner
 
 
-class SavantRunScanner(BaseScanner):
+class Agent DriveRunScanner(BaseScanner):
     """
-    Scanner specialized for Savant and compatible external agent run data.
+    Scanner specialized for Agent Drive and compatible external agent run data.
 
     Input formats supported:
     - Path to .json or .jsonl file containing trajectory / engagement dump
@@ -41,9 +41,9 @@ class SavantRunScanner(BaseScanner):
     the full primitive suite and (when possible) a synthesized framework draft.
     """
 
-    name: str = "savant-run"
+    name: str = "agentdrive-run"
 
-    def __init__(self, actor: str = "savant-run-scanner-v0.1"):
+    def __init__(self, actor: str = "agentdrive-run-scanner-v0.1"):
         self.actor = actor
 
     def scan(self, run_data: dict[str, Any] | Path | str) -> list[Genome]:
@@ -54,7 +54,7 @@ class SavantRunScanner(BaseScanner):
 
         # Use the high-level ReasoningEngine (wires all primitives + ledger audit)
         engine = ReasoningEngine(
-            genome_id="candidate-savant-extraction",
+            genome_id="candidate-agentdrive-extraction",
             actor=self.actor,
         )
         enrichment = engine.extract_from_run(data)
@@ -67,9 +67,9 @@ class SavantRunScanner(BaseScanner):
             try:
                 synth = synthesize_framework(
                     observations=obs,
-                    framework_id="extracted-from-savant-run",
+                    framework_id="extracted-from-agentdrive-run",
                     version="0.1.0-candidate",
-                    display_name="Savant Run Synthesis",
+                    display_name="Agent Drive Run Synthesis",
                     category="extracted",
                 )
                 framework = {
@@ -88,7 +88,7 @@ class SavantRunScanner(BaseScanner):
         # Build a production-quality candidate manifest
         now = datetime.utcnow()
         manifest = GenomeManifest(
-            id="extracted-savant-patterns",
+            id="extracted-agentdrive-patterns",
             version="0.1.0-candidate",
             content_hash="sha256:pending",
             created=now,
@@ -130,7 +130,7 @@ class SavantRunScanner(BaseScanner):
                     "PatternMemory",
                     "synthesize_framework",
                 ],
-                "reasoning_primitives_version": "savant-reasoning-0.1.0",
+                "reasoning_primitives_version": "agentdrive-reasoning-0.1.0",
             },
             tool_compositions={
                 "common_sequences": enrichment.reasoning_patterns.get("patterns_recognized", []),
@@ -167,4 +167,4 @@ class SavantRunScanner(BaseScanner):
 
 
 # Also export a convenience alias for backward compatibility during transition
-RichRunScanner = SavantRunScanner  # Rich external workers and Savant workers use the same scanner
+RichRunScanner = Agent DriveRunScanner  # Rich external workers and Agent Drive workers use the same scanner

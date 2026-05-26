@@ -1,5 +1,5 @@
 """
-SavantAdapter — Base Protocol and Implementation for Multi-Model Pool Integration.
+Agent DriveAdapter — Base Protocol and Implementation for Multi-Model Pool Integration.
 
 This is the universal contract that every model-specific adapter (Grok, Claude, Codex, ...)
 must satisfy. It abstracts:
@@ -31,7 +31,7 @@ Usage (universal, works for any model):
         harness.record_outcome({...})
 
 User instruction example the model should receive:
-    "For the rest of this session and every sub-agent you create, use the Savant
+    "For the rest of this session and every sub-agent you create, use the Agent Drive
      Pool system. Activate it with: from agentdrive.adapters import activate_for_grok_build;
      activate_for_grok_build(swarm_id='research-2026-05'). All your children will
      automatically receive their own isolated DNA pools."
@@ -57,14 +57,14 @@ from agentdrive.registry import GenomeRegistry
 logger = logging.getLogger(__name__)
 
 
-class SavantAdapter(Protocol):
+class Agent DriveAdapter(Protocol):
     """Protocol defining the integration surface for any AI model / agent runtime.
 
     Implementations:
-    - SavantAdapterBase (universal fallback)
-    - GrokBuildSavantAdapter (Grok build system + spawn_subagent)
-    - ClaudeCodeSavantAdapter
-    - CodexSavantAdapter
+    - Agent DriveAdapterBase (universal fallback)
+    - GrokBuildAgent DriveAdapter (Grok build system + spawn_subagent)
+    - ClaudeCodeAgent DriveAdapter
+    - CodexAgent DriveAdapter
     """
 
     def get_name(self) -> str:
@@ -78,7 +78,7 @@ class SavantAdapter(Protocol):
     def get_scoped_pool(self) -> AgentDrive:
         """Return the Drive appropriate for the *current* execution context.
 
-        Auto-detects SAVANT_* env vars (or equivalent runtime context).
+        Auto-detects AGENTDRIVE_* env vars (or equivalent runtime context).
         This is the method sub-agents should primarily call.
         """
         ...
@@ -107,7 +107,7 @@ class SavantAdapter(Protocol):
 
 
 @dataclass
-class SavantContext:
+class Agent DriveContext:
     """Lightweight carrier of swarm identity that can be passed to children."""
 
     swarm_id: str | None = None
@@ -122,11 +122,11 @@ class SavantContext:
         if self.subagent_id:
             env["AGENTDRIVE_SUBAGENT_ID"] = self.subagent_id
         if self.parent_agent_id:
-            env["SAVANT_PARENT_AGENT_ID"] = self.parent_agent_id
+            env["AGENTDRIVE_PARENT_AGENT_ID"] = self.parent_agent_id
         return env
 
 
-class SavantAdapterBase:
+class Agent DriveAdapterBase:
     """Concrete base implementation. Safe default for any model.
 
     Model-specific adapters should subclass and override:
@@ -145,15 +145,15 @@ class SavantAdapterBase:
         self._default_swarm = default_swarm_id
         self._default_sub = default_subagent_id
         self._activated = False
-        logger.debug("SavantAdapterBase initialized (%s)", name)
+        logger.debug("Agent DriveAdapterBase initialized (%s)", name)
 
     def get_name(self) -> str:
         return self._name
 
-    def detect_context(self) -> SavantContext:
+    def detect_context(self) -> Agent DriveContext:
         """Detect current swarm/sub from environment (or internal defaults)."""
         swarm, sub = detect_swarm_context()
-        return SavantContext(
+        return Agent DriveContext(
             swarm_id=swarm or self._default_swarm,
             subagent_id=sub or self._default_sub,
         )
@@ -190,7 +190,7 @@ class SavantAdapterBase:
 
         self._activated = True
         logger.info(
-            "SavantAdapterBase activated (swarm=%s, sub=%s)",
+            "Agent DriveAdapterBase activated (swarm=%s, sub=%s)",
             self._default_swarm,
             self._default_sub,
         )
@@ -213,18 +213,18 @@ class SavantAdapterBase:
 def detect_swarm_context() -> tuple[str | None, str | None]:
     """Return (swarm_id, subagent_id) by inspecting standard env vars.
 
-    These vars are set either by the user's shell, by a parent Savant-aware
+    These vars are set either by the user's shell, by a parent Agent Drive-aware
     spawner, or by the adapter's patched spawn_subagent / equivalent.
     """
     swarm = (
         os.environ.get("AGENTDRIVE_SWARM_ID")
-        or os.environ.get("SAVANT_SWARM")
+        or os.environ.get("AGENTDRIVE_SWARM")
         or os.environ.get("SWARM_ID")
     )
     sub = (
         os.environ.get("AGENTDRIVE_SUBAGENT_ID")
-        or os.environ.get("SAVANT_SUB_AGENT_ID")
-        or os.environ.get("SAVANT_AGENT_ID")
+        or os.environ.get("AGENTDRIVE_SUB_AGENT_ID")
+        or os.environ.get("AGENTDRIVE_AGENT_ID")
         or os.environ.get("SUBAGENT_ID")
     )
     return swarm, sub
@@ -287,7 +287,7 @@ def create_scoped_pool(
     return AgentDrive(registry=registry, name=name, drive_path=drive_path)
 
 
-def get_savant_pool(swarm_id: str | None = None, subagent_id: str | None = None) -> AgentDrive:
+def get_agentdrive_pool(swarm_id: str | None = None, subagent_id: str | None = None) -> AgentDrive:
     """Convenience alias used by __init__.py and models."""
     return create_scoped_pool(swarm_id, subagent_id)
 
@@ -311,12 +311,12 @@ def create_harness(
 
 
 __all__ = [
-    "SavantAdapter",
-    "SavantAdapterBase",
-    "SavantContext",
+    "Agent DriveAdapter",
+    "Agent DriveAdapterBase",
+    "Agent DriveContext",
     "detect_swarm_context",
     "create_scoped_pool",
-    "get_savant_pool",
+    "get_agentdrive_pool",
     "get_scoped_pool",
     "create_harness",
 ]

@@ -14,7 +14,7 @@ Membership tracking (``list_active_swarms`` showing both sub-agents as
 members of the same swarm) is the auxiliary signal that the manager
 correctly handled the cache-hit path for the second sub-agent.
 
-Tests rely on the autouse ``isolated_savant_home`` fixture from conftest
+Tests rely on the autouse ``isolated_agentdrive_home`` fixture from conftest
 to scope ``~/.agentdrive`` to a temp dir per test.
 """
 
@@ -47,7 +47,7 @@ def _make_genome(gid: str, framework: dict | None = None) -> Genome:
 # ─────────────────────────────────────────────────────────────────────
 
 
-def test_get_swarm_drive_path_is_subagent_agnostic(isolated_savant_home: Path) -> None:
+def test_get_swarm_drive_path_is_subagent_agnostic(isolated_agentdrive_home: Path) -> None:
     """v1 path encoded subagent into the directory; v2 collapses to per-swarm.
     Backwards-compatible signature, new behavior."""
     base = get_swarm_drive_path("alpha")
@@ -59,7 +59,7 @@ def test_get_swarm_drive_path_is_subagent_agnostic(isolated_savant_home: Path) -
     assert base.name == "drive"
 
 
-def test_two_subagents_get_same_drive_instance(isolated_savant_home: Path) -> None:
+def test_two_subagents_get_same_drive_instance(isolated_agentdrive_home: Path) -> None:
     """Calling get_or_create_pool with two different sub-agent IDs but the
     same swarm returns the SAME AgentDrive object. The v1 bug returned a
     fresh-but-broken Drive each time."""
@@ -71,21 +71,21 @@ def test_two_subagents_get_same_drive_instance(isolated_savant_home: Path) -> No
     assert drive_a is drive_b, "siblings in the same swarm must share one Drive"
 
 
-def test_drive_path_is_the_real_swarm_path(isolated_savant_home: Path) -> None:
+def test_drive_path_is_the_real_swarm_path(isolated_agentdrive_home: Path) -> None:
     """v1 bug regression: the constructed Drive's drive_path used to default
     to the global Drive, not the swarm path. Lock that down."""
     mgr = SwarmDriveManager()
 
     drive = mgr.get_or_create_pool(swarm_id="gamma", subagent_id="lead")
 
-    expected = isolated_savant_home / "swarms" / "gamma" / "drive"
+    expected = isolated_agentdrive_home / "swarms" / "gamma" / "drive"
     assert drive.drive_path == expected, (
         f"Drive landed at {drive.drive_path}, expected {expected} — "
         "the drive_path bug surfaced by examples/03_swarm.py is back"
     )
 
 
-def test_different_swarms_get_different_drives(isolated_savant_home: Path) -> None:
+def test_different_swarms_get_different_drives(isolated_agentdrive_home: Path) -> None:
     mgr = SwarmDriveManager()
 
     delta = mgr.get_or_create_pool(swarm_id="delta", subagent_id="a")
@@ -100,7 +100,7 @@ def test_different_swarms_get_different_drives(isolated_savant_home: Path) -> No
 # ─────────────────────────────────────────────────────────────────────
 
 
-def test_swarm_tracks_all_subagent_members(isolated_savant_home: Path) -> None:
+def test_swarm_tracks_all_subagent_members(isolated_agentdrive_home: Path) -> None:
     """Both first-create and cache-hit paths must register the sub-agent."""
     mgr = SwarmDriveManager()
 
@@ -118,7 +118,7 @@ def test_swarm_tracks_all_subagent_members(isolated_savant_home: Path) -> None:
 # ─────────────────────────────────────────────────────────────────────
 
 
-def test_subagent_writes_are_author_tagged(isolated_savant_home: Path) -> None:
+def test_subagent_writes_are_author_tagged(isolated_agentdrive_home: Path) -> None:
     """A Genome ingested with subagent_id gets an author entry stamped
     ``sub:<id>`` so siblings can attribute and filter each other's work."""
     mgr = SwarmDriveManager()
@@ -131,7 +131,7 @@ def test_subagent_writes_are_author_tagged(isolated_savant_home: Path) -> None:
     assert "sub:planner" in author_ids
 
 
-def test_subagent_writes_dont_double_tag(isolated_savant_home: Path) -> None:
+def test_subagent_writes_dont_double_tag(isolated_agentdrive_home: Path) -> None:
     """Re-ingesting the same Genome from the same sub-agent must not pile
     up duplicate author entries."""
     mgr = SwarmDriveManager()
@@ -146,7 +146,7 @@ def test_subagent_writes_dont_double_tag(isolated_savant_home: Path) -> None:
     assert len(tagged) == 1, "author tag must be idempotent across re-ingest"
 
 
-def test_writers_lists_every_subagent_that_contributed(isolated_savant_home: Path) -> None:
+def test_writers_lists_every_subagent_that_contributed(isolated_agentdrive_home: Path) -> None:
     mgr = SwarmDriveManager()
     drive = mgr.get_or_create_pool(swarm_id="iota", subagent_id="root")
 
@@ -158,7 +158,7 @@ def test_writers_lists_every_subagent_that_contributed(isolated_savant_home: Pat
     assert drive.writers() == ["critic", "planner"]
 
 
-def test_genomes_by_subagent_filters_correctly(isolated_savant_home: Path) -> None:
+def test_genomes_by_subagent_filters_correctly(isolated_agentdrive_home: Path) -> None:
     """The sibling-learning query: 'what did cousin-B write?'"""
     mgr = SwarmDriveManager()
     drive = mgr.get_or_create_pool(swarm_id="kappa", subagent_id="root")
@@ -180,7 +180,7 @@ def test_genomes_by_subagent_filters_correctly(isolated_savant_home: Path) -> No
 # ─────────────────────────────────────────────────────────────────────
 
 
-def test_sibling_can_read_what_another_sibling_wrote(isolated_savant_home: Path) -> None:
+def test_sibling_can_read_what_another_sibling_wrote(isolated_agentdrive_home: Path) -> None:
     """The whole point of Milestone 2a — sub-agent A writes, sub-agent B
     obtains the same Drive instance and sees A's work without any
     cross-config required."""

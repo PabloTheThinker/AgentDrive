@@ -1,7 +1,7 @@
 """Trust-gated quarantine for externally-sourced Agent DNA.
 
 Every genome that arrives from a non-local source — a sub-agent's
-inheritance manifest, a peer Savant's reconciliation, a federated pull —
+inheritance manifest, a peer Agent Drive's reconciliation, a federated pull —
 MUST land here first. Quarantine validates the candidate against a
 configurable rule set before any release into the live pool.
 

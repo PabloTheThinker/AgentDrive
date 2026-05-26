@@ -1,6 +1,6 @@
 """Pool reconciliation routine — periodic background pool scan.
 
-Every Savant agent should be able to notice, without the operator asking,
+Every Agent Drive agent should be able to notice, without the operator asking,
 that new DNA has landed in its pool. Sub-agents push genomes in via the
 inheritance loop, quarantine releases candidates after approval, peer
 adapters drop entries through their own ingest paths. This module is the
@@ -429,7 +429,7 @@ class ReconciliationRunner:
             self._stop_event = threading.Event()
             t = threading.Thread(
                 target=self._run_loop,
-                name="savant-reconciliation",
+                name="agentdrive-reconciliation",
                 daemon=True,
             )
             self._thread = t

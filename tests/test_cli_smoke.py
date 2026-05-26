@@ -16,11 +16,11 @@ def test_cli_version():
     # Accept either product name (rebrand carried-through) plus the current
     # major.minor — bump intentionally drops the version pin from the test so
     # the smoke test survives patch bumps.
-    assert "AgentDrive" in result.stdout or "Savant" in result.stdout
+    assert "AgentDrive" in result.stdout or "Agent Drive" in result.stdout
     assert "0." in result.stdout  # any 0.x version
 
 
-def test_cli_doctor_runs(isolated_savant_home):
+def test_cli_doctor_runs(isolated_agentdrive_home):
     result = subprocess.run(
         [sys.executable, "-m", "agentdrive.cli", "doctor"],
         capture_output=True,
@@ -32,7 +32,7 @@ def test_cli_doctor_runs(isolated_savant_home):
     # Doctor renders through the chrome system; assert on stable user-facing markers.
     stdout = result.stdout
     assert (
-        "Savant health check" in stdout
+        "Agent Drive health check" in stdout
         or "All systems nominal" in stdout
         or "Home directory" in stdout
     )

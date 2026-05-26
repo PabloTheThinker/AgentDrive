@@ -1,5 +1,5 @@
 """
-Pytest configuration and shared fixtures for Savant.
+Pytest configuration and shared fixtures for Agent Drive.
 
 Provides isolated AGENTDRIVE_HOME per test (via context override) so tests
 never touch the user's real ~/.agentdrive .
@@ -19,12 +19,12 @@ from agentdrive.constants import (
 
 
 @pytest.fixture(autouse=True)
-def isolated_savant_home(monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
+def isolated_agentdrive_home(monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
     """
-    Automatically give every test its own temporary Savant home directory.
+    Automatically give every test its own temporary Agent Drive home directory.
     This is the most important fixture for test isolation.
     """
-    with tempfile.TemporaryDirectory(prefix="savant-test-") as td:
+    with tempfile.TemporaryDirectory(prefix="agentdrive-test-") as td:
         home = Path(td)
         token = set_agentdrive_home_override(home)
         # Also clear any AGENTDRIVE_HOME env the test process may have inherited
@@ -58,7 +58,7 @@ def sample_genome_dir(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def registry(isolated_savant_home: Path) -> "GenomeRegistry":
+def registry(isolated_agentdrive_home: Path) -> "GenomeRegistry":
     from agentdrive.registry import GenomeRegistry
 
     return GenomeRegistry()

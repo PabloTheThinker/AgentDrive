@@ -1,15 +1,15 @@
 """Anomaly detector — find the one observation that doesn't fit.
 
-Core DNA extraction primitive in the Savant reasoning suite.
+Core DNA extraction primitive in the Agent Drive reasoning suite.
 
-Savant role:
+Agent Drive role:
 - DNA Scanners call `detect_anomalies` on run observations / events /
   ledger entries to surface rare events, state outliers, stale data,
   or novel identities.
 - Results go into `genome.reasoning_patterns["anomalies"]` and can drive
   enrichment, or flag genomes that need human review.
 - Heuristics remain pure structural (rare-kind, state-outlier, stale,
-  identity-novel) — savant precision, zero hallucination.
+  identity-novel) — agentdrive precision, zero hallucination.
 
 Adapted: docs updated for Genome model; same API and severity ordering.
 """

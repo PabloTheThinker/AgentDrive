@@ -51,7 +51,7 @@ def _m4_disabled() -> bool:
 # _tokens mirrors causality.py for token carry / overlap detection
 # _jaccard mirrors patterns.py for intent/field or textual reasoning overlap scoring
 def _tokens(text: str) -> set[str]:
-    """Tokenization logic aligned with savant.reasoning.causality for consistency in scoring."""
+    """Tokenization logic aligned with agentdrive.reasoning.causality for consistency in scoring."""
     TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_.-]{2,}")
     STOP = {
         "the",
@@ -108,7 +108,7 @@ def _tokens(text: str) -> set[str]:
 
 
 def _jaccard(a: Any, b: Any) -> float:
-    """Jaccard set overlap, identical semantics to savant.reasoning.patterns."""
+    """Jaccard set overlap, identical semantics to agentdrive.reasoning.patterns."""
     sa, sb = set(a or []), set(b or [])
     if not sa and not sb:
         return 0.0
@@ -141,10 +141,10 @@ class AgentDrive:
     - Backed by GenomeRegistry for genome storage/search
     - Maintains a simple append-only JSONL ingest log under ~/.agentdrive/pool/ingest.jsonl  (or per-swarm equivalent)
     - Richer stats (sources, actors, registry integration)
-    - First-class CLI service via `savant pool ...`
+    - First-class CLI service via `agentdrive pool ...`
 
     Supports full per-swarm and per-subagent isolation:
-    - When swarm_id or subagent_id provided (or via current context / SAVANT_*_ID env), uses
+    - When swarm_id or subagent_id provided (or via current context / AGENTDRIVE_*_ID env), uses
       ~/.agentdrive/swarms/<swarm_id>/<subagent_id>/pool/  (starts empty: own genomes/ + ingest)
     - Parent/child sharing governed by user's DriveSettings.sharing_policy (none/read-only/selective/full)
     - Automatic provisioning via SwarmDriveManager + get_default_drive()

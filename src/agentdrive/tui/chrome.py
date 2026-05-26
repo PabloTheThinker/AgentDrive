@@ -1,7 +1,7 @@
 """
 AgentDrive TUI Chrome — the unified UI primitives library.
 
-Every Savant surface (chat, doctor, onboarding, pool browser, genome views,
+Every Agent Drive surface (chat, doctor, onboarding, pool browser, genome views,
 setup wizard) renders against the same primitives so the product feels like
 one continuous experience instead of a dozen unrelated commands.
 
@@ -43,7 +43,7 @@ from rich.text import Text
 
 
 class Glyphs:
-    """Symbol constants — every Savant surface uses the same characters."""
+    """Symbol constants — every Agent Drive surface uses the same characters."""
 
     USER = "❯"
     ASSISTANT = "✦"

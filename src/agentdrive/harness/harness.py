@@ -1,5 +1,5 @@
 """
-Savant Harness — The execution adapter that lets any agent "plug into" the AgentDrive.
+Agent Drive Harness — The execution adapter that lets any agent "plug into" the AgentDrive.
 
 The harness is the bridge between:
 - An individual worker agent (rich external, custom, etc.)
@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 
 class Harness:
     """
-    The runtime harness an agent uses to participate in the Savant ecosystem.
+    The runtime harness an agent uses to participate in the Agent Drive ecosystem.
 
     Typical usage (inside a worker agent):
 

@@ -17,7 +17,7 @@ python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-This installs the `agentdrive` CLI, the `savant` engine package, the test deps (`pytest`, `pytest-asyncio`), and the lint/format tools (`ruff`, `mypy`).
+This installs the `agentdrive` CLI, the `agentdrive` engine package, the test deps (`pytest`, `pytest-asyncio`), and the lint/format tools (`ruff`, `mypy`).
 
 ## One-command demo — local Drive + 2 sub-agents + simulated peer
 

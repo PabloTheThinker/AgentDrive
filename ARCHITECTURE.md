@@ -1,8 +1,8 @@
-# Savant Architecture
+# Agent Drive Architecture
 
 ## Overview
 
-Savant is structured around three primary concerns:
+Agent Drive is structured around three primary concerns:
 
 1. **Orchestration** — Selecting, composing, and dispatching work using structured, genome-aware frameworks.
 2. **Genome Representation & Registry** — First-class, versioned, evaluable packages of agent capability (the "DNA" of the system).
@@ -12,11 +12,11 @@ These concerns are deliberately separated to keep the system maintainable and to
 
 ## High-Level Components
 
-- **Savant Core (Orchestrator)**: The typed framework dispatcher and mission engine. It is now genome-native — capable of reasoning about available Genomes when planning work, dispatching steps to appropriate workers, producing validated artifacts, and emitting rich telemetry that feeds the evolutionary layer.
+- **Agent Drive Core (Orchestrator)**: The typed framework dispatcher and mission engine. It is now genome-native — capable of reasoning about available Genomes when planning work, dispatching steps to appropriate workers, producing validated artifacts, and emitting rich telemetry that feeds the evolutionary layer.
 - **Genome Registry**: Local and (future) remote stores of versioned Genomes. Supports discovery, forking, and provenance tracking.
-- **DNA Scanners & Extractors**: Components that analyze instrumented agent runs (from external workers or Savant workers) and produce candidate Genomes.
+- **DNA Scanners & Extractors**: Components that analyze instrumented agent runs (from external workers or Agent Drive workers) and produce candidate Genomes.
 - **Evolutionary Engine**: The improvement system — review, mutation proposal, safe merging, and performance-based selection.
-- **Worker Agents**: Any capable execution environment (rich external agents, custom Savant workers, other ACP/MCP-compatible agents). Workers both consume and contribute Genomes.
+- **Worker Agents**: Any capable execution environment (rich external agents, custom Agent Drive workers, other ACP/MCP-compatible agents). Workers both consume and contribute Genomes.
 
 ## Genome Model
 
@@ -36,7 +36,7 @@ A major focus of the current development phase is a high-quality, professional t
 - Prior professional TUI and CLI implementations
 - Mature terminal experiences (prompt_toolkit usage, skinning, live callbacks, spinners, reasoning display, tool progress, etc.)
 
-The goal is a Savant TUI/CLI that feels as capable and pleasant as the best individual agents while exposing the unique power of the genome and evolutionary layers.
+The goal is a Agent Drive TUI/CLI that feels as capable and pleasant as the best individual agents while exposing the unique power of the genome and evolutionary layers.
 
 ## Design Constraints
 

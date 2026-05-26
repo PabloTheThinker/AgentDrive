@@ -1,7 +1,7 @@
 """
 Micro-animation kit for short-lived TUI operations.
 
-The Savant chat experience leans on minimal visual polish.
+The Agent Drive chat experience leans on minimal visual polish.
 Most operations finish in 1-3 seconds — a full progress bar feels heavy;
 a tiny spinner with a one-line label feels just right.
 
@@ -10,7 +10,7 @@ Provides:
   frame sets (braille, dots, pulse, scan), an optional rotating label,
   and a clean done/fail state.
 - ``StepProgress``: lightweight multi-step indicator for sequenced work
-  (e.g., the savant update flow) — each step shows pending / running /
+  (e.g., the agentdrive update flow) — each step shows pending / running /
   done / failed with the matching glyph.
 
 Designed to be drop-in: ``with MicroSpinner(console, "loading pool…"):``.

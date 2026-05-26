@@ -1,13 +1,13 @@
 """
-SavantAgent — the framework as the agent's body.
+Agent DriveAgent — the framework as the agent's body.
 
 Composes:
-- SavantLLM       (the model = the agent's voice)
+- Agent DriveLLM       (the model = the agent's voice)
 - Harness   (the Drive = the agent's lived experience / memory)
 - AgentSession    (the conversation persistence)
 
 The system prompt is built from:
-- Savant identity blurb
+- Agent Drive identity blurb
 - DNA pulled from the Drive for the current turn
 - Reasoning patterns surfaced by the top genomes
 
@@ -33,13 +33,13 @@ from agentdrive.events import (
 )
 from agentdrive.harness.harness import Harness
 from agentdrive.providers.base import load_config_provider
-from agentdrive.providers.llm import SavantLLM
+from agentdrive.providers.llm import Agent DriveLLM
 
 logger = logging.getLogger(__name__)
 
 
-SAVANT_IDENTITY = (
-    "You are Savant — an AI agent whose body is the AgentDrive. "
+AGENTDRIVE_IDENTITY = (
+    "You are Agent Drive — an AI agent whose body is the AgentDrive. "
     "Your knowledge comes from a living pool of DNA (Genomes): structured frameworks, "
     "reasoning patterns, and tool compositions accumulated from real agent work. "
     "Each turn, the most relevant DNA for the user's task is loaded into your context. "
@@ -59,19 +59,19 @@ class TurnResult:
     error: str | None = None
 
 
-class SavantAgent:
+class Agent DriveAgent:
     """
     Conversational agent backed by the AgentDrive.
 
     Usage:
-        agent = SavantAgent(agent_id="my-agent")
+        agent = Agent DriveAgent(agent_id="my-agent")
         for chunk in agent.send("Hello"):
             print(chunk, end="")
     """
 
     def __init__(
         self,
-        agent_id: str = "savant-agent",
+        agent_id: str = "agentdrive-agent",
         session: AgentSession | None = None,
         swarm_id: str | None = None,
         subagent_id: str | None = None,
@@ -82,7 +82,7 @@ class SavantAgent:
         pool_top_k: int = 5,
     ):
         self.agent_id = agent_id
-        self.identity = identity or SAVANT_IDENTITY
+        self.identity = identity or AGENTDRIVE_IDENTITY
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.history_turns = history_turns
@@ -95,7 +95,7 @@ class SavantAgent:
             subagent_id=subagent_id,
         )
         self.session = session or AgentSession(agent_id=agent_id)
-        self._llm: SavantLLM | None = None
+        self._llm: Agent DriveLLM | None = None
         self._last_pulled: list[dict[str, Any]] = []
 
     # ─────────────────────────────────────────────────────────────────
@@ -103,12 +103,12 @@ class SavantAgent:
     # ─────────────────────────────────────────────────────────────────
 
     @property
-    def llm(self) -> SavantLLM | None:
+    def llm(self) -> Agent DriveLLM | None:
         if self._llm is None:
             cfg = load_config_provider()
             if cfg and cfg[0]:
                 try:
-                    self._llm = SavantLLM()
+                    self._llm = Agent DriveLLM()
                 except Exception:
                     self._llm = None
         return self._llm
@@ -244,7 +244,7 @@ class SavantAgent:
         history = self.session.history_for_llm(max_turns=self.history_turns)
 
         # The current user message is now the last element of history;
-        # SavantLLM.stream() expects history to NOT include the current prompt.
+        # Agent DriveLLM.stream() expects history to NOT include the current prompt.
         history_for_llm = history[:-1] if history and history[-1]["role"] == "user" else history
 
         # 3. Stream
@@ -314,7 +314,7 @@ class SavantAgent:
             pass
 
         # Emit MessageComplete before returning so subscribers can finalize
-        # the streaming row. Tokens/cost are not reported by SavantLLM today;
+        # the streaming row. Tokens/cost are not reported by Agent DriveLLM today;
         # pass 0/0.0 rather than skipping the event.
         try:
             emit(

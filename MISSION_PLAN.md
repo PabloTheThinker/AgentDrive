@@ -1,11 +1,11 @@
-# SAVANT MISSION 2026 — Swarm DNA Pool System
+# AGENTDRIVE MISSION 2026 — Swarm DNA Pool System
 
-**Goal**: Make Savant the independent, user-sovereign, production-grade framework for **Agent DNA Pools** — especially for agent swarms.
+**Goal**: Make Agent Drive the independent, user-sovereign, production-grade framework for **Agent DNA Pools** — especially for agent swarms.
 
-Every time any model (Grok, Claude, Codex, custom) spawns sub-agents, each sub-agent automatically gets its own isolated, persistent Savant Pool (DNA = memory + patterns). Pools start empty. The user is always in full control. Sub-agents learn, adapt, train, and improve both individually and as a collective.
+Every time any model (Grok, Claude, Codex, custom) spawns sub-agents, each sub-agent automatically gets its own isolated, persistent Agent Drive Pool (DNA = memory + patterns). Pools start empty. The user is always in full control. Sub-agents learn, adapt, train, and improve both individually and as a collective.
 
 The system must be:
-- 100% Savant-branded (no external-brand pollution in core identity)
+- 100% Agent Drive-branded (no external-brand pollution in core identity)
 - Fully documented
 - Have a first-class TUI for the Pool + swarms
 - Support adapters/MCP so any model can connect
@@ -30,11 +30,11 @@ The system must be:
 1. **Branding Lead** (subagent)
    - Finish renaming all remaining external-brand references in source, docs, examples, tests
    - Update class names, file names, docstrings, __init__.py exports
-   - Goal: pure Savant identity in user-facing surfaces and core code
+   - Goal: pure Agent Drive identity in user-facing surfaces and core code
 
 2. **Swarm Pool Core** (subagent)
    - Implement full per-swarm / per-subagent pool isolation in `pool/pool.py` + registry
-   - Add `SavantSwarmPoolManager`
+   - Add `Agent DriveSwarmPoolManager`
    - Support `swarm_id` + `subagent_id` scoping with automatic directory creation
    - Implement sharing policies (none / read / selective / full)
    - Wire into `get_default_pool()` and harness so spawned sub-agents automatically get their own pool
@@ -49,20 +49,20 @@ The system must be:
    - Wire fully into `app.py` dispatch + completer + help
 
 4. **Documentation Team** (subagent or parallel)
-   - `docs/POOL.md` — The Savant Pool
+   - `docs/POOL.md` — The Agent Drive Pool
    - `docs/SWARM.md` — Swarm DNA & Sub-Agent Pools
    - `docs/INTEGRATION.md` — How Grok, Claude Code, Codex, etc. connect
    - `docs/SETTINGS.md` — User control & configuration
-   - Overhaul root README + VISION with clean Savant voice
-   - Add quickstart for "Spawn a swarm with Savant Pools"
+   - Overhaul root README + VISION with clean Agent Drive voice
+   - Add quickstart for "Spawn a swarm with Agent Drive Pools"
 
 5. **Adapters & Multi-Model Bridge** (subagent)
-   - Create `src/savant/adapters/` package
-   - Base `SavantAdapter` protocol
+   - Create `src/agentdrive/adapters/` package
+   - Base `Agent DriveAdapter` protocol
    - MCP server for pool access (stdio + HTTP)
    - Grok Build System adapter (tie into how Grok spawns subagents via spawn_subagent)
    - Example adapters for Claude Code and Codex
-   - Show how any model can be instructed: "Attach to your Savant Pool for this swarm"
+   - Show how any model can be instructed: "Attach to your Agent Drive Pool for this swarm"
 
 6. **Settings & Control** (subagent)
    - Expand config system for all pool/swarm behavior
@@ -78,10 +78,10 @@ The system must be:
 
 ## Success Criteria
 
-- User runs `savant tui`, types `pool`, sees a beautiful dedicated view with their swarms
+- User runs `agentdrive tui`, types `pool`, sees a beautiful dedicated view with their swarms
 - When Grok (or any model) spawns sub-agents, each gets `~/.agentdrive/swarms/<swarm_id>/<subagent_id>/pool/`
 - User can fully configure isolation/sharing/auto-rules via CLI/TUI or by telling the AI
-- Clean, professional Savant-only language everywhere
+- Clean, professional Agent Drive-only language everywhere
 - Comprehensive docs that a new user can follow to use with Grok build system + other models
 - Adapters exist so Claude Code, Codex, etc. can participate
 

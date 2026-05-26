@@ -1,9 +1,9 @@
 """Framework synthesizer — observation blob → typed framework draft.
 
-Core reasoning primitive in Savant for turning observations into
+Core reasoning primitive in Agent Drive for turning observations into
 typed framework drafts for Genomes.
 
-Savant / DNA role:
+Agent Drive / DNA role:
 - Primary tool for *synthesizing new framework steps* from run observations.
 - DNA Scanners feed extracted observations (timeline events, tool calls,
   state changes, claims) into `synthesize_framework` → produces
@@ -79,7 +79,7 @@ def synthesize_framework(
     if not by_kind:
         rationale.append("no observations supplied; emitted single-step stub")
         steps.append(
-            {"id": "summarize", "type": "reasoning", "agent": "savant-core", "output": "summary"}
+            {"id": "summarize", "type": "reasoning", "agent": "agentdrive-core", "output": "summary"}
         )
         schema_props["summary"] = {"type": "string"}
     else:
@@ -100,7 +100,7 @@ def synthesize_framework(
                 {
                     "id": step_id,
                     "type": "reasoning",
-                    "agent": "savant-core",
+                    "agent": "agentdrive-core",
                     "inputs": [f"{slug}_focus"],
                     "output": f"{slug}_findings",
                 }
@@ -122,7 +122,7 @@ def synthesize_framework(
             {
                 "id": "compose_artifact",
                 "type": "validate",
-                "agent": "savant-core",
+                "agent": "agentdrive-core",
                 "depends_on": [s["id"] for s in steps],
             }
         )

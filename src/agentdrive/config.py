@@ -20,12 +20,12 @@ from typing import Any
 import yaml
 
 from agentdrive.constants import (
-    SAVANT_VERSION,
+    AGENTDRIVE_VERSION,
     get_agentdrive_home,
-    get_savant_config_path,
+    get_agentdrive_config_path,
 )
 from agentdrive.exceptions import (
-    SavantConfigError,
+    Agent DriveConfigError,
 )
 
 logger = logging.getLogger(__name__)
@@ -89,7 +89,7 @@ _CONFIG_PARSE_WARNED: set = set()
 
 
 def _get_config_path() -> Path:
-    return get_savant_config_path()
+    return get_agentdrive_config_path()
 
 
 def _ensure_home() -> Path:
@@ -103,8 +103,8 @@ def _ensure_home() -> Path:
     return home
 
 
-def ensure_savant_home() -> Path:
-    """Public wrapper to ensure the Savant home directory tree exists."""
+def ensure_agentdrive_home() -> Path:
+    """Public wrapper to ensure the Agent Drive home directory tree exists."""
     return _ensure_home()
 
 
@@ -125,7 +125,7 @@ def _warn_config_parse_failure(config_path: Path, exc: Exception) -> None:
     )
     logger.warning(msg)
     try:
-        sys.stderr.write(f"⚠️  savant config: {msg}\n")
+        sys.stderr.write(f"⚠️  agentdrive config: {msg}\n")
         sys.stderr.flush()
     except Exception:
         pass
@@ -250,7 +250,7 @@ def save_config(config: dict[str, Any]) -> Path:
         except Exception as e:
             if tmp.exists():
                 tmp.unlink(missing_ok=True)
-            raise SavantConfigError(f"Failed to save config: {e}") from e
+            raise Agent DriveConfigError(f"Failed to save config: {e}") from e
 
 
 def get_config_value(key: str, default: Any = None) -> Any:
@@ -286,7 +286,7 @@ _LOGGING_CONFIGURED = False
 
 
 def setup_logging(level: str | None = None, log_file: Path | None = None) -> None:
-    """Configure root + savant logger. Call early in CLI entry."""
+    """Configure root + agentdrive logger. Call early in CLI entry."""
     global _LOGGING_CONFIGURED
     if _LOGGING_CONFIGURED:
         return
@@ -321,7 +321,7 @@ def setup_logging(level: str | None = None, log_file: Path | None = None) -> Non
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("httpx").setLevel(logging.WARNING)
 
-    logger.info(f"AgentDrive v{SAVANT_VERSION} logging initialized (level={lvl}, file={log_file})")
+    logger.info(f"AgentDrive v{AGENTDRIVE_VERSION} logging initialized (level={lvl}, file={log_file})")
     _LOGGING_CONFIGURED = True
 
 

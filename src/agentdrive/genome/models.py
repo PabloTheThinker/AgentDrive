@@ -1,5 +1,5 @@
 """
-Core data models for Savant Genomes (Agent DNA).
+Core data models for Agent Drive Genomes (Agent DNA).
 
 This is the foundational representation of transferable, versioned, evolvable
 agent capabilities.
@@ -147,7 +147,7 @@ class GenomeManifest(BaseModel):
 
 class Genome(BaseModel):
     """
-    A complete Savant Genome — the reliable, evolvable 'DNA' primitive for agent capabilities.
+    A complete Agent Drive Genome — the reliable, evolvable 'DNA' primitive for agent capabilities.
 
     Supports:
     - Programmatic creation via Genome.create(...)

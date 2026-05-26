@@ -1,7 +1,7 @@
 # AgentDrive Pool & Swarm Settings — Complete User Reference
 
 > AgentDrive is the product; the Pool primitive below is exposed by the
-> underlying Savant engine. See [README](../README.md).
+> underlying Agent Drive engine. See [README](../README.md).
 
 All user-controllable behavior for the Pool lives under the `pool:` section of your AgentDrive configuration (`~/.agentdrive/config.yaml` or `$AGENTDRIVE_HOME/config.yaml`).
 
@@ -34,7 +34,7 @@ Changes are persisted atomically. Use the CLI, TUI, or Python API.
 
 ## PoolSettings Dataclass (Source of Truth)
 
-Defined in `src/savant/pool/settings.py`:
+Defined in `src/agentdrive/pool/settings.py`:
 
 | Field                    | Type                  | Default     | Description |
 |--------------------------|-----------------------|-------------|-------------|
@@ -64,28 +64,28 @@ Combined with `allow_upward_proposals`, this gives precise control over the dire
 
 ## Managing Settings
 
-### Via CLI (`savant config`)
+### Via CLI (`agentdrive config`)
 
 ```bash
 # View everything
-savant config show
+agentdrive config show
 
 # Read a specific value
-savant config get pool.global.isolation_level
+agentdrive config get pool.global.isolation_level
 
 # Set (creates the section if needed)
-savant config set pool.global.isolation_level subagent
-savant config set pool.global.sharing_policy selective
-savant config set pool.swarms.my-mission.isolation_level swarm
+agentdrive config set pool.global.isolation_level subagent
+agentdrive config set pool.global.sharing_policy selective
+agentdrive config set pool.swarms.my-mission.isolation_level swarm
 
 # Edit the raw file in $EDITOR
-savant config edit
+agentdrive config edit
 ```
 
 ### Via Python API (agents or scripts)
 
 ```python
-from savant.pool.settings import (
+from agentdrive.pool.settings import (
     get_pool_settings_manager,
     PoolSettings,
     get_effective_pool_settings,
@@ -107,13 +107,13 @@ print(effective)
 
 ### Via TUI
 
-Launch `savant tui`, navigate to the Pool view, select “pool settings”. Interactive editor for global and per-swarm values with live preview of effective policy.
+Launch `agentdrive tui`, navigate to the Pool view, select “pool settings”. Interactive editor for global and per-swarm values with live preview of effective policy.
 
 ### Via Natural Language (Any Connected AI)
 
 Give the AI this instruction (or let it read the manager’s `as_user_instructions()`):
 
-> “You are participating in the user’s Savant Pool system. All settings live in the user’s `~/.savant/config.yaml` under the `pool:` section. The user is sovereign. If the user tells you to change isolation_level, auto_ingest_on_success, sharing_policy, min_quality_for_ingest, retention, or allow_upward_proposals for the global pool or for a specific swarm_id, you MUST use the Savant Python API (`get_pool_settings_manager().set_global()` / `set_for_swarm()`) or the `savant config set` CLI to make the change. Never hard-code or ignore user policy instructions.”
+> “You are participating in the user’s Agent Drive Pool system. All settings live in the user’s `~/.agentdrive/config.yaml` under the `pool:` section. The user is sovereign. If the user tells you to change isolation_level, auto_ingest_on_success, sharing_policy, min_quality_for_ingest, retention, or allow_upward_proposals for the global pool or for a specific swarm_id, you MUST use the Agent Drive Python API (`get_pool_settings_manager().set_global()` / `set_for_swarm()`) or the `agentdrive config set` CLI to make the change. Never hard-code or ignore user policy instructions.”
 
 The `PoolSettingsManager.as_user_instructions()` method returns a ready-to-use paragraph for system prompts.
 
@@ -125,17 +125,17 @@ The `PoolSettingsManager.as_user_instructions()` method returns a ready-to-use p
 
 `get_effective_pool_settings(swarm_id, subagent_id=None)` performs the correct merge (most specific wins).
 
-## Other Related Savant Settings
+## Other Related Agent Drive Settings
 
 While not under `pool:`, these affect the overall experience:
 
-In `savant:` top-level:
+In `agentdrive:` top-level:
 - `log_level`
 - `default_worker`
 
-In `registry:`, `scanners:`, `orchestrator:`, `tui:`, `integration:` — see `savant config show` for the full merged defaults.
+In `registry:`, `scanners:`, `orchestrator:`, `tui:`, `integration:` — see `agentdrive config show` for the full merged defaults.
 
-`SAVANT_HOME` environment variable (or context override) lets you run completely isolated configurations (useful for testing or multiple personas).
+`AGENTDRIVE_HOME` environment variable (or context override) lets you run completely isolated configurations (useful for testing or multiple personas).
 
 ## Persistence & Reload
 
@@ -145,7 +145,7 @@ In `registry:`, `scanners:`, `orchestrator:`, `tui:`, `integration:` — see `sa
 
 ## Safety & Defaults
 
-Sensible, conservative defaults are chosen so a brand-new Savant installation is safe:
+Sensible, conservative defaults are chosen so a brand-new Agent Drive installation is safe:
 
 - Private per-subagent pools
 - Auto-ingest only on clearly successful runs
@@ -186,7 +186,7 @@ pool:
 ## Viewing Effective Policy at Runtime
 
 ```python
-from savant.pool.settings import get_effective_pool_settings
+from agentdrive.pool.settings import get_effective_pool_settings
 print(get_effective_pool_settings("my-swarm").to_dict())
 ```
 

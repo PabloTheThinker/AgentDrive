@@ -1,9 +1,9 @@
 """Pattern memory — persist inferred / extracted frameworks and signatures,
 recognize them across runs for Genome enrichment.
 
-Core reasoning primitive in Savant.
+Core reasoning primitive in Agent Drive.
 
-In Savant DNA context:
+In Agent Drive DNA context:
 - Scanners and the evolutionary engine use `PatternMemory` to remember
   signatures of successful reasoning patterns extracted from runs
   (intents + fields observed).
@@ -18,7 +18,7 @@ Adapted:
 - Removed hard dependency on inferencer (not ported in this batch).
 - PatternSignature can be built directly or via `from_run_data`.
 - from_report removed; use constructor or from_run_data(framework_id, intents, fields).
-- Default root now Savant reasoning dir.
+- Default root now Agent Drive reasoning dir.
 - Jaccard logic and remember/recognize behavior 100% preserved.
 
 This is the "learn from shape" companion to calibration and ledger.
@@ -34,15 +34,15 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-def _savant_reasoning_root() -> Path:
-    base = os.environ.get("SAVANT_REASONING_ROOT")
+def _agentdrive_reasoning_root() -> Path:
+    base = os.environ.get("AGENTDRIVE_REASONING_ROOT")
     if base:
         return Path(base)
     return Path.home() / ".agentdrive" / "reasoning"
 
 
 def _default_root() -> Path:
-    return _savant_reasoning_root() / "patterns"
+    return _agentdrive_reasoning_root() / "patterns"
 
 
 @dataclass(slots=True)
@@ -68,7 +68,7 @@ class PatternSignature:
     def from_run_data(
         cls, framework_id: str, intents: list[str], fields: list[str], display_name: str = ""
     ) -> PatternSignature:
-        """Build directly from scanner / run analysis results (preferred in Savant)."""
+        """Build directly from scanner / run analysis results (preferred in Agent Drive)."""
         return cls(
             framework_id=framework_id,
             intents=sorted(set(intents or [])),
@@ -103,7 +103,7 @@ def _jaccard(a: Iterable[str], b: Iterable[str]) -> float:
 
 
 class PatternMemory:
-    """JSONL-backed pattern store for Savant reasoning patterns / genomes."""
+    """JSONL-backed pattern store for Agent Drive reasoning patterns / genomes."""
 
     def __init__(self, root: Path | None = None, *, corpus: str = "default") -> None:
         self.root = Path(root) if root else _default_root()

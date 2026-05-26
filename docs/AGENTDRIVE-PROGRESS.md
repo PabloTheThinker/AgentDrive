@@ -142,7 +142,7 @@ In order. Each item is small enough to be a single PR.
 | 2 | Build FastAPI web Phase 2 pages for Drive/Swarms/DNA/Snapshots/Capabilities/Peers | 1-2 days | ✅ All 6 pages backed by real engine calls (Phase 2 #1–#7) |
 | 3 | Trash stale rename artifacts if still tracked; keep package metadata ignored | 5 min | ✅ tree clean, `.gitignore` covers `.ruff_cache/` |
 | 4 | Add `CODE_OF_CONDUCT.md` and `DEVELOPERS.md` with one-command bring-up | 1 hr | ✅ + `AGENTS.md`, `.github/copilot-instructions.md`, `Makefile`, `scripts/dev-bringup.sh` |
-| 5 | Keep link-preserving naming cleanup moving through older Pool/Savant docs | 30 min | ✅ SWARM / SETTINGS / CONTRIBUTING reframed under AgentDrive |
+| 5 | Keep link-preserving naming cleanup moving through older Pool/Agent Drive docs | 30 min | ✅ SWARM / SETTINGS / CONTRIBUTING reframed under AgentDrive |
 | 6 | Build the 30-line cap resolver reference | 0.5 day | ✅ `docs/CAP-RESOLVER.md` |
 | 7 | `docker/docker-compose.yml` booting 1 default + 2 sub-agents + 1 peer | 1 day | ✅ `docker/Dockerfile` + compose + `README.md` + `versions.md` |
 | 8 | Cut the PyPI release + tag-based release workflow | 1 day | ✅ `.github/workflows/release.yml` (Trusted Publishing, tag-driven, TestPyPI dry-run) |

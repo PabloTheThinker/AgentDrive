@@ -20,18 +20,18 @@ _SUBAGENT_ID_CTX: ContextVar[str | object] = ContextVar("_SUBAGENT_ID_CTX", defa
 
 
 def set_agentdrive_home_override(path: str | Path | None) -> Token:
-    """Set a context-local Savant home override (for testing, scoped runs)."""
+    """Set a context-local Agent Drive home override (for testing, scoped runs)."""
     value: str | object = _UNSET if path is None else str(path)
     return _AGENTDRIVE_HOME_OVERRIDE.set(value)
 
 
 def reset_agentdrive_home_override(token: Token) -> None:
-    """Restore the previous context-local Savant home override."""
+    """Restore the previous context-local Agent Drive home override."""
     _AGENTDRIVE_HOME_OVERRIDE.reset(token)
 
 
 def get_agentdrive_home_override() -> str | None:
-    """Return the active context-local Savant home override, if any."""
+    """Return the active context-local Agent Drive home override, if any."""
     override = _AGENTDRIVE_HOME_OVERRIDE.get()
     if override is _UNSET or not override:
         return None
@@ -99,10 +99,10 @@ def using_swarm(swarm_id: str, subagent_id: str | None = None):
 
 def get_agentdrive_home() -> Path:
     """
-    Return the Savant home directory (default: ~/.agentdrive).
+    Return the Agent Drive home directory (default: ~/.agentdrive).
 
     Respects AGENTDRIVE_HOME env var.
-    Single source of truth for all Savant data: config, genomes, logs, cache.
+    Single source of truth for all Agent Drive data: config, genomes, logs, cache.
     """
     override = get_agentdrive_home_override()
     if override:
@@ -115,12 +115,12 @@ def get_agentdrive_home() -> Path:
     return Path.home() / ".agentdrive"
 
 
-def get_savant_config_path() -> Path:
+def get_agentdrive_config_path() -> Path:
     """Path to the main config.yaml."""
     return get_agentdrive_home() / "config.yaml"
 
 
-def get_savant_env_path() -> Path:
+def get_agentdrive_env_path() -> Path:
     """Path to the .env file for secrets."""
     return get_agentdrive_home() / ".env"
 
@@ -172,18 +172,18 @@ def get_swarm_drive_path(swarm_id: str, subagent_id: str | None = None) -> Path:
 
 
 # Version and identifiers
-SAVANT_VERSION = "0.2.0"  # Keep in sync with __init__.py and pyproject
+AGENTDRIVE_VERSION = "0.2.0"  # Keep in sync with __init__.py and pyproject
 
 # Default config keys (used by config.py)
-DEFAULT_SAVANT_HOME_NAME = ".agentdrive"
+DEFAULT_AGENTDRIVE_HOME_NAME = ".agentdrive"
 
 __all__ = [
     "get_agentdrive_home",
     "get_agentdrive_home_override",
     "set_agentdrive_home_override",
     "reset_agentdrive_home_override",
-    "get_savant_config_path",
-    "get_savant_env_path",
+    "get_agentdrive_config_path",
+    "get_agentdrive_env_path",
     "get_genomes_dir",
     "get_logs_dir",
     "get_cache_dir",
@@ -197,5 +197,5 @@ __all__ = [
     "reset_current_subagent_id",
     "get_current_subagent_id",
     "using_swarm",
-    "SAVANT_VERSION",
+    "AGENTDRIVE_VERSION",
 ]

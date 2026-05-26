@@ -1,6 +1,6 @@
 # security-incident-postmortem (Example Seed Genome)
 
-This is the first real genome seeded into the Savant project.
+This is the first real genome seeded into the Agent Drive project.
 
 It was adapted from a high-quality structured framework for rigorous postmortems.
 

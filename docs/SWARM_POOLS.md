@@ -1,9 +1,9 @@
-# Savant Swarm Pools — DNA for Sub-Agents
+# Agent Drive Swarm Pools — DNA for Sub-Agents
 
-> Part of the Savant engine — the open-source substrate behind AgentDrive. See [README](../README.md).
+> Part of the Agent Drive engine — the open-source substrate behind AgentDrive. See [README](../README.md).
 
 > **Note**: This document is superseded by the professional documentation suite:
-> - `docs/POOL.md` — Full guide to the Savant Pool
+> - `docs/POOL.md` — Full guide to the Agent Drive Pool
 > - `docs/SWARM.md` — Per-sub-agent pools, DNA growth, swarm dynamics
 > - `docs/INTEGRATION.md` — Connecting Grok, Claude, Codex, etc.
 > - `docs/SETTINGS.md` — Complete user-controllable settings reference
@@ -12,7 +12,7 @@
 
 ---
 
-When any AI (Grok, Claude Code, Codex, custom model, etc.) deploys sub-agents — exactly like the Grok build system does with `spawn_subagent` — each sub-agent receives its own isolated **Savant Pool**.
+When any AI (Grok, Claude Code, Codex, custom model, etc.) deploys sub-agents — exactly like the Grok build system does with `spawn_subagent` — each sub-agent receives its own isolated **Agent Drive Pool**.
 
 ## Why Swarm Pools?
 
@@ -26,21 +26,21 @@ This is the "Exo Labs for agent experience" — instead of connecting hardware, 
 
 ## User Control (Non-Negotiable)
 
-Every Savant installation belongs to the user. The pool starts empty. The user (or any AI instructed by the user) can change:
+Every Agent Drive installation belongs to the user. The pool starts empty. The user (or any AI instructed by the user) can change:
 
 - `isolation_level`: none | swarm | subagent (default: subagent)
 - `auto_ingest_on_success`
 - `sharing_policy`
 - `retention`, quality thresholds, etc.
 
-Settings live in `~/.savant/config.yaml` and can be overridden per-swarm or per-run.
+Settings live in `~/.agentdrive/config.yaml` and can be overridden per-swarm or per-run.
 
 ## How Models Connect
 
-Savant provides clean adapters (MCP server, stdio, HTTP) so:
+Agent Drive provides clean adapters (MCP server, stdio, HTTP) so:
 
-- Grok build system / Claude Code / Codex / any model can be told: "use SavantPool for your sub-agents".
-- Each spawned sub-agent gets `SAVANT_SWARM_ID` + `SAVANT_SUBAGENT_ID` environment or context, automatically scoping its pool.
+- Grok build system / Claude Code / Codex / any model can be told: "use Agent DrivePool for your sub-agents".
+- Each spawned sub-agent gets `AGENTDRIVE_SWARM_ID` + `AGENTDRIVE_SUBAGENT_ID` environment or context, automatically scoping its pool.
 
 See `adapters/` and `docs/INTEGRATION.md` (coming soon).
 

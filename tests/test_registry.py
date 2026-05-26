@@ -1,4 +1,4 @@
-"""Tests for savant.registry (GenomeRegistry)"""
+"""Tests for agentdrive.registry (GenomeRegistry)"""
 
 from agentdrive.genome.models import Genome
 from agentdrive.registry import GenomeRegistry

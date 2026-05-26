@@ -7,7 +7,7 @@ genomes into its pool (subject to consent), and an audit-trail event fires
 so the absorption is legible in the chat ribbon.
 
 This module is data + events only. It does NOT run quarantine — that is a
-separate concern handled by ``savant.quarantine`` (built in parallel). See
+separate concern handled by ``agentdrive.quarantine`` (built in parallel). See
 the open design question in the cover note about whether auto-absorb
 should route through quarantine first.
 
@@ -212,7 +212,7 @@ def record_manifest(
         ``quarantine.submit()`` instead of being ingested directly. They
         land as ``rejected`` in the result with reason
         ``"quarantined for review: <id>"`` and reach the Drive only after
-        ``savant quarantine approve``. Set this in peer-federation adapters
+        ``agentdrive quarantine approve``. Set this in peer-federation adapters
         and any other code path that receives DNA from outside the local
         instance.
 

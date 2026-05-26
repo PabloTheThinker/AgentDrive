@@ -1,6 +1,6 @@
-# Savant Genome Specification v0.1
+# Agent Drive Genome Specification v0.1
 
-This document defines the **Agent Genome** (or "DNA") format — the portable, versioned, evolvable unit of specialized capability in the Savant ecosystem.
+This document defines the **Agent Genome** (or "DNA") format — the portable, versioned, evolvable unit of specialized capability in the Agent Drive ecosystem.
 
 ## Goals of the Format
 
@@ -71,7 +71,7 @@ It defines deterministic, schema-validated steps.
 
 See the seeded examples under genomes/examples/ for reference shapes.
 
-Key addition in Savant: steps can declare which **genome sub-components** they activate.
+Key addition in Agent Drive: steps can declare which **genome sub-components** they activate.
 
 ## Reasoning Patterns (The "Why" Layer)
 
@@ -123,7 +123,7 @@ This gives us a true evolutionary tree instead of a bag of unrelated skills.
 
 Not every agent will natively understand the full genome format.
 
-Savant will provide:
+Agent Drive will provide:
 
 - **Export adapters** → turn relevant parts of a genome into external skills, custom prompts, etc.
 - **Import scanners** → pull useful patterns out of existing agent runs and package them as genomes.

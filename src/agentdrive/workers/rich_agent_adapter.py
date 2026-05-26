@@ -13,12 +13,12 @@ This is THE reference implementation showing how any capable external agent
   4. Record the full outcome / trajectory signal back into the Drive
      (contribute back for future agents and automatic genome improvement)
 
-Location: savant/workers/rich_agent_adapter.py
+Location: agentdrive/workers/rich_agent_adapter.py
 
 Run as a script (the intended canonical demo):
 
-    # From the savant/ project root
-    PYTHONPATH=src python -m savant.workers.rich_agent_adapter \
+    # From the agentdrive/ project root
+    PYTHONPATH=src python -m agentdrive.workers.rich_agent_adapter \
         --task "Analyze the recent production database outage and write a blameless postmortem"
 
 Or import and use programmatically:
@@ -45,15 +45,15 @@ from typing import Any
 
 # ------------------------------------------------------------------
 # Path bootstrap so the module is robust whether run via:
-#   - python -m savant.workers.rich_agent_adapter  (with PYTHONPATH=src)
+#   - python -m agentdrive.workers.rich_agent_adapter  (with PYTHONPATH=src)
 #   - direct execution of the .py file
 #   - after `pip install -e .`
 # ------------------------------------------------------------------
 def _ensure_importable():
     """Make 'import agentdrive' succeed even when the file is executed directly."""
     here = Path(__file__).resolve()
-    # .../savant/src/agentdrive/workers/rich_agent_adapter.py
-    # parents[0]=workers, [1]=savant, [2]=src, [3]=savant-project-root
+    # .../agentdrive/src/agentdrive/workers/rich_agent_adapter.py
+    # parents[0]=workers, [1]=agentdrive, [2]=src, [3]=agentdrive-project-root
     src_dir = here.parents[2]
     project_root = here.parents[3]
 
@@ -69,7 +69,7 @@ from agentdrive.drive.drive import get_default_drive
 from agentdrive.harness.harness import Harness
 from agentdrive.registry import GenomeRegistry
 
-# Rich is a hard dependency of Savant (see pyproject.toml)
+# Rich is a hard dependency of Agent Drive (see pyproject.toml)
 try:
     from rich import print as rprint
     from rich.console import Console
@@ -93,7 +93,7 @@ class RichAgentAdapter:
     Rich worker traits demonstrated:
     - Explicit, named tool invocations with arguments
     - Structured internal monologue / trajectory (steps, observations, claims)
-    - Heavy use of injected reasoning patterns from the Savant DNA pool
+    - Heavy use of injected reasoning patterns from the Agent Drive DNA pool
     - Self-scoring, reflection, and discovery of new micro-patterns
     - Clean separation of "pull DNA → adapt → execute → record/contribute"
 
@@ -101,10 +101,10 @@ class RichAgentAdapter:
     full pull-adapt-work-contribute loop happens automatically.
 
     This serves as the canonical example of how external agents integrate
-    with Savant for DNA-enhanced execution.
+    with Agent Drive for DNA-enhanced execution.
     """
 
-    name: str = "rich-savant-harness-worker"
+    name: str = "rich-agentdrive-harness-worker"
 
     def __init__(self, agent_id: str = "rich-agent-001"):
         self.agent_id = agent_id
@@ -161,7 +161,7 @@ class RichAgentAdapter:
             self._log("PULL_DNA", f"Retrieved {len(dna)} high-value genomes for this task")
 
             if dna and HAS_RICH:
-                t = Table(title="Pulled Savant DNA (top matches)")
+                t = Table(title="Pulled Agent Drive DNA (top matches)")
                 t.add_column("genome_id", style="green")
                 t.add_column("score", justify="right")
                 t.add_column("key_reasoning_patterns")
@@ -179,7 +179,7 @@ class RichAgentAdapter:
 
             # --- 2. ADAPT (inject DNA into prompt / policy) ---
             base = (
-                "You are a production-grade autonomous agent augmented by Savant DNA.\n"
+                "You are a production-grade autonomous agent augmented by Agent Drive DNA.\n"
                 f"User task: {task}\n\n"
                 "Instructions:\n"
                 "- Maintain a complete execution ledger (observations, claims, reflections).\n"
@@ -191,7 +191,7 @@ class RichAgentAdapter:
                 base,
                 extra_instructions=(
                     "Heavily weight any causal-analysis, blameless-postmortem, or "
-                    "framework-synthesis patterns present in the injected Savant DNA. "
+                    "framework-synthesis patterns present in the injected Agent Drive DNA. "
                     "Cite the genome_ids you actually used in your final trace."
                 ),
             )
@@ -199,7 +199,7 @@ class RichAgentAdapter:
             if HAS_RICH:
                 console.print(
                     Panel(
-                        enriched[:280] + "…", title="Enriched Savant-Augmented Prompt", expand=False
+                        enriched[:280] + "…", title="Enriched Agent Drive-Augmented Prompt", expand=False
                     )
                 )
             else:
@@ -243,7 +243,7 @@ class RichAgentAdapter:
 
             # Final rich worker result object
             work_payload = {
-                "final_answer": f"Task completed with Savant-augmented reasoning: {task}",
+                "final_answer": f"Task completed with Agent Drive-augmented reasoning: {task}",
                 "framework": "dna_harness_postmortem_v1",
                 "patterns_applied": list(set(patterns_applied)),
                 "genomes_consulted": self.harness.get_pulled_genomes(),
@@ -276,7 +276,7 @@ class RichAgentAdapter:
             )
 
             # (In a production integration the raw trajectory would also be
-            #  fed to SavantRunScanner to auto-extract a new/improved Genome.)
+            #  fed to Agent DriveRunScanner to auto-extract a new/improved Genome.)
 
         # End of harness context
 
@@ -293,13 +293,13 @@ class RichAgentAdapter:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        prog="python -m savant.workers.rich_agent_adapter",
+        prog="python -m agentdrive.workers.rich_agent_adapter",
         description="Canonical runnable example of a rich external agent using Harness.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Examples:\n"
-            '  python -m savant.workers.rich_agent_adapter --task "Write a postmortem for the API latency spike"\n'
-            '  PYTHONPATH=src python -m savant.workers.rich_agent_adapter --task "..." --agent-id "prod-rich-42"\n'
+            '  python -m agentdrive.workers.rich_agent_adapter --task "Write a postmortem for the API latency spike"\n'
+            '  PYTHONPATH=src python -m agentdrive.workers.rich_agent_adapter --task "..." --agent-id "prod-rich-42"\n'
         ),
     )
     parser.add_argument(
@@ -329,7 +329,7 @@ def main() -> int:
     else:
         print("Final outcome:", summary)
 
-    print("\nYou just witnessed the complete Savant participation loop in action.\n")
+    print("\nYou just witnessed the complete Agent Drive participation loop in action.\n")
     return 0
 
 

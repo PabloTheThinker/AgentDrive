@@ -8,7 +8,7 @@ All notable changes to this project are documented here. The product is
 
 First release after the AgentDrive pivot. Bundles v2 milestones M1–M6,
 productization fix-list #1–#8, the full CodeQL security pass, and the
-site refocus from /savant to /agentdrive.
+site refocus from /agentdrive to /agentdrive.
 
 ### Architecture (v2 milestones — see ``docs/AGENTDRIVE-V2.md``)
 - **M1 — content-addressed Genome objects.** Every Genome is keyed by
@@ -81,15 +81,15 @@ with no deprecation aliases (the project has no production users yet).
 ### Renamed
 
 **Modules**
-- `savant.pool.pool` → `savant.drive.drive`
-- `savant.pool.swarm_manager` → `savant.drive.swarm_manager`
-- `savant.pool.swarm_policy` → `savant.drive.swarm_policy`
-- `savant.pool.settings` → `savant.drive.settings`
-- `savant.tui.views.pool_view` → `savant.tui.views.drive_view`
+- `agentdrive.pool.pool` → `agentdrive.drive.drive`
+- `agentdrive.pool.swarm_manager` → `agentdrive.drive.swarm_manager`
+- `agentdrive.pool.swarm_policy` → `agentdrive.drive.swarm_policy`
+- `agentdrive.pool.settings` → `agentdrive.drive.settings`
+- `agentdrive.tui.views.pool_view` → `agentdrive.tui.views.drive_view`
 
 **Classes**
-- `SavantPool` → `AgentDrive`
-- `SavantSwarmPoolManager` → `SwarmDriveManager`
+- `Agent DrivePool` → `AgentDrive`
+- `Agent DriveSwarmPoolManager` → `SwarmDriveManager`
 - `SwarmPoolPolicy` → `SwarmDrivePolicy`
 - `PoolSettings` → `DriveSettings`
 - `PoolSettingsManager` → `DriveSettingsManager`
@@ -103,7 +103,7 @@ with no deprecation aliases (the project has no production users yet).
 - `get_swarm_pool_manager` → `get_swarm_drive_manager`
 - `get_pool_settings_manager` → `get_drive_settings_manager`
 - `get_effective_pool_settings` → `get_effective_drive_settings`
-- `get_savant_pool_path` → `get_default_drive_path`
+- `get_agentdrive_pool_path` → `get_default_drive_path`
 - `get_swarm_pool_path` → `get_swarm_drive_path`
 - `register_pool_view` → `register_drive_view`
 
@@ -112,8 +112,8 @@ with no deprecation aliases (the project has no production users yet).
 - `pool_settings` → `drive_settings`
 
 **CLI**
-- The `savant` script entry is removed. The CLI binary is now **`agentdrive`** only.
-- `savant pool {status,ingest,query,stats}` → `agentdrive drive {status,ingest,query,stats}`
+- The `agentdrive` script entry is removed. The CLI binary is now **`agentdrive`** only.
+- `agentdrive pool {status,ingest,query,stats}` → `agentdrive drive {status,ingest,query,stats}`
 
 **Filesystem**
 - The default Drive lives at `~/.agentdrive/drive/` (was `~/.agentdrive/pool/`).
@@ -121,70 +121,70 @@ with no deprecation aliases (the project has no production users yet).
 
 ### Repository
 
-- GitHub repository renamed from `PabloTheThinker/savant` to `PabloTheThinker/AgentDrive`.
+- GitHub repository renamed from `PabloTheThinker/agentdrive` to `PabloTheThinker/AgentDrive`.
 - Install URL canonicalized to `https://vektraindustries.com/agentdrive/install`.
-- Legacy `/savant/install` website endpoint removed to reduce installer attack surface.
+- Legacy `/agentdrive/install` website endpoint removed to reduce installer attack surface.
 
 ### Why
 
 Two names for the same concept made the system feel incoherent: people typed
-`savant pool` but read about "AgentDrive" in the README, and sub-agents had
-`SavantPool` instances while the docs talked about Drives. The pivot collapses
-the dual naming — Savant is the engine credit only, AgentDrive is the
+`agentdrive pool` but read about "AgentDrive" in the README, and sub-agents had
+`Agent DrivePool` instances while the docs talked about Drives. The pivot collapses
+the dual naming — Agent Drive is the engine credit only, AgentDrive is the
 primitive, the binary, the product. The ProtonDrive parallel ("your agents,
 your memory, your control") gives the system a mental model people understand
 on first contact.
 
 ### Engine credit
 
-`savant.*` Python modules retain their names because the engine is still
-Savant — the federated learning substrate, quarantine, peer registry,
+`agentdrive.*` Python modules retain their names because the engine is still
+Agent Drive — the federated learning substrate, quarantine, peer registry,
 reconciliation, confidence scoring, and inheritance manifests are unchanged.
 What moved is the product surface above them.
 
-## [Unreleased] — Level B: package rebrand savant → agentdrive
+## [Unreleased] — Level B: package rebrand agentdrive → agentdrive
 
 The Python package itself is now `agentdrive`. The default user-home directory
 is `~/.agentdrive/`. Environment variables follow the same flip. This is the
 second half of the AgentDrive pivot — Level A renamed the primitive
-(`SavantPool` → `AgentDrive`); Level B brings the package, paths, and env
+(`Agent DrivePool` → `AgentDrive`); Level B brings the package, paths, and env
 into the same name.
 
 ### Renamed
 
 **Package + directory**
-- `src/savant/` → `src/agentdrive/`
-- All `from savant.X` / `import savant` → `from agentdrive.X` / `import agentdrive`
-- `pyproject.toml` project name: `savant` → `agentdrive`
+- `src/agentdrive/` → `src/agentdrive/`
+- All `from agentdrive.X` / `import agentdrive` → `from agentdrive.X` / `import agentdrive`
+- `pyproject.toml` project name: `agentdrive` → `agentdrive`
 
 **Filesystem**
-- `~/.savant/` → `~/.agentdrive/`
-- Existing `~/.savant/` was migrated in place on the dev machine.
+- `~/.agentdrive/` → `~/.agentdrive/`
+- Existing `~/.agentdrive/` was migrated in place on the dev machine.
 
 **Environment variables**
-- `SAVANT_HOME` → `AGENTDRIVE_HOME`
-- `SAVANT_SWARM_ID` → `AGENTDRIVE_SWARM_ID`
-- `SAVANT_SUBAGENT_ID` → `AGENTDRIVE_SUBAGENT_ID`
+- `AGENTDRIVE_HOME` → `AGENTDRIVE_HOME`
+- `AGENTDRIVE_SWARM_ID` → `AGENTDRIVE_SWARM_ID`
+- `AGENTDRIVE_SUBAGENT_ID` → `AGENTDRIVE_SUBAGENT_ID`
 
 **Logger + theme**
-- Logger root namespace `savant` → `agentdrive` (log file is now `~/.agentdrive/logs/agentdrive.log`).
-- Rich palette tokens `savant.ok` / `savant.warn` / `savant.err` / `savant.genome` → `agentdrive.*`.
+- Logger root namespace `agentdrive` → `agentdrive` (log file is now `~/.agentdrive/logs/agentdrive.log`).
+- Rich palette tokens `agentdrive.ok` / `agentdrive.warn` / `agentdrive.err` / `agentdrive.genome` → `agentdrive.*`.
 
 **Constants helpers**
-- `get_savant_home` → `get_agentdrive_home`
-- `get_savant_home_override` / `set_savant_home_override` / `reset_savant_home_override` → `get_/set_/reset_agentdrive_home_override`
-- Internal `_SAVANT_HOME_OVERRIDE` context var → `_AGENTDRIVE_HOME_OVERRIDE`
+- `get_agentdrive_home` → `get_agentdrive_home`
+- `get_agentdrive_home_override` / `set_agentdrive_home_override` / `reset_agentdrive_home_override` → `get_/set_/reset_agentdrive_home_override`
+- Internal `_AGENTDRIVE_HOME_OVERRIDE` context var → `_AGENTDRIVE_HOME_OVERRIDE`
 
 **Entry points**
-- `pyproject.toml` `[project.entry-points."savant.scanners"]` → `"agentdrive.scanners"`
-- `pyproject.toml` `[project.entry-points."savant.workers"]` → `"agentdrive.workers"`
+- `pyproject.toml` `[project.entry-points."agentdrive.scanners"]` → `"agentdrive.scanners"`
+- `pyproject.toml` `[project.entry-points."agentdrive.workers"]` → `"agentdrive.workers"`
 - CLI binary entry: `agentdrive = "agentdrive.cli:main"`
 
 ### Kept (engine credit)
 
-- `SavantHarness` class name retained — it remains the engine adapter that
-  agents wrap their work with. Importable as `from agentdrive import SavantHarness`.
-- `savant` brand mentions in docstrings/README where they refer to the federated
+- `Agent DriveHarness` class name retained — it remains the engine adapter that
+  agents wrap their work with. Importable as `from agentdrive import Agent DriveHarness`.
+- `agentdrive` brand mentions in docstrings/README where they refer to the federated
   learning substrate that powers AgentDrive.
 
 ### Verification
@@ -195,14 +195,14 @@ into the same name.
 - `scripts/test_failure_modes.py` → 15/15 probes passed
 - CLI smoke: `python3 -m agentdrive.cli --help` resolves, `drive` verb wired, log header shows `AgentDrive v0.1.0`.
 
-## [Unreleased] — Final naming pass: SavantHarness → Harness + README rewrite
+## [Unreleased] — Final naming pass: Agent DriveHarness → Harness + README rewrite
 
 ### Renamed
 
-- `SavantHarness` → `Harness` everywhere — code, tests, docs, README.
+- `Agent DriveHarness` → `Harness` everywhere — code, tests, docs, README.
   Imported as `from agentdrive import Harness`. No deprecation alias.
-- This closes the last lingering "Savant" name on the public API surface.
-  `savant` references that remain are intentional engine credit and live
+- This closes the last lingering "Agent Drive" name on the public API surface.
+  `agentdrive` references that remain are intentional engine credit and live
   only in the `agentdrive.*` namespace docstrings.
 
 ### README
@@ -213,7 +213,7 @@ into the same name.
 - Quickstart and swarm example use the renamed `Harness` import so any
   copy/paste actually runs.
 - Architecture diagram updated to label the adapter `Harness` instead of
-  `SavantHarness`.
+  `Agent DriveHarness`.
 - Docs table updated: `INTEGRATION.md` description now reads
   "Wrapping your agent in `Harness`".
 

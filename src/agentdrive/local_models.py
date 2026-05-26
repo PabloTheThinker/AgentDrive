@@ -1,7 +1,7 @@
 """Local-model adapter layer for AgentDrive.
 
 A small, dependency-free dispatch layer so the healing-loop repair swarm —
-and, eventually, any Savant LLM call that wants to target a locally hosted
+and, eventually, any Agent Drive LLM call that wants to target a locally hosted
 model — can talk to *any* local backend without code paths that hard-code
 Ollama.
 
@@ -302,7 +302,7 @@ def is_available(spec: LocalModelSpec) -> bool:
 _DEFAULT_YAML = """\
 # AgentDrive local LLM backends.
 #
-# Each entry registers a local model Savant can dispatch to. The healing
+# Each entry registers a local model Agent Drive can dispatch to. The healing
 # loop and any future LocalModelAdapter consumer iterates this list and
 # uses the entries whose endpoint probes succeed at runtime. Failures are
 # silent — only configured + reachable models get used, so it's safe to

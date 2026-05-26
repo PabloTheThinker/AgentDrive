@@ -156,7 +156,7 @@ def test_failures_drag_success_rate(registry: GenomeRegistry) -> None:
     assert rating.stars == 0
 
 
-def test_sidecar_survives_restart(registry: GenomeRegistry, isolated_savant_home: Path) -> None:
+def test_sidecar_survives_restart(registry: GenomeRegistry, isolated_agentdrive_home: Path) -> None:
     g = _seed_genome(gid="sidecar-test", score=0.9)
     registry.save(g)
     pool = AgentDrive(registry=registry)

@@ -1,8 +1,8 @@
 """
-Savant Adapters — Multi-Model Integration for AgentDrives
+Agent Drive Adapters — Multi-Model Integration for AgentDrives
 
 This package enables *any* AI model or agent system (Grok Build, Claude Code,
-Codex, Cursor, custom agents, etc.) to participate in the Savant ecosystem of
+Codex, Cursor, custom agents, etc.) to participate in the Agent Drive ecosystem of
 shared, evolving agent DNA (Genomes) stored in user-owned Pools — including
 automatic scoping for swarms and sub-agents.
 
@@ -22,8 +22,8 @@ ready-to-paste instruction text for the user to give their AI.
 
 Public API (recommended entry points):
     from agentdrive.adapters import (
-        get_savant_adapter,
-        SavantAdapter,
+        get_agentdrive_adapter,
+        Agent DriveAdapter,
         activate_for_grok_build,
         get_scoped_pool,
     )
@@ -44,69 +44,69 @@ from agentdrive.drive.drive import AgentDrive
 from agentdrive.drive.settings import DriveSettings, get_effective_drive_settings
 
 from .base import (
-    SavantAdapter,
-    SavantAdapterBase,
+    Agent DriveAdapter,
+    Agent DriveAdapterBase,
     create_scoped_pool,
     detect_swarm_context,
-    get_savant_pool,
+    get_agentdrive_pool,
     get_scoped_pool,
 )
 
 
 # Model-specific adapters (import lazily to avoid heavy deps at top level)
-def get_savant_adapter(model: str = "auto") -> SavantAdapter:
+def get_agentdrive_adapter(model: str = "auto") -> Agent DriveAdapter:
     """Factory: return the best adapter for the given model family.
 
     model: "grok" | "grok-build" | "claude" | "claude-code" | "codex" | "auto"
     """
     model = (model or "auto").lower()
     if model in ("grok", "grok-build", "grok_build"):
-        from .grok_build_adapter import GrokBuildSavantAdapter
+        from .grok_build_adapter import GrokBuildAgent DriveAdapter
 
-        return GrokBuildSavantAdapter()
+        return GrokBuildAgent DriveAdapter()
     if model in ("claude", "claude-code", "claude_code"):
-        from .claude_code_adapter import ClaudeCodeSavantAdapter
+        from .claude_code_adapter import ClaudeCodeAgent DriveAdapter
 
-        return ClaudeCodeSavantAdapter()
+        return ClaudeCodeAgent DriveAdapter()
     if model in ("codex", "openai-codex"):
-        from .codex_adapter import CodexSavantAdapter
+        from .codex_adapter import CodexAgent DriveAdapter
 
-        return CodexSavantAdapter()
+        return CodexAgent DriveAdapter()
     # default / auto
-    from .base import SavantAdapterBase
+    from .base import Agent DriveAdapterBase
 
-    return SavantAdapterBase()
+    return Agent DriveAdapterBase()
 
 
-def activate_for_grok_build(swarm_id: str | None = None, **kwargs) -> SavantAdapter:
+def activate_for_grok_build(swarm_id: str | None = None, **kwargs) -> Agent DriveAdapter:
     """One-liner for Grok Build users: call this after user says 'use AgentDrive'.
 
     Returns the activated adapter. Automatically patches spawn_subagent if possible.
     """
-    from .grok_build_adapter import GrokBuildSavantAdapter, get_savant_instructions_for_grok
+    from .grok_build_adapter import GrokBuildAgent DriveAdapter, get_agentdrive_instructions_for_grok
 
-    adapter = GrokBuildSavantAdapter(swarm_id=swarm_id, **kwargs)
+    adapter = GrokBuildAgent DriveAdapter(swarm_id=swarm_id, **kwargs)
     adapter.activate()
     # Print user-friendly instructions the model can surface if needed
     # (models often echo this back to confirm)
-    print(get_savant_instructions_for_grok(swarm_id or "current-session"))
+    print(get_agentdrive_instructions_for_grok(swarm_id or "current-session"))
     return adapter
 
 
-def activate_for_claude(swarm_id: str | None = None, **kwargs) -> SavantAdapter:
-    from .claude_code_adapter import ClaudeCodeSavantAdapter
+def activate_for_claude(swarm_id: str | None = None, **kwargs) -> Agent DriveAdapter:
+    from .claude_code_adapter import ClaudeCodeAgent DriveAdapter
 
-    adapter = ClaudeCodeSavantAdapter(swarm_id=swarm_id, **kwargs)
+    adapter = ClaudeCodeAgent DriveAdapter(swarm_id=swarm_id, **kwargs)
     adapter.activate()
     return adapter
 
 
 __all__ = [
-    "SavantAdapter",
-    "SavantAdapterBase",
-    "get_savant_adapter",
+    "Agent DriveAdapter",
+    "Agent DriveAdapterBase",
+    "get_agentdrive_adapter",
     "get_scoped_pool",
-    "get_savant_pool",
+    "get_agentdrive_pool",
     "detect_swarm_context",
     "create_scoped_pool",
     "activate_for_grok_build",

@@ -1,7 +1,7 @@
 """
-Render representative Savant TUI frames to SVG for the README.
+Render representative Agent Drive TUI frames to SVG for the README.
 
-Uses real Savant render code paths (chrome, board_view) against a synthetic
+Uses real Agent Drive render code paths (chrome, board_view) against a synthetic
 in-memory MissionBoard so the screenshots match production exactly.
 
 Outputs:
@@ -17,7 +17,7 @@ import tempfile
 from pathlib import Path
 
 # Isolate AGENTDRIVE_HOME so we never touch the real one.
-_tmp = tempfile.mkdtemp(prefix="savant-screenshot-")
+_tmp = tempfile.mkdtemp(prefix="agentdrive-screenshot-")
 os.environ["AGENTDRIVE_HOME"] = _tmp
 
 REPO = Path(__file__).resolve().parent.parent
@@ -91,7 +91,7 @@ def render_mission_board():
     out = ASSETS / "mission-board.svg"
     console.save_svg(
         str(out),
-        title="savant board",
+        title="agentdrive board",
         code_format=(
             '<svg class="rich-terminal" viewBox="0 0 {width} {height}" '
             'xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">'
@@ -104,14 +104,14 @@ def render_mission_board():
 def render_welcome():
     """Render the welcome / what-it-is frame.
 
-    A clean Savant intro card built with the same Rich primitives the TUI uses.
+    A clean Agent Drive intro card built with the same Rich primitives the TUI uses.
     """
     console = Console(record=True, width=120, force_terminal=True, color_system="truecolor")
 
     p = PALETTE
 
     title = Text()
-    title.append("Savant", style=f"bold {p.accent}")
+    title.append("Agent Drive", style=f"bold {p.accent}")
     title.append("  Living DNA for AI agents", style=f"{p.muted}")
 
     body = Text()
@@ -153,7 +153,7 @@ def render_welcome():
     console.print()
 
     out = ASSETS / "welcome.svg"
-    console.save_svg(str(out), title="savant")
+    console.save_svg(str(out), title="agentdrive")
     print(f"[OK] {out}")
 
 

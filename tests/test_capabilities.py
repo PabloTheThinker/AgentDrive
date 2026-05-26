@@ -169,8 +169,8 @@ def test_minted_cap_verifies(store: CapStore) -> None:
     store.verify(cap)
 
 
-def test_default_cap_store_uses_active_agentdrive_home(isolated_savant_home: Path) -> None:
-    assert default_cap_store_path() == isolated_savant_home / "cap" / "_caps.db"
+def test_default_cap_store_uses_active_agentdrive_home(isolated_agentdrive_home: Path) -> None:
+    assert default_cap_store_path() == isolated_agentdrive_home / "cap" / "_caps.db"
     assert get_default_cap_store().db_path == default_cap_store_path()
 
 

@@ -1,8 +1,8 @@
 """
-SavantLLM — lightweight chat completion client for any configured provider.
+Agent DriveLLM — lightweight chat completion client for any configured provider.
 
 Usage:
-    llm = SavantLLM()
+    llm = Agent DriveLLM()
     reply = llm.chat("What does this code do?")
 
     # Or with system prompt and history:
@@ -29,7 +29,7 @@ from agentdrive.providers.base import ProviderProfile, get, load_config_provider
 logger = logging.getLogger(__name__)
 
 
-class SavantLLM:
+class Agent DriveLLM:
     """Lightweight LLM client using the configured provider."""
 
     def __init__(self, provider_name: str | None = None, model: str | None = None):
@@ -194,7 +194,7 @@ class SavantLLM:
             context = f"Relevant genomes from my AgentDrive:\n{genome_list}"
 
         system = (
-            "You are Savant, an AI assistant for the AgentDrive — a living ecosystem "
+            "You are Agent Drive, an AI assistant for the AgentDrive — a living ecosystem "
             "for agent DNA (genomes, reasoning patterns, frameworks). "
             "Answer questions helpfully, reference the user's pool genomes when relevant, "
             "and suggest actions like querying, importing, or creating new genomes."
@@ -221,7 +221,7 @@ class SavantLLM:
             context = f"Relevant genomes:\n{genome_list}"
 
         system = (
-            "You are Savant, an AI assistant for the AgentDrive — a living ecosystem "
+            "You are Agent Drive, an AI assistant for the AgentDrive — a living ecosystem "
             "for agent DNA. Reference the user's pool genomes when relevant."
         )
 

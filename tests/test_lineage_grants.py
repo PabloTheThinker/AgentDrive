@@ -190,13 +190,13 @@ def test_grants_for_grantee_filters_correctly(store: GrantStore) -> None:
 
 
 def test_pull_via_grant_returns_issuers_genomes(
-    isolated_savant_home: Path,
+    isolated_agentdrive_home: Path,
     tmp_path: Path,
 ) -> None:
     """The whole point of M2c: cousin-A publishes; cousin-B receives a
     grant; cousin-B pulls and sees cousin-A's work — without any
     ancestral relationship between them."""
-    store = GrantStore(isolated_savant_home / "dna" / "_grants.db")
+    store = GrantStore(isolated_agentdrive_home / "dna" / "_grants.db")
 
     cousin_a = DNADrive("cousin-a")
     cousin_a.publish(_make_genome("cousin-a-cap", eval_score=0.9))
@@ -214,8 +214,8 @@ def test_pull_via_grant_returns_issuers_genomes(
     assert received[0].depth == -1, "cross-source pulls must be marked with depth=-1"
 
 
-def test_pull_via_grant_applies_min_eval_gate(isolated_savant_home: Path) -> None:
-    store = GrantStore(isolated_savant_home / "dna" / "_grants.db")
+def test_pull_via_grant_applies_min_eval_gate(isolated_agentdrive_home: Path) -> None:
+    store = GrantStore(isolated_agentdrive_home / "dna" / "_grants.db")
 
     cousin_a = DNADrive("cousin-a")
     cousin_a.publish(_make_genome("strong-cap", eval_score=0.9))
@@ -234,8 +234,8 @@ def test_pull_via_grant_applies_min_eval_gate(isolated_savant_home: Path) -> Non
     assert framework_step == "strong-cap"
 
 
-def test_pull_via_grant_restricted_to_content_hashes(isolated_savant_home: Path) -> None:
-    store = GrantStore(isolated_savant_home / "dna" / "_grants.db")
+def test_pull_via_grant_restricted_to_content_hashes(isolated_agentdrive_home: Path) -> None:
+    store = GrantStore(isolated_agentdrive_home / "dna" / "_grants.db")
     cousin_a = DNADrive("cousin-a")
     h1 = cousin_a.publish(_make_genome("a"))
     cousin_a.publish(_make_genome("b"))
@@ -255,8 +255,8 @@ def test_pull_via_grant_restricted_to_content_hashes(isolated_savant_home: Path)
     assert received[0].content_hash == h1
 
 
-def test_pull_via_grant_rejects_revoked_grant(isolated_savant_home: Path) -> None:
-    store = GrantStore(isolated_savant_home / "dna" / "_grants.db")
+def test_pull_via_grant_rejects_revoked_grant(isolated_agentdrive_home: Path) -> None:
+    store = GrantStore(isolated_agentdrive_home / "dna" / "_grants.db")
     cousin_a = DNADrive("cousin-a")
     cousin_a.publish(_make_genome("a"))
 

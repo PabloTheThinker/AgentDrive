@@ -1,8 +1,8 @@
 """Causality miner — turn a flat trace into a DAG of cause→effect.
 
-Core reasoning primitive in Savant for mining causal relationships from traces.
+Core reasoning primitive in Agent Drive for mining causal relationships from traces.
 
-Savant role in DNA/Genome pipeline:
+Agent Drive role in DNA/Genome pipeline:
 - After `reconstruct_trace` (reasoning.py) on a run's ledger entries,
   `mine_causality` builds a CausalGraph.
 - The graph (with weights and rationales) is stored in
@@ -113,7 +113,7 @@ def mine_causality(
 ) -> CausalGraph:
     """Infer causal edges between steps in a trace.
 
-    ``observations`` is accepted for symmetry with the rest of savant
+    ``observations`` is accepted for symmetry with the rest of agentdrive
     but is currently used only as a token-frequency prior so common
     project-wide tokens don't blow up the rationale.
     """

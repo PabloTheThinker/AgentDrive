@@ -300,7 +300,7 @@ done
 # Configuration
 # ============================================================================
 
-SAVANT_REPO="https://github.com/PabloTheThinker/AgentDrive.git"  # Correct casing is important for GitHub raw / git+ URLs
+AGENTDRIVE_REPO="https://github.com/PabloTheThinker/AgentDrive.git"  # Correct casing is important for GitHub raw / git+ URLs
 MIN_PYTHON="3.11"
 AGENTDRIVE_HOME="${AGENTDRIVE_HOME:-$HOME/.agentdrive}"
 
@@ -445,7 +445,7 @@ exec "$VENV_DIR/bin/agentdrive" "\$@"
 SHIMEOF
         chmod +x "$SHIM_PATH"
         log_success "AgentDrive installed in dev mode → $SHIM_PATH"
-        SAVANT_BIN="$VENV_DIR/bin/agentdrive"
+        AGENTDRIVE_BIN="$VENV_DIR/bin/agentdrive"
         # Skip normal install below
         SKIP_INSTALL=true
     fi
@@ -463,7 +463,7 @@ if command -v uv >/dev/null 2>&1; then
     uv venv "$VENV_DIR" --python "$PYTHON_VERSION" 2>/dev/null || python3 -m venv "$VENV_DIR"
 
     log_info "Installing AgentDrive with uv..."
-    if VIRTUAL_ENV="$VENV_DIR" uv pip install --force-reinstall "git+${SAVANT_REPO}@${REF}"; then
+    if VIRTUAL_ENV="$VENV_DIR" uv pip install --force-reinstall "git+${AGENTDRIVE_REPO}@${REF}"; then
         log_success "AgentDrive installed with uv"
     else
         log_error "Installation failed."
@@ -474,7 +474,7 @@ else
     python3 -m venv "$VENV_DIR"
 
     log_info "Installing AgentDrive with pip..."
-    if "$VENV_DIR/bin/pip" install --upgrade --force-reinstall "git+${SAVANT_REPO}@${REF}"; then
+    if "$VENV_DIR/bin/pip" install --upgrade --force-reinstall "git+${AGENTDRIVE_REPO}@${REF}"; then
         log_success "AgentDrive installed into virtual environment"
     else
         log_error "Installation failed."
@@ -492,7 +492,7 @@ exec "$VENV_DIR/bin/agentdrive" "\$@"
 SHIMEOF
 chmod +x "$SHIM_PATH"
 log_success "Created agentdrive launcher → $SHIM_PATH"
-SAVANT_BIN="$VENV_DIR/bin/agentdrive"
+AGENTDRIVE_BIN="$VENV_DIR/bin/agentdrive"
 fi
 
 # 5. PATH setup — ensure ~/.local/bin is on PATH
@@ -571,8 +571,8 @@ else
 fi
 
 if [ "$launch_now" = true ]; then
-    if [[ -n "$SAVANT_BIN" && -x "$SAVANT_BIN" ]]; then
-        exec "$SAVANT_BIN"
+    if [[ -n "$AGENTDRIVE_BIN" && -x "$AGENTDRIVE_BIN" ]]; then
+        exec "$AGENTDRIVE_BIN"
     elif command -v agentdrive >/dev/null 2>&1; then
         exec agentdrive
     else

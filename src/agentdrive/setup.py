@@ -4,7 +4,7 @@ AgentDrive Setup Wizard — interactive CLI configuration.
 Rendered against the unified chrome primitives so it feels like part of
 the same product as chat, doctor, and onboarding.
 
-Sections (each can be run independently via `savant setup <section>`):
+Sections (each can be run independently via `agentdrive setup <section>`):
 
   1. Home & Persistence
   2. AgentDrive (default)
@@ -21,8 +21,8 @@ from rich.console import Group
 from rich.prompt import Prompt
 from rich.text import Text
 
-from agentdrive.config import ensure_savant_home, get_agentdrive_home, load_config, save_config
-from agentdrive.constants import SAVANT_VERSION
+from agentdrive.config import ensure_agentdrive_home, get_agentdrive_home, load_config, save_config
+from agentdrive.constants import AGENTDRIVE_VERSION
 from agentdrive.drive.settings import get_drive_settings_manager
 from agentdrive.drive.swarm_manager import get_swarm_drive_manager
 from agentdrive.tui.chrome import (
@@ -102,7 +102,7 @@ def section_home() -> bool:
     proceed = confirm_prompt(
         console,
         title="Create this directory?",
-        body=f"Savant will set up [{PALETTE.accent}]{home}[/] with the right permissions.",
+        body=f"Agent Drive will set up [{PALETTE.accent}]{home}[/] with the right permissions.",
         default_yes=True,
         palette=PALETTE,
     )
@@ -116,12 +116,12 @@ def section_home() -> bool:
         )
         return False
 
-    ensure_savant_home()
+    ensure_agentdrive_home()
     console.print()
     console.print(ok_line(f"Ready at [{PALETTE.genome}]{home}[/]", palette=PALETTE))
 
     cfg = load_config()
-    cfg["savant_home"] = str(home)
+    cfg["agentdrive_home"] = str(home)
     save_config(cfg)
     return True
 
@@ -147,14 +147,14 @@ def section_global_pool() -> bool:
     proceed = confirm_prompt(
         console,
         title="Create your global AgentDrive?",
-        body="Every Savant installation has one. Starts empty, grows with use.",
+        body="Every Agent Drive installation has one. Starts empty, grows with use.",
         default_yes=True,
         palette=PALETTE,
     )
     if not proceed:
         console.print()
         console.print(
-            info_line("Skipped. Run [bold]savant setup pool[/] anytime.", palette=PALETTE)
+            info_line("Skipped. Run [bold]agentdrive setup pool[/] anytime.", palette=PALETTE)
         )
         return True
 
@@ -436,7 +436,7 @@ def section_tui() -> bool:
             Section(
                 "TUI Preferences",
                 [
-                    ("the surface", "primary way most people use Savant"),
+                    ("the surface", "primary way most people use Agent Drive"),
                     ("skin", "controls glyphs, palette, panel borders"),
                 ],
                 palette=PALETTE,
@@ -450,7 +450,7 @@ def section_tui() -> bool:
     skin_default = confirm_prompt(
         console,
         title="Use the default professional skin?",
-        body="You can switch skins later with [bold]savant tui skin <name>[/].",
+        body="You can switch skins later with [bold]agentdrive tui skin <name>[/].",
         default_yes=True,
         palette=PALETTE,
     )
@@ -487,8 +487,8 @@ TOTAL_SECTIONS = len(SECTIONS)
 def _welcome_panel(running_subset: bool, names: list[str]) -> None:
     hero = Text()
     hero.append(f"{Glyphs.DIAMOND} ", style=PALETTE.accent)
-    hero.append("SAVANT SETUP", style=PALETTE.title + " bold")
-    hero.append(f"  v{SAVANT_VERSION}", style=PALETTE.muted)
+    hero.append("AGENTDRIVE SETUP", style=PALETTE.title + " bold")
+    hero.append(f"  v{AGENTDRIVE_VERSION}", style=PALETTE.muted)
 
     if running_subset:
         body_text = Text.from_markup(
@@ -515,7 +515,7 @@ def _welcome_panel(running_subset: bool, names: list[str]) -> None:
 
 def run_setup(sections: list[str] | None = None) -> bool:
     """
-    Run the Savant setup wizard.
+    Run the Agent Drive setup wizard.
 
     If `sections` is provided, only run those specific sections (by short name).
     """
@@ -590,8 +590,8 @@ def run_setup(sections: list[str] | None = None) -> bool:
                 Section(
                     "Try next",
                     [
-                        ("savant setup swarm", "tweak sub-agent pool policies"),
-                        ("savant setup ai", "change AI provider or API key"),
+                        ("agentdrive setup swarm", "tweak sub-agent pool policies"),
+                        ("agentdrive setup ai", "change AI provider or API key"),
                         ("agentdrive provider set", "switch AI provider from CLI"),
                         ("agentdrive model set", "switch model from CLI"),
                         ("agentdrive", "launch the agent chat"),
@@ -617,7 +617,7 @@ def run_setup(sections: list[str] | None = None) -> bool:
 
 
 def cmd_setup(args) -> int:
-    """Entry point for `savant setup` and `savant setup <section>`."""
+    """Entry point for `agentdrive setup` and `agentdrive setup <section>`."""
     sections = None
     if hasattr(args, "section") and args.section:
         mapping = {s["name"]: s["name"] for s in SECTIONS}

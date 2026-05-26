@@ -1,6 +1,6 @@
 # AgentDrive Integration Guide — Connecting Grok, Claude Code, Codex, and Any Model
 
-> AgentDrive is the public product. The historical Savant engine wording remains
+> AgentDrive is the public product. The historical Agent Drive engine wording remains
 > in a few Python class names and older design notes; new integrations should use
 > the `agentdrive` package and CLI.
 
@@ -17,7 +17,7 @@ Any Python-based agent or sub-agent can directly use:
 - `Harness` — the simplest participation wrapper (pull DNA → adapt → record).
 - `RichAgentAdapter` / `ExternalWorkerAdapter` — canonical reference implementation showing a rich, tool-using, trajectory-emitting agent.
 - `AgentDrive`, `DriveQuery`, and `GenomeRegistry` for direct control.
-- `SavantRunScanner` (and custom scanners) to turn raw trajectories into new Genomes.
+- `Agent DriveRunScanner` (and custom scanners) to turn raw trajectories into new Genomes.
 
 See:
 - `src/agentdrive/harness/harness.py`
@@ -45,8 +45,8 @@ with harness.task_context(user_task):
 
 Parent runtimes pass two environment variables (or context) when launching children:
 
-- `SAVANT_SWARM_ID` — legacy-compatible name that groups related sub-agents (e.g. one mission or conversation thread)
-- `SAVANT_SUBAGENT_ID` — legacy-compatible name for this child (its private pool lives here)
+- `AGENTDRIVE_SWARM_ID` — legacy-compatible name that groups related sub-agents (e.g. one mission or conversation thread)
+- `AGENTDRIVE_SUBAGENT_ID` — legacy-compatible name for this child (its private pool lives here)
 
 AgentDrive helpers (`get_swarm_pool_path`, `get_effective_pool_settings`) automatically create and select the correct isolated pool directory and policy set.
 
@@ -88,7 +88,7 @@ Grok’s build / agent orchestration already supports spawning sub-agents (via `
 **Recommended pattern**:
 
 1. When the parent decides to spawn, generate a `swarm_id` (stable per top-level mission) and per-child `subagent_id`.
-2. Launch the child process / container / sandbox with the two `SAVANT_*` env vars.
+2. Launch the child process / container / sandbox with the two `AGENTDRIVE_*` env vars.
 3. In the child’s bootstrap (or via injected system prompt + tool), ensure it:
    - Imports/uses `Harness` (if Python) **or**
    - Is told “you are participating in AgentDrive for swarm X; use the provided adapter / CLI / MCP tools to pull and record DNA”.
@@ -98,7 +98,7 @@ Because AgentDrive pools are just directories + Python objects, even a non-Pytho
 
 User instruction example to Grok:
 
-> “For all sub-agents you spawn on this task, set SAVANT_SWARM_ID to ‘user-mission-42’, give each a distinct SUBAGENT_ID, attach the Harness (or equivalent), and respect the Drive settings I have in ~/.agentdrive/config.yaml.”
+> “For all sub-agents you spawn on this task, set AGENTDRIVE_SWARM_ID to ‘user-mission-42’, give each a distinct SUBAGENT_ID, attach the Harness (or equivalent), and respect the Drive settings I have in ~/.agentdrive/config.yaml.”
 
 ### 6. Claude Code, Cursor, Windsurf, Codex, and Other IDE/Agent Runtimes
 
@@ -112,8 +112,8 @@ Example wrapper (invoked by Claude Code’s “run in agent”):
 
 ```bash
 #!/bin/bash
-export SAVANT_SWARM_ID="${CLAUDE_MISSION_ID:-default}"
-export SAVANT_SUBAGENT_ID="${CLAUDE_SUBTASK_ID:-$(uuidgen)}"
+export AGENTDRIVE_SWARM_ID="${CLAUDE_MISSION_ID:-default}"
+export AGENTDRIVE_SUBAGENT_ID="${CLAUDE_SUBTASK_ID:-$(uuidgen)}"
 python -m agentdrive.workers.rich_agent_adapter --task "$*"
 ```
 

@@ -1,10 +1,10 @@
 # Chat Pattern 2 — Pre-Integration Audit
 
-**Target:** `src/savant/tui/chat.py` (1117 lines, single `ChatView` class)
+**Target:** `src/agentdrive/tui/chat.py` (1117 lines, single `ChatView` class)
 **Scope:** Read-only audit. Map blocking-loop surface area so the integrator can
 swap in a queue-driven async `ChatLoop` without regressing behavior.
 **Reference:** `docs/UX-PROPOSAL.md` Pattern 2 (keep typing while agent works),
-`src/savant/events.py` (typed `EventBus` already exists — chat.py does **not**
+`src/agentdrive/events.py` (typed `EventBus` already exists — chat.py does **not**
 import it yet).
 
 ---
@@ -53,14 +53,14 @@ text mutated by the worker thread; the *main* thread polls `done_event` every
 
 **Where the agent is called:** `self.agent.send(...)` line 442 — synchronous,
 blocking, callback-based streaming via `on_chunk`. See
-`src/savant/agent/agent.py:165`.
+`src/agentdrive/agent/agent.py:165`.
 
 **Where tool calls render:** **Not present.** No tool-call ribbon, no
 `ToolStart/ToolProgress/ToolComplete` rendering in chat.py. Only DNA tree
 (post-turn) at 512–542.
 
 **Where the session saves:** **Not in chat.py.** Persistence is owned by
-`SavantAgent.send()` internally; chat.py never calls a save method. The only
+`Agent DriveAgent.send()` internally; chat.py never calls a save method. The only
 read of session state is `self.agent.session.turns` (lines 330, 351, 650, 848).
 
 ---
@@ -116,7 +116,7 @@ region stays on screen after the turn, which is correct and must be preserved.
 Instance state held on `ChatView` (constructor 110–149):
 
 - `self.tui`, `self.console`, `self.skin`, `self.palette` — UI handles.
-- `self.agent_id`, `self.agent` (`SavantAgent`) — owns session + pool + LLM.
+- `self.agent_id`, `self.agent` (`Agent DriveAgent`) — owns session + pool + LLM.
 - `self.indicator_style` (default `"unicode"`) — mutated by `/indicator`.
 - `self.show_reasoning_hints` (bool) — mutated by `/reasoning`.
 - `self._last_user_message` (Optional[str]) — used by `/retry` (840–852);
@@ -136,7 +136,7 @@ Implicit state (lives on `self.agent`): `agent.session.turns`,
 1. **Multiline composer keybindings.** Enter submits; `\<Enter>`, Ctrl+Enter,
    Alt+Enter, Esc-Enter all insert a newline (126–141).
 2. **History search.** Up-arrow walks `FileHistory` at
-   `~/.savant/.savant_chat_history` (144).
+   `~/.agentdrive/.agentdrive_chat_history` (144).
 3. **Streaming cursor animation.** Blinking `▍` at ~2.4 Hz interleaved with
    `Indicator.frame()` rotation (454, 461–467).
 4. **`Live` finalization.** On completion the region re-renders as
@@ -190,7 +190,7 @@ while True:
 
 **After (sketch):**
 ```python
-from savant.chat_loop import ChatLoop, ExitSignal
+from agentdrive.chat_loop import ChatLoop, ExitSignal
 
 loop = ChatLoop(
     prompt_session=self._prompt_session,

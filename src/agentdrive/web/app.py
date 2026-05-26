@@ -18,7 +18,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from agentdrive import SAVANT_VERSION
+from agentdrive import AGENTDRIVE_VERSION
 from agentdrive.backup import SnapshotError, SnapshotManager
 from agentdrive.constants import get_agentdrive_home, get_default_drive_path
 from agentdrive.drive.drive import AgentDrive
@@ -52,7 +52,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
     store = AuthStore(auth_db or default_db_path())
     store.bootstrap_from_env()
 
-    app = FastAPI(title="AgentDrive Web", version=SAVANT_VERSION)
+    app = FastAPI(title="AgentDrive Web", version=AGENTDRIVE_VERSION)
     app.state.auth_store = store
     app.state.login_limiter = LoginRateLimiter(max_attempts=5, window_s=60)
     app.state.started_at = time.time()
@@ -207,7 +207,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         return JSONResponse(
             {
                 "status": "ok",
-                "version": SAVANT_VERSION,
+                "version": AGENTDRIVE_VERSION,
                 "uptime_s": uptime_s,
             }
         )
@@ -343,7 +343,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                 "action": "/signup",
                 "submit_label": "Request access",
                 "password_autocomplete": "new-password",
-                "footnote": "Vektra Industries · AgentDrive v" + SAVANT_VERSION,
+                "footnote": "Vektra Industries · AgentDrive v" + AGENTDRIVE_VERSION,
             },
         )
 
@@ -372,7 +372,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                     "password_autocomplete": "new-password",
                     "username": username,
                     "error": str(exc),
-                    "footnote": "Vektra Industries · AgentDrive v" + SAVANT_VERSION,
+                    "footnote": "Vektra Industries · AgentDrive v" + AGENTDRIVE_VERSION,
                 },
                 status_code=400,
             )
@@ -393,7 +393,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                 "request": request,
                 "user": user,
                 "active": "dashboard",
-                "version": SAVANT_VERSION,
+                "version": AGENTDRIVE_VERSION,
                 "stats_drives": 1,
                 "stats_agents": 1,
                 "metrics": [
@@ -1319,7 +1319,7 @@ def _login_page(
                 if is_signup_disabled()
                 else 'Need access? <a href="/signup">Request an account</a>.'
             ),
-            "footnote": "Vektra Industries · AgentDrive v" + SAVANT_VERSION,
+            "footnote": "Vektra Industries · AgentDrive v" + AGENTDRIVE_VERSION,
         },
         status_code=status_code,
     )

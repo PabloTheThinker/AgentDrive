@@ -1,5 +1,5 @@
 """
-Mission Board — a persistent, Savant-native lane board for agent missions.
+Mission Board — a persistent, Agent Drive-native lane board for agent missions.
 
 A *Mission* is a piece of work an agent (or a user) commits to. It is more
 durable than a chat turn but lighter-weight than a genome — it tracks intent,

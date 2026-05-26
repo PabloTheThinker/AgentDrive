@@ -1,4 +1,4 @@
-"""Tests for savant.events — typed bus, recorder, thread safety."""
+"""Tests for agentdrive.events — typed bus, recorder, thread safety."""
 
 from __future__ import annotations
 

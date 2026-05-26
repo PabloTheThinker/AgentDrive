@@ -1,6 +1,6 @@
 # AgentDrive Pool — The Living DNA Repository for AI Agents
 
-> Public product: AgentDrive. "Savant Pool" remains historical/internal engine
+> Public product: AgentDrive. "Agent Drive Pool" remains historical/internal engine
 > wording in some code and older design notes.
 
 **The AgentDrive Pool is the persistent, user-owned evolutionary memory system for agent intelligence.** It stores, retrieves, and evolves structured "DNA" (Genomes) — portable packages of frameworks, reasoning patterns, tool strategies, and proven outcomes that agents can pull, adapt, and improve.
@@ -155,7 +155,7 @@ The `PoolSettingsManager` and `get_effective_pool_settings(swarm_id)` provide th
 
 ## How the Pool Grows
 
-1. **Ingestion** — Scanners (e.g. `SavantRunScanner`, `RichRunScanner`) analyze instrumented trajectories and produce candidate Genomes → `drive.ingest()`.
+1. **Ingestion** — Scanners (e.g. `Agent DriveRunScanner`, `RichRunScanner`) analyze instrumented trajectories and produce candidate Genomes → `drive.ingest()`.
 2. **Harness Contributions** — Every harness-wrapped run on success can auto-propose deltas.
 3. **Explicit Proposals** — `pool.propose_improvement()` from humans or agents.
 4. **Fork/Merge/Evolve** — Registry + evolutionary engine operations (CLI/TUI/orchestrator).

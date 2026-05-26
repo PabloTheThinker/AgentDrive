@@ -7,7 +7,7 @@ one PASS or FAIL line per mode, tallies the result, and ALWAYS exits 0 so
 the findings are surfaced rather than burying the run in CI red.
 
 Run:
-    cd ~/savant && python3 scripts/test_failure_modes.py
+    cd ~/agentdrive && python3 scripts/test_failure_modes.py
 
 This is NOT a unit-test suite. The job is to expose real bugs and document
 edge cases the unit tests do not exercise.
@@ -369,7 +369,7 @@ def mode_8_peer_bad_scheme() -> Tuple[bool, str]:
 
     if not result.errors:
         # FINDING: peers._address_scheme treats ftp:// as the fall-through
-        # "file" scheme because the only schemes it knows are file/http/https/savant.
+        # "file" scheme because the only schemes it knows are file/http/https/agentdrive.
         # So a bogus scheme silently routes through the local-file adapter.
         return False, "ftp:// scheme silently accepted (no adapter error reported)"
     if result.submitted != 0:

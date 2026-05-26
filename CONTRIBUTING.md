@@ -1,6 +1,6 @@
 # Contributing to AgentDrive
 
-Thank you for your interest in contributing to AgentDrive — RAID for AI agents, powered by the open-source Savant engine.
+Thank you for your interest in contributing to AgentDrive — RAID for AI agents, powered by the open-source Agent Drive engine.
 
 We hold ourselves to a high engineering standard: clear contracts, calm interfaces, and clean open-source practices.
 

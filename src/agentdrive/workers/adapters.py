@@ -2,7 +2,7 @@
 Concrete Agent Adapters.
 
 ExternalAgentAdapter is the reference implementation that lets external agents
-act as Savant workers and contribute genomes to the ecosystem.
+act as Agent Drive workers and contribute genomes to the ecosystem.
 """
 
 from __future__ import annotations
@@ -18,12 +18,12 @@ logger = logging.getLogger(__name__)
 
 class ExternalAgentAdapter(AgentAdapter):
     """
-    Adapter that wraps external agents (rich workers or compatible systems) for use inside Savant.
+    Adapter that wraps external agents (rich workers or compatible systems) for use inside Agent Drive.
 
     - as_worker(): returns a Worker that can dispatch framework execution to the external agent
       (via subprocess, ACP, local import if co-located, etc.)
     - contribute_genome(): accepts a run artifact (trajectory, log dir, or
-      structured dict) and feeds it through Savant scanners to produce candidate Genomes.
+      structured dict) and feeds it through Agent Drive scanners to produce candidate Genomes.
 
     This is intentionally lightweight in v0.1 — real integrations use agent
     tool surfaces, run export, or direct hooks.

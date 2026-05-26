@@ -1,7 +1,7 @@
 """
 AgentDrive TUI Skin / Theme Engine
 
-A professional, data-driven theming system for the Savant terminal experience.
+A professional, data-driven theming system for the Agent Drive terminal experience.
 Skins are defined in YAML and allow full visual customization without code changes.
 
 Designed for a precise, analytical, high-trust aesthetic appropriate for
@@ -17,7 +17,7 @@ from rich.theme import Theme
 
 DEFAULT_SKIN = {
     "name": "default",
-    "description": "Professional analytical theme for Savant (precise, trustworthy, low-distraction)",
+    "description": "Professional analytical theme for Agent Drive (precise, trustworthy, low-distraction)",
     "colors": {
         "banner_border": "#4A90A4",
         "banner_title": "#5DADE2",
@@ -91,7 +91,7 @@ class SkinEngine:
         return self.skin["colors"].get(key, "white")
 
     def print_banner(self, title: str) -> None:
-        """Render a professional Savant banner."""
+        """Render a professional Agent Drive banner."""
         c = self.skin["colors"]
         self.console.print(
             f"[{c['banner_border']}]╭{'─' * (len(title) + 4)}╮[/{c['banner_border']}]"

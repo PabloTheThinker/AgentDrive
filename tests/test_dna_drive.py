@@ -132,12 +132,12 @@ def test_max_depth_filters_far_ancestors(tmp_path: Path) -> None:
 # ─────────────────────────────────────────────────────────────────────
 
 
-def test_root_agent_pulls_nothing(isolated_savant_home: Path) -> None:
+def test_root_agent_pulls_nothing(isolated_agentdrive_home: Path) -> None:
     root = DNADrive("root-agent")
     assert root.pull_inherited() == []
 
 
-def test_child_inherits_parent_genome(isolated_savant_home: Path) -> None:
+def test_child_inherits_parent_genome(isolated_agentdrive_home: Path) -> None:
     parent = DNADrive("parent-agent")
     parent.publish(_make_genome("parent-cap"))
     # Brief sleep so the child's created_at is strictly greater.
@@ -152,7 +152,7 @@ def test_child_inherits_parent_genome(isolated_savant_home: Path) -> None:
 
 
 def test_grandchild_inherits_full_lineage_with_correct_depths(
-    isolated_savant_home: Path,
+    isolated_agentdrive_home: Path,
 ) -> None:
     grandparent = DNADrive("grandparent")
     grandparent.publish(_make_genome("ancestral-wisdom"))
@@ -169,7 +169,7 @@ def test_grandchild_inherits_full_lineage_with_correct_depths(
     assert by_source == {"parent": 1, "grandparent": 2}
 
 
-def test_inherited_results_are_depth_sorted(isolated_savant_home: Path) -> None:
+def test_inherited_results_are_depth_sorted(isolated_agentdrive_home: Path) -> None:
     """Closer ancestors first — relevance ordering for the Harness query."""
     g0 = DNADrive("g0")
     g0.publish(_make_genome("a"))
@@ -186,7 +186,7 @@ def test_inherited_results_are_depth_sorted(isolated_savant_home: Path) -> None:
     assert depths == sorted(depths), "results must be sorted by depth ascending"
 
 
-def test_min_eval_gate_filters_low_score_genomes(isolated_savant_home: Path) -> None:
+def test_min_eval_gate_filters_low_score_genomes(isolated_agentdrive_home: Path) -> None:
     parent = DNADrive("p")
     parent.publish(_make_genome("good-cap", eval_score=0.9))
     parent.publish(_make_genome("weak-cap", eval_score=0.3))
@@ -205,7 +205,7 @@ def test_min_eval_gate_filters_low_score_genomes(isolated_savant_home: Path) -> 
 
 
 def test_pull_inherited_does_not_include_own_by_default(
-    isolated_savant_home: Path,
+    isolated_agentdrive_home: Path,
 ) -> None:
     """include_self=False by default — pull_inherited surfaces ancestors,
     not the agent's own published Genomes (that's what own() is for)."""
@@ -225,7 +225,7 @@ def test_pull_inherited_does_not_include_own_by_default(
 
 
 def test_diamond_inheritance_does_not_duplicate_shared_ancestor_genomes(
-    isolated_savant_home: Path,
+    isolated_agentdrive_home: Path,
 ) -> None:
     """If g3 has two parents (g1, g2) that share a grandparent g0,
     g0's Genomes should appear ONCE in the inherited list, not twice."""
@@ -244,7 +244,7 @@ def test_diamond_inheritance_does_not_duplicate_shared_ancestor_genomes(
     assert g0_entries[0].depth == 2, "should report shortest path to shared ancestor"
 
 
-def test_lineage_helper_returns_full_ancestry(isolated_savant_home: Path) -> None:
+def test_lineage_helper_returns_full_ancestry(isolated_agentdrive_home: Path) -> None:
     DNADrive("g0")
     time.sleep(0.01)
     DNADrive("g1", parents=["g0"])

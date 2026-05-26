@@ -14,5 +14,5 @@
     "Same metric reported with >20% variance across sources within 5min window -> flag for investigation"
   ],
   "extraction_note": "Seeded from high-quality security-incident-postmortem framework + reasoning primitives (witness, causality, contradictions, anomaly).",
-  "primitives_version": "savant-reasoning-0.1.0"
+  "primitives_version": "agentdrive-reasoning-0.1.0"
 }
