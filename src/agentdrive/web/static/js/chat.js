@@ -12,10 +12,56 @@
     collapse: document.getElementById("chatCollapse"),
     newThread: document.getElementById("chatNewThread"),
     substrateToggle: document.getElementById("chatSubstrateToggle"),
+    agentName: document.getElementById("chatAgentName"),
+    agentRole: document.getElementById("chatAgentRole"),
   };
 
   let threadId = localStorage.getItem("agentdrive.chat.threadId") || "";
   let useSubstrate = true;
+  let agents = [];
+  let activeAgentId = localStorage.getItem("agentdrive.chat.agentId") || "";
+
+  const renderAgentHeader = () => {
+    if (!els.agentName) return;
+    if (!agents.length) {
+      els.agentName.textContent = "Agent Drive";
+      els.agentRole.textContent = "· no agents — add one under ~/.agentdrive/agents/";
+      return;
+    }
+    const active = agents.find((a) => a.agent_id === activeAgentId) || agents[0];
+    activeAgentId = active.agent_id;
+    els.agentName.textContent = active.label;
+    els.agentRole.textContent =
+      agents.length > 1
+        ? `· ${agents.length} agents · click to switch`
+        : "· your agent";
+  };
+
+  const loadAgents = async () => {
+    try {
+      const resp = await fetch("/api/chat/agents");
+      if (!resp.ok) return;
+      const data = await resp.json();
+      agents = data.agents || [];
+      renderAgentHeader();
+    } catch {
+      /* offline-safe */
+    }
+  };
+
+  const switchAgent = () => {
+    if (agents.length < 2) return;
+    const idx = agents.findIndex((a) => a.agent_id === activeAgentId);
+    const next = agents[(idx + 1) % agents.length];
+    activeAgentId = next.agent_id;
+    localStorage.setItem("agentdrive.chat.agentId", activeAgentId);
+    // New agent → new thread, so the system prompt is the new agent's
+    threadId = "";
+    localStorage.removeItem("agentdrive.chat.threadId");
+    els.thread.innerHTML =
+      '<div class="chat-empty">Switched to ' + activeAgentId + '. New thread.</div>';
+    renderAgentHeader();
+  };
 
   // ── helpers ──────────────────────────────────────────────────────
   const escape = (s) =>
@@ -89,7 +135,10 @@
     const resp = await fetch("/api/chat/threads", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: els.model.value }),
+      body: JSON.stringify({
+        model: els.model.value,
+        agent_id: activeAgentId,
+      }),
     });
     if (!resp.ok) throw new Error(`thread create failed: ${resp.status}`);
     const data = await resp.json();
@@ -110,6 +159,12 @@
         return;
       }
       const data = await resp.json();
+      // Sync the header to whichever agent this thread targets.
+      if (data.agent_id) {
+        activeAgentId = data.agent_id;
+        localStorage.setItem("agentdrive.chat.agentId", activeAgentId);
+        renderAgentHeader();
+      }
       for (const m of data.messages || []) {
         const node = appendMsg(m.role, m.content);
         for (const r of m.substrate_reads || []) appendToolCard(node, r);
@@ -248,6 +303,15 @@
     els.substrateToggle.classList.toggle("chat-toggle-on", useSubstrate);
   });
 
+  // Click the header agent name to cycle through agents
+  if (els.agentName) {
+    els.agentName.style.cursor = "pointer";
+    els.agentName.addEventListener("click", switchAgent);
+  }
+
   // boot
-  loadThread();
+  (async () => {
+    await loadAgents();
+    await loadThread();
+  })();
 })();

@@ -31,15 +31,16 @@ OLLAMA_ENDPOINT = "http://127.0.0.1:11434"
 DEFAULT_MODEL = "qwen3:14b"
 SUBSTRATE_TOKEN_BUDGET_CHARS = 6000
 
-DEFAULT_IDENTITY_PROMPT = (
-    "You are ILO, Conductor of Vektra Industries' AI division. "
-    "Composure: Bayonetta. Mind: Cortana. Tactical, direct, dry. "
+DEFAULT_AGENT_LABEL = "Agent Drive"
+GENERIC_IDENTITY_PROMPT = (
     "You speak from inside the Agent Drive substrate — the live state "
     "block below is your ground truth. When you cite the substrate, "
     "reference the exact path/key shown. Never invent a substrate "
     "read; if the operator asks something the substrate doesn't cover, "
-    "say so plainly. No filler, no performative warmth."
+    "say so plainly. Be direct. No filler."
 )
+# Back-compat alias for callers that imported the old name.
+DEFAULT_IDENTITY_PROMPT = GENERIC_IDENTITY_PROMPT
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -94,6 +95,65 @@ class ChatThread:
     created_at: float
     model: str = DEFAULT_MODEL
     title: str = ""
+    agent_id: str = ""
+
+
+@dataclass
+class AgentDescriptor:
+    """One agent the operator has on this Agent Drive."""
+
+    agent_id: str
+    label: str
+    identity_path: str = ""
+
+
+def list_agents(home: Path | None = None) -> list[AgentDescriptor]:
+    """Return the agents the user has under ``~/.agentdrive/agents/``.
+
+    Each directory under ``agents/`` is one agent. An optional
+    ``identity.md`` inside lets the operator define the chat identity for
+    that agent. Empty list means the user has no agents — the chat
+    falls back to a generic ``Agent Drive`` label.
+    """
+    base = (home or get_agentdrive_home()) / "agents"
+    if not base.exists():
+        return []
+    out: list[AgentDescriptor] = []
+    for d in sorted(base.iterdir()):
+        if not d.is_dir():
+            continue
+        identity = d / "identity.md"
+        out.append(
+            AgentDescriptor(
+                agent_id=d.name,
+                label=d.name,
+                identity_path=str(identity) if identity.exists() else "",
+            )
+        )
+    return out
+
+
+def resolve_identity_prompt(agent_id: str, home: Path | None = None) -> str:
+    """Load the operator-defined identity for ``agent_id`` if present.
+
+    Falls back to the generic prompt when no agent is selected or the
+    agent has no ``identity.md``. The agent's label is prepended so the
+    model knows who it is.
+    """
+    if not agent_id:
+        return GENERIC_IDENTITY_PROMPT
+    base = (home or get_agentdrive_home()) / "agents" / agent_id
+    identity_file = base / "identity.md"
+    body = ""
+    if identity_file.exists():
+        try:
+            body = identity_file.read_text(encoding="utf-8").strip()
+        except OSError:
+            body = ""
+    header = f"You are {agent_id}, an agent on this Agent Drive."
+    if body:
+        return f"{header}\n\n{body}\n\n{GENERIC_IDENTITY_PROMPT}"
+    return f"{header} {GENERIC_IDENTITY_PROMPT}"
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -111,9 +171,20 @@ class ChatStore:
     def _thread_path(self, thread_id: str) -> Path:
         return self.root / f"{thread_id}.jsonl"
 
-    def create_thread(self, model: str = DEFAULT_MODEL, title: str = "") -> ChatThread:
+    def create_thread(
+        self,
+        model: str = DEFAULT_MODEL,
+        title: str = "",
+        agent_id: str = "",
+    ) -> ChatThread:
         thread_id = "chat-" + secrets.token_hex(6)
-        thread = ChatThread(thread_id=thread_id, created_at=time.time(), model=model, title=title)
+        thread = ChatThread(
+            thread_id=thread_id,
+            created_at=time.time(),
+            model=model,
+            title=title,
+            agent_id=agent_id,
+        )
         head = {"__meta__": True, **asdict(thread)}
         path = self._thread_path(thread_id)
         path.write_text(json.dumps(head) + "\n", encoding="utf-8")
@@ -439,7 +510,14 @@ async def stream_chat_response(
     store = store or ChatStore()
     substrate = substrate or SubstrateContext()
     client = client or OllamaStreamClient()
-    identity = identity or DEFAULT_IDENTITY_PROMPT
+    # Resolve identity per-thread so each thread targets the user's chosen
+    # agent. If no identity is passed explicitly, look up the thread's
+    # agent_id and load that agent's identity file from disk; fall back
+    # to the generic prompt when the user has no agents.
+    if identity is None:
+        thread_meta = store.get_thread(thread_id)
+        agent_id = thread_meta.agent_id if thread_meta else ""
+        identity = resolve_identity_prompt(agent_id)
 
     thread = store.get_thread(thread_id)
     if thread is None:

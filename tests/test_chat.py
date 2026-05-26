@@ -15,6 +15,8 @@ from agentdrive.web.chat import (
     SubstrateContext,
     SubstrateRead,
     build_system_prompt,
+    list_agents,
+    resolve_identity_prompt,
 )
 
 # ── ChatStore round-trip ─────────────────────────────────────────────
@@ -159,3 +161,47 @@ def test_chat_message_requires_content(tmp_path: Path):
 
     resp = client.post(f"/api/chat/threads/{thread_id}/messages", json={"content": "   "})
     assert resp.status_code == 400
+
+
+# ── Agent identity ─────────────────────────────────────────────────
+
+
+def test_list_agents_empty_home(tmp_path: Path):
+    assert list_agents(home=tmp_path) == []
+
+
+def test_list_agents_finds_user_agents(tmp_path: Path):
+    (tmp_path / "agents" / "savant-agent").mkdir(parents=True)
+    (tmp_path / "agents" / "field-operator").mkdir()
+    (tmp_path / "agents" / "field-operator" / "identity.md").write_text("# Field Operator")
+    agents = list_agents(home=tmp_path)
+    ids = sorted(a.agent_id for a in agents)
+    assert ids == ["field-operator", "savant-agent"]
+    fo = next(a for a in agents if a.agent_id == "field-operator")
+    assert fo.identity_path.endswith("identity.md")
+
+
+def test_resolve_identity_prompt_with_identity_file(tmp_path: Path):
+    agent_dir = tmp_path / "agents" / "field-operator"
+    agent_dir.mkdir(parents=True)
+    (agent_dir / "identity.md").write_text("You speak with field-grade precision.")
+    prompt = resolve_identity_prompt("field-operator", home=tmp_path)
+    assert "field-operator" in prompt
+    assert "field-grade precision" in prompt
+
+
+def test_resolve_identity_prompt_no_agent(tmp_path: Path):
+    # No agent id → generic prompt with no name claim
+    prompt = resolve_identity_prompt("", home=tmp_path)
+    assert "Agent Drive substrate" in prompt
+    assert "ILO" not in prompt
+
+
+def test_agents_endpoint_returns_list_shape(tmp_path: Path):
+    client = _make_client(tmp_path)
+    _login(client)
+    resp = client.get("/api/chat/agents")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert "agents" in body
+    assert isinstance(body["agents"], list)

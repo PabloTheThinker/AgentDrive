@@ -1230,8 +1230,22 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
     # ── Chat sidebar API ─────────────────────────────────────────────
     from agentdrive.web.chat import (
         ChatStore,
+        list_agents,
         stream_chat_response,
     )
+
+    @app.get("/api/chat/agents")
+    def list_chat_agents(user: User = Depends(require_user)):
+        return {
+            "agents": [
+                {
+                    "agent_id": a.agent_id,
+                    "label": a.label,
+                    "has_identity": bool(a.identity_path),
+                }
+                for a in list_agents()
+            ]
+        }
 
     @app.get("/api/chat/threads")
     def list_chat_threads(user: User = Depends(require_user)):
@@ -1244,6 +1258,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                     "created_at": t.created_at,
                     "model": t.model,
                     "title": t.title,
+                    "agent_id": t.agent_id,
                 }
                 for t in threads
             ]
@@ -1257,12 +1272,18 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             body = {}
         model = body.get("model") or "qwen3:14b"
         title = body.get("title") or ""
-        thread = ChatStore().create_thread(model=model, title=title)
+        agent_id = body.get("agent_id") or ""
+        if not agent_id:
+            agents = list_agents()
+            if agents:
+                agent_id = agents[0].agent_id
+        thread = ChatStore().create_thread(model=model, title=title, agent_id=agent_id)
         return {
             "thread_id": thread.thread_id,
             "created_at": thread.created_at,
             "model": thread.model,
             "title": thread.title,
+            "agent_id": thread.agent_id,
         }
 
     @app.get("/api/chat/threads/{thread_id}")
@@ -1277,6 +1298,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             "created_at": thread.created_at,
             "model": thread.model,
             "title": thread.title,
+            "agent_id": thread.agent_id,
             "messages": [m.to_dict() for m in messages],
         }
 
