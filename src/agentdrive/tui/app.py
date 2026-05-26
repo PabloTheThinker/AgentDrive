@@ -1,7 +1,7 @@
 """
-Savant Professional TUI Application
+AgentDrive Professional TUI Application
 
-High-quality terminal interface for the Savant Framework.
+High-quality terminal interface for the AgentDrive.
 Focus: precision, clarity, trust, and powerful genome-aware workflows.
 
 Savant is an independent, open-source framework for agent DNA (memory + patterns).
@@ -181,7 +181,7 @@ class SavantTUI:
 
     def run(self) -> None:
         """Main REPL loop — premium feel with completion, history, clean interrupts."""
-        self.skin.print_banner("Savant Framework")
+        self.skin.print_banner("AgentDrive")
 
         # Dedicated first-launch Savant Welcome Screen
         # Shown once after onboarding — distinct from the reusable setup wizard.
@@ -350,7 +350,7 @@ class SavantTUI:
                 palette=p,
                 key_width=14,
             ),
-            title="Welcome to Savant",
+            title="Welcome to AgentDrive",
             palette=p,
         )
 
@@ -464,7 +464,7 @@ class SavantTUI:
             Section(
                 "Board",
                 [
-                    ("board / b", "Savant Mission Board (lanes: pending/running/done/failed)"),
+                    ("board / b", "AgentDrive Mission Board (lanes: pending/running/done/failed)"),
                     ("board recent", "compact recent-missions view"),
                     ("board create <t>", "stage a Pending mission"),
                     ("board stats", "lane counts + avg duration"),
@@ -531,7 +531,7 @@ class SavantTUI:
             section_panel(
                 *sections,
                 hint,
-                title="Savant TUI · commands",
+                title="AgentDrive TUI · commands",
                 palette=p,
             )
         )
@@ -799,7 +799,7 @@ class SavantTUI:
             pool_panel = Panel("[dim]Pool not available[/]", title="Pool", border_style="dim")
 
         sys_panel = Panel(
-            f"Savant TUI: [agentdrive.ok]active[/]  •  Skin: [agentdrive.label]{self.skin.skin.get('name', 'default')}[/]\n"
+            f"AgentDrive TUI: [agentdrive.ok]active[/]  •  Skin: [agentdrive.label]{self.skin.skin.get('name', 'default')}[/]\n"
             f"Python: {sys.version.split()[0]}  •  Registry writable: [agentdrive.ok]yes[/]\n"
             "[dim]Evolutionary engine, scanners, and worker adapters ready for wiring.[/dim]",
             title="System",
@@ -820,7 +820,7 @@ class SavantTUI:
             self.console.print(f"[agentdrive.warn]Chat error:[/] {rich_escape(str(e))}")
 
     def _show_board(self, args: list[str]) -> None:
-        """Render the Savant Mission Board."""
+        """Render the AgentDrive Mission Board."""
         from agentdrive.board import get_default_board
         from agentdrive.tui.board_view import render_board, render_board_inline
         from agentdrive.tui.chrome import Palette, error_line, ok_line, warn_line
@@ -1702,7 +1702,7 @@ class SavantTUI:
 
         self.console.print(
             Panel(
-                "[bold]Savant Setup Wizard[/]\n"
+                "[bold]AgentDrive Setup Wizard[/]\n"
                 "Run the full wizard or reconfigure specific areas (especially Swarm DNA policies).",
                 border_style=self.skin.style("banner_border"),
             )
@@ -1765,6 +1765,6 @@ class SavantTUI:
 
 
 def launch_tui() -> None:
-    """Launch the professional Savant TUI."""
+    """Launch the professional AgentDrive TUI."""
     app = SavantTUI()
     app.run()

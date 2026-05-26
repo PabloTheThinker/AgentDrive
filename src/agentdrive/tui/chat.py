@@ -1,7 +1,7 @@
 """
 Savant Chat — premium streaming TUI for talking to your Savant Agent.
 
-The Savant Framework is the agent's body, the configured LLM is the voice,
+The AgentDrive is the agent's body, the configured LLM is the voice,
 the AgentDrive is the lived memory. Every turn grows the Drive.
 
 Layout principles (mirrored across every Savant surface via chrome.py):
@@ -100,7 +100,7 @@ CHAT_HELP_SECTIONS = [
         "Top-level commands (delegate to TUI)",
         [
             ("/doctor", "animated health check"),
-            ("/board", "Savant Mission Board (kanban)"),
+            ("/board", "AgentDrive Mission Board (kanban)"),
             ("/genomes", "browse the genome registry"),
             ("/view <id>", "inspect a specific genome"),
             ("/run <id>", "execute a genome"),
@@ -1218,7 +1218,7 @@ class ChatView:
         head = Text("Providers", style=f"bold {p.accent}")
         hint = Text()
         hint.append("Configure in your shell: ", style=p.muted)
-        hint.append("savant provider set <name>", style=f"bold {p.accent}")
+        hint.append("agentdrive provider set <name>", style=f"bold {p.accent}")
 
         self.console.print()
         self.console.print(

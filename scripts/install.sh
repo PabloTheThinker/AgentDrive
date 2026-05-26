@@ -92,9 +92,9 @@ prompt_yes_no() {
 
     if [ "$IS_INTERACTIVE" = true ]; then
         read -r -p "$question $prompt_suffix " answer || answer=""
-    elif [ -r /dev/tty ] && [ -w /dev/tty ]; then
-        printf "%s %s " "$question" "$prompt_suffix" > /dev/tty
-        IFS= read -r answer < /dev/tty || answer=""
+    elif { : </dev/tty; } 2>/dev/null && { : >/dev/tty; } 2>/dev/null; then
+        printf "%s %s " "$question" "$prompt_suffix" >/dev/tty 2>/dev/null || true
+        IFS= read -r answer </dev/tty 2>/dev/null || answer=""
     else
         answer=""
     fi
@@ -552,7 +552,13 @@ echo
 echo -e "${BOLD}Documentation:${NC} https://github.com/PabloTheThinker/AgentDrive"
 echo
 
-# 8. Offer to launch immediately
+# 8. Offer to launch immediately (skip if --skip-launch was passed)
+if [ "$RUN_LAUNCH" = false ]; then
+    echo
+    log_info "Skipping launch (--skip-launch). Run ${BOLD}agentdrive${NC} to start."
+    exit 0
+fi
+
 launch_now=false
 if [[ -n "$GUM" ]]; then
     if "$GUM" confirm "Launch AgentDrive TUI now?" --default=true --affirmative="Yes, launch it" --negative="Later"; then

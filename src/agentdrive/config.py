@@ -1,5 +1,5 @@
 """
-Configuration management for Savant Framework.
+Configuration management for AgentDrive.
 
 - ~/.agentdrive/config.yaml for user settings
 - ~/.agentdrive/.env for secrets (API keys etc.)
@@ -245,7 +245,7 @@ def save_config(config: dict[str, Any]) -> Path:
             # Invalidate caches
             _LOAD_CONFIG_CACHE.clear()
             _RAW_CONFIG_CACHE.clear()
-            logger.info(f"Saved Savant config to {path}")
+            logger.info(f"Saved AgentDrive config to {path}")
             return path
         except Exception as e:
             if tmp.exists():

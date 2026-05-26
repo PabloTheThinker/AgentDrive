@@ -1,5 +1,5 @@
 """
-Savant Framework Exceptions.
+AgentDrive Exceptions.
 
 All public exceptions live here for easy catching by integrators and downstream
 tools (external adapters, custom workers, scanners, etc.).

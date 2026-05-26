@@ -1,5 +1,5 @@
 """
-Savant TUI Chrome — the unified UI primitives library.
+AgentDrive TUI Chrome — the unified UI primitives library.
 
 Every Savant surface (chat, doctor, onboarding, pool browser, genome views,
 setup wizard) renders against the same primitives so the product feels like

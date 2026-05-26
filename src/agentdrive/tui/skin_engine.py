@@ -1,5 +1,5 @@
 """
-Savant TUI Skin / Theme Engine
+AgentDrive TUI Skin / Theme Engine
 
 A professional, data-driven theming system for the Savant terminal experience.
 Skins are defined in YAML and allow full visual customization without code changes.
@@ -53,7 +53,7 @@ DEFAULT_SKIN = {
 
 
 class SkinEngine:
-    """Manages visual theming for the Savant TUI."""
+    """Manages visual theming for the AgentDrive TUI."""
 
     def __init__(self, skin_name: str | None = None):
         self.skin = self._load_skin(skin_name or "default")

@@ -1,4 +1,4 @@
-"""Shared constants for Savant Framework.
+"""Shared constants for AgentDrive.
 
 Import-safe module with no heavy dependencies — can be imported from anywhere
 without risk of circular imports. Designed for consistency across the agent ecosystem.

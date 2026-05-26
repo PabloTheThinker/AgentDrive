@@ -360,11 +360,11 @@ def _run_doctor() -> int:
             else:
                 steps.advance(f"{pname} (no key)")
                 results.append(("AI provider", True, f"{pname} · {model} · no key"))
-                provider_suggestion = f"savant provider key {cfg[0]}"
+                provider_suggestion = f"agentdrive provider key {cfg[0]}"
         else:
             steps.skip("not configured")
             results.append(("AI provider", True, "not configured · chat will be disabled"))
-            provider_suggestion = "savant provider set <name>"
+            provider_suggestion = "agentdrive provider set <name>"
     except Exception as e:
         steps.fail(str(e)[:60])
         results.append(("AI provider", False, str(e)))
@@ -1376,7 +1376,7 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
 
 
 def cmd_uninstall(args: argparse.Namespace) -> int:
-    """Uninstall Savant package and optionally remove user data."""
+    """Uninstall AgentDrive package and optionally remove user data."""
     from agentdrive.tui.chrome import Palette, confirm_prompt, info_line, ok_line
     from agentdrive.tui.skin_engine import skin
 
@@ -1437,7 +1437,7 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
 
 
 def cmd_clean(args: argparse.Namespace) -> int:
-    """Clean Savant cache and data, keeping config intact."""
+    """Clean AgentDrive cache and data, keeping config intact."""
     from agentdrive.tui.chrome import Palette, confirm_prompt, info_line, ok_line, warn_line
     from agentdrive.tui.skin_engine import skin
 
@@ -1557,7 +1557,7 @@ def cmd_reinstall(args: argparse.Namespace) -> int:
 
 
 def cmd_update(args: argparse.Namespace) -> int:
-    """Update Savant to the latest version from GitHub."""
+    """Update AgentDrive to the latest version from GitHub."""
     return _run_update_flow(args, force=False)
 
 
@@ -1874,7 +1874,7 @@ def cmd_model(args: argparse.Namespace) -> int:
             console.print("  [yellow]No provider configured.[/]")
             console.print("  Use [cyan]savant provider set <name>[/] to configure one.")
 
-        console.print("\n[dim]Use 'savant model set <model>' to switch.[/]")
+        console.print("\n[dim]Use 'agentdrive model set <model>' to switch.[/]")
         return 0
 
     if sub == "set":
@@ -2118,7 +2118,7 @@ Self-manage:
     p.set_defaults(func=cmd_doctor)
 
     # config
-    p = subparsers.add_parser("config", help="View and modify Savant configuration")
+    p = subparsers.add_parser("config", help="View and modify AgentDrive configuration")
     p.add_argument("subcommand", nargs="?", choices=["show", "get", "set", "edit"], default="show")
     p.add_argument("key", nargs="?", help="config key for get/set (dot notation supported)")
     p.add_argument("value", nargs="?", help="value for 'set'")
@@ -2191,19 +2191,19 @@ Self-manage:
     pm_set.set_defaults(func=cmd_model)
 
     # self-management
-    p = subparsers.add_parser("uninstall", help="Uninstall Savant package")
+    p = subparsers.add_parser("uninstall", help="Uninstall AgentDrive package")
     p.add_argument("--yes", "-y", action="store_true", help="Skip confirmation prompts")
     p.set_defaults(func=cmd_uninstall)
 
-    p = subparsers.add_parser("clean", help="Clean Savant cache and data (keeps config)")
+    p = subparsers.add_parser("clean", help="Clean AgentDrive cache and data (keeps config)")
     p.add_argument("--all", "-a", action="store_true", help="Also remove genomes")
     p.set_defaults(func=cmd_clean)
 
-    p = subparsers.add_parser("reinstall", help="Reinstall Savant from GitHub")
+    p = subparsers.add_parser("reinstall", help="Reinstall AgentDrive from GitHub")
     p.add_argument("--branch", default="main", help="Branch to install from (default: main)")
     p.set_defaults(func=cmd_reinstall)
 
-    p = subparsers.add_parser("update", help="Update Savant to the latest version")
+    p = subparsers.add_parser("update", help="Update AgentDrive to the latest version")
     p.add_argument("--branch", default="main", help="Branch to update from (default: main)")
     p.set_defaults(func=cmd_update)
 
@@ -2346,20 +2346,31 @@ def main() -> None:
     except Exception:
         pass
 
-    # First-run experience: if no config yet AND we're on a real TTY, run the
-    # guided onboarding flow. In non-interactive contexts (CI, pipes, IDE shells,
-    # automation), silently materialize a minimal config so subsequent commands
-    # don't re-prompt forever and don't bury their output under a stub panel.
+    # First-run experience: if no provider is configured yet AND we're on a real
+    # TTY, run the guided onboarding flow. We check provider state — not just
+    # config file existence — because logging/setup writes a stub config.yaml
+    # before the user has chosen a provider. In non-interactive contexts (CI,
+    # pipes, IDE shells, automation), silently materialize a minimal config.
     tried_onboarding = False
     try:
         home = get_agentdrive_home()
-        if not (home / "config.yaml").exists():
+        config_exists = (home / "config.yaml").exists()
+        provider_configured = False
+        if config_exists:
+            try:
+                from agentdrive.providers import load_config_provider
+                cfg = load_config_provider()
+                provider_configured = bool(cfg and cfg[0])
+            except Exception:
+                provider_configured = False
+
+        if not provider_configured:
             if sys.stdin.isatty() and sys.stdout.isatty():
                 from agentdrive.onboarding import run_onboarding
 
                 print()
                 tried_onboarding = run_onboarding()
-            else:
+            elif not config_exists:
                 from agentdrive.onboarding import init_minimal_config
 
                 init_minimal_config()
@@ -2377,7 +2388,7 @@ def main() -> None:
             console.print("\n[yellow]Interrupted.[/]")
             sys.exit(130)
         except Exception as exc:
-            logger.exception("Unhandled error in Savant CLI")
+            logger.exception("Unhandled error in AgentDrive CLI")
             console.print(f"[red]Error:[/] {exc}")
             sys.exit(1)
     else:

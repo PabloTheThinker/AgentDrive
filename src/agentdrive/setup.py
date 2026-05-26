@@ -1,5 +1,5 @@
 """
-Savant Setup Wizard — interactive CLI configuration.
+AgentDrive Setup Wizard — interactive CLI configuration.
 
 Rendered against the unified chrome primitives so it feels like part of
 the same product as chat, doctor, and onboarding.
@@ -592,8 +592,8 @@ def run_setup(sections: list[str] | None = None) -> bool:
                     [
                         ("savant setup swarm", "tweak sub-agent pool policies"),
                         ("savant setup ai", "change AI provider or API key"),
-                        ("savant provider set", "switch AI provider from CLI"),
-                        ("savant model set", "switch model from CLI"),
+                        ("agentdrive provider set", "switch AI provider from CLI"),
+                        ("agentdrive model set", "switch model from CLI"),
                         ("agentdrive", "launch the agent chat"),
                     ],
                     palette=PALETTE,

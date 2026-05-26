@@ -1,5 +1,5 @@
 """
-Savant Agent — the Savant Framework as a conversational AI agent.
+Savant Agent — the AgentDrive as a conversational AI agent.
 
 The framework is the body. The model is the voice. The pool is the memory.
 The user talks to the agent; the agent talks back, grounded in DNA that

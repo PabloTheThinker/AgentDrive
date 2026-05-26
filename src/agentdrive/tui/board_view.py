@@ -1,5 +1,5 @@
 """
-Mission Board renderer — chrome-styled lane view for the Savant Mission Board.
+Mission Board renderer — chrome-styled lane view for the AgentDrive Mission Board.
 
 Two rendering modes:
 - `render_board(board, palette, console)`  full-screen lane view (board command)
@@ -119,7 +119,7 @@ def render_board(board: MissionBoard, palette: Palette, console: Console) -> Non
     console.print(
         section_panel(
             *sections,
-            title=f"{Glyphs.DIAMOND} Savant Mission Board",
+            title=f"{Glyphs.DIAMOND} AgentDrive Mission Board",
             palette=p,
         )
     )

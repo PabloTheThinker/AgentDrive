@@ -194,7 +194,7 @@ class SavantLLM:
             context = f"Relevant genomes from my AgentDrive:\n{genome_list}"
 
         system = (
-            "You are Savant, an AI assistant for the Savant Framework — a living ecosystem "
+            "You are Savant, an AI assistant for the AgentDrive — a living ecosystem "
             "for agent DNA (genomes, reasoning patterns, frameworks). "
             "Answer questions helpfully, reference the user's pool genomes when relevant, "
             "and suggest actions like querying, importing, or creating new genomes."
@@ -221,7 +221,7 @@ class SavantLLM:
             context = f"Relevant genomes:\n{genome_list}"
 
         system = (
-            "You are Savant, an AI assistant for the Savant Framework — a living ecosystem "
+            "You are Savant, an AI assistant for the AgentDrive — a living ecosystem "
             "for agent DNA. Reference the user's pool genomes when relevant."
         )
 

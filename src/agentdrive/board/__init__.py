@@ -1,5 +1,5 @@
 """
-Savant Mission Board — a Savant-native kanban for mission lifecycles.
+AgentDrive Mission Board — a Savant-native kanban for mission lifecycles.
 
 While other terminal agents track tasks as ephemeral inline todos, the Savant
 board treats *missions* as first-class persistent artifacts. Each mission

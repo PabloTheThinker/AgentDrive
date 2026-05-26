@@ -1455,7 +1455,7 @@ class DriveView:
             self.console.print()
             self.console.print(
                 info_line(
-                    "Exited Pool mode — back to the main Savant TUI.",
+                    "Exited Pool mode — back to the main AgentDrive TUI.",
                     palette=p,
                 )
             )

@@ -1,5 +1,5 @@
 """
-Savant Onboarding — polished first-run experience.
+AgentDrive Onboarding — polished first-run experience.
 
 When a user types `savant` for the first time, they get a guided,
 step-by-step flow that explains Savant, detects their environment,
@@ -156,7 +156,7 @@ def run_onboarding() -> bool:
         section_panel(
             Group(hero, tagline),
             body_text,
-            title="Welcome to Savant",
+            title="Welcome to AgentDrive",
             palette=PALETTE,
         )
     )
@@ -263,7 +263,7 @@ def run_onboarding() -> bool:
                     "Try next",
                     [
                         ("agentdrive", "open the agent chat"),
-                        ("savant provider set", "connect an AI model"),
+                        ("agentdrive provider set", "connect an AI model"),
                         ("savant pool status", "check pool health"),
                         ("savant doctor", "full system health check"),
                         ("savant setup", "re-run any setup section"),
