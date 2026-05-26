@@ -1,7 +1,7 @@
 Codex usage: in=1617 out=22188
 # Loom Dreaming — Refined Concept
 
-Loom Dreaming is Agent Drive’s substrate-wide reflection cycle: an append-only, offline-biased process that consolidates signals from the whole Grid, stress-tests what it learned, and turns the strongest structures into three kinds of waking-state artifacts: durable memory, evolved genomes, and reusable reasoning patterns. The key architectural shift from OpenClaw is that dreaming is no longer “workspace memory maintenance”; it is a substrate self-modeling mechanism.
+Loom Dreaming is Agent Drive’s substrate-wide reflection cycle: an append-only, offline-biased process that consolidates signals from the whole Loom, stress-tests what it learned, and turns the strongest structures into three kinds of waking-state artifacts: durable memory, evolved genomes, and reusable reasoning patterns. The key architectural shift from OpenClaw is that dreaming is no longer “workspace memory maintenance”; it is a substrate self-modeling mechanism.
 
 ## 1) Common signal model
 
@@ -559,7 +559,7 @@ class MultiSubstrateIngestor:
 scoring — weighted candidate scoring for Deep promotion and REM reinforcement.
 
 Design goals:
-- Keep the OpenClaw math recognizable while adapting it to a living Grid.
+- Keep the OpenClaw math recognizable while adapting it to a living Loom.
 - Separate raw component calculation from lane choice and storage.
 - No new magic — just disciplined composition + Agent Drive / Genome idioms.
 """
