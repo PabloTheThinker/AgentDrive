@@ -13,6 +13,7 @@
     {{ rail_btn('cap',      '/capabilities', 'Capabilities',   active == 'cap') }}
     {{ rail_btn('peer',     '/peers',        'Peers',          active == 'peer') }}
     <div class="rail-spacer"></div>
+    {{ rail_btn('settings',  '/settings',      'Settings',       active == 'settings') }}
     {% if user and user.role == 'admin' %}
       {{ rail_btn('users', '/settings/users', 'Users', active == 'users') }}
     {% endif %}

@@ -1120,6 +1120,96 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
 
     # ── settings ───────────────────────────────────────────────────────
 
+    def _render_settings(
+        request: Request,
+        user: User,
+        *,
+        saved: bool = False,
+        error: str | None = None,
+        status_code: int = 200,
+    ) -> HTMLResponse:
+        from agentdrive.drive.settings import DriveSettingsManager
+
+        mgr = DriveSettingsManager()
+        settings = mgr.get_global()
+        config_path = get_agentdrive_home() / "config.yaml"
+        try:
+            config_yaml = config_path.read_text(encoding="utf-8")
+        except Exception:
+            config_yaml = "# config.yaml not yet written\n"
+        return templates.TemplateResponse(
+            request,
+            "settings.html",
+            {
+                "request": request,
+                "user": user,
+                "active": "settings",
+                "settings": settings,
+                "config_path": str(config_path),
+                "config_yaml": config_yaml,
+                "saved": saved,
+                "error": error,
+            },
+            status_code=status_code,
+        )
+
+    @app.get("/settings", response_class=HTMLResponse)
+    def settings_page(request: Request, user: User = Depends(require_user)):
+        return _render_settings(request, user)
+
+    @app.post("/settings", response_class=HTMLResponse)
+    def save_settings(
+        request: Request,
+        user: User = Depends(require_user),
+        auto_ingest_on_success: Annotated[str | None, Form()] = None,
+        min_quality_for_ingest: Annotated[float, Form()] = 0.75,
+        sharing_policy: Annotated[str, Form()] = "selective",
+        allow_upward_proposals: Annotated[str | None, Form()] = None,
+        retention_days: Annotated[int, Form()] = 0,
+        isolation_level: Annotated[str, Form()] = "subagent",
+    ):
+        from agentdrive.drive.settings import DriveSettings, DriveSettingsManager
+
+        if sharing_policy not in ("none", "read", "selective", "full"):
+            return _render_settings(
+                request, user, error=f"invalid sharing_policy: {sharing_policy}", status_code=400
+            )
+        if isolation_level not in ("none", "swarm", "subagent"):
+            return _render_settings(
+                request, user, error=f"invalid isolation_level: {isolation_level}", status_code=400
+            )
+        if not 0.0 <= min_quality_for_ingest <= 1.0:
+            return _render_settings(
+                request,
+                user,
+                error="min_quality_for_ingest must be between 0.0 and 1.0",
+                status_code=400,
+            )
+        if retention_days < 0 or retention_days > 3650:
+            return _render_settings(
+                request,
+                user,
+                error="retention_days must be between 0 and 3650",
+                status_code=400,
+            )
+
+        try:
+            mgr = DriveSettingsManager()
+            current = mgr.get_global()
+            updated = DriveSettings(
+                isolation_level=isolation_level,  # type: ignore[arg-type]
+                auto_ingest_on_success=auto_ingest_on_success is not None,
+                min_quality_for_ingest=float(min_quality_for_ingest),
+                sharing_policy=sharing_policy,  # type: ignore[arg-type]
+                retention_days=int(retention_days),
+                allow_upward_proposals=allow_upward_proposals is not None,
+            )
+            mgr.set_global(updated)
+        except Exception as exc:
+            return _render_settings(request, user, error=str(exc), status_code=500)
+
+        return _render_settings(request, user, saved=True)
+
     @app.get("/settings/users", response_class=HTMLResponse)
     def users_page(request: Request, user: User = Depends(require_admin)):
         return templates.TemplateResponse(

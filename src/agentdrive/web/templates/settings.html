@@ -1,0 +1,180 @@
+{% extends "_shell.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Settings · AgentDrive{% endblock %}
+
+{% block page_main %}
+{% set kicker = "Settings · Drive" %}
+{% set headline = "Full control over your AgentDrive" %}
+{% set stats = [
+  {"text": "isolation " ~ settings.isolation_level, "color": "tertiary"},
+  {"text": "sharing " ~ settings.sharing_policy, "color": "tertiary"},
+  {"text": ("auto-ingest on" if settings.auto_ingest_on_success else "auto-ingest off"), "color": ("success" if settings.auto_ingest_on_success else "tertiary"), "dot": ("on" if settings.auto_ingest_on_success else None)},
+] %}
+{% set actions_html %}
+  <a class="btn btn-secondary" href="https://github.com/PabloTheThinker/AgentDrive#settings">Docs</a>
+{% endset %}
+{% include "_header_band.html" %}
+
+<div style="position: relative; z-index: 10; flex: 1; overflow-y: auto; padding: 24px 32px;">
+
+  {% if saved %}
+  <div class="item" style="margin-bottom: 16px; border-color: var(--success);">
+    <span class="rail-stripe success"></span>
+    <div class="item-row">
+      <div class="glyph success">{{ icon('check', 14) }}</div>
+      <div class="u-flex1">
+        <p class="item-title">Settings saved</p>
+        <div class="item-meta">Changes are live · take effect on next operation</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if error %}
+  <div class="item" style="margin-bottom: 16px; border-color: var(--error);">
+    <span class="rail-stripe warm"></span>
+    <div class="item-row">
+      <div class="glyph warm">{{ icon('alert', 14) }}</div>
+      <div class="u-flex1">
+        <p class="item-title">Could not save</p>
+        <div class="item-meta">{{ error }}</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <form method="post" action="/settings">
+
+    <!-- ─── LEAN TAB ────────────────────────────────────────────── -->
+    <div class="item" style="margin-bottom: 12px;">
+      <span class="rail-stripe accent"></span>
+      <div style="padding: 16px 20px; width: 100%;">
+        <p class="item-title" style="margin-bottom: 4px;">Essentials</p>
+        <div class="item-meta" style="margin-bottom: 20px;">The five knobs most users want to control.</div>
+
+        <!-- Auto-ingest -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-subtle);">
+          <div>
+            <label for="auto_ingest_on_success" class="mono u-small" style="font-weight: 600;">Auto-ingest on success</label>
+            <div class="item-meta">Automatically save high-quality genomes from successful runs.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="auto_ingest_on_success" name="auto_ingest_on_success" value="true"
+                   {% if settings.auto_ingest_on_success %}checked{% endif %}>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Quality threshold -->
+        <div style="padding: 12px 0; border-bottom: 1px solid var(--border-subtle);">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label for="min_quality_for_ingest" class="mono u-small" style="font-weight: 600;">Quality threshold</label>
+            <span class="mono u-small u-muted" id="quality_display">{{ "%.2f"|format(settings.min_quality_for_ingest) }}</span>
+          </div>
+          <div class="item-meta" style="margin-bottom: 8px;">Minimum score (0.00 – 1.00) for a genome to be ingested automatically.</div>
+          <input type="range" id="min_quality_for_ingest" name="min_quality_for_ingest"
+                 min="0" max="1" step="0.05" value="{{ settings.min_quality_for_ingest }}"
+                 oninput="document.getElementById('quality_display').textContent = parseFloat(this.value).toFixed(2);"
+                 style="width: 100%;">
+        </div>
+
+        <!-- Sharing policy -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-subtle); gap: 16px;">
+          <div style="flex: 1;">
+            <label for="sharing_policy" class="mono u-small" style="font-weight: 600;">Sharing policy</label>
+            <div class="item-meta">What peers in the same swarm can do with your DNA.</div>
+          </div>
+          <select name="sharing_policy" id="sharing_policy" class="select">
+            <option value="none"      {% if settings.sharing_policy == 'none' %}selected{% endif %}>None — private</option>
+            <option value="read"      {% if settings.sharing_policy == 'read' %}selected{% endif %}>Read — others can pull</option>
+            <option value="selective" {% if settings.sharing_policy == 'selective' %}selected{% endif %}>Selective — gated</option>
+            <option value="full"      {% if settings.sharing_policy == 'full' %}selected{% endif %}>Full — open exchange</option>
+          </select>
+        </div>
+
+        <!-- Allow upward proposals -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-subtle);">
+          <div>
+            <label for="allow_upward_proposals" class="mono u-small" style="font-weight: 600;">Allow upward proposals</label>
+            <div class="item-meta">Let sub-agents propose improvements back to parent swarms.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="allow_upward_proposals" name="allow_upward_proposals" value="true"
+                   {% if settings.allow_upward_proposals %}checked{% endif %}>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Retention -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; gap: 16px;">
+          <div style="flex: 1;">
+            <label for="retention_days" class="mono u-small" style="font-weight: 600;">Retention</label>
+            <div class="item-meta">Days to keep old genomes (0 = forever).</div>
+          </div>
+          <input type="number" name="retention_days" id="retention_days"
+                 min="0" max="3650" value="{{ settings.retention_days }}"
+                 class="select" style="width: 100px; text-align: right;">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ─── ADVANCED TOGGLE ──────────────────────────────────────── -->
+    <details style="margin-bottom: 16px;">
+      <summary class="item" style="cursor: pointer; padding: 12px 20px; list-style: none;">
+        <div class="item-row">
+          <div class="glyph tertiary">{{ icon('chevron-down', 12) }}</div>
+          <div class="u-flex1">
+            <p class="item-title" style="margin: 0;">Advanced</p>
+            <div class="item-meta">Isolation, raw config, every knob exposed.</div>
+          </div>
+        </div>
+      </summary>
+
+      <!-- Isolation -->
+      <div class="item" style="margin-top: 8px;">
+        <span class="rail-stripe tertiary"></span>
+        <div style="padding: 16px 20px; width: 100%;">
+          <p class="item-title" style="margin-bottom: 4px;">Drive · Isolation</p>
+          <div class="item-meta" style="margin-bottom: 12px;">How sub-agent pools are isolated from each other and the parent.</div>
+          <div style="display: flex; gap: 8px;">
+            <label class="radio-card {% if settings.isolation_level == 'none' %}active{% endif %}">
+              <input type="radio" name="isolation_level" value="none" {% if settings.isolation_level == 'none' %}checked{% endif %}>
+              <span class="mono u-small" style="font-weight: 600;">None</span>
+              <span class="item-meta">Everything shared</span>
+            </label>
+            <label class="radio-card {% if settings.isolation_level == 'swarm' %}active{% endif %}">
+              <input type="radio" name="isolation_level" value="swarm" {% if settings.isolation_level == 'swarm' %}checked{% endif %}>
+              <span class="mono u-small" style="font-weight: 600;">Swarm</span>
+              <span class="item-meta">Per-swarm isolation</span>
+            </label>
+            <label class="radio-card {% if settings.isolation_level == 'subagent' %}active{% endif %}">
+              <input type="radio" name="isolation_level" value="subagent" {% if settings.isolation_level == 'subagent' %}checked{% endif %}>
+              <span class="mono u-small" style="font-weight: 600;">Sub-agent</span>
+              <span class="item-meta">Strict isolation</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Raw YAML viewer -->
+      <div class="item" style="margin-top: 12px;">
+        <span class="rail-stripe tertiary"></span>
+        <div style="padding: 16px 20px; width: 100%;">
+          <p class="item-title" style="margin-bottom: 4px;">Raw config.yaml</p>
+          <div class="item-meta" style="margin-bottom: 12px;">
+            Source of truth at <span class="mono">{{ config_path }}</span>. Edit via this form, or directly on disk and reload.
+          </div>
+          <pre class="mono u-small" style="background: var(--bg-elevated); padding: 12px; border-radius: 6px; overflow-x: auto; max-height: 320px; border: 1px solid var(--border-subtle);">{{ config_yaml }}</pre>
+        </div>
+      </div>
+    </details>
+
+    <!-- Submit -->
+    <div style="display: flex; justify-content: flex-end; gap: 8px; padding: 12px 0;">
+      <button type="submit" class="btn btn-primary">{{ icon('check', 12) }} Save settings</button>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
