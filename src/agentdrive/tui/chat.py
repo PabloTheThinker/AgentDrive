@@ -38,7 +38,7 @@ from rich.padding import Padding
 from rich.panel import Panel
 from rich.text import Text
 
-from agentdrive.agent import Indicator, AgentDriveAgent
+from agentdrive.agent import AgentDriveAgent, Indicator
 from agentdrive.chat_loop import ChatLoop
 from agentdrive.constants import get_agentdrive_home
 from agentdrive.tui.chrome import (

@@ -97,7 +97,14 @@ from agentdrive.adapters import (
 )
 
 # Agent Drive Agent — the framework as a conversational AI agent
-from agentdrive.agent import AGENTDRIVE_IDENTITY, AgentSession, Indicator, AgentDriveAgent, Turn, TurnResult
+from agentdrive.agent import (
+    AGENTDRIVE_IDENTITY,
+    AgentDriveAgent,
+    AgentSession,
+    Indicator,
+    Turn,
+    TurnResult,
+)
 from agentdrive.config import (
     ensure_agentdrive_home,
     get_config_value,
@@ -109,8 +116,8 @@ from agentdrive.config import (
 )
 from agentdrive.constants import (
     AGENTDRIVE_VERSION,
-    get_agentdrive_home,
     get_agentdrive_config_path,
+    get_agentdrive_home,
 )
 from agentdrive.exceptions import (
     AgentDriveConfigError,
