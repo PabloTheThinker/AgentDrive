@@ -210,7 +210,9 @@ def test_approve_ingests_into_pool_only_if_validation_passes(
     assert any("quarantine:approved" in e.get("source", "") for e in pool.get_ingest_history())
 
 
-def test_reject_marks_entry_and_does_not_ingest(isolated_agentdrive_home: Path, tmp_path: Path) -> None:
+def test_reject_marks_entry_and_does_not_ingest(
+    isolated_agentdrive_home: Path, tmp_path: Path
+) -> None:
     src = _make_valid_genome_dir(tmp_path)
     pool = AgentDrive(registry=GenomeRegistry())
     q = Quarantine()
@@ -225,7 +227,9 @@ def test_reject_marks_entry_and_does_not_ingest(isolated_agentdrive_home: Path, 
     assert pool.get_pool_stats()["ingest_events"] == 0
 
 
-def test_hold_keeps_entry_quarantined_status(isolated_agentdrive_home: Path, tmp_path: Path) -> None:
+def test_hold_keeps_entry_quarantined_status(
+    isolated_agentdrive_home: Path, tmp_path: Path
+) -> None:
     src = _make_valid_genome_dir(tmp_path)
     q = Quarantine()
     entry = q.submit(src, source_peer="peer-q")

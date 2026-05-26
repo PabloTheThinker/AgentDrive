@@ -179,7 +179,9 @@ def run_onboarding() -> bool:
         return False
 
     # ── Step 1: Home directory ────────────────────────────────────────
-    _print_step(1, TOTAL_STEPS, "Home directory", "Agent Drive stores your data, config, and DNA here.")
+    _print_step(
+        1, TOTAL_STEPS, "Home directory", "Agent Drive stores your data, config, and DNA here."
+    )
     ensure_agentdrive_home()
     console.print(
         ok_line(

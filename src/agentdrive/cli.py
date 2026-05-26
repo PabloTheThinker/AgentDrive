@@ -1581,7 +1581,9 @@ def _run_update_flow(args: argparse.Namespace, force: bool) -> int:
         return 1
 
     # ─── Pre-flight panel ────────────────────────────────────────────
-    current_version = _verify_installed_version(venv_pip) if venv_pip.exists() else AGENTDRIVE_VERSION
+    current_version = (
+        _verify_installed_version(venv_pip) if venv_pip.exists() else AGENTDRIVE_VERSION
+    )
     pre = Group(
         Text.from_markup("[bold cyan]◆ Agent Drive update[/]"),
         Text.from_markup(f"  [dim]source[/]  {_REPO_HTTPS}"),
@@ -2359,6 +2361,7 @@ def main() -> None:
         if config_exists:
             try:
                 from agentdrive.providers import load_config_provider
+
                 cfg = load_config_provider()
                 provider_configured = bool(cfg and cfg[0])
             except Exception:

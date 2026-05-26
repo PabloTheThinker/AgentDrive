@@ -321,7 +321,9 @@ def setup_logging(level: str | None = None, log_file: Path | None = None) -> Non
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("httpx").setLevel(logging.WARNING)
 
-    logger.info(f"AgentDrive v{AGENTDRIVE_VERSION} logging initialized (level={lvl}, file={log_file})")
+    logger.info(
+        f"AgentDrive v{AGENTDRIVE_VERSION} logging initialized (level={lvl}, file={log_file})"
+    )
     _LOGGING_CONFIGURED = True
 
 

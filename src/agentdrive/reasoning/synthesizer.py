@@ -79,7 +79,12 @@ def synthesize_framework(
     if not by_kind:
         rationale.append("no observations supplied; emitted single-step stub")
         steps.append(
-            {"id": "summarize", "type": "reasoning", "agent": "agentdrive-core", "output": "summary"}
+            {
+                "id": "summarize",
+                "type": "reasoning",
+                "agent": "agentdrive-core",
+                "output": "summary",
+            }
         )
         schema_props["summary"] = {"type": "string"}
     else:

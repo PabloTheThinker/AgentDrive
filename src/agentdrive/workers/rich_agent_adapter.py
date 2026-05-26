@@ -199,7 +199,9 @@ class RichAgentAdapter:
             if HAS_RICH:
                 console.print(
                     Panel(
-                        enriched[:280] + "…", title="Enriched Agent Drive-Augmented Prompt", expand=False
+                        enriched[:280] + "…",
+                        title="Enriched Agent Drive-Augmented Prompt",
+                        expand=False,
                     )
                 )
             else:

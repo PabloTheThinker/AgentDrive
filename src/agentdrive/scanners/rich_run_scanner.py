@@ -167,4 +167,6 @@ class AgentDriveRunScanner(BaseScanner):
 
 
 # Also export a convenience alias for backward compatibility during transition
-RichRunScanner = AgentDriveRunScanner  # Rich external workers and Agent Drive workers use the same scanner
+RichRunScanner = (
+    AgentDriveRunScanner  # Rich external workers and Agent Drive workers use the same scanner
+)
