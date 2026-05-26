@@ -1195,7 +1195,6 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
 
         try:
             mgr = DriveSettingsManager()
-            current = mgr.get_global()
             updated = DriveSettings(
                 isolation_level=isolation_level,  # type: ignore[arg-type]
                 auto_ingest_on_success=auto_ingest_on_success is not None,
