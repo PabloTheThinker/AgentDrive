@@ -29,5 +29,13 @@
   </section>
 
   {% block page_inspector %}{% endblock %}
+
+  {% if user %}
+    {% include "_chat_sidebar.html" %}
+  {% endif %}
 </div>
+{% if user %}
+  <link rel="stylesheet" href="/static/css/chat.css">
+  <script defer src="/static/js/chat.js"></script>
+{% endif %}
 {% endblock %}

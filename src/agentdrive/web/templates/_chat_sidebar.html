@@ -1,0 +1,52 @@
+{# Chat sidebar partial — included from _shell.html. Substrate-grounded ILO chat. #}
+<aside class="chat-sidebar" id="chatSidebar" data-thread-id="">
+  <div class="chat-collapse" id="chatCollapse" title="Collapse / expand">›</div>
+
+  <div class="chat-header">
+    <div class="chat-title">
+      <span class="chat-dot"></span>
+      <h2>ILO <span class="chat-dim">· Conductor</span></h2>
+    </div>
+    <div class="chat-actions">
+      <button class="chat-icon-btn" id="chatNewThread" title="New thread">+</button>
+      <button class="chat-icon-btn" id="chatHistory" title="History">⌕</button>
+    </div>
+  </div>
+
+  <div class="chat-ctx-strip">
+    <span class="chat-kicker">Context</span>
+    <span class="chat-chip chat-chip-active" id="chatChipPage">page</span>
+    <span class="chat-chip chat-chip-thread" id="chatChipSubstrate" title="Live substrate grounding">⊕ substrate</span>
+  </div>
+
+  <div class="chat-thread" id="chatThread">
+    <div class="chat-empty">
+      Ask ILO about your substrate. Dreams, genomes, reasoning ledger,
+      drive ingest — all live, all grounded.
+    </div>
+  </div>
+
+  <div class="chat-composer">
+    <div class="chat-composer-row">
+      <textarea
+        id="chatInput"
+        placeholder="Ask ILO about your substrate…  (⌘+↵ to send)"
+        rows="1"></textarea>
+      <button class="chat-send" id="chatSend" title="Send">↑</button>
+    </div>
+    <div class="chat-composer-meta">
+      <div class="chat-meta-left">
+        <select class="chat-model-select" id="chatModel">
+          <option value="qwen3:14b" selected>ollama · qwen3:14b</option>
+          <option value="qwen2.5-coder:14b">ollama · qwen2.5-coder:14b</option>
+        </select>
+        <div class="chat-toggles">
+          <span class="chat-toggle chat-toggle-on" id="chatSubstrateToggle">substrate</span>
+        </div>
+      </div>
+      <div class="chat-meta-right">
+        <span id="chatStatus">ready</span>
+      </div>
+    </div>
+  </div>
+</aside>

@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -1226,6 +1226,87 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
     def approve_user_route(user_id: int, request: Request, user: User = Depends(require_admin)):
         store.approve_user(user_id)
         return _redirect("/settings/users")
+
+    # ── Chat sidebar API ─────────────────────────────────────────────
+    from agentdrive.web.chat import (
+        ChatStore,
+        stream_chat_response,
+    )
+
+    @app.get("/api/chat/threads")
+    def list_chat_threads(user: User = Depends(require_user)):
+        chat_store = ChatStore()
+        threads = chat_store.list_threads()
+        return {
+            "threads": [
+                {
+                    "thread_id": t.thread_id,
+                    "created_at": t.created_at,
+                    "model": t.model,
+                    "title": t.title,
+                }
+                for t in threads
+            ]
+        }
+
+    @app.post("/api/chat/threads")
+    async def create_chat_thread(request: Request, user: User = Depends(require_user)):
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        model = body.get("model") or "qwen3:14b"
+        title = body.get("title") or ""
+        thread = ChatStore().create_thread(model=model, title=title)
+        return {
+            "thread_id": thread.thread_id,
+            "created_at": thread.created_at,
+            "model": thread.model,
+            "title": thread.title,
+        }
+
+    @app.get("/api/chat/threads/{thread_id}")
+    def get_chat_thread(thread_id: str, user: User = Depends(require_user)):
+        chat_store = ChatStore()
+        thread = chat_store.get_thread(thread_id)
+        if thread is None:
+            raise HTTPException(status_code=404, detail="thread not found")
+        messages = chat_store.get_messages(thread_id)
+        return {
+            "thread_id": thread.thread_id,
+            "created_at": thread.created_at,
+            "model": thread.model,
+            "title": thread.title,
+            "messages": [m.to_dict() for m in messages],
+        }
+
+    @app.post("/api/chat/threads/{thread_id}/messages")
+    async def post_chat_message(
+        thread_id: str, request: Request, user: User = Depends(require_user)
+    ):
+        try:
+            body = await request.json()
+        except Exception:
+            raise HTTPException(status_code=400, detail="invalid JSON body")
+        content = (body.get("content") or "").strip()
+        if not content:
+            raise HTTPException(status_code=400, detail="content required")
+        model = body.get("model")
+        use_substrate = bool(body.get("use_substrate", True))
+
+        import json as _json
+
+        async def event_stream():
+            async for event in stream_chat_response(
+                thread_id,
+                content,
+                model=model,
+                use_substrate=use_substrate,
+            ):
+                payload = _json.dumps(event["data"], default=str)
+                yield f"event: {event['event']}\ndata: {payload}\n\n"
+
+        return StreamingResponse(event_stream(), media_type="text/event-stream")
 
     return app
 
