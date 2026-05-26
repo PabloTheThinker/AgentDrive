@@ -211,7 +211,7 @@ class SavantAgent:
         llm = self.llm
         if llm is None:
             text = (
-                "No AI provider is configured. Use `savant provider set <name>` "
+                "No AI provider is configured. Use `agentdrive provider set <name>` "
                 "in your terminal — then come back and we can talk properly."
             )
             self.session.append(Turn(role="assistant", content=text))

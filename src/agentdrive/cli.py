@@ -507,7 +507,7 @@ def cmd_config(args: argparse.Namespace) -> int:
 
     if args.subcommand == "set":
         if not args.key or args.value is None:
-            console.print("[red]Usage: savant config set <key> <value>[/]")
+            console.print("[red]Usage: agentdrive config set <key> <value>[/]")
             return 1
         # Very naive typing for now (strings mostly)
         try:
@@ -1755,13 +1755,13 @@ def cmd_provider(args: argparse.Namespace) -> int:
                 console.print(
                     f"  [grey50]{pre}[/]     [dim]default model:[/] [agentdrive.genome]{p.default_model}[/]"
                 )
-        console.print("\n[dim]Configure with[/] [cyan]savant provider set <name>[/]")
+        console.print("\n[dim]Configure with[/] [cyan]agentdrive provider set <name>[/]")
         return 0
 
     if sub == "set":
         pname = args.provider_name or ""
         if not pname:
-            console.print("[red]Usage: savant provider set <name>[/]")
+            console.print("[red]Usage: agentdrive provider set <name>[/]")
             return 1
 
         profile = get(pname)
@@ -1811,7 +1811,7 @@ def cmd_provider(args: argparse.Namespace) -> int:
     if sub == "key":
         pname = args.provider_name or ""
         if not pname:
-            console.print("[red]Usage: savant provider key <name>[/]")
+            console.print("[red]Usage: agentdrive provider key <name>[/]")
             return 1
         profile = get(pname)
         if not profile:
@@ -1872,7 +1872,7 @@ def cmd_model(args: argparse.Namespace) -> int:
                     console.print(f"  • [agentdrive.genome]{m}[/] {mark}")
         else:
             console.print("  [yellow]No provider configured.[/]")
-            console.print("  Use [cyan]savant provider set <name>[/] to configure one.")
+            console.print("  Use [cyan]agentdrive provider set <name>[/] to configure one.")
 
         console.print("\n[dim]Use 'agentdrive model set <model>' to switch.[/]")
         return 0
@@ -1880,8 +1880,8 @@ def cmd_model(args: argparse.Namespace) -> int:
     if sub == "set":
         model = args.model_name or ""
         if not model:
-            console.print("[red]Usage: savant model set <model-id>[/]")
-            console.print("  List available models with: [cyan]savant model list[/]")
+            console.print("[red]Usage: agentdrive model set <model-id>[/]")
+            console.print("  List available models with: [cyan]agentdrive model list[/]")
             return 1
 
         if current_provider:
@@ -1889,7 +1889,7 @@ def cmd_model(args: argparse.Namespace) -> int:
             console.print(f"[green]✓[/] Active model set to [agentdrive.genome]{model}[/]")
         else:
             console.print("[yellow]No provider configured. Set a provider first:[/]")
-            console.print("  [cyan]savant provider set openai[/]")
+            console.print("  [cyan]agentdrive provider set openai[/]")
         return 0
 
     console.print("[red]Unknown model subcommand[/]")
@@ -2059,13 +2059,13 @@ Drive operations:
   agentdrive drive ingest <dir>   agentdrive drive query "task description"
 
 Provider & model:
-  savant provider list            savant provider set <name> --model <id>
-  savant provider key <name>      savant model list
-  savant model set <model-id>
+  agentdrive provider list            agentdrive provider set <name> --model <id>
+  agentdrive provider key <name>      agentdrive model list
+  agentdrive model set <model-id>
 
 Genomes & config:
-  savant genomes list             savant config show
-  savant config get <key>         savant config set <key> <value>
+  savant genomes list             agentdrive config show
+  agentdrive config get <key>         agentdrive config set <key> <value>
   savant scan /path/to/run
 
 Self-manage:

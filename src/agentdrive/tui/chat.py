@@ -536,7 +536,7 @@ class ChatView:
                 ("provider", "[agentdrive.warn]not set[/]"),
                 ("model", "—"),
                 ("key", "[agentdrive.warn]missing[/]"),
-                ("setup", f"[{p.accent}]savant provider set <name>[/]"),
+                ("setup", f"[{p.accent}]agentdrive provider set <name>[/]"),
             ]
         sections.append(Section("Voice", voice_rows, palette=p))
 
@@ -598,7 +598,7 @@ class ChatView:
             self.console.print()
             self.console.print(
                 warn_line(
-                    f"No AI provider configured. Run [{p.accent}]savant provider set <name>[/] in your shell.",
+                    f"No AI provider configured. Run [{p.accent}]agentdrive provider set <name>[/] in your shell.",
                     palette=p,
                 )
             )
@@ -732,7 +732,7 @@ class ChatView:
             self.console.print(
                 warn_line(
                     "Can't reply — no provider configured. "
-                    f"Run [{self.palette.accent}]savant provider set <name>[/] in your shell.",
+                    f"Run [{self.palette.accent}]agentdrive provider set <name>[/] in your shell.",
                     palette=self.palette,
                 )
             )
@@ -1144,7 +1144,7 @@ class ChatView:
                 self.console.print()
                 self.console.print(
                     warn_line(
-                        f"No provider configured. Run [{p.accent}]savant provider set <name>[/] first.",
+                        f"No provider configured. Run [{p.accent}]agentdrive provider set <name>[/] first.",
                         palette=p,
                     )
                 )
@@ -1169,7 +1169,7 @@ class ChatView:
             self.console.print()
             self.console.print(
                 warn_line(
-                    f"No provider configured. Run [{p.accent}]savant provider set <name>[/] in your shell.",
+                    f"No provider configured. Run [{p.accent}]agentdrive provider set <name>[/] in your shell.",
                     palette=p,
                 )
             )

@@ -347,7 +347,7 @@ def section_ai_integration() -> bool:
                 console.print()
                 console.print(
                     warn_line(
-                        "No key entered. Set one later with: [bold]savant provider key <name>[/]",
+                        "No key entered. Set one later with: [bold]agentdrive provider key <name>[/]",
                         palette=PALETTE,
                     )
                 )
@@ -404,7 +404,7 @@ def section_ai_integration() -> bool:
         console.print()
         console.print(
             info_line(
-                f"Skipped. Run [{PALETTE.accent}]savant provider set <name>[/] later.",
+                f"Skipped. Run [{PALETTE.accent}]agentdrive provider set <name>[/] later.",
                 palette=PALETTE,
             )
         )

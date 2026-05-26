@@ -90,7 +90,7 @@ def _env_rows(env: dict[str, Any]) -> list[TreeRow]:
         return [
             TreeRow(
                 label="[dim]nothing detected[/]",
-                secondary="run [bold]savant provider set <name>[/] later",
+                secondary="run [bold]agentdrive provider set <name>[/] later",
             )
         ]
 
