@@ -35,6 +35,12 @@
       agents.length > 1
         ? `· ${agents.length} agents · click to switch`
         : "· your agent";
+    if (els.input) {
+      els.input.placeholder = `Ask ${active.label} about the substrate…  (⌘+↵ to send)`;
+    }
+    for (const who of els.thread.querySelectorAll(".chat-msg-agent .chat-msg-who")) {
+      who.textContent = active.label;
+    }
   };
 
   const loadAgents = async () => {
@@ -93,15 +99,22 @@
     if (empty) empty.remove();
   };
 
+  const agentLabel = () => {
+    if (!agents.length) return "Agent";
+    const active = agents.find((a) => a.agent_id === activeAgentId) || agents[0];
+    return active.label;
+  };
+
   const appendMsg = (role, text, opts = {}) => {
     clearEmpty();
     const msg = document.createElement("div");
     msg.className = `chat-msg ${role === "assistant" ? "chat-msg-agent" : ""}`;
     const initial = role === "assistant" ? "◆" : "P";
+    const who = role === "assistant" ? agentLabel() : "You";
     msg.innerHTML = `
       <div class="chat-msg-avatar">${initial}</div>
       <div class="chat-msg-body">
-        <div class="chat-msg-who">${role === "assistant" ? "ILO" : "You"}</div>
+        <div class="chat-msg-who">${escape(who)}</div>
         <div class="chat-msg-text"></div>
         <div class="chat-msg-tools"></div>
         <div class="chat-msg-meta"></div>
