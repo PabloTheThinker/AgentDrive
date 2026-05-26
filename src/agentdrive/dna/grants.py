@@ -350,13 +350,14 @@ class GrantStore:
         safe_grant_id = str(grant.grant_id).replace("\r", "").replace("\n", "")
         safe_issuer = str(issuer).replace("\r", "").replace("\n", "")
         safe_grantee = str(grantee).replace("\r", "").replace("\n", "")
+        safe_ttl_seconds = str(ttl_seconds).replace("\r", "").replace("\n", "")
         logger.info(
             "Issued lineage_share grant",
             extra={
                 "grant_id": safe_grant_id,
                 "issuer": safe_issuer,
                 "grantee": safe_grantee,
-                "ttl_seconds": ttl_seconds,
+                "ttl_seconds": safe_ttl_seconds,
             },
         )
         return grant
