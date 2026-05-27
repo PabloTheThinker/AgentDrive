@@ -228,7 +228,7 @@ def test_agent_runtime_endpoint_returns_model_and_http_sse_shapes(
         "ilo",
         {
             "kind": "http_sse",
-            "url": "http://parallax:8081/chat",
+            "url": "http://example.internal:8081/chat",
             "auth_env": "ILO_RUNTIME_TOKEN",
         },
         home=isolated_agentdrive_home,
@@ -251,7 +251,7 @@ def test_agent_runtime_endpoint_returns_model_and_http_sse_shapes(
     assert body == {
         "agent_id": "ilo",
         "kind": "http_sse",
-        "url": "http://parallax:8081/chat",
+        "url": "http://example.internal:8081/chat",
         "auth_env": "ILO_RUNTIME_TOKEN",
         "healthy": True,
         "detail": "connected",
@@ -280,7 +280,7 @@ def test_agent_runtime_post_writes_file_for_admin(
         "/api/chat/agents/ilo/runtime",
         json={
             "kind": "http_sse",
-            "url": "http://parallax:8081/chat",
+            "url": "http://example.internal:8081/chat",
             "auth_env": "ILO_RUNTIME_TOKEN",
             "timeout_s": 120,
         },
@@ -291,7 +291,7 @@ def test_agent_runtime_post_writes_file_for_admin(
     assert body["kind"] == "http_sse"
     assert body["auth_env"] == "ILO_RUNTIME_TOKEN"
     path = isolated_agentdrive_home / "agents" / "ilo" / "runtime.json"
-    assert json.loads(path.read_text(encoding="utf-8"))["url"] == "http://parallax:8081/chat"
+    assert json.loads(path.read_text(encoding="utf-8"))["url"] == "http://example.internal:8081/chat"
     assert stat.S_IMODE(path.stat().st_mode) == 0o600
 
 

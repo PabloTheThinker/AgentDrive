@@ -114,7 +114,19 @@ __all__ = [
     "AgentDrive",
     "DriveSettings",
     "get_effective_drive_settings",
+    # ILO / Grok Conductor first-class bridge (grok_pattern_lineage)
+    "GrokPatternLineageBridge",
+    "ilo_pattern_to_genome",
+    "publish_ilo_genome",
 ]
 
 # Lazy submodules for direct access: from agentdrive.adapters.grok_build_adapter import ...
 # (no __getattr__ needed for normal usage)
+
+# Re-export the ILO/Grok Pattern Lineage Bridge for first-class usage
+#   from agentdrive.adapters import GrokPatternLineageBridge, ilo_pattern_to_genome
+from .grok_build_adapter import (
+    GrokPatternLineageBridge,
+    ilo_pattern_to_genome,
+    publish_ilo_genome,
+)

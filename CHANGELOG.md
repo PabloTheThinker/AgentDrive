@@ -4,6 +4,33 @@ All notable changes to this project are documented here. The product is
 **AgentDrive** — local-first Drive for AI agent swarms, distributed under the
 ``agentdrive`` Python package.
 
+## Unreleased
+
+### Code Cleanliness, Stability & Native Fit (P0 fixes from swarm audit)
+- Fixed critical silent-failure / crash paths in the DNA evolution and immune modules:
+  - `Ancestry(db_path=...)` now constructed correctly everywhere (was bare `Ancestry()` — dead code for trusted lineage and research).
+  - All state/immune paths now use `get_agentdrive_home()` (no more hardcoded `Path.home()` bypassing config, env, or test fixtures).
+  - Eliminated undefined-name risks in `_research_phase` (genome_id scoping) and made research/ancestry paths actually executable.
+  - Genome id extraction made robust against manifest vs. direct attr differences.
+- Modernized logger names to `__name__`, restored ruff-clean state on the two modules + example (imports, unused vars, docstrings). Applied ruff format.
+- Reframed module docs and comments to pure AgentDrive-native language (removed "Lineage Engine"/THYMOS leakage while keeping the biological inspiration clear).
+- Made external research sources (brain_path) explicitly optional/pluggable via constructor — no hidden .ilo defaults in core (the GrokPatternLineageBridge is the clean injection point for ILO and Grok harnesses).
+- Minor web DNA UI construction fix (correct DNADrive kwarg) so ancestry pages don't explode on load.
+
+### High-Continuity Operator Bridge & Documentation
+- GrokPatternLineageBridge (adapters) + top-level re-exports now the canonical path for high-continuity operators who maintain external research indexes. The bridge allows exporting custom patterns as Genomes, publishing them into DNA Drives, consuming collective DNA, and driving evolution cycles.
+- HELP.md now contains a complete "Advanced: High-Continuity Operator Bridge" section with exact inventory of the immune system, evolver, and bridge capabilities, copy-paste examples, and honest status.
+- All examples updated for clarity and safety.
+
+### Onboarding & Examples (major practical improvement)
+- Added two high-quality, copy-pasteable, heavily-commented runnable examples:
+  - `examples/04_quarantine_workflow.py` — complete end-to-end foreign-DNA intake with LineageImmuneRule.
+  - `examples/05_lineage_dna_grants.py` — full demonstration of DNADrive + Ancestry, signed LineageShareGrant + pull_via_grant, LineageImmuneSystem (adaptive memory), LineageDNAEvolver cycles, and Harness DNA methods.
+- Polished all existing examples (01–03 + 10) with clearer "what works today" headers and cross-references.
+- Significantly improved Quickstart in README with a "Get value in ~2 minutes" block that runs the full curated tour.
+- Exposed the complete lineage/quarantine/reconciliation surface at the top-level public API (`from agentdrive import Quarantine, DNADrive, LineageImmuneSystem, GrantStore, ReconciliationRunner, ...`).
+- Updated `docs/INTEGRATION.md` with direct pointers and usage guidance for the new examples and advanced modules.
+
 ## [0.2.0] — 2026-05-25
 
 First release after the AgentDrive pivot. Bundles v2 milestones M1–M6,

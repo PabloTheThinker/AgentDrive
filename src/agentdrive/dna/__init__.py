@@ -27,6 +27,12 @@ from .grants import (
     ReducerKind,
     pull_via_grant,
 )
+from .lineage_immune import (
+    GenomeThreatAssessment,
+    LineageImmuneSystem,
+    ThreatLevel,
+    lineage_immune,
+)
 
 __all__ = [
     "Ancestry",
@@ -42,4 +48,9 @@ __all__ = [
     "GrantQuotaExceededError",
     "ReducerKind",
     "pull_via_grant",
+    # Optional deeper genome health / immunity (Lineage-inspired but native)
+    "LineageImmuneSystem",
+    "GenomeThreatAssessment",
+    "ThreatLevel",
+    "lineage_immune",
 ]

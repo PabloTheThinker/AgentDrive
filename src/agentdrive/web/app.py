@@ -651,7 +651,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             try:
                 from agentdrive.dna.drive import DNADrive  # type: ignore
 
-                drive = DNADrive(agent_id=agent, dna_root=dna_root)
+                drive = DNADrive(agent, root=dna_root)  # fixed kwarg (was dna_root)
                 for a in getattr(drive, "ancestors", lambda: [])():
                     ancestors.append(
                         {

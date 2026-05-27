@@ -89,7 +89,7 @@ def test_onboarding_set_runtime_writes_http_sse(
         data={
             "agent_id": "ilo",
             "kind": "http_sse",
-            "url": "http://parallax:8081/chat",
+            "url": "http://example.internal:8081/chat",
             "auth_env": "ILO_RUNTIME_TOKEN",
             "provider": "",
         },
@@ -102,7 +102,7 @@ def test_onboarding_set_runtime_writes_http_sse(
     assert stat.S_IMODE(rt.stat().st_mode) == 0o600
     data = json.loads(rt.read_text(encoding="utf-8"))
     assert data["kind"] == "http_sse"
-    assert data["url"] == "http://parallax:8081/chat"
+    assert data["url"] == "http://example.internal:8081/chat"
     assert data["auth_env"] == "ILO_RUNTIME_TOKEN"
 
 

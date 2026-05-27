@@ -22,9 +22,12 @@ Any Python-based agent or sub-agent can directly use:
 See:
 - `src/agentdrive/harness/harness.py`
 - `src/agentdrive/workers/rich_agent_adapter.py` (runnable demo/reference worker)
-- `examples/01_hello_drive.py`
-- `examples/02_dedup.py`
-- `examples/03_swarm.py`
+- `examples/01_hello_drive.py` (core ingest + Harness)
+- `examples/02_dedup.py` (content-addressed dedup)
+- `examples/03_swarm.py` (shared Swarm Drives)
+- `examples/04_quarantine_workflow.py` (mandatory foreign-DNA gate + LineageImmuneRule)
+- `examples/05_lineage_dna_grants.py` (DNADrive, grants, LineageImmuneSystem, LineageDNAEvolver)
+- `examples/11_high_continuity_bridge_demo.py` (GrokPatternLineageBridge + activate_as_ilo_conductor for high-continuity nodes)
 
 **Minimal integration for a sub-agent**:
 
@@ -107,6 +110,37 @@ Same principles apply:
 - These systems have “agent” or “sub-task” modes that can run custom code or call external tools.
 - Provide a thin wrapper script or MCP server that the runtime can invoke.
 - Use natural language: “Always use AgentDrive DNA injection and recording for every sub-task you create.”
+
+### 7. Optional Deeper Lineage-Enhanced Components (Advanced)
+
+For operators or developers who want stronger evolutionary and immune behavior on top of the base AgentDrive model, the following first-class (but opt-in) modules are available. They are **fully native** — no external Lineage Engine required — and are now exported at the top level:
+
+```python
+from agentdrive import (
+    Quarantine, DNADrive, LineageImmuneSystem, ThreatLevel,
+    LineageDNAEvolver, DNACycleResult,
+    GrantStore, LineageShareGrant, pull_via_grant,
+    ReconciliationRunner,
+)
+```
+
+See the excellent runnable demos (and the full progressive guide):
+- `examples/04_quarantine_workflow.py` — complete submit/validate/approve with LineageImmuneRule participating
+- `examples/05_lineage_dna_grants.py` — DNADrive publish/pull, signed grants + pull_via_grant, adaptive immune assessment + memory, full Research/Evaluate/Evolve cycles, Harness DNA methods
+- `examples/11_high_continuity_bridge_demo.py` — GrokPatternLineageBridge activation, custom pattern (reasoning/speech/lineage) → Genome publish, consume, safe evolver with brain_path (the dedicated ILO/Conductor power-user path)
+- `docs/development/ONBOARDING_AND_EXAMPLES.md` — detailed onboarding history (see `docs/INTEGRATION.md` and examples for current guidance)
+
+Key surfaces:
+- `agentdrive.quarantine` + `LineageImmuneRule` (registered by default) — the **mandatory** gate. Every peer pull, grant result, and inheritance manifest lands here.
+- `DNADrive` + `Ancestry` — forward-only ancestral memory with closure-table queries.
+- `GrantStore` / `LineageShareGrant` + `pull_via_grant` — signed, scoped, TTL-bounded, quota-protected sideways (cousin) sharing. Results must still route through Quarantine.
+- `LineageImmuneSystem` — adaptive threat discrimination and memory used by Quarantine/Reconciliation.
+- `LineageDNAEvolver` — provides a Research→Evaluate→Evolve skeleton for any Genome using AgentDrive-native sources (with graceful degradation). See source for exact implemented depth.
+- `ReconciliationRunner` — background delta scanner that emits `ReconciliationDelta` / `ReconciliationCompleted` events (powers live UIs).
+
+These are production surfaces used by the CLI (`agentdrive quarantine`, `agentdrive reconcile`), TUI ribbons, web dashboard, and Harness. They are the "new lineage-enhanced features" referenced in the project vision.
+
+Full details and the exact "what is working today" behavior are in the two example files above and in `docs/AGENTDRIVE-V2-INHERITANCE.md`.
 
 Example wrapper (invoked by Claude Code’s “run in agent”):
 

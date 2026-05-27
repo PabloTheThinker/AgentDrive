@@ -46,6 +46,7 @@ from typing import TYPE_CHECKING, Any
 import yaml
 
 from agentdrive.constants import get_agentdrive_home
+from agentdrive.dna.lineage_immune import LineageImmuneSystem, ThreatLevel
 from agentdrive.events import (
     QuarantineApproved,
     QuarantineRejected,
@@ -288,7 +289,56 @@ def _default_rules() -> list[ValidationRule]:
         NoExecutables(),
         PromptSanity(),
         SignatureValid(),
+        LineageImmuneRule(),
     ]
+
+
+class LineageImmuneRule(ValidationRule):
+    """
+    Optional immune assessment layer using Lineage-style adaptive memory and threat discrimination.
+
+    This strengthens quarantine with memory of past hostile patterns and lineage trust signals,
+    without requiring any external Lineage Engine runtime.
+
+    It is registered in default rules but designed to be lightweight and fail-open on errors.
+    """
+
+    name = "lineage_immune"
+
+    def __init__(self) -> None:
+        self.immune = LineageImmuneSystem()
+
+    def check(self, genome_dir: Path) -> tuple[bool, str]:
+        try:
+            # Load the genome manifest for assessment (same pattern as other rules)
+            manifest_path = None
+            for cand in ("manifest.yaml", "manifest.json"):
+                p = genome_dir / cand
+                if p.is_file():
+                    manifest_path = p
+                    break
+            if not manifest_path:
+                return True, ""  # defer to SchemaValid etc.
+
+            if manifest_path.suffix == ".yaml":
+                import yaml
+                genome_data = yaml.safe_load(manifest_path.read_text()) or {}
+            else:
+                genome_data = json.loads(manifest_path.read_text())
+
+            assessment = self.immune.assess_genome(genome_data)
+
+            if assessment.threat_level in (ThreatLevel.HOSTILE, ThreatLevel.CRITICAL):
+                return False, f"lineage_immune: {assessment.threat_level} - {', '.join(assessment.reasons[:3])}"
+
+            if assessment.threat_level == ThreatLevel.SUSPICIOUS:
+                return True, f"lineage_immune: suspicious ({', '.join(assessment.reasons[:2])})"
+
+            return True, ""
+
+        except Exception as e:
+            logger.warning("LineageImmuneRule failed open: %s", e)
+            return True, ""
 
 
 # ─────────────────────────────────────────────────────────────────────

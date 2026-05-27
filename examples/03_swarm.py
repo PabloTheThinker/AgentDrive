@@ -1,11 +1,16 @@
-"""Swarm demo — two sub-agents sharing one swarm Drive (v2 / Milestone 2a).
+"""Swarm Drive demo — stigmergic shared memory for sub-agents (shipped).
 
-Each sub-agent in a swarm now writes to the SAME Drive, namespacing its
-writes via the Genome author field. Siblings can read each other's work
-without any cross-config — this is the "we work together" experience pool.
+Two (or N) sub-agents in the same swarm get handles to the *identical* Drive
+instance. Writes from any participant are immediately visible to siblings via
+the shared content store + subagent-indexed views.
+
+No message bus, no parent serialization, no copy. Pure shared substrate.
 
 Run:
     python3 examples/03_swarm.py
+
+This is the foundation for swarm learning and the harness multi-worker pattern.
+Pair with 04 (quarantine for anything crossing swarm boundaries) and 05 (lineage).
 """
 
 from __future__ import annotations

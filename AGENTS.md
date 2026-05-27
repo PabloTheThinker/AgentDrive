@@ -38,7 +38,7 @@ The public API is re-exported at `src/agentdrive/__init__.py`. Don't reach into 
 
 ## Conventions
 
-- **Public API:** `from agentdrive import Harness, AgentDrive, DriveQuery, DriveSettings, Genome, GenomeRegistry, Quarantine, PeerRegistry`. Add to the package root, not to a submodule, when introducing a new top-level concept.
+- **Public API:** `from agentdrive import Harness, AgentDrive, DriveQuery, DriveSettings, Genome, GenomeRegistry, Quarantine, DNADrive, LineageImmuneSystem, LineageDNAEvolver, GrantStore, ReconciliationRunner, ...`. Add to the package root (see the big `__all__` block in `src/agentdrive/__init__.py`), not to a submodule, when introducing a new top-level concept.
 - **Type hints** are expected on public functions. `mypy src/agentdrive` runs as an informational check.
 - **Ruff** owns lint + format. `ruff check .` and `ruff format --check .` must pass.
 - **Tests live in `tests/`** mirroring the source tree. New mutating routes need an authz test that proves both the allow and deny paths.

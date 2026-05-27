@@ -138,6 +138,56 @@ from agentdrive.reasoning import (
     reconstruct_trace,
     synthesize_framework,
 )  # core primitives for scanners and evolution engine
+
+# First-class re-exports for the deep ILO / Conductor integration points
+# (lineage_immune + lineage_dna + the Grok/ILO Pattern Lineage Bridge live here)
+from agentdrive.dna import (
+    LineageImmuneSystem,
+    GenomeThreatAssessment,
+    ThreatLevel,
+    lineage_immune,
+)
+from agentdrive.evolution import (
+    LineageDNAEvolver,
+    DNACycleResult,
+    evolve_genome_with_lineage,
+)
+from agentdrive.adapters.grok_build_adapter import (
+    GrokPatternLineageBridge,
+    ilo_pattern_to_genome,
+    publish_ilo_genome,
+)
+
+# Advanced trust, lineage, and observability surfaces (opt-in but first-class)
+# These power the new DNA/Quarantine/Reconciliation/Lineage-enhanced experience.
+from agentdrive.quarantine import (
+    Quarantine,
+    QuarantineEntry,
+    QuarantineStatus,
+    ValidationRule,
+    get_default_quarantine,
+)
+from agentdrive.reconciliation import (
+    ReconciliationReport,
+    ReconciliationRunner,
+)
+from agentdrive.dna.drive import DNADrive, InheritedGenome
+from agentdrive.dna.grants import (
+    GrantScope,
+    GrantStore,
+    LineageShareGrant,
+    pull_via_grant,
+)
+from agentdrive.dna.lineage_immune import (
+    GenomeThreatAssessment,
+    LineageImmuneSystem,
+    ThreatLevel,
+)
+from agentdrive.evolution.lineage_dna import (
+    DNACycleResult,
+    LineageDNAEvolver,
+    evolve_genome_with_lineage,
+)
 from agentdrive.workers import (
     ExternalAgentAdapter,
     ExternalWorkerAdapter,
@@ -212,4 +262,35 @@ __all__ = [
     "synthesize_framework",
     "reconstruct_trace",
     "Ledger",
+    # Quarantine (mandatory gate for all foreign DNA)
+    "Quarantine",
+    "QuarantineEntry",
+    "QuarantineStatus",
+    "ValidationRule",
+    "get_default_quarantine",
+    # Reconciliation (background delta detection + events)
+    "ReconciliationRunner",
+    "ReconciliationReport",
+    # DNA Drives + forward inheritance
+    "DNADrive",
+    "InheritedGenome",
+    # Lineage grants (signed sideways sharing)
+    "GrantStore",
+    "LineageShareGrant",
+    "GrantScope",
+    "pull_via_grant",
+    # Lineage immune system (adaptive threat assessment)
+    "LineageImmuneSystem",
+    "ThreatLevel",
+    "GenomeThreatAssessment",
+    # Lineage DNA evolver (Research/Evaluate/Evolve cycles)
+    "LineageDNAEvolver",
+    "DNACycleResult",
+    "evolve_genome_with_lineage",
+    # Grok/ILO Pattern Lineage Bridge (PUBLISH/CONSUME/ACTIVATE for Conductor nodes)
+    "GrokPatternLineageBridge",
+    "ilo_pattern_to_genome",
+    "publish_ilo_genome",
+    # Immune singleton (shared adaptive state)
+    "lineage_immune",
 ]

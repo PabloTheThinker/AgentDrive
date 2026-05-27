@@ -1,10 +1,19 @@
-"""Hello, AgentDrive.
+"""Hello, AgentDrive — smallest end-to-end (fully working today).
 
-The smallest possible end-to-end: ingest a Genome (a reasoning pattern an
-agent learned) into your default Drive, then query for it back.
+Ingest a Genome (structured, versioned, content-addressed "DNA" / reasoning
+pattern an agent learned) into your Personal Drive, verify deduplication
+semantics via the content store, then pull relevant DNA via the Harness.
+
+This is the absolute minimum "agent participates in the living pool".
 
 Run:
     python3 examples/01_hello_drive.py
+
+See also:
+- 02_dedup.py (content-addressing payoff)
+- 03_swarm.py (shared swarm substrate)
+- 04_quarantine_workflow.py (the mandatory foreign-DNA gate)
+- 05_lineage_dna_grants.py (DNA, grants, immune system, evolver — the new lineage-enhanced features)
 """
 
 from __future__ import annotations

@@ -1,11 +1,17 @@
-"""Dedup demo.
+"""Content-addressed deduplication (core invariant — working today).
 
-Two Genomes with **different ids** but **identical content** ingest into one
-underlying object on disk. This is the content-addressing payoff: two
-sub-agents that independently discover the same pattern store it once.
+Two Genomes with **different ids** but **identical content** (framework defines
+identity) ingest into one underlying object on disk.
+
+This is the central payoff of the content store: identical patterns discovered
+by completely separate agents or runs converge to a single object. Snapshots,
+federation, and cross-agent inheritance all benefit.
 
 Run:
     python3 examples/02_dedup.py
+
+See 01_hello_drive.py for the basic ingest + harness query path and
+04/05 for the advanced quarantine + lineage surfaces.
 """
 
 from __future__ import annotations
