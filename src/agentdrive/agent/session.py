@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from agentdrive.constants import get_agentdrive_home
+from agentdrive.utils.safe_paths import safe_name
 
 
 def _now_iso() -> str:
@@ -27,7 +28,8 @@ def _agents_root() -> Path:
 
 
 def _session_dir(agent_id: str) -> Path:
-    return _agents_root() / agent_id / "sessions"
+    safe_id = safe_name(agent_id)
+    return _agents_root() / safe_id / "sessions"
 
 
 @dataclass
@@ -99,7 +101,8 @@ class AgentSession:
 
     @classmethod
     def load(cls, agent_id: str, session_id: str) -> AgentSession:
-        path = _session_dir(agent_id) / f"{session_id}.jsonl"
+        safe_session = safe_name(session_id)  # also protect the filename component
+        path = _session_dir(agent_id) / f"{safe_session}.jsonl"
         if not path.exists():
             raise FileNotFoundError(f"No session {session_id} for agent {agent_id}")
 

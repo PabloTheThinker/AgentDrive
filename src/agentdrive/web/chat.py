@@ -27,6 +27,7 @@ import httpx
 
 from agentdrive.constants import get_agentdrive_home
 from agentdrive.providers.base import ProviderProfile
+from agentdrive.utils.safe_paths import safe_name
 
 OLLAMA_ENDPOINT = "http://127.0.0.1:11434"
 DEFAULT_MODEL = "qwen3:14b"
@@ -145,7 +146,8 @@ def resolve_identity_prompt(agent_id: str, home: Path | None = None) -> str:
     """
     if not agent_id:
         return GENERIC_IDENTITY_PROMPT
-    base = (home or get_agentdrive_home()) / "agents" / agent_id
+    safe_id = safe_name(agent_id)
+    base = (home or get_agentdrive_home()) / "agents" / safe_id
     identity_file = base / "identity.md"
     body = ""
     if identity_file.exists():
