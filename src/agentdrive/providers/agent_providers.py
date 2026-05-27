@@ -9,16 +9,22 @@ from typing import Any
 import agentdrive.providers.builtins  # noqa: F401 - register built-in providers
 from agentdrive.constants import get_agentdrive_home
 from agentdrive.providers.base import ProviderProfile, list_available
+from agentdrive.utils.safe_paths import PathTraversalError, safe_name
 
 
 def _config_path(agent_id: str, home: Path | None = None) -> Path:
-    return (home or get_agentdrive_home()) / "agents" / agent_id / "providers.json"
+    # Prevent path traversal via untrusted agent_id coming from web routes / user input.
+    safe_id = safe_name(agent_id)
+    return (home or get_agentdrive_home()) / "agents" / safe_id / "providers.json"
 
 
 def _load_agent_provider_config(agent_id: str, home: Path | None = None) -> dict[str, Any]:
     if not agent_id:
         return {}
-    path = _config_path(agent_id, home)
+    try:
+        path = _config_path(agent_id, home)
+    except PathTraversalError:
+        return {}
     if not path.exists():
         return {}
     try:
