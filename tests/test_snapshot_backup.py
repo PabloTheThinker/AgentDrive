@@ -242,9 +242,12 @@ def running_ui(tmp_path: Path):
     _seed_drive(drive, 2)
 
     # Pick a free port deterministically.
-    with socket.socket() as s:
-        s.bind(("127.0.0.1", 0))
-        port = s.getsockname()[1]
+    try:
+        with socket.socket() as s:
+            s.bind(("127.0.0.1", 0))
+            port = s.getsockname()[1]
+    except PermissionError:
+        pytest.skip("local socket binding is unavailable in this sandbox")
 
     def resolve(agent_id: str) -> Path:
         return drive  # all agents in this test share the same Drive

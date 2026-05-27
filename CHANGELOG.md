@@ -78,6 +78,12 @@ its own persistent Drive — local-first, privacy-absolute, recoverable. The
 "pool" concept and its API surface are renamed end-to-end; this is a hard cut
 with no deprecation aliases (the project has no production users yet).
 
+### Chat Runtime
+- Agent sidebars now resolve an agent runtime adapter from
+  `~/.agentdrive/agents/<agent_id>/runtime.json`; HTTP+SSE runtimes are the
+  primary chat path, with the provider/model picker retained as the `model`
+  fallback for bare LLM wrapper agents.
+
 ### Renamed
 
 **Modules**

@@ -14,17 +14,29 @@
     substrateToggle: document.getElementById("chatSubstrateToggle"),
     agentName: document.getElementById("chatAgentName"),
     agentRole: document.getElementById("chatAgentRole"),
+    runtimeDot: document.getElementById("chatRuntimeDot"),
+    runtimeKind: document.getElementById("chatRuntimeKind"),
+    runtimeToggle: document.getElementById("chatRuntimeToggle"),
+    runtimePopover: document.getElementById("chatRuntimePopover"),
+    runtimePopoverKind: document.getElementById("chatRuntimePopoverKind"),
+    runtimeUrlRow: document.getElementById("chatRuntimeUrlRow"),
+    runtimeUrl: document.getElementById("chatRuntimeUrl"),
+    runtimeAuthRow: document.getElementById("chatRuntimeAuthRow"),
+    runtimeAuth: document.getElementById("chatRuntimeAuth"),
+    modelWrap: document.getElementById("chatModelWrap"),
   };
 
   let threadId = localStorage.getItem("agentdrive.chat.threadId") || "";
   let useSubstrate = true;
   let agents = [];
   let activeAgentId = localStorage.getItem("agentdrive.chat.agentId") || "";
+  let activeRuntime = { kind: "model", healthy: null, detail: "" };
 
   const providerAgentKey = () => activeAgentId || "__default__";
   const modelStorageKey = () => `agentdrive.chat.model.${providerAgentKey()}`;
 
   const selectedProviderModel = () => {
+    if ((activeRuntime.kind || "model") !== "model") return {};
     const raw = els.model.value || "";
     const idx = raw.indexOf("::");
     if (idx === -1) return { provider: "", model: raw };
@@ -63,9 +75,69 @@
       const data = await resp.json();
       agents = data.agents || [];
       renderAgentHeader();
-      await loadAgentProviders();
+      await loadAgentRuntime();
     } catch {
       /* offline-safe */
+    }
+  };
+
+  const runtimeAgentKey = () => activeAgentId || "__default__";
+
+  const setRuntimeDot = (healthy) => {
+    if (!els.runtimeDot) return;
+    els.runtimeDot.classList.remove(
+      "chat-runtime-healthy",
+      "chat-runtime-unknown",
+      "chat-runtime-error",
+    );
+    if (healthy === true) {
+      els.runtimeDot.classList.add("chat-runtime-healthy");
+    } else if (healthy === false) {
+      els.runtimeDot.classList.add("chat-runtime-error");
+    } else {
+      els.runtimeDot.classList.add("chat-runtime-unknown");
+    }
+  };
+
+  const renderRuntime = () => {
+    const kind = activeRuntime.kind || "model";
+    if (els.runtimeKind) els.runtimeKind.textContent = kind;
+    if (els.runtimePopoverKind) els.runtimePopoverKind.textContent = kind;
+    setRuntimeDot(activeRuntime.healthy);
+
+    if (els.runtimeUrlRow && els.runtimeUrl) {
+      els.runtimeUrlRow.hidden = !activeRuntime.url;
+      els.runtimeUrl.textContent = activeRuntime.url || "";
+    }
+    if (els.runtimeAuthRow && els.runtimeAuth) {
+      els.runtimeAuthRow.hidden = !activeRuntime.auth_env;
+      els.runtimeAuth.textContent = activeRuntime.auth_env || "";
+    }
+    if (els.modelWrap) els.modelWrap.hidden = kind !== "model";
+    if (els.model) els.model.hidden = kind !== "model";
+  };
+
+  const loadAgentRuntime = async (preferredModelValue = "") => {
+    setStatus("checking runtime…");
+    try {
+      const resp = await fetch(`/api/chat/agents/${encodeURIComponent(runtimeAgentKey())}/runtime`);
+      if (!resp.ok) {
+        activeRuntime = { kind: "model", healthy: null, detail: "runtime unavailable" };
+        renderRuntime();
+        setStatus("runtime unavailable");
+        return;
+      }
+      activeRuntime = await resp.json();
+      renderRuntime();
+      if ((activeRuntime.kind || "model") === "model") {
+        await loadAgentProviders(preferredModelValue);
+      } else {
+        setStatus(activeRuntime.healthy === false ? "runtime error" : "ready");
+      }
+    } catch {
+      activeRuntime = { kind: "model", healthy: null, detail: "runtime unavailable" };
+      renderRuntime();
+      setStatus("runtime unavailable");
     }
   };
 
@@ -124,7 +196,7 @@
     els.thread.innerHTML =
       '<div class="chat-empty">Switched to ' + activeAgentId + '. New thread.</div>';
     renderAgentHeader();
-    void loadAgentProviders();
+    void loadAgentRuntime();
   };
 
   // ── helpers ──────────────────────────────────────────────────────
@@ -235,7 +307,7 @@
         activeAgentId = data.agent_id;
         localStorage.setItem("agentdrive.chat.agentId", activeAgentId);
         renderAgentHeader();
-        await loadAgentProviders(
+        await loadAgentRuntime(
           data.provider && data.model ? `${data.provider}::${data.model}` : "",
         );
       }
@@ -320,8 +392,10 @@
           scrollThread();
         } else if (event === "done") {
           textEl.classList.remove("chat-streaming");
+          const runtime = data.runtime_kind || activeRuntime.kind || "model";
           const provider = data.provider ? `${data.provider} · ` : "";
-          metaEl.textContent = `${provider}${data.model || ""} · ${(data.substrate_reads || []).length} reads`;
+          const model = data.model ? `${provider}${data.model}` : runtime;
+          metaEl.textContent = `${model} · ${(data.substrate_reads || []).length} reads`;
           setStatus("ready");
         } else if (event === "error") {
           textEl.innerHTML = `<em>${escape(data.error || "error")}</em>`;
@@ -370,16 +444,29 @@
     threadId = "";
     localStorage.removeItem("agentdrive.chat.threadId");
     els.thread.innerHTML =
-      '<div class="chat-empty">New thread. Ask ILO about your substrate.</div>';
+      '<div class="chat-empty">New thread. Ask your agent about your substrate.</div>';
     setStatus("ready");
   });
   els.substrateToggle.addEventListener("click", () => {
     useSubstrate = !useSubstrate;
     els.substrateToggle.classList.toggle("chat-toggle-on", useSubstrate);
   });
-  els.model.addEventListener("change", () => {
-    localStorage.setItem(modelStorageKey(), els.model.value);
-  });
+  if (els.model) {
+    els.model.addEventListener("change", () => {
+      localStorage.setItem(modelStorageKey(), els.model.value);
+    });
+  }
+  if (els.runtimeToggle && els.runtimePopover) {
+    els.runtimeToggle.addEventListener("click", (event) => {
+      event.stopPropagation();
+      els.runtimePopover.hidden = !els.runtimePopover.hidden;
+    });
+    document.addEventListener("click", (event) => {
+      if (els.runtimePopover.hidden) return;
+      if (event.target.closest && event.target.closest("#chatRuntimeStatus")) return;
+      els.runtimePopover.hidden = true;
+    });
+  }
 
   // Click the header agent name to cycle through agents
   if (els.agentName) {

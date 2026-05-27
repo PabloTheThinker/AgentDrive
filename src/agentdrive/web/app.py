@@ -69,6 +69,9 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
 
     @app.on_event("startup")
     async def _start_retention_loop():  # noqa: ANN202
+        if os.environ.get("AGENTDRIVE_DISABLE_RETENTION_LOOP") == "1":
+            app.state.retention_task = None
+            return
         app.state.retention_task = _asyncio.create_task(_retention_loop(app))
 
     @app.on_event("shutdown")
@@ -1232,6 +1235,11 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         resolve_agent_default,
         resolve_agent_providers,
     )
+    from agentdrive.runtime import (
+        load_runtime_config,
+        resolve_adapter,
+        write_runtime_config,
+    )
     from agentdrive.web.chat import (
         ChatStore,
         list_agents,
@@ -1254,6 +1262,19 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             return "", value
         provider_name, model_name = value.split("::", 1)
         return provider_name, model_name
+
+    async def _chat_runtime_status(agent_id: str) -> dict[str, Any]:
+        try:
+            adapter = resolve_adapter(agent_id)
+            health = await adapter.health()
+        except ValueError as exc:
+            config = load_runtime_config(agent_id)
+            health = {
+                "kind": str(config.get("kind") or "model"),
+                "healthy": False,
+                "detail": str(exc),
+            }
+        return {"agent_id": agent_id, **health}
 
     @app.get("/api/chat/agents")
     def list_chat_agents(user: User = Depends(require_user)):
@@ -1285,6 +1306,31 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             )
         return {"providers": providers}
 
+    @app.get("/api/chat/agents/{agent_id}/runtime")
+    async def get_chat_agent_runtime(agent_id: str, user: User = Depends(require_user)):
+        return await _chat_runtime_status(agent_id)
+
+    @app.post("/api/chat/agents/{agent_id}/runtime")
+    async def set_chat_agent_runtime(
+        agent_id: str,
+        request: Request,
+        user: User = Depends(require_admin),
+        _cap=Depends(
+            require_cap("chat", "write", resource_kind="agent", resource_id_arg="agent_id")
+        ),
+    ):
+        try:
+            body = await request.json()
+        except Exception:
+            raise HTTPException(status_code=400, detail="invalid JSON body")
+        if not isinstance(body, dict):
+            raise HTTPException(status_code=400, detail="runtime config must be an object")
+        try:
+            write_runtime_config(agent_id, body)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        return await _chat_runtime_status(agent_id)
+
     @app.get("/api/chat/threads")
     def list_chat_threads(user: User = Depends(require_user)):
         chat_store = ChatStore()
@@ -1298,6 +1344,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                     "provider": t.provider,
                     "title": t.title,
                     "agent_id": t.agent_id,
+                    "runtime_kind": t.runtime_kind,
                 }
                 for t in threads
             ]
@@ -1320,18 +1367,27 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             agents = list_agents()
             if agents:
                 agent_id = agents[0].agent_id
-        if not provider or not model:
-            default = resolve_agent_default(agent_id)
-            if default:
-                provider = provider or default[0]
-                model = model or default[1]
-        if not model:
-            model = "qwen3:14b"
+        runtime_config = load_runtime_config(agent_id)
+        runtime_kind = str(runtime_config.get("kind") or "model")
+        if runtime_kind == "model":
+            provider = str(runtime_config.get("provider") or provider)
+            model = str(runtime_config.get("model") or model)
+            if not provider or not model:
+                default = resolve_agent_default(agent_id)
+                if default:
+                    provider = provider or default[0]
+                    model = model or default[1]
+            if not model:
+                model = "qwen3:14b"
+        else:
+            provider = ""
+            model = ""
         thread = ChatStore().create_thread(
             model=model,
             provider=provider,
             title=title,
             agent_id=agent_id,
+            runtime_kind=runtime_kind,
         )
         return {
             "thread_id": thread.thread_id,
@@ -1340,6 +1396,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             "provider": thread.provider,
             "title": thread.title,
             "agent_id": thread.agent_id,
+            "runtime_kind": thread.runtime_kind,
         }
 
     @app.get("/api/chat/threads/{thread_id}")
@@ -1356,6 +1413,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             "provider": thread.provider,
             "title": thread.title,
             "agent_id": thread.agent_id,
+            "runtime_kind": thread.runtime_kind,
             "messages": [m.to_dict() for m in messages],
         }
 
@@ -1372,7 +1430,15 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             raise HTTPException(status_code=400, detail="content required")
         model = body.get("model")
         provider = body.get("provider")
-        if model:
+        chat_store = ChatStore()
+        thread = chat_store.get_thread(thread_id)
+        if thread is None:
+            raise HTTPException(status_code=404, detail="thread not found")
+        runtime_kind = str(load_runtime_config(thread.agent_id).get("kind") or "model")
+        if runtime_kind != "model":
+            model = None
+            provider = None
+        elif model:
             parsed_provider, parsed_model = _split_provider_model(model)
             provider = provider or parsed_provider
             model = parsed_model

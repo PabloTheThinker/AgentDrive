@@ -26,9 +26,7 @@ from typing import Any
 import httpx
 
 from agentdrive.constants import get_agentdrive_home
-from agentdrive.providers.agent_providers import resolve_agent_providers
 from agentdrive.providers.base import ProviderProfile
-from agentdrive.providers.base import get as get_provider
 
 OLLAMA_ENDPOINT = "http://127.0.0.1:11434"
 DEFAULT_MODEL = "qwen3:14b"
@@ -100,6 +98,7 @@ class ChatThread:
     provider: str = ""
     title: str = ""
     agent_id: str = ""
+    runtime_kind: str = ""
 
 
 @dataclass
@@ -181,6 +180,7 @@ class ChatStore:
         provider: str = "",
         title: str = "",
         agent_id: str = "",
+        runtime_kind: str = "",
     ) -> ChatThread:
         thread_id = "chat-" + secrets.token_hex(6)
         thread = ChatThread(
@@ -190,6 +190,7 @@ class ChatStore:
             provider=provider,
             title=title,
             agent_id=agent_id,
+            runtime_kind=runtime_kind,
         )
         head = {"__meta__": True, **asdict(thread)}
         path = self._thread_path(thread_id)
@@ -246,6 +247,19 @@ class ChatStore:
             raise FileNotFoundError(f"thread not found: {thread_id}")
         with path.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(message.to_dict(), default=str) + "\n")
+
+    def update_thread(self, thread: ChatThread) -> None:
+        path = self._thread_path(thread.thread_id)
+        if not path.exists():
+            raise FileNotFoundError(f"thread not found: {thread.thread_id}")
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            return
+        head = {"__meta__": True, **asdict(thread)}
+        rest = lines[1:] if lines else []
+        body = [json.dumps(head), *rest]
+        path.write_text("\n".join(body) + "\n", encoding="utf-8")
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -617,15 +631,24 @@ async def stream_chat_response(
     if identity is None:
         identity = resolve_identity_prompt(thread.agent_id)
 
-    chosen_profile = _resolve_thread_provider(thread, provider)
-    if chosen_profile is None:
-        yield {
-            "event": "error",
-            "data": {"error": "no available providers for this agent"},
-        }
-        return
-    chosen_model = model or thread.model or DEFAULT_MODEL
-    client = client or LLMStreamClient(chosen_profile)
+    from agentdrive.runtime import build, load_runtime_config
+    from agentdrive.runtime.model import ModelAdapter
+
+    runtime_config = load_runtime_config(thread.agent_id)
+    runtime_kind = str(runtime_config.get("kind") or "model")
+    if runtime_kind == "model":
+        runtime_config = dict(runtime_config)
+        if "provider" not in runtime_config and (provider or thread.provider):
+            runtime_config["provider"] = provider or thread.provider
+        if "model" not in runtime_config and (model or thread.model):
+            runtime_config["model"] = model or thread.model
+        adapter = ModelAdapter(thread.agent_id, runtime_config, stream_client=client)
+    else:
+        adapter = build(thread.agent_id, runtime_config)
+
+    if thread.runtime_kind != adapter.kind:
+        thread.runtime_kind = adapter.kind
+        store.update_thread(thread)
 
     # 1. record the user message
     user_msg = ChatMessage(role="user", content=user_text)
@@ -649,11 +672,13 @@ async def stream_chat_response(
 
     # 4. stream tokens
     pieces: list[str] = []
-    async for piece in client.stream_chat(chosen_model, messages):
+    async for piece in adapter.stream(messages):
         pieces.append(piece)
         yield {"event": "token", "data": {"text": piece}}
 
     # 5. persist the assistant message and emit done
+    chosen_model = getattr(adapter, "model", None)
+    chosen_provider = getattr(adapter, "provider_name", "")
     assistant_msg = ChatMessage(
         role="assistant",
         content="".join(pieces),
@@ -666,20 +691,8 @@ async def stream_chat_response(
         "data": {
             "content": assistant_msg.content,
             "model": chosen_model,
-            "provider": chosen_profile.name,
+            "provider": chosen_provider,
+            "runtime_kind": adapter.kind,
             "substrate_reads": [asdict(r) for r in reads],
         },
     }
-
-
-def _resolve_thread_provider(
-    thread: ChatThread,
-    provider_override: str | None = None,
-) -> ProviderProfile | None:
-    provider_name = provider_override or thread.provider
-    if provider_name:
-        profile = get_provider(provider_name)
-        if profile is not None and profile in resolve_agent_providers(thread.agent_id):
-            return profile
-    providers = resolve_agent_providers(thread.agent_id)
-    return providers[0] if providers else None

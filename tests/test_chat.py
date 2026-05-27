@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import stat
 from pathlib import Path
 
 import pytest
@@ -205,3 +206,108 @@ def test_agents_endpoint_returns_list_shape(tmp_path: Path):
     body = resp.json()
     assert "agents" in body
     assert isinstance(body["agents"], list)
+
+
+def test_agent_runtime_endpoint_returns_model_and_http_sse_shapes(
+    tmp_path: Path,
+    isolated_agentdrive_home: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    from agentdrive.runtime import write_runtime_config
+    from agentdrive.runtime.http_sse import HTTPSSEAdapter
+
+    async def fake_health(self):
+        return {
+            **self.display_config(),
+            "healthy": True,
+            "detail": "connected",
+        }
+
+    monkeypatch.setattr(HTTPSSEAdapter, "health", fake_health)
+    write_runtime_config(
+        "ilo",
+        {
+            "kind": "http_sse",
+            "url": "http://parallax:8081/chat",
+            "auth_env": "ILO_RUNTIME_TOKEN",
+        },
+        home=isolated_agentdrive_home,
+    )
+
+    client = _make_client(tmp_path)
+    _login(client)
+
+    resp = client.get("/api/chat/agents/bare/runtime")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["agent_id"] == "bare"
+    assert body["kind"] == "model"
+    assert body["healthy"] is True
+    assert "url" not in body
+
+    resp = client.get("/api/chat/agents/ilo/runtime")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body == {
+        "agent_id": "ilo",
+        "kind": "http_sse",
+        "url": "http://parallax:8081/chat",
+        "auth_env": "ILO_RUNTIME_TOKEN",
+        "healthy": True,
+        "detail": "connected",
+    }
+
+
+def test_agent_runtime_post_writes_file_for_admin(
+    tmp_path: Path,
+    isolated_agentdrive_home: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    from agentdrive.runtime.http_sse import HTTPSSEAdapter
+
+    async def fake_health(self):
+        return {
+            **self.display_config(),
+            "healthy": True,
+            "detail": "connected",
+        }
+
+    monkeypatch.setattr(HTTPSSEAdapter, "health", fake_health)
+    client = _make_client(tmp_path)
+    _login(client)
+
+    resp = client.post(
+        "/api/chat/agents/ilo/runtime",
+        json={
+            "kind": "http_sse",
+            "url": "http://parallax:8081/chat",
+            "auth_env": "ILO_RUNTIME_TOKEN",
+            "timeout_s": 120,
+        },
+    )
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["kind"] == "http_sse"
+    assert body["auth_env"] == "ILO_RUNTIME_TOKEN"
+    path = isolated_agentdrive_home / "agents" / "ilo" / "runtime.json"
+    assert json.loads(path.read_text(encoding="utf-8"))["url"] == "http://parallax:8081/chat"
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600
+
+
+def test_agent_runtime_post_403s_for_non_admin(tmp_path: Path):
+    client = _make_client(tmp_path)
+    user = client.app.state.auth_store.create_user(
+        "operator",
+        "operator password 123",
+        role="user",
+    )
+    token = client.app.state.auth_store.create_session(user.id)
+    client.cookies.set("agentdrive_session", token)
+
+    resp = client.post(
+        "/api/chat/agents/ilo/runtime",
+        json={"kind": "model", "provider": "ollama", "model": "qwen3:14b"},
+    )
+
+    assert resp.status_code == 403

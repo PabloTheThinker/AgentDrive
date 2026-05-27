@@ -36,7 +36,28 @@
     </div>
     <div class="chat-composer-meta">
       <div class="chat-meta-left">
-        <select class="chat-model-select" id="chatModel"></select>
+        <div class="chat-runtime" id="chatRuntimeStatus">
+          <span class="chat-runtime-dot chat-runtime-unknown" id="chatRuntimeDot"></span>
+          <span id="chatRuntimeKind">runtime</span>
+          <button class="chat-runtime-link" id="chatRuntimeToggle" type="button">⚙ runtime</button>
+          <div class="chat-runtime-popover" id="chatRuntimePopover" hidden>
+            <div class="chat-runtime-row">
+              <span>kind</span>
+              <strong id="chatRuntimePopoverKind">model</strong>
+            </div>
+            <div class="chat-runtime-row" id="chatRuntimeUrlRow" hidden>
+              <span>url</span>
+              <code id="chatRuntimeUrl"></code>
+            </div>
+            <div class="chat-runtime-row" id="chatRuntimeAuthRow" hidden>
+              <span>auth</span>
+              <code id="chatRuntimeAuth"></code>
+            </div>
+            <div class="chat-runtime-model" id="chatModelWrap">
+              <select class="chat-model-select" id="chatModel"></select>
+            </div>
+          </div>
+        </div>
         <div class="chat-toggles">
           <span class="chat-toggle chat-toggle-on" id="chatSubstrateToggle">substrate</span>
         </div>
