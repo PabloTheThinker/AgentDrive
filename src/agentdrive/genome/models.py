@@ -54,7 +54,7 @@ class GenomeProvenance(BaseModel):
             {
                 "parent": parent,
                 "relation": relation,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(datetime.UTC).isoformat(),
                 "notes": notes,
             }
         )
@@ -316,7 +316,7 @@ class Genome(BaseModel):
             {
                 "parent": self.genome_id,
                 "relation": "fork",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(datetime.UTC).isoformat(),
                 "notes": notes,
             }
         )

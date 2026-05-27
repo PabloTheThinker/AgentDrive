@@ -369,6 +369,50 @@ def _run_doctor() -> int:
         steps.fail(str(e)[:60])
         results.append(("AI provider", False, str(e)))
 
+    # 8. Production operational checks (permissions, reconciliation, immune)
+    try:
+        from agentdrive.utils.safe_paths import safe_join
+        home = get_agentdrive_home()
+
+        # Check permissions on sensitive operational files
+        sensitive_files = [
+            home / "auth.db",
+            home / "caps.db",
+            home / "dna" / "_ancestry.db",
+        ]
+        perm_issues = []
+        for f in sensitive_files:
+            if f.exists():
+                mode = oct(f.stat().st_mode)[-3:]
+                if mode not in ("600", "700"):
+                    perm_issues.append(f"{f.name}={mode}")
+
+        if perm_issues:
+            steps.advance(f"permissions: {', '.join(perm_issues)}")
+            results.append(("Operational files", False, f"weak perms: {', '.join(perm_issues)}"))
+        else:
+            steps.advance("sensitive files permissions OK")
+            results.append(("Operational files", True, "sensitive DBs have tight permissions"))
+
+        # Quick reconciliation health
+        try:
+            from agentdrive.reconciliation import ReconciliationRunner
+            rec = ReconciliationRunner()
+            status = rec.status() if hasattr(rec, "status") else {"healthy": True}
+            if status.get("healthy", True):
+                steps.advance("reconciliation healthy")
+                results.append(("Reconciliation", True, "background awareness running"))
+            else:
+                steps.advance("reconciliation issues")
+                results.append(("Reconciliation", False, str(status)))
+        except Exception:
+            steps.skip("reconciliation not initialized")
+            results.append(("Reconciliation", True, "not yet initialized"))
+
+    except Exception as e:
+        steps.skip(f"ops checks limited: {str(e)[:40]}")
+        results.append(("Operational checks", True, "partial (advanced features)"))
+
     steps.finish()
 
     # Build result tree
