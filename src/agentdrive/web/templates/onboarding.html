@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Onboarding · Agent Drive{% endblock %}
+{% block head %}
+<style>
+  body { background: var(--page); color: var(--primary); font-family: 'IBM Plex Sans', system-ui, sans-serif; margin: 0; }
+  .onb-wrap { max-width: 760px; margin: 0 auto; padding: 64px 32px 96px; }
+  .onb-kicker { color: var(--accent); text-transform: uppercase; letter-spacing: 0.14em; font-size: 12px; font-weight: 600; }
+  .onb-h1 { font-size: 28px; font-weight: 600; margin: 8px 0 24px; }
+  .onb-lead { color: var(--secondary); line-height: 1.6; margin-bottom: 32px; }
+  .onb-stepper { display: flex; gap: 4px; margin-bottom: 40px; }
+  .onb-step { flex: 1; padding: 12px 0; border-top: 2px solid var(--line); color: var(--tertiary); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .onb-step.active { border-top-color: var(--accent); color: var(--primary); }
+  .onb-step.done { border-top-color: var(--accent-dim); color: var(--secondary); }
+  .onb-card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 24px; margin-bottom: 16px; }
+  .onb-card h2 { font-size: 18px; font-weight: 600; margin: 0 0 12px; }
+  .onb-card p { color: var(--secondary); line-height: 1.6; margin: 0 0 16px; }
+  .onb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .onb-grid .onb-card { margin-bottom: 0; }
+  .onb-label { display: block; color: var(--secondary); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .onb-input, .onb-textarea, .onb-select { width: 100%; box-sizing: border-box; background: var(--sunken); border: 1px solid var(--line); color: var(--primary); padding: 10px 12px; border-radius: 4px; font-family: inherit; font-size: 14px; margin-bottom: 16px; }
+  .onb-textarea { min-height: 100px; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+  .onb-input:focus, .onb-textarea:focus, .onb-select:focus { outline: none; border-color: var(--accent); }
+  .onb-row { display: flex; gap: 12px; align-items: center; margin-top: 24px; }
+  .onb-btn { background: var(--accent); color: var(--page); padding: 10px 20px; border: none; border-radius: 4px; font-weight: 600; font-size: 14px; cursor: pointer; font-family: inherit; }
+  .onb-btn:hover { background: var(--accent-dim); }
+  .onb-btn-secondary { background: transparent; color: var(--secondary); border: 1px solid var(--line); }
+  .onb-btn-secondary:hover { border-color: var(--line-strong); color: var(--primary); }
+  .onb-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+  .onb-dot-green { background: var(--success); box-shadow: 0 0 8px var(--success); }
+  .onb-dot-amber { background: var(--warning); }
+  .onb-dot-red { background: var(--danger); }
+  .onb-mono { font-family: 'JetBrains Mono', monospace; color: var(--accent); font-size: 13px; }
+  .onb-hint { color: var(--tertiary); font-size: 13px; line-height: 1.5; margin-top: 8px; }
+  .onb-error { color: var(--danger); background: rgba(248, 113, 113, 0.08); border: 1px solid var(--danger); border-radius: 4px; padding: 12px; margin-bottom: 16px; font-size: 14px; }
+  .onb-success { color: var(--success); background: rgba(74, 222, 128, 0.08); border: 1px solid var(--success); border-radius: 4px; padding: 12px; margin-bottom: 16px; font-size: 14px; }
+  a.onb-link { color: var(--accent); text-decoration: none; }
+  a.onb-link:hover { text-decoration: underline; }
+  .onb-radio-card { background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 16px; margin-bottom: 12px; cursor: pointer; }
+  .onb-radio-card.selected { border-color: var(--accent); background: var(--accent-glow); }
+  .onb-radio-card input { margin-right: 8px; }
+</style>
+{% endblock %}
+{% block layout %}
+<div class="onb-wrap">
+  <div class="onb-kicker">Agent Drive setup</div>
+  <h1 class="onb-h1">{{ step_title }}</h1>
+
+  <div class="onb-stepper">
+    <div class="onb-step {% if step == 1 %}active{% elif step > 1 %}done{% endif %}">1 · Welcome</div>
+    <div class="onb-step {% if step == 2 %}active{% elif step > 2 %}done{% endif %}">2 · Agent</div>
+    <div class="onb-step {% if step == 3 %}active{% elif step > 3 %}done{% endif %}">3 · Runtime</div>
+    <div class="onb-step {% if step == 4 %}active{% endif %}">4 · Test &amp; finish</div>
+  </div>
+
+  {% if error %}<div class="onb-error">{{ error }}</div>{% endif %}
+
+  {% if step == 1 %}
+    <div class="onb-card">
+      <h2>What this is</h2>
+      <p>
+        Agent Drive is a substrate-grounded workspace for your AI agents. The
+        sidebar chat talks to <em>your</em> agent — wherever it runs — over
+        HTTP+SSE. Bring your own runtime. If you don't have one yet, you can
+        wire the sidebar to a model provider as a fallback.
+      </p>
+      <p>This wizard takes you through:</p>
+      <ul style="color: var(--secondary); line-height: 1.8;">
+        <li>Creating an agent record (id, label, optional identity).</li>
+        <li>Telling Agent Drive how to reach your agent (or a model).</li>
+        <li>Verifying the connection and opening chat.</li>
+      </ul>
+      <div class="onb-row">
+        <a class="onb-btn" href="/onboarding?step=2">Start</a>
+        <a class="onb-btn onb-btn-secondary" href="/.well-known/agent-drive.html">Agent-facing docs</a>
+      </div>
+    </div>
+
+  {% elif step == 2 %}
+    <div class="onb-card">
+      <h2>Create your agent</h2>
+      <p>One directory per agent under <span class="onb-mono">~/.agentdrive/agents/&lt;id&gt;/</span>. The optional identity becomes the system prompt prefix.</p>
+      <form method="post" action="/onboarding/agent">
+        <label class="onb-label">Agent id (slug)</label>
+        <input class="onb-input" name="agent_id" value="{{ form.agent_id }}" placeholder="ilo" required pattern="[a-z0-9][a-z0-9_-]{1,63}">
+        <div class="onb-hint">Lowercase letters, digits, hyphen, underscore. Used in URLs and file paths.</div>
+
+        <label class="onb-label" style="margin-top: 16px;">Display label</label>
+        <input class="onb-input" name="label" value="{{ form.label }}" placeholder="ILO">
+
+        <label class="onb-label">Identity (optional)</label>
+        <textarea class="onb-textarea" name="identity" placeholder="You are ILO, conductor of...">{{ form.identity }}</textarea>
+        <div class="onb-hint">Markdown supported. Agent Drive prepends this to every system prompt for this agent.</div>
+
+        <div class="onb-row">
+          <button class="onb-btn" type="submit">Create agent</button>
+          <a class="onb-btn onb-btn-secondary" href="/onboarding?step=1">Back</a>
+        </div>
+      </form>
+    </div>
+
+  {% elif step == 3 %}
+    <div class="onb-card">
+      <h2>How does Agent Drive reach <span class="onb-mono">{{ agent_id }}</span>?</h2>
+      <p>Two paths. Pick one — you can change it any time in settings.</p>
+      <form method="post" action="/onboarding/runtime">
+        <input type="hidden" name="agent_id" value="{{ agent_id }}">
+        <div class="onb-grid">
+          <label class="onb-radio-card{% if form.kind == 'http_sse' %} selected{% endif %}">
+            <input type="radio" name="kind" value="http_sse" {% if form.kind == 'http_sse' %}checked{% endif %} required>
+            <strong>My agent (HTTP + SSE)</strong>
+            <div class="onb-hint" style="margin-top: 8px;">Agent Drive POSTs chat turns to your endpoint and streams the response back. See the <a class="onb-link" href="/.well-known/agent-drive.html#sse">protocol contract</a>.</div>
+          </label>
+          <label class="onb-radio-card{% if form.kind == 'model' %} selected{% endif %}">
+            <input type="radio" name="kind" value="model" {% if form.kind == 'model' %}checked{% endif %}>
+            <strong>LLM fallback</strong>
+            <div class="onb-hint" style="margin-top: 8px;">Use a provider directly (OpenAI, Anthropic, Ollama, etc.). Requires an API key in <span class="onb-mono">~/.agentdrive/.env</span>.</div>
+          </label>
+        </div>
+
+        <div style="margin-top: 24px;">
+          <label class="onb-label">Endpoint URL (HTTP+SSE)</label>
+          <input class="onb-input" name="url" value="{{ form.url }}" placeholder="http://parallax.tailnet:8081/chat">
+          <label class="onb-label">Auth env var (optional)</label>
+          <input class="onb-input" name="auth_env" value="{{ form.auth_env }}" placeholder="ILO_RUNTIME_TOKEN">
+          <div class="onb-hint">Agent Drive reads this env var and sends <span class="onb-mono">Authorization: Bearer &lt;value&gt;</span>.</div>
+        </div>
+
+        <div style="margin-top: 24px;">
+          <label class="onb-label">Provider (LLM fallback)</label>
+          {% if available_providers %}
+            <select class="onb-select" name="provider">
+              {% for p in available_providers %}
+                <option value="{{ p.name }}" {% if form.provider == p.name %}selected{% endif %}>{{ p.display_name }} · {{ p.default_model }}</option>
+              {% endfor %}
+            </select>
+          {% else %}
+            <div class="onb-hint" style="color: var(--warning);">No provider keys detected. Add one to <span class="onb-mono">~/.agentdrive/.env</span> and refresh to use the fallback.</div>
+          {% endif %}
+        </div>
+
+        <div class="onb-row">
+          <button class="onb-btn" type="submit">Save runtime</button>
+          <a class="onb-btn onb-btn-secondary" href="/onboarding?step=2">Back</a>
+        </div>
+      </form>
+    </div>
+
+  {% elif step == 4 %}
+    <div class="onb-card">
+      <h2>Connection check</h2>
+      <p>Agent <span class="onb-mono">{{ agent_id }}</span> runtime kind: <strong>{{ runtime.kind }}</strong>.</p>
+      <p>
+        <span class="onb-dot onb-dot-{{ 'green' if runtime.healthy else 'amber' }}"></span>
+        <span style="vertical-align: middle;">{{ runtime.detail }}</span>
+      </p>
+      {% if runtime.kind == 'http_sse' %}
+        <p>Endpoint: <span class="onb-mono">{{ runtime.url }}</span></p>
+      {% elif runtime.kind == 'model' %}
+        <p>Provider: <span class="onb-mono">{{ runtime.provider }}</span> · model: <span class="onb-mono">{{ runtime.model }}</span></p>
+      {% endif %}
+      <div class="onb-row">
+        <a class="onb-btn" href="/dashboard#chat">Open chat</a>
+        <a class="onb-btn onb-btn-secondary" href="/.well-known/agent-drive.html">Read the agent-facing docs →</a>
+      </div>
+    </div>
+    <script>
+      try { localStorage.setItem("agentdrive.onboarding.done", "1"); } catch (e) {}
+    </script>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1459,6 +1459,266 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
 
         return StreamingResponse(event_stream(), media_type="text/event-stream")
 
+    # ── Onboarding flow ───────────────────────────────────────────────
+    import re as _re
+
+    from agentdrive.providers import base as _providers_base
+
+    _SLUG_RE = _re.compile(r"^[a-z0-9][a-z0-9_-]{1,63}$")
+
+    _STEP_TITLES = {
+        1: "Welcome",
+        2: "Create your agent",
+        3: "Choose a runtime",
+        4: "Test &amp; finish",
+    }
+
+    def _onboarding_available_providers():
+        out = []
+        for p in _providers_base.list_available():
+            out.append(
+                {
+                    "name": p.name,
+                    "display_name": p.display_name,
+                    "default_model": p.default_model,
+                }
+            )
+        return out
+
+    def _onboarding_render(
+        request: Request,
+        step: int,
+        *,
+        agent_id: str = "",
+        form: dict | None = None,
+        error: str = "",
+        runtime: dict | None = None,
+    ):
+        form = form or {}
+        ctx = {
+            "request": request,
+            "step": step,
+            "step_title": _STEP_TITLES.get(step, "Setup"),
+            "agent_id": agent_id,
+            "form": {
+                "agent_id": form.get("agent_id", agent_id),
+                "label": form.get("label", ""),
+                "identity": form.get("identity", ""),
+                "kind": form.get("kind", "http_sse"),
+                "url": form.get("url", ""),
+                "auth_env": form.get("auth_env", ""),
+                "provider": form.get("provider", ""),
+            },
+            "available_providers": _onboarding_available_providers(),
+            "runtime": runtime or {},
+            "error": error,
+            "version": AGENTDRIVE_VERSION,
+        }
+        return templates.TemplateResponse(request, "onboarding.html", ctx)
+
+    @app.get("/onboarding", response_class=HTMLResponse)
+    def onboarding_get(
+        request: Request,
+        step: int = 1,
+        agent_id: str = "",
+        user: User = Depends(require_user),
+    ):
+        step = max(1, min(4, step))
+        runtime = {}
+        if step == 4 and agent_id and _SLUG_RE.match(agent_id):
+            cfg = load_runtime_config(agent_id)
+            runtime = {
+                "kind": cfg.get("kind", "model"),
+                "url": cfg.get("url", ""),
+                "provider": cfg.get("provider", ""),
+                "model": cfg.get("model", ""),
+                "healthy": True,
+                "detail": "runtime.json configured",
+            }
+        return _onboarding_render(request, step, agent_id=agent_id, runtime=runtime)
+
+    @app.post("/onboarding/agent")
+    def onboarding_create_agent(
+        request: Request,
+        agent_id: Annotated[str, Form()] = "",
+        label: Annotated[str, Form()] = "",
+        identity: Annotated[str, Form()] = "",
+        user: User = Depends(require_user),
+    ):
+        slug = agent_id.strip().lower()
+        if not _SLUG_RE.match(slug):
+            return _onboarding_render(
+                request,
+                2,
+                form={"agent_id": agent_id, "label": label, "identity": identity},
+                error="Agent id must be a slug: lowercase letters, digits, hyphen, underscore. 2–64 chars.",
+            )
+        home = get_agentdrive_home()
+        agent_dir = home / "agents" / slug
+        agent_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            agent_dir.chmod(0o700)
+        except OSError:
+            pass
+        identity_body = identity.strip()
+        if identity_body or label.strip():
+            header = f"# {label.strip() or slug}\n\n" if label.strip() else ""
+            (agent_dir / "identity.md").write_text(
+                header + identity_body + ("\n" if identity_body else ""),
+                encoding="utf-8",
+            )
+        return _redirect(f"/onboarding?step=3&agent_id={slug}")
+
+    @app.post("/onboarding/runtime")
+    async def onboarding_set_runtime(
+        request: Request,
+        agent_id: Annotated[str, Form()] = "",
+        kind: Annotated[str, Form()] = "http_sse",
+        url: Annotated[str, Form()] = "",
+        auth_env: Annotated[str, Form()] = "",
+        provider: Annotated[str, Form()] = "",
+        user: User = Depends(require_user),
+    ):
+        slug = agent_id.strip().lower()
+        if not _SLUG_RE.match(slug):
+            return _onboarding_render(request, 3, agent_id=agent_id, error="Invalid agent id.")
+        if kind == "http_sse":
+            if not url.strip():
+                return _onboarding_render(
+                    request,
+                    3,
+                    agent_id=slug,
+                    form={"kind": kind, "url": url, "auth_env": auth_env},
+                    error="Endpoint URL is required for HTTP+SSE runtime.",
+                )
+            config = {"kind": "http_sse", "url": url.strip()}
+            if auth_env.strip():
+                config["auth_env"] = auth_env.strip()
+        elif kind == "model":
+            if not provider.strip():
+                return _onboarding_render(
+                    request,
+                    3,
+                    agent_id=slug,
+                    form={"kind": kind, "provider": provider},
+                    error="Pick a provider (or add an API key to ~/.agentdrive/.env).",
+                )
+            profile = _providers_base.get(provider.strip())
+            if profile is None:
+                return _onboarding_render(
+                    request,
+                    3,
+                    agent_id=slug,
+                    form={"kind": kind, "provider": provider},
+                    error=f"Unknown provider: {provider}",
+                )
+            config = {
+                "kind": "model",
+                "provider": profile.name,
+                "model": profile.default_model,
+            }
+        else:
+            return _onboarding_render(
+                request, 3, agent_id=slug, error=f"Unsupported runtime kind: {kind}"
+            )
+        try:
+            write_runtime_config(slug, config)
+        except ValueError as exc:
+            return _onboarding_render(request, 3, agent_id=slug, error=str(exc))
+        return _redirect(f"/onboarding?step=4&agent_id={slug}")
+
+    # ── Agent-facing spec (public) ────────────────────────────────────
+    import json as _json_spec
+
+    _SPEC_ENDPOINTS = [
+        {
+            "method": "GET",
+            "path": "/api/chat/agents",
+            "auth": "user",
+            "purpose": "List agents on this Drive.",
+        },
+        {
+            "method": "GET",
+            "path": "/api/chat/agents/{id}/runtime",
+            "auth": "user",
+            "purpose": "Read agent runtime config + health.",
+        },
+        {
+            "method": "POST",
+            "path": "/api/chat/agents/{id}/runtime",
+            "auth": "admin",
+            "purpose": "Write agent runtime.json.",
+        },
+        {
+            "method": "GET",
+            "path": "/api/chat/agents/{id}/providers",
+            "auth": "user",
+            "purpose": "List providers + models available for an agent.",
+        },
+        {
+            "method": "GET",
+            "path": "/api/chat/threads",
+            "auth": "user",
+            "purpose": "List chat threads.",
+        },
+        {
+            "method": "POST",
+            "path": "/api/chat/threads",
+            "auth": "user",
+            "purpose": "Create a new chat thread.",
+        },
+        {
+            "method": "GET",
+            "path": "/api/chat/threads/{id}",
+            "auth": "user",
+            "purpose": "Fetch thread + messages.",
+        },
+        {
+            "method": "POST",
+            "path": "/api/chat/threads/{id}/messages",
+            "auth": "user",
+            "purpose": "Stream a chat turn via SSE.",
+        },
+    ]
+
+    @app.get("/.well-known/agent-drive.html", response_class=HTMLResponse)
+    def agent_drive_spec(request: Request):
+        spec = {
+            "version": AGENTDRIVE_VERSION,
+            "runtime_kinds": ["http_sse", "model"],
+            "sse_events": ["data", "done", "error"],
+            "endpoints": _SPEC_ENDPOINTS,
+            "runtime_json_schema": {
+                "http_sse": {
+                    "kind": "http_sse",
+                    "url": "<string, required>",
+                    "auth_env": "<string, optional>",
+                    "timeout_s": "<int, optional, default 120>",
+                },
+                "model": {
+                    "kind": "model",
+                    "provider": "<provider name, e.g. anthropic>",
+                    "model": "<model id>",
+                },
+            },
+            "request_shape": {
+                "method": "POST",
+                "content_type": "application/json",
+                "body": {"messages": "list[{role,content}]", "agent_id": "string"},
+                "auth_header": "Bearer <auth_env value, optional>",
+            },
+        }
+        return templates.TemplateResponse(
+            request,
+            "agent_drive_spec.html",
+            {
+                "request": request,
+                "version": AGENTDRIVE_VERSION,
+                "spec_json": _json_spec.dumps(spec, indent=2),
+                "endpoints": _SPEC_ENDPOINTS,
+            },
+        )
+
     return app
 
 
@@ -1469,6 +1729,7 @@ _ALLOWED_REDIRECT_PATHS = {
     "/",
     "/dashboard",
     "/login",
+    "/onboarding",
     "/setup",
     "/dna",
     "/peers",
