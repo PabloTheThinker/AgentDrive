@@ -56,12 +56,20 @@ class ProviderProfile:
         if not self.models_url:
             return self.fallback_models
         try:
-            resp = httpx.get(self.models_url, timeout=10)
+            headers = {}
+            key = self.get_api_key()
+            if key:
+                headers["Authorization"] = f"Bearer {key}"
+            resp = httpx.get(self.models_url, headers=headers, timeout=10)
             if resp.status_code == 200:
                 data = resp.json()
                 models = []
                 for m in data.get("data", []):
                     mid = m.get("id", "")
+                    if mid:
+                        models.append(mid)
+                for m in data.get("models", []):
+                    mid = m.get("name", "") or m.get("model", "") or m.get("id", "")
                     if mid:
                         models.append(mid)
                 return models[:50] if models else self.fallback_models

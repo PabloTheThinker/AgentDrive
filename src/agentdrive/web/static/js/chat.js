@@ -21,6 +21,19 @@
   let agents = [];
   let activeAgentId = localStorage.getItem("agentdrive.chat.agentId") || "";
 
+  const providerAgentKey = () => activeAgentId || "__default__";
+  const modelStorageKey = () => `agentdrive.chat.model.${providerAgentKey()}`;
+
+  const selectedProviderModel = () => {
+    const raw = els.model.value || "";
+    const idx = raw.indexOf("::");
+    if (idx === -1) return { provider: "", model: raw };
+    return {
+      provider: raw.slice(0, idx),
+      model: raw.slice(idx + 2),
+    };
+  };
+
   const renderAgentHeader = () => {
     if (!els.agentName) return;
     if (!agents.length) {
@@ -50,8 +63,52 @@
       const data = await resp.json();
       agents = data.agents || [];
       renderAgentHeader();
+      await loadAgentProviders();
     } catch {
       /* offline-safe */
+    }
+  };
+
+  const loadAgentProviders = async (preferredValue = "") => {
+    if (!els.model) return;
+    setStatus("loading models…");
+    const agentId = encodeURIComponent(providerAgentKey());
+    try {
+      const resp = await fetch(`/api/chat/agents/${agentId}/providers`);
+      if (!resp.ok) {
+        setStatus("models unavailable");
+        return;
+      }
+      const data = await resp.json();
+      const providers = data.providers || [];
+      els.model.innerHTML = "";
+      let defaultValue = "";
+      for (const provider of providers) {
+        const group = document.createElement("optgroup");
+        group.label = provider.display_name || provider.name;
+        for (const model of provider.models || []) {
+          const value = `${provider.name}::${model}`;
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = model;
+          group.appendChild(option);
+          if (!defaultValue || provider.is_default && model === provider.default_model) {
+            defaultValue = value;
+          }
+        }
+        if (group.children.length) els.model.appendChild(group);
+      }
+      const savedValue = localStorage.getItem(modelStorageKey()) || "";
+      const wanted = preferredValue || savedValue || defaultValue;
+      if (wanted && Array.from(els.model.options).some((opt) => opt.value === wanted)) {
+        els.model.value = wanted;
+      } else if (els.model.options.length) {
+        els.model.selectedIndex = 0;
+      }
+      els.model.disabled = !els.model.options.length;
+      setStatus(els.model.options.length ? "ready" : "no providers");
+    } catch {
+      setStatus("models unavailable");
     }
   };
 
@@ -67,6 +124,7 @@
     els.thread.innerHTML =
       '<div class="chat-empty">Switched to ' + activeAgentId + '. New thread.</div>';
     renderAgentHeader();
+    void loadAgentProviders();
   };
 
   // ── helpers ──────────────────────────────────────────────────────
@@ -149,7 +207,7 @@
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: els.model.value,
+        ...selectedProviderModel(),
         agent_id: activeAgentId,
       }),
     });
@@ -177,6 +235,9 @@
         activeAgentId = data.agent_id;
         localStorage.setItem("agentdrive.chat.agentId", activeAgentId);
         renderAgentHeader();
+        await loadAgentProviders(
+          data.provider && data.model ? `${data.provider}::${data.model}` : "",
+        );
       }
       for (const m of data.messages || []) {
         const node = appendMsg(m.role, m.content);
@@ -220,7 +281,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: text,
-          model: els.model.value,
+          ...selectedProviderModel(),
           use_substrate: useSubstrate,
         }),
       });
@@ -259,7 +320,8 @@
           scrollThread();
         } else if (event === "done") {
           textEl.classList.remove("chat-streaming");
-          metaEl.textContent = `${data.model || ""} · ${(data.substrate_reads || []).length} reads`;
+          const provider = data.provider ? `${data.provider} · ` : "";
+          metaEl.textContent = `${provider}${data.model || ""} · ${(data.substrate_reads || []).length} reads`;
           setStatus("ready");
         } else if (event === "error") {
           textEl.innerHTML = `<em>${escape(data.error || "error")}</em>`;
@@ -314,6 +376,9 @@
   els.substrateToggle.addEventListener("click", () => {
     useSubstrate = !useSubstrate;
     els.substrateToggle.classList.toggle("chat-toggle-on", useSubstrate);
+  });
+  els.model.addEventListener("change", () => {
+    localStorage.setItem(modelStorageKey(), els.model.value);
   });
 
   // Click the header agent name to cycle through agents

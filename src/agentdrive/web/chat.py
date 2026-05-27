@@ -26,6 +26,9 @@ from typing import Any
 import httpx
 
 from agentdrive.constants import get_agentdrive_home
+from agentdrive.providers.agent_providers import resolve_agent_providers
+from agentdrive.providers.base import ProviderProfile
+from agentdrive.providers.base import get as get_provider
 
 OLLAMA_ENDPOINT = "http://127.0.0.1:11434"
 DEFAULT_MODEL = "qwen3:14b"
@@ -94,6 +97,7 @@ class ChatThread:
     thread_id: str
     created_at: float
     model: str = DEFAULT_MODEL
+    provider: str = ""
     title: str = ""
     agent_id: str = ""
 
@@ -174,6 +178,7 @@ class ChatStore:
     def create_thread(
         self,
         model: str = DEFAULT_MODEL,
+        provider: str = "",
         title: str = "",
         agent_id: str = "",
     ) -> ChatThread:
@@ -182,6 +187,7 @@ class ChatStore:
             thread_id=thread_id,
             created_at=time.time(),
             model=model,
+            provider=provider,
             title=title,
             agent_id=agent_id,
         )
@@ -421,52 +427,141 @@ class SubstrateContext:
 
 
 # ─────────────────────────────────────────────────────────────────────
-# Ollama streaming client
+# Provider streaming client
 # ─────────────────────────────────────────────────────────────────────
 
 
-class OllamaStreamClient:
-    """Minimal async streaming client for Ollama /api/chat."""
+class LLMStreamClient:
+    """Async streaming client for registry-backed LLM provider profiles."""
 
-    def __init__(self, endpoint: str = OLLAMA_ENDPOINT, timeout_s: float = 120.0) -> None:
-        self.endpoint = endpoint.rstrip("/")
+    def __init__(
+        self,
+        profile: ProviderProfile,
+        timeout_s: float = 120.0,
+        transport: httpx.AsyncBaseTransport | None = None,
+    ) -> None:
+        self.profile = profile
+        self.base_url = profile.base_url.rstrip("/")
         self.timeout_s = timeout_s
+        self.transport = transport
 
     async def stream_chat(
         self,
         model: str,
         messages: list[dict[str, str]],
     ) -> AsyncIterator[str]:
-        """Yield response token chunks as plain strings.
+        """Yield response token chunks as plain strings."""
+        if self.profile.api_mode == "anthropic":
+            async for piece in self._stream_anthropic(model, messages):
+                yield piece
+            return
+        async for piece in self._stream_chat_completions(model, messages):
+            yield piece
 
-        Falls back to a clear error message if Ollama is unreachable, instead
-        of raising — the UI surfaces it as the assistant turn.
-        """
-        url = f"{self.endpoint}/api/chat"
+    async def _stream_chat_completions(
+        self,
+        model: str,
+        messages: list[dict[str, str]],
+    ) -> AsyncIterator[str]:
+        url = f"{self.base_url}/chat/completions"
+        headers: dict[str, str] = {}
+        key = self.profile.get_api_key()
+        if self.profile.requires_key and key:
+            headers["Authorization"] = f"Bearer {key}"
         body = {"model": model, "messages": messages, "stream": True}
         try:
-            async with httpx.AsyncClient(timeout=self.timeout_s) as client:
-                async with client.stream("POST", url, json=body) as resp:
+            async with httpx.AsyncClient(
+                timeout=self.timeout_s,
+                transport=self.transport,
+            ) as client:
+                async with client.stream("POST", url, headers=headers, json=body) as resp:
                     if resp.status_code >= 400:
                         text = await resp.aread()
-                        yield f"[ollama HTTP {resp.status_code}: {text.decode('utf-8', 'replace')[:200]}]"
+                        yield self._http_error(resp.status_code, text)
                         return
                     async for line in resp.aiter_lines():
                         line = line.strip()
                         if not line:
                             continue
+                        if not line.startswith("data:"):
+                            continue
+                        payload = line.removeprefix("data:").strip()
+                        if payload == "[DONE]":
+                            return
                         try:
-                            chunk = json.loads(line)
+                            chunk = json.loads(payload)
                         except ValueError:
                             continue
-                        msg = chunk.get("message") or {}
-                        piece = msg.get("content", "")
+                        choices = chunk.get("choices") or []
+                        if not choices:
+                            continue
+                        delta = choices[0].get("delta") or {}
+                        piece = delta.get("content", "")
                         if piece:
                             yield piece
-                        if chunk.get("done"):
-                            return
         except httpx.HTTPError as exc:
-            yield f"[ollama unreachable: {exc}]"
+            yield self._unreachable_error(exc)
+
+    async def _stream_anthropic(
+        self,
+        model: str,
+        messages: list[dict[str, str]],
+    ) -> AsyncIterator[str]:
+        url = f"{self.base_url}/messages"
+        headers = {"anthropic-version": "2023-06-01"}
+        key = self.profile.get_api_key()
+        if self.profile.requires_key and key:
+            headers["x-api-key"] = key
+        system_parts = [m["content"] for m in messages if m.get("role") == "system"]
+        chat_messages = [m for m in messages if m.get("role") in ("user", "assistant")]
+        body: dict[str, Any] = {
+            "model": model,
+            "messages": chat_messages,
+            "stream": True,
+            "max_tokens": 4096,
+        }
+        if system_parts:
+            body["system"] = "\n\n".join(system_parts)
+        try:
+            async with httpx.AsyncClient(
+                timeout=self.timeout_s,
+                transport=self.transport,
+            ) as client:
+                async with client.stream("POST", url, headers=headers, json=body) as resp:
+                    if resp.status_code >= 400:
+                        text = await resp.aread()
+                        yield self._http_error(resp.status_code, text)
+                        return
+                    async for line in resp.aiter_lines():
+                        line = line.strip()
+                        if not line.startswith("data:"):
+                            continue
+                        payload = line.removeprefix("data:").strip()
+                        if payload == "[DONE]":
+                            return
+                        try:
+                            chunk = json.loads(payload)
+                        except ValueError:
+                            continue
+                        if chunk.get("type") != "content_block_delta":
+                            continue
+                        delta = chunk.get("delta") or {}
+                        piece = delta.get("text", "")
+                        if piece:
+                            yield piece
+        except httpx.HTTPError as exc:
+            yield self._unreachable_error(exc)
+
+    def _http_error(self, status_code: int, body: bytes) -> str:
+        text = body.decode("utf-8", "replace")[:200]
+        return f"[{self.profile.name} HTTP {status_code}: {text}]"
+
+    def _unreachable_error(self, exc: httpx.HTTPError) -> str:
+        return f"[{self.profile.name} unreachable: {exc}]"
+
+
+# Back-compat alias for callers that imported the old name.
+OllamaStreamClient = LLMStreamClient
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -491,8 +586,9 @@ async def stream_chat_response(
     *,
     store: ChatStore | None = None,
     substrate: SubstrateContext | None = None,
-    client: OllamaStreamClient | None = None,
+    client: LLMStreamClient | None = None,
     model: str | None = None,
+    provider: str | None = None,
     use_substrate: bool = True,
     identity: str | None = None,
 ) -> AsyncIterator[dict[str, Any]]:
@@ -509,21 +605,27 @@ async def stream_chat_response(
     """
     store = store or ChatStore()
     substrate = substrate or SubstrateContext()
-    client = client or OllamaStreamClient()
+    thread = store.get_thread(thread_id)
+    if thread is None:
+        yield {"event": "error", "data": {"error": f"thread not found: {thread_id}"}}
+        return
+
     # Resolve identity per-thread so each thread targets the user's chosen
     # agent. If no identity is passed explicitly, look up the thread's
     # agent_id and load that agent's identity file from disk; fall back
     # to the generic prompt when the user has no agents.
     if identity is None:
-        thread_meta = store.get_thread(thread_id)
-        agent_id = thread_meta.agent_id if thread_meta else ""
-        identity = resolve_identity_prompt(agent_id)
+        identity = resolve_identity_prompt(thread.agent_id)
 
-    thread = store.get_thread(thread_id)
-    if thread is None:
-        yield {"event": "error", "data": {"error": f"thread not found: {thread_id}"}}
+    chosen_profile = _resolve_thread_provider(thread, provider)
+    if chosen_profile is None:
+        yield {
+            "event": "error",
+            "data": {"error": "no available providers for this agent"},
+        }
         return
     chosen_model = model or thread.model or DEFAULT_MODEL
+    client = client or LLMStreamClient(chosen_profile)
 
     # 1. record the user message
     user_msg = ChatMessage(role="user", content=user_text)
@@ -564,6 +666,20 @@ async def stream_chat_response(
         "data": {
             "content": assistant_msg.content,
             "model": chosen_model,
+            "provider": chosen_profile.name,
             "substrate_reads": [asdict(r) for r in reads],
         },
     }
+
+
+def _resolve_thread_provider(
+    thread: ChatThread,
+    provider_override: str | None = None,
+) -> ProviderProfile | None:
+    provider_name = provider_override or thread.provider
+    if provider_name:
+        profile = get_provider(provider_name)
+        if profile is not None and profile in resolve_agent_providers(thread.agent_id):
+            return profile
+    providers = resolve_agent_providers(thread.agent_id)
+    return providers[0] if providers else None

@@ -1228,11 +1228,32 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         return _redirect("/settings/users")
 
     # ── Chat sidebar API ─────────────────────────────────────────────
+    from agentdrive.providers.agent_providers import (
+        resolve_agent_default,
+        resolve_agent_providers,
+    )
     from agentdrive.web.chat import (
         ChatStore,
         list_agents,
         stream_chat_response,
     )
+
+    _provider_model_cache: dict[str, tuple[float, list[str]]] = {}
+
+    def _provider_models(profile):  # noqa: ANN001, ANN202
+        cached = _provider_model_cache.get(profile.name)
+        now = time.time()
+        if cached and now - cached[0] < 60:
+            return cached[1]
+        models = profile.fetch_models()
+        _provider_model_cache[profile.name] = (now, models)
+        return models
+
+    def _split_provider_model(value: str) -> tuple[str, str]:
+        if "::" not in value:
+            return "", value
+        provider_name, model_name = value.split("::", 1)
+        return provider_name, model_name
 
     @app.get("/api/chat/agents")
     def list_chat_agents(user: User = Depends(require_user)):
@@ -1247,6 +1268,23 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             ]
         }
 
+    @app.get("/api/chat/agents/{agent_id}/providers")
+    def list_chat_agent_providers(agent_id: str, user: User = Depends(require_user)):
+        default = resolve_agent_default(agent_id)
+        providers = []
+        for profile in resolve_agent_providers(agent_id):
+            models = _provider_models(profile)
+            providers.append(
+                {
+                    "name": profile.name,
+                    "display_name": profile.display_name,
+                    "models": models,
+                    "default_model": profile.default_model,
+                    "is_default": bool(default and default[0] == profile.name),
+                }
+            )
+        return {"providers": providers}
+
     @app.get("/api/chat/threads")
     def list_chat_threads(user: User = Depends(require_user)):
         chat_store = ChatStore()
@@ -1257,6 +1295,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                     "thread_id": t.thread_id,
                     "created_at": t.created_at,
                     "model": t.model,
+                    "provider": t.provider,
                     "title": t.title,
                     "agent_id": t.agent_id,
                 }
@@ -1270,18 +1309,35 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             body = await request.json()
         except Exception:
             body = {}
-        model = body.get("model") or "qwen3:14b"
+        model = body.get("model") or ""
+        provider = body.get("provider") or ""
+        parsed_provider, parsed_model = _split_provider_model(model)
+        provider = provider or parsed_provider
+        model = parsed_model
         title = body.get("title") or ""
         agent_id = body.get("agent_id") or ""
         if not agent_id:
             agents = list_agents()
             if agents:
                 agent_id = agents[0].agent_id
-        thread = ChatStore().create_thread(model=model, title=title, agent_id=agent_id)
+        if not provider or not model:
+            default = resolve_agent_default(agent_id)
+            if default:
+                provider = provider or default[0]
+                model = model or default[1]
+        if not model:
+            model = "qwen3:14b"
+        thread = ChatStore().create_thread(
+            model=model,
+            provider=provider,
+            title=title,
+            agent_id=agent_id,
+        )
         return {
             "thread_id": thread.thread_id,
             "created_at": thread.created_at,
             "model": thread.model,
+            "provider": thread.provider,
             "title": thread.title,
             "agent_id": thread.agent_id,
         }
@@ -1297,6 +1353,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             "thread_id": thread.thread_id,
             "created_at": thread.created_at,
             "model": thread.model,
+            "provider": thread.provider,
             "title": thread.title,
             "agent_id": thread.agent_id,
             "messages": [m.to_dict() for m in messages],
@@ -1314,6 +1371,11 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         if not content:
             raise HTTPException(status_code=400, detail="content required")
         model = body.get("model")
+        provider = body.get("provider")
+        if model:
+            parsed_provider, parsed_model = _split_provider_model(model)
+            provider = provider or parsed_provider
+            model = parsed_model
         use_substrate = bool(body.get("use_substrate", True))
 
         import json as _json
@@ -1323,6 +1385,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                 thread_id,
                 content,
                 model=model,
+                provider=provider,
                 use_substrate=use_substrate,
             ):
                 payload = _json.dumps(event["data"], default=str)
