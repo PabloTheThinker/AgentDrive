@@ -117,7 +117,7 @@ def mode_1_corrupted_sidecar() -> Tuple[bool, str]:
     for label, payload in (
         ("not-json", b"{not json at all"),
         ("wrong-types", b'{"stars": "five", "encounters": null, "success_rate": []}'),
-        ("missing-fields", b'{}'),
+        ("missing-fields", b"{}"),
         ("nested-junk", b'{"stars": {"a": 1}}'),
     ):
         sidecar.write_bytes(payload)
@@ -149,9 +149,7 @@ def mode_2_race_on_confidence_sidecar() -> Tuple[bool, str]:
     pool = AgentDrive(registry=registry)
     # Seed a few outcomes so update has something to write.
     for _ in range(5):
-        g.record_improvement(
-            description="seed", proposed_by="probe", score_delta=0.0
-        )
+        g.record_improvement(description="seed", proposed_by="probe", score_delta=0.0)
     registry.save(g)
 
     errors: List[str] = []
@@ -293,7 +291,11 @@ def mode_5_validate_after_tampering() -> Tuple[bool, str]:
         sha_unchanged = refreshed is not None and refreshed.sha256 == original_sha
         # Not a failure on its own — validate did re-run rules — but record
         # it as a soft note so the harness call-out can flag it.
-        note = "sha unchanged after tamper (no integrity re-check)" if sha_unchanged else "sha refreshed"
+        note = (
+            "sha unchanged after tamper (no integrity re-check)"
+            if sha_unchanged
+            else "sha refreshed"
+        )
     return True, f"validate re-ran rules and caught injected content [{note}]"
 
 
@@ -423,7 +425,10 @@ def mode_10_peer_invalid_trust() -> Tuple[bool, str]:
             f"trust_level mutated despite invalid input: "
             f"{before.trust_level!r} → {after.trust_level if after else 'gone'!r}",
         )
-    return True, f"rejected invalid trust ({'raised' if raised else 'returned False'}), no persisted mutation"
+    return (
+        True,
+        f"rejected invalid trust ({'raised' if raised else 'returned False'}), no persisted mutation",
+    )
 
 
 def mode_11_reconciliation_under_live_mutation() -> Tuple[bool, str]:
@@ -534,7 +539,10 @@ def mode_13_prompt_sanity_on_malicious_manifest() -> Tuple[bool, str]:
 
         refreshed = q.get(entry.quarantine_id)
         if refreshed is None or not any("prompt_sanity" in r for r in refreshed.reasons):
-            return False, f"entry.reasons missing prompt_sanity: {refreshed.reasons if refreshed else None}"
+            return (
+                False,
+                f"entry.reasons missing prompt_sanity: {refreshed.reasons if refreshed else None}",
+            )
     return True, f"PromptSanity caught injection: {sanity[2][:60]!r}"
 
 

@@ -265,8 +265,7 @@ def subscribe_ribbons(instance_for_pool: dict) -> None:
         ribbon(
             "C",
             "PeerSyncCompleted",
-            f"peer={e.peer_id} submitted={e.submitted} errors={e.errors} "
-            f"took={e.duration_ms}ms",
+            f"peer={e.peer_id} submitted={e.submitted} errors={e.errors} took={e.duration_ms}ms",
             accent="yellow",
         )
 
@@ -274,8 +273,7 @@ def subscribe_ribbons(instance_for_pool: dict) -> None:
         ribbon(
             "C",
             "QuarantineSubmitted",
-            f"qid={e.quarantine_id[:8]} genome={e.genome_id or '?'} "
-            f"src={e.source_peer}",
+            f"qid={e.quarantine_id[:8]} genome={e.genome_id or '?'} src={e.source_peer}",
             accent="magenta",
         )
 
@@ -341,11 +339,13 @@ def subscribe_ribbons(instance_for_pool: dict) -> None:
 def render_peer_list(reg: PeerRegistry) -> None:
     rows: List[Tuple[str, str]] = []
     for entry in reg.list():
-        rows.append((
-            entry.peer_id,
-            f"[bold]{entry.trust_level:<9}[/] {entry.address}  "
-            f"[dim]notes={entry.notes or '-'}[/]",
-        ))
+        rows.append(
+            (
+                entry.peer_id,
+                f"[bold]{entry.trust_level:<9}[/] {entry.address}  "
+                f"[dim]notes={entry.notes or '-'}[/]",
+            )
+        )
     if not rows:
         rows = [("(none)", "no peers registered")]
     panel(
@@ -357,8 +357,10 @@ def render_peer_list(reg: PeerRegistry) -> None:
 def render_genome_listing(label_key: str, registry: GenomeRegistry) -> None:
     entries = list_genomes(registry=registry)
     table = Table(
-        show_header=True, header_style=f"bold {PALETTE.accent}",
-        border_style=PALETTE.muted, expand=False,
+        show_header=True,
+        header_style=f"bold {PALETTE.accent}",
+        border_style=PALETTE.muted,
+        expand=False,
     )
     table.add_column("genome_id", style="bold")
     table.add_column("stars", justify="center")
@@ -369,15 +371,15 @@ def render_genome_listing(label_key: str, registry: GenomeRegistry) -> None:
     for e in entries:
         stars = "★" * e.confidence_stars + "·" * (5 - e.confidence_stars)
         table.add_row(
-            e.genome_id, stars, ",".join(e.domains) or "-",
+            e.genome_id,
+            stars,
+            ",".join(e.domains) or "-",
             f"{e.score:.2f}",
         )
     panel(f"{LABELS[label_key]} :: pool genomes", table)
 
 
-def render_validation_table(
-    results: List[Tuple[str, bool, str]], qid: str
-) -> None:
+def render_validation_table(results: List[Tuple[str, bool, str]], qid: str) -> None:
     rows: List[Tuple[str, str]] = []
     for name, ok, reason in results:
         glyph = Glyphs.CHECK if ok else Glyphs.CROSS
@@ -416,22 +418,57 @@ def phase_seed(homes: dict) -> dict:
     # A — security domain, 4-5 stars
     with use_home(homes["A"]):
         reg_a = GenomeRegistry()
-        seed_genome(reg_a, "incident-postmortem", domain="security",
-                    encounters=120, success_rate=0.88, avg_score=0.83, target_stars=5)
-        seed_genome(reg_a, "evidence-trace", domain="security",
-                    encounters=58, success_rate=0.82, avg_score=0.79, target_stars=4)
-        seed_genome(reg_a, "risk-scorer", domain="security",
-                    encounters=55, success_rate=0.81, avg_score=0.78, target_stars=4)
+        seed_genome(
+            reg_a,
+            "incident-postmortem",
+            domain="security",
+            encounters=120,
+            success_rate=0.88,
+            avg_score=0.83,
+            target_stars=5,
+        )
+        seed_genome(
+            reg_a,
+            "evidence-trace",
+            domain="security",
+            encounters=58,
+            success_rate=0.82,
+            avg_score=0.79,
+            target_stars=4,
+        )
+        seed_genome(
+            reg_a,
+            "risk-scorer",
+            domain="security",
+            encounters=55,
+            success_rate=0.81,
+            avg_score=0.78,
+            target_stars=4,
+        )
         registries["A"] = reg_a
         render_genome_listing("A", reg_a)
 
     # B — code domain, 4 stars each
     with use_home(homes["B"]):
         reg_b = GenomeRegistry()
-        seed_genome(reg_b, "regex-architect", domain="code",
-                    encounters=52, success_rate=0.81, avg_score=0.77, target_stars=4)
-        seed_genome(reg_b, "sql-explain", domain="code",
-                    encounters=54, success_rate=0.80, avg_score=0.76, target_stars=4)
+        seed_genome(
+            reg_b,
+            "regex-architect",
+            domain="code",
+            encounters=52,
+            success_rate=0.81,
+            avg_score=0.77,
+            target_stars=4,
+        )
+        seed_genome(
+            reg_b,
+            "sql-explain",
+            domain="code",
+            encounters=54,
+            success_rate=0.80,
+            avg_score=0.76,
+            target_stars=4,
+        )
         registries["B"] = reg_b
         render_genome_listing("B", reg_b)
 
@@ -485,10 +522,7 @@ def phase_sync_trusted(homes: dict, registries: dict) -> List[str]:
         assert pool_c.get_pool_stats()["ingest_events"] == 0, (
             "trusted-peer sync must not have ingested anything directly"
         )
-        note(
-            "verified: 0 direct ingests into C's pool — every candidate "
-            "is parked in quarantine"
-        )
+        note("verified: 0 direct ingests into C's pool — every candidate is parked in quarantine")
         return result.quarantine_ids
 
 
@@ -524,9 +558,7 @@ def phase_sync_lower_trust(homes: dict, registries: dict) -> List[str]:
         return result.quarantine_ids
 
 
-def phase_poisoned(
-    homes: dict, registries: dict, prior_qids: List[str]
-) -> None:
+def phase_poisoned(homes: dict, registries: dict, prior_qids: List[str]) -> None:
     divider("PHASE 8: POISONED CANDIDATE — malformed genome with embedded shebang")
     bad_dir = write_poisoned_genome(homes["B"])
     info(f"injected poisoned genome into edge-2 at {bad_dir}")
@@ -541,10 +573,7 @@ def phase_poisoned(
         peer_reg._atomic_write(peer_reg._entry_path("edge-2"), peer.to_dict())
 
         result = sync_peer("edge-2", target_pool=pool_c)
-        info(
-            f"re-sync submitted={result.submitted} "
-            f"qids={[q[:8] for q in result.quarantine_ids]}"
-        )
+        info(f"re-sync submitted={result.submitted} qids={[q[:8] for q in result.quarantine_ids]}")
 
         # Identify the poisoned qid (one not seen before).
         q = get_default_quarantine()
@@ -565,14 +594,9 @@ def phase_poisoned(
 
         entry = q.get(poisoned_qid)
         assert entry is not None
-        assert entry.status == QuarantineStatus.PENDING, (
-            "poisoned entry must remain PENDING"
-        )
+        assert entry.status == QuarantineStatus.PENDING, "poisoned entry must remain PENDING"
         assert entry.reasons, "validation reasons must be populated on failure"
-        note(
-            f"poisoned candidate held in PENDING with reasons: "
-            f"{entry.reasons[0]}"
-        )
+        note(f"poisoned candidate held in PENDING with reasons: {entry.reasons[0]}")
 
         # Try to approve it — must refuse.
         ok = q.approve(poisoned_qid, pool_c, note="should-be-blocked")
@@ -649,18 +673,20 @@ def phase_final_state(homes: dict, registries: dict) -> None:
         peer_reg = PeerRegistry()
         rows = []
         for entry in peer_reg.list():
-            rows.append((
-                entry.peer_id,
-                f"trust={entry.trust_level:<8} "
-                f"last_sync={entry.last_sync_iso or '-'}",
-            ))
+            rows.append(
+                (
+                    entry.peer_id,
+                    f"trust={entry.trust_level:<8} last_sync={entry.last_sync_iso or '-'}",
+                )
+            )
         panel(
             f"{LABELS['C']} :: peers (post-sync)",
             Section("peers", rows, palette=PALETTE),
         )
 
         runner = ReconciliationRunner(
-            registry=registries["C"], pool=pool_c,
+            registry=registries["C"],
+            pool=pool_c,
             state_path=homes["C"] / "reconciliation.state.json",
             interval_s=30.0,
         )
@@ -688,14 +714,17 @@ def phase_final_state(homes: dict, registries: dict) -> None:
 
 def main() -> int:
     CONSOLE.print()
-    CONSOLE.print(Panel(
-        "[bold cyan]Vektra Federation Deep-Test[/]\n\n"
-        "Three AGENTDRIVE_HOMEs · peer trust gate · quarantine inversion · "
-        "inheritance routing\n"
-        "Hard contract under test: [bold]nothing crosses an instance "
-        "boundary without quarantine.[/]",
-        border_style="cyan", padding=(1, 2),
-    ))
+    CONSOLE.print(
+        Panel(
+            "[bold cyan]Vektra Federation Deep-Test[/]\n\n"
+            "Three AGENTDRIVE_HOMEs · peer trust gate · quarantine inversion · "
+            "inheritance routing\n"
+            "Hard contract under test: [bold]nothing crosses an instance "
+            "boundary without quarantine.[/]",
+            border_style="cyan",
+            padding=(1, 2),
+        )
+    )
 
     subscribe_ribbons(instance_for_pool={LABELS["C"]: "C"})
 

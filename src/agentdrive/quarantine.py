@@ -322,6 +322,7 @@ class LineageImmuneRule(ValidationRule):
 
             if manifest_path.suffix == ".yaml":
                 import yaml
+
                 genome_data = yaml.safe_load(manifest_path.read_text()) or {}
             else:
                 genome_data = json.loads(manifest_path.read_text())
@@ -329,7 +330,10 @@ class LineageImmuneRule(ValidationRule):
             assessment = self.immune.assess_genome(genome_data)
 
             if assessment.threat_level in (ThreatLevel.HOSTILE, ThreatLevel.CRITICAL):
-                return False, f"lineage_immune: {assessment.threat_level} - {', '.join(assessment.reasons[:3])}"
+                return (
+                    False,
+                    f"lineage_immune: {assessment.threat_level} - {', '.join(assessment.reasons[:3])}",
+                )
 
             if assessment.threat_level == ThreatLevel.SUSPICIOUS:
                 return True, f"lineage_immune: suspicious ({', '.join(assessment.reasons[:2])})"

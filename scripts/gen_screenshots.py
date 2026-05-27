@@ -47,39 +47,55 @@ def _seed_board() -> MissionBoard:
         m.status = status
         board.add(m)
 
-    add("Ingest payments-2025-Q4 audit corpus", MissionStatus.DONE,
+    add(
+        "Ingest payments-2025-Q4 audit corpus",
+        MissionStatus.DONE,
         genome_id="security-incident-postmortem-1.0.0",
         swarm_id="payments-review",
         subagent_id="ingest-1",
-        duration_s=42.7)
-    add("Cross-reference vendor SOC2 evidence", MissionStatus.DONE,
+        duration_s=42.7,
+    )
+    add(
+        "Cross-reference vendor SOC2 evidence",
+        MissionStatus.DONE,
         genome_id="evidence-trace-0.3.1",
         swarm_id="payments-review",
         subagent_id="trace-2",
-        duration_s=18.4)
-    add("Score risk against control catalog v3", MissionStatus.RUNNING,
+        duration_s=18.4,
+    )
+    add(
+        "Score risk against control catalog v3",
+        MissionStatus.RUNNING,
         genome_id="risk-scorer-1.2.0",
         swarm_id="payments-review",
         subagent_id="scorer-1",
-        duration_s=6.1)
-    add("Draft incident remediation playbook", MissionStatus.RUNNING,
+        duration_s=6.1,
+    )
+    add(
+        "Draft incident remediation playbook",
+        MissionStatus.RUNNING,
         genome_id="postmortem-author-0.9.0",
         swarm_id="payments-review",
         subagent_id="author-1",
-        duration_s=3.0)
-    add("Notify on-call rotation via Slack", MissionStatus.PENDING,
-        swarm_id="payments-review")
-    add("Generate exec-summary for CFO review", MissionStatus.PENDING,
-        swarm_id="payments-review")
-    add("Vector embed of FY24 audit deltas", MissionStatus.FAILED,
+        duration_s=3.0,
+    )
+    add("Notify on-call rotation via Slack", MissionStatus.PENDING, swarm_id="payments-review")
+    add("Generate exec-summary for CFO review", MissionStatus.PENDING, swarm_id="payments-review")
+    add(
+        "Vector embed of FY24 audit deltas",
+        MissionStatus.FAILED,
         genome_id="embed-bulk-0.5.0",
         swarm_id="payments-review",
         subagent_id="embed-3",
         duration_s=12.0,
-        outcome={"error": "rate-limited by upstream provider"})
-    add("Q3 vendor risk baseline (archived)", MissionStatus.ARCHIVED,
+        outcome={"error": "rate-limited by upstream provider"},
+    )
+    add(
+        "Q3 vendor risk baseline (archived)",
+        MissionStatus.ARCHIVED,
         swarm_id="payments-review-q3",
-        duration_s=128.0)
+        duration_s=128.0,
+    )
 
     return board
 

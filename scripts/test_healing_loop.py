@@ -140,8 +140,7 @@ def _ribbon_ingest(ev: PoolIngest) -> None:
 
 def _ribbon_outcome(ev: PoolOutcome) -> None:
     console.print(
-        f"  [dim]▸ pool · outcome[/] [magenta]{ev.genome_id}[/]  "
-        f"[dim]score={ev.score:.3f}[/]"
+        f"  [dim]▸ pool · outcome[/] [magenta]{ev.genome_id}[/]  [dim]score={ev.score:.3f}[/]"
     )
 
 
@@ -212,11 +211,11 @@ def seed_phase(pool: AgentDrive, harness: Harness, ribbon_tokens: list) -> None:
     # gives the rating tiers expected by RECOVERY.md.
     spec = [
         # (gid, domain, base_score, encounters, score_distribution)
-        ("incident-postmortem",  "security", 0.72, 28, "high"),
-        ("evidence-trace",       "security", 0.68, 26, "high"),
-        ("risk-scorer",          "security", 0.82, 55, "high"),
-        ("postmortem-author",    "security", 0.70, 2,  "high"),
-        ("embed-bulk",           "embedding", 0.75, 5,  "high"),
+        ("incident-postmortem", "security", 0.72, 28, "high"),
+        ("evidence-trace", "security", 0.68, 26, "high"),
+        ("risk-scorer", "security", 0.82, 55, "high"),
+        ("postmortem-author", "security", 0.70, 2, "high"),
+        ("embed-bulk", "embedding", 0.75, 5, "high"),
     ]
 
     for gid, domain, base, encounters, dist in spec:
@@ -233,12 +232,14 @@ def seed_phase(pool: AgentDrive, harness: Harness, ribbon_tokens: list) -> None:
                 score = 0.65 if i % 2 == 0 else 0.55
 
             with harness.task_context(f"task-{gid}-{i}"):
-                harness.record_outcome({
-                    "status": "success",
-                    "quality": score,
-                    "used_genomes": [g.genome_id],
-                    "result": f"synthetic outcome {i}",
-                })
+                harness.record_outcome(
+                    {
+                        "status": "success",
+                        "quality": score,
+                        "used_genomes": [g.genome_id],
+                        "result": f"synthetic outcome {i}",
+                    }
+                )
 
         rating = confidence_module.get_rating(g.genome_id, pool.registry)
         srep = stars(rating.stars) if rating else "☆☆☆☆☆"
@@ -257,23 +258,27 @@ def snapshot_pool(pool: AgentDrive, title: str) -> None:
     rows = []
     for e in sorted(entries, key=lambda x: (-x.confidence_stars, -x.encounter_count)):
         promotion = " [bold magenta]◆ PROMOTED[/]" if e.is_ultimate else ""
-        rows.append(TreeRow(
-            label=f"[magenta]{e.id}[/]  [cyan]{stars(e.confidence_stars)}[/]{promotion}",
-            secondary=f"{e.encounter_count} encounters · score {e.score:.3f}",
-        ))
-    console.print(section_panel(
-        Section(title, [("genomes", str(len(entries)))], palette=palette),
-        Tree(rows, palette=palette),
-        title=f"◆ {title}",
-        palette=palette,
-    ))
+        rows.append(
+            TreeRow(
+                label=f"[magenta]{e.id}[/]  [cyan]{stars(e.confidence_stars)}[/]{promotion}",
+                secondary=f"{e.encounter_count} encounters · score {e.score:.3f}",
+            )
+        )
+    console.print(
+        section_panel(
+            Section(title, [("genomes", str(len(entries)))], palette=palette),
+            Tree(rows, palette=palette),
+            title=f"◆ {title}",
+            palette=palette,
+        )
+    )
 
 
 def simulate_death(task_signature: str) -> None:
     divider("PHASE 3: AGENT DEATH")
     console.print(
         f"  [bold red]▸ AGENT DEATH[/] · [yellow]agent-paws-3[/] · "
-        f"task: [italic]\"{task_signature}\"[/]"
+        f'task: [italic]"{task_signature}"[/]'
     )
     console.print("  [dim]SubagentDone(ok=False) would fire here in production.[/]")
 
@@ -304,10 +309,12 @@ def show_candidates(eligible: list) -> list:
     rows = []
     for entry, info in eligible:
         prom = " [bold magenta]◆ PROMOTED[/]" if entry.is_ultimate else ""
-        rows.append(TreeRow(
-            label=f"[magenta]{entry.id}[/]  [cyan]{stars(entry.confidence_stars)}[/]{prom}",
-            secondary=f"{entry.encounter_count} encounters · score {entry.score:.3f}",
-        ))
+        rows.append(
+            TreeRow(
+                label=f"[magenta]{entry.id}[/]  [cyan]{stars(entry.confidence_stars)}[/]{prom}",
+                secondary=f"{entry.encounter_count} encounters · score {entry.score:.3f}",
+            )
+        )
     console.print(Tree(rows, palette=palette))
     return eligible[:3]
 
@@ -321,7 +328,11 @@ def show_candidates(eligible: list) -> list:
 # AGENTDRIVE_REPAIR_CLI env var; otherwise the script falls back to a
 # stub that reports "no backend configured" and the test still exercises
 # the routing path (just without a real LLM in the loop).
-CODEX_TOOL = Path(os.environ.get("AGENTDRIVE_REPAIR_CLI", "")) if os.environ.get("AGENTDRIVE_REPAIR_CLI") else None
+CODEX_TOOL = (
+    Path(os.environ.get("AGENTDRIVE_REPAIR_CLI", ""))
+    if os.environ.get("AGENTDRIVE_REPAIR_CLI")
+    else None
+)
 SUBAGENT_TIMEOUT_S = 90
 
 
@@ -338,7 +349,7 @@ def _build_repair_prompt(task_signature: str, genome_info, genome_id: str) -> st
     framework_steps = []
     for s in getattr(genome_info, "step_previews", []) or []:
         if isinstance(s, dict):
-            framework_steps.append(f"- {s.get('name','?')}: {s.get('description','')}")
+            framework_steps.append(f"- {s.get('name', '?')}: {s.get('description', '')}")
         else:
             framework_steps.append(f"- {s}")
     steps_block = "\n".join(framework_steps) or "- (no framework steps)"
@@ -379,9 +390,12 @@ def _call_codex(prompt: str, timeout: float) -> str:
         "python3",
         str(CODEX_TOOL),
         prompt,
-        "--model", "gpt-5.4",
-        "--effort", "medium",
-        "--timeout", str(int(timeout)),
+        "--model",
+        "gpt-5.4",
+        "--effort",
+        "medium",
+        "--timeout",
+        str(int(timeout)),
     ]
     proc = subprocess.run(
         cmd,
@@ -390,9 +404,7 @@ def _call_codex(prompt: str, timeout: float) -> str:
         timeout=timeout,
     )
     if proc.returncode != 0:
-        raise RuntimeError(
-            f"codex exited {proc.returncode}: {proc.stderr.strip()[:200]}"
-        )
+        raise RuntimeError(f"codex exited {proc.returncode}: {proc.stderr.strip()[:200]}")
     return (proc.stdout or "").strip()
 
 
@@ -426,13 +438,13 @@ def _run_backend_in_thread(fn, *args, timeout: float) -> Tuple[bool, str, float]
 
 
 def _backend_codex(prompt: str) -> Tuple[bool, str, float]:
-    return _run_backend_in_thread(_call_codex, prompt, SUBAGENT_TIMEOUT_S,
-                                  timeout=SUBAGENT_TIMEOUT_S)
+    return _run_backend_in_thread(
+        _call_codex, prompt, SUBAGENT_TIMEOUT_S, timeout=SUBAGENT_TIMEOUT_S
+    )
 
 
 def _backend_local(spec: local_models.LocalModelSpec, prompt: str) -> Tuple[bool, str, float]:
-    return _run_backend_in_thread(_call_local, spec, prompt,
-                                  timeout=SUBAGENT_TIMEOUT_S)
+    return _run_backend_in_thread(_call_local, spec, prompt, timeout=SUBAGENT_TIMEOUT_S)
 
 
 def _build_subagent_lineup() -> List[tuple]:
@@ -526,11 +538,13 @@ def dispatch_repair_swarm(top3: list, task_signature: str) -> List[tuple]:
         # Emit a "tool" event per sub-agent so the live tree shows which
         # model each one is talking to.
         for sub_id, label, _kind, _payload, _entry, _info in paired:
-            emit(SubagentTool(
-                subagent_id=sub_id,
-                swarm_id=swarm_id,
-                tool=label,
-            ))
+            emit(
+                SubagentTool(
+                    subagent_id=sub_id,
+                    swarm_id=swarm_id,
+                    tool=label,
+                )
+            )
 
         # Build prompts, dispatch in parallel.
         prompts = {
@@ -562,18 +576,22 @@ def dispatch_repair_swarm(top3: list, task_signature: str) -> List[tuple]:
                     }
                     # rough token estimate from response length
                     token_est = max(0, len(text) // 4)
-                    emit(SubagentTokens(
-                        subagent_id=sub_id,
-                        swarm_id=swarm_id,
-                        tokens=token_est,
-                        cost_usd=0.0,
-                    ))
-                    emit(SubagentDone(
-                        subagent_id=sub_id,
-                        swarm_id=swarm_id,
-                        ok=ok,
-                        duration_s=elapsed,
-                    ))
+                    emit(
+                        SubagentTokens(
+                            subagent_id=sub_id,
+                            swarm_id=swarm_id,
+                            tokens=token_est,
+                            cost_usd=0.0,
+                        )
+                    )
+                    emit(
+                        SubagentDone(
+                            subagent_id=sub_id,
+                            swarm_id=swarm_id,
+                            ok=ok,
+                            duration_s=elapsed,
+                        )
+                    )
                     status = "[green]ok[/]" if ok else "[red]fail[/]"
                     console.print(
                         f"  ▸ [yellow]{sub_id}[/] {status} "
@@ -588,9 +606,22 @@ def dispatch_repair_swarm(top3: list, task_signature: str) -> List[tuple]:
     # Stash outputs onto sub_specs tuples so PHASE 7 can score the real text.
     enriched = []
     for sub_id, gid, info in sub_specs:
-        enriched.append((sub_id, gid, info, outputs.get(sub_id, {
-            "label": "?", "ok": False, "text": "", "elapsed": 0.0,
-        })))
+        enriched.append(
+            (
+                sub_id,
+                gid,
+                info,
+                outputs.get(
+                    sub_id,
+                    {
+                        "label": "?",
+                        "ok": False,
+                        "text": "",
+                        "elapsed": 0.0,
+                    },
+                ),
+            )
+        )
     return enriched
 
 
@@ -614,8 +645,27 @@ def _lexical_quality_score(text: str, task_signature: str) -> float:
 
     # keyword coverage component
     stop = {
-        "the", "a", "an", "for", "and", "or", "of", "in", "on", "to", "with",
-        "is", "at", "by", "from", "into", "this", "that", "as", "be", "are",
+        "the",
+        "a",
+        "an",
+        "for",
+        "and",
+        "or",
+        "of",
+        "in",
+        "on",
+        "to",
+        "with",
+        "is",
+        "at",
+        "by",
+        "from",
+        "into",
+        "this",
+        "that",
+        "as",
+        "be",
+        "are",
     }
     terms = [
         t.strip(".,;:!?\"'()[]")
@@ -676,12 +726,12 @@ def validate_and_record(
         backend_status = "[green]ok[/]" if output.get("ok") else "[red]backend failed[/]"
         console.print(
             f"  [{color}]{verdict}[/] [magenta]{gid}[/] via [yellow]{sub_id}[/]  "
-            f"[dim]score={score:.2f} · {output.get('label','?')} · {backend_status}[/]{tag}"
+            f"[dim]score={score:.2f} · {output.get('label', '?')} · {backend_status}[/]{tag}"
         )
 
         excerpt = (output.get("text") or "").strip().replace("\n", " ")
         if not excerpt:
-            excerpt = f"<no output — {output.get('text','') or 'silent failure'}>"
+            excerpt = f"<no output — {output.get('text', '') or 'silent failure'}>"
         if len(excerpt) > 200:
             excerpt = excerpt[:200] + "…"
         console.print(f"    [dim]excerpt:[/] {excerpt}")
@@ -703,12 +753,14 @@ def validate_and_record(
     for sub_id, gid, info, score in passed:
         full_gid = info.genome_id
         with harness.task_context(f"recovery via {gid}"):
-            harness.record_outcome({
-                "status": "success",
-                "quality": score,
-                "used_genomes": [full_gid],
-                "result": f"recovery delivered by {sub_id}",
-            })
+            harness.record_outcome(
+                {
+                    "status": "success",
+                    "quality": score,
+                    "used_genomes": [full_gid],
+                    "result": f"recovery delivered by {sub_id}",
+                }
+            )
 
     console.print()
     console.print("[dim]Deltas:[/]")
@@ -721,8 +773,7 @@ def validate_and_record(
         a = after.get(info.id, b)
         change = "unchanged" if b[0] == a[0] else f"★{b[0]}→★{a[0]}"
         console.print(
-            f"  [magenta]{gid}[/]: {b[1]}→{a[1]} encounters, "
-            f"[cyan]{stars(a[0])}[/] {change}"
+            f"  [magenta]{gid}[/]: {b[1]}→{a[1]} encounters, [cyan]{stars(a[0])}[/] {change}"
         )
 
     return passed, failed
@@ -748,9 +799,7 @@ def quarantine_failed(failed: list, pool: AgentDrive) -> Optional[str]:
 
     q = get_default_quarantine()
     entry = q.submit(staging, source_peer=f"recovery:{sub_id}")
-    console.print(
-        f"  [yellow]▸ quarantine entry created[/] [dim]{entry.quarantine_id[:16]}…[/]"
-    )
+    console.print(f"  [yellow]▸ quarantine entry created[/] [dim]{entry.quarantine_id[:16]}…[/]")
     console.print(
         f"    genome={entry.genome_id}  status={entry.status.value}  src={entry.source_peer}"
     )
@@ -770,12 +819,14 @@ def final_summary(pool: AgentDrive, quarantine_id: Optional[str]) -> None:
             )
             for e in pending
         ]
-        console.print(section_panel(
-            Section("Quarantine ledger", [("pending", str(len(pending)))], palette=palette),
-            Tree(rows, palette=palette),
-            title="◆ Quarantine awaiting review",
-            palette=palette,
-        ))
+        console.print(
+            section_panel(
+                Section("Quarantine ledger", [("pending", str(len(pending)))], palette=palette),
+                Tree(rows, palette=palette),
+                title="◆ Quarantine awaiting review",
+                palette=palette,
+            )
+        )
 
 
 # ─────────────────────────────────────────────────────────────────────

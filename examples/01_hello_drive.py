@@ -31,7 +31,10 @@ g = Genome.create(
     version="1.0.0",
     framework={
         "steps": [
-            {"id": "1", "name": "Canonicalize the payload — sorted keys, minimal separators, UTF-8"},
+            {
+                "id": "1",
+                "name": "Canonicalize the payload — sorted keys, minimal separators, UTF-8",
+            },
             {"id": "2", "name": "SHA-256 the canonical bytes"},
             {"id": "3", "name": "Write to objects/<aa>/<rest>.json; existing path is a dedup hit"},
         ],

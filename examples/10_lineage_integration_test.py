@@ -36,7 +36,9 @@ def main():
     r = ev.run_full_cycle(dry_run=True)
     print(f"  Evolver: delta={r.fitness_delta:.3f}, findings={len(r.research_findings)}")
 
-    print("\nFull lineage story is in examples/04_quarantine_workflow.py and 05_lineage_dna_grants.py")
+    print(
+        "\nFull lineage story is in examples/04_quarantine_workflow.py and 05_lineage_dna_grants.py"
+    )
 
 
 if __name__ == "__main__":

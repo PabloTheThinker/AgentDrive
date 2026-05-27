@@ -76,13 +76,11 @@ import json
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional
 
-from agentdrive.genome.models import GenomeAuthor, GenomeManifest
 from agentdrive.dna.drive import DNADrive
+from agentdrive.genome.models import GenomeAuthor, GenomeManifest
 from agentdrive.harness.harness import Harness
-from agentdrive.adapters.base import get_scoped_pool  # for consume_swarm_dna
-
 
 # ------------------------------------------------------------------
 # Public instruction text (models love to be given exact copy-paste)
@@ -515,9 +513,14 @@ class GrokPatternLineageBridge:
             evaluation_score={
                 "fitness": fitness,
                 "ilo_internal": fitness,
-                "reference_tasks": (float(pattern.get("uses", 0)) / 100.0) if pattern.get("uses") else 0.5,
+                "reference_tasks": (float(pattern.get("uses", 0)) / 100.0)
+                if pattern.get("uses")
+                else 0.5,
             },
-            dependencies={"genomes": [], "agent_capabilities": ["long_reasoning", "pattern_routing", "lineage_awareness"]},
+            dependencies={
+                "genomes": [],
+                "agent_capabilities": ["long_reasoning", "pattern_routing", "lineage_awareness"],
+            },
         )
 
         # Build the dict in two passes to compute stable content_hash
@@ -527,20 +530,26 @@ class GrokPatternLineageBridge:
             "manifest": manifest.model_dump(),
             "reasoning_patterns": {
                 "core": {
-                    "system_prompt": pattern.get("system_prompt") or pattern.get("prompt") or pattern.get("description", ""),
+                    "system_prompt": pattern.get("system_prompt")
+                    or pattern.get("prompt")
+                    or pattern.get("description", ""),
                     "output_schema": pattern.get("output_schema", {}),
                     "tags": pattern.get("tags", []),
                     "ilo_fitness": fitness,
                 },
                 "speech_or_interaction": pattern.get("speech", pattern.get("narrative_style", {})),
-                "lineage_integration": pattern.get("integration_code", pattern.get("heuristic", {})),
+                "lineage_integration": pattern.get(
+                    "integration_code", pattern.get("heuristic", {})
+                ),
             },
             "evaluations": {
                 "ilo_fitness": fitness,
                 "proven_in_cycles": pattern.get("uses", 0),
             },
             "provenance": {
-                "lineage": [{"parent": "ilo-native", "relation": "extracted", "timestamp": created_str}],
+                "lineage": [
+                    {"parent": "ilo-native", "relation": "extracted", "timestamp": created_str}
+                ],
                 "source_brain": str(self.brain_path),
             },
             "framework": pattern.get("framework", {}),
@@ -588,6 +597,7 @@ class GrokPatternLineageBridge:
                         data = json.loads(text.splitlines()[0]) if text.strip() else {}
                     elif p.suffix == ".yaml":
                         import yaml  # type: ignore
+
                         data = yaml.safe_load(text) or {}
                     else:
                         # Markdown: treat frontmatter or first strong signals as pattern
@@ -601,7 +611,11 @@ class GrokPatternLineageBridge:
                             cat = "reasoning"
                             if "speech" in str(p).lower() or "narrative" in str(p).lower():
                                 cat = "speech"
-                            elif "lineage" in str(p).lower() or "integration" in str(p).lower() or "dna" in str(p).lower():
+                            elif (
+                                "lineage" in str(p).lower()
+                                or "integration" in str(p).lower()
+                                or "dna" in str(p).lower()
+                            ):
                                 cat = "lineage_integration"
                             if cat in categories:
                                 g = self.ilo_pattern_to_genome(data, category=cat)
@@ -653,14 +667,10 @@ class GrokPatternLineageBridge:
             content_hash = dna.publish(genome_dict)  # type: ignore[arg-type]
 
         if into_swarm:
-            try:
-                # Contribute a copy/reference into the active swarm pool for stigmergic sharing
-                swarm_pool = get_scoped_pool() if "get_scoped_pool" in globals() else None
-                # The harness path above already participates in swarm if env is set.
-                # This is a no-op marker for explicit swarm contribution.
-                pass
-            except Exception:
-                pass
+            # Swarm pool contribution is handled automatically by the Harness
+            # when AGENTDRIVE_SWARM_ID is present in the environment.
+            # This block is intentionally a no-op for now.
+            pass
 
         return content_hash
 
@@ -698,7 +708,9 @@ class GrokPatternLineageBridge:
             if swarm_id:
                 # In real impl the pool would be selected by swarm; here we use the active one
                 pass
-            relevant = pool.get_relevant_dna("", top_k=top_k) if hasattr(pool, "get_relevant_dna") else []
+            relevant = (
+                pool.get_relevant_dna("", top_k=top_k) if hasattr(pool, "get_relevant_dna") else []
+            )
             return relevant
         except Exception as exc:
             logger.debug("consume_swarm_dna soft-fail: %s", exc)
@@ -780,7 +792,9 @@ def ilo_pattern_to_genome(pattern: Dict[str, Any], **kwargs) -> Dict[str, Any]:
     return bridge.ilo_pattern_to_genome(pattern, **kwargs)
 
 
-def publish_ilo_genome(genome_dict: Dict[str, Any], agent_id: str = "ilo-conductor", **kwargs) -> str:
+def publish_ilo_genome(
+    genome_dict: Dict[str, Any], agent_id: str = "ilo-conductor", **kwargs
+) -> str:
     bridge = GrokPatternLineageBridge(ilo_agent_id=agent_id)
     return bridge.publish_ilo_genome(genome_dict, agent_id=agent_id, **kwargs)
 

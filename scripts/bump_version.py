@@ -21,12 +21,14 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 PYPROJECT = ROOT / "pyproject.toml"
 
+
 def get_current_version() -> str:
     content = PYPROJECT.read_text()
     match = re.search(r'version\s*=\s*"([^"]+)"', content)
     if not match:
         raise RuntimeError("Could not find version in pyproject.toml")
     return match.group(1)
+
 
 def bump_version(current: str, part: str) -> str:
     major, minor, patch = map(int, current.split("."))
@@ -43,9 +45,12 @@ def bump_version(current: str, part: str) -> str:
         raise ValueError("part must be major, minor, or patch")
     return f"{major}.{minor}.{patch}"
 
+
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python scripts/bump_version.py [major|minor|patch] [--dry-run] [--print-only]")
+        print(
+            "Usage: python scripts/bump_version.py [major|minor|patch] [--dry-run] [--print-only]"
+        )
         sys.exit(1)
 
     part = sys.argv[1]
@@ -68,11 +73,7 @@ def main():
         return
 
     content = PYPROJECT.read_text()
-    new_content = re.sub(
-        r'(version\s*=\s*")([^"]+)(")',
-        rf'\g<1>{new}\g<3>',
-        content
-    )
+    new_content = re.sub(r'(version\s*=\s*")([^"]+)(")', rf"\g<1>{new}\g<3>", content)
     PYPROJECT.write_text(new_content)
 
     print(f"Bumped version: {current} → {new}")
@@ -81,6 +82,7 @@ def main():
     print(f"  git commit -m 'chore: release v{new}'")
     print(f"  git tag -a v{new} -m 'Release v{new}'")
     print("  git push origin main --tags")
+
 
 if __name__ == "__main__":
     main()
