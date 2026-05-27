@@ -1553,8 +1553,13 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                 form={"agent_id": agent_id, "label": label, "identity": identity},
                 error="Agent id must be a slug: lowercase letters, digits, hyphen, underscore. 2–64 chars.",
             )
+        # Extra defense using the project's recognized sanitizer (helps CodeQL)
+        from agentdrive.utils.safe_paths import safe_name
+
+        safe_slug = safe_name(slug)
+
         home = get_agentdrive_home()
-        agent_dir = home / "agents" / slug
+        agent_dir = home / "agents" / safe_slug
         agent_dir.mkdir(parents=True, exist_ok=True)
         try:
             agent_dir.chmod(0o700)
@@ -1562,7 +1567,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             pass
         identity_body = identity.strip()
         if identity_body or label.strip():
-            header = f"# {label.strip() or slug}\n\n" if label.strip() else ""
+            header = f"# {label.strip() or safe_slug}\n\n" if label.strip() else ""
             (agent_dir / "identity.md").write_text(
                 header + identity_body + ("\n" if identity_body else ""),
                 encoding="utf-8",
