@@ -206,7 +206,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 def cmd_deps_check(args: argparse.Namespace) -> int:
     """Lightweight dependency compatibility report (core of the update framework)."""
     setup_logging()
-    from importlib.metadata import version, PackageNotFoundError
+    from importlib.metadata import PackageNotFoundError, version
 
     from rich.console import Console
     from rich.table import Table
@@ -251,7 +251,9 @@ def cmd_deps_check(args: argparse.Namespace) -> int:
         table.add_row(pkg, inst, declared.get(pkg, "?"), desc)
 
     console.print(table)
-    console.print("\nSee [bold]docs/DEPENDENCY_UPDATES.md[/] for the full update framework and process.")
+    console.print(
+        "\nSee [bold]docs/DEPENDENCY_UPDATES.md[/] for the full update framework and process."
+    )
     console.print("Run under a fresh venv with proposed pins to validate future bumps.")
     return 0
 
@@ -2224,7 +2226,9 @@ Self-manage:
         help="Dependency management, compatibility checks, and update support (see docs/DEPENDENCY_UPDATES.md)",
     )
     deps_subs = p.add_subparsers(dest="deps_subcommand")
-    dc = deps_subs.add_parser("check", help="Report declared vs installed key dependencies + known compatibility notes")
+    dc = deps_subs.add_parser(
+        "check", help="Report declared vs installed key dependencies + known compatibility notes"
+    )
     dc.set_defaults(func=cmd_deps_check)
 
     # config
