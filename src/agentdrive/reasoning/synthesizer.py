@@ -48,7 +48,11 @@ class FrameworkSynthesis:
                 "inputs": list(self.inputs),
                 "steps": list(self.steps),
                 "output": {
-                    "schema": f"../../schemas/{self.framework_id}-v{self.version.rsplit('.', 1)[0]}.json",
+                    # Schema is expected alongside the genome (or in a sibling schemas/ dir)
+                    # when the draft is materialized. The synthesizer produces the structural
+                    # contract; materialization / genome write is responsible for placing the
+                    # actual JSON Schema file.
+                    "schema": f"{self.framework_id}-v{self.version.rsplit('.', 1)[0]}.json",
                     "formats": ["markdown", "json"],
                     "title_template": self.display_name + " — {{ subject }}",
                 },
