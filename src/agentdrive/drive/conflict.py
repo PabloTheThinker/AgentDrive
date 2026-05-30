@@ -15,7 +15,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -66,7 +66,7 @@ def emit_conflict_genome(
     clone = incoming.model_copy(deep=True)
     clone.manifest.id = f"{original.manifest.id}-{suffix}"
     clone.manifest.content_hash = "sha256:pending"
-    clone.manifest.last_improved = datetime.utcnow()
+    clone.manifest.last_improved = datetime.now(UTC)
     clone.provenance.add_lineage_entry(
         parent=original.manifest.content_hash,
         relation="conflict-copy",

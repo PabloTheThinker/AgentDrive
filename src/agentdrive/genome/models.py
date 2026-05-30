@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
@@ -54,7 +54,7 @@ class GenomeProvenance(BaseModel):
             {
                 "parent": parent,
                 "relation": relation,
-                "timestamp": datetime.now(datetime.UTC).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "notes": notes,
             }
         )
@@ -208,7 +208,7 @@ class Genome(BaseModel):
         ):
             self.manifest.content_hash = self.compute_content_hash()
         if update_timestamp and self.manifest.last_improved is None:
-            self.manifest.last_improved = datetime.utcnow()
+            self.manifest.last_improved = datetime.now(UTC)
 
     @model_validator(mode="after")
     def _ensure_integrity(self) -> Genome:
@@ -255,7 +255,7 @@ class Genome(BaseModel):
             id=id,
             version=version,
             content_hash="sha256:pending",
-            created=datetime.utcnow(),
+            created=datetime.now(UTC),
             authors=auth_objects,
             applicability=applicability or {},
             dependencies=dependencies or {"genomes": [], "agent_capabilities": []},
@@ -303,8 +303,8 @@ class Genome(BaseModel):
             **mdata,
             version=new_version,
             content_hash="sha256:pending",
-            created=datetime.utcnow(),
-            last_improved=datetime.utcnow(),
+            created=datetime.now(UTC),
+            last_improved=datetime.now(UTC),
             authors=auth_objects,
         )
         data["manifest"] = new_manifest.model_dump(mode="json")
@@ -316,7 +316,7 @@ class Genome(BaseModel):
             {
                 "parent": self.genome_id,
                 "relation": "fork",
-                "timestamp": datetime.now(datetime.UTC).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "notes": notes,
             }
         )
@@ -338,14 +338,14 @@ class Genome(BaseModel):
         Returns the event. Does not change version (call site or registry decides on version bump).
         """
         event = ImprovementEvent(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             description=description,
             proposed_by=proposed_by,
             score_delta=score_delta,
             notes=notes,
         )
         self.provenance.improvements.append(event)
-        self.manifest.last_improved = datetime.utcnow()
+        self.manifest.last_improved = datetime.now(UTC)
         return event
 
     # --- Persistence (hardened, full-structure aware) ---
