@@ -418,6 +418,36 @@ class AgentDrive:
         existing = self.registry.search(query=genome.manifest.id, limit=5)
 
         accepted = True
+
+        # GBrain-inspired self-wiring knowledge graph (zero LLM for edge extraction).
+        # Extract typed edges from the genome on every ingest. This builds
+        # a rich, queryable relationship layer on top of existing provenance.
+        try:
+            from agentdrive.knowledge_graph import extract_from_genome
+
+            entities, edges = extract_from_genome(genome)
+            if edges:
+                # For now, log + emit. Later: persist to drive edges store + graph index.
+                logger.info(
+                    "knowledge_graph_edges_extracted",
+                    extra={
+                        "genome_id": genome.manifest.id,
+                        "edge_count": len(edges),
+                        "sample_relations": [e.relation for e in edges[:3]],
+                    },
+                )
+                for edge in edges[:5]:  # emit a few for visibility
+                    emit(
+                        "knowledge_graph_edge",
+                        {
+                            "source": edge.source,
+                            "target": edge.target,
+                            "relation": edge.relation,
+                            "genome": genome.manifest.id,
+                        },
+                    )
+        except Exception as e:
+            logger.debug(f"Knowledge graph extraction skipped: {e}")
         reason = "New genome accepted into pool"
 
         if existing:
