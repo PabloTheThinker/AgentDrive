@@ -7,8 +7,10 @@ The visual direction matches ``~/agentdrive-wireframes/`` — IBM Plex Sans
 
 from __future__ import annotations
 
+import asyncio
 import os
 import time
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any
@@ -52,7 +54,24 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
     store = AuthStore(auth_db or default_db_path())
     store.bootstrap_from_env()
 
-    app = FastAPI(title="AgentDrive Web", version=AGENTDRIVE_VERSION)
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        # Startup
+        if os.environ.get("AGENTDRIVE_DISABLE_RETENTION_LOOP") == "1":
+            app.state.retention_task = None
+        else:
+            app.state.retention_task = asyncio.create_task(_retention_loop(app))
+        yield
+        # Shutdown
+        task = getattr(app.state, "retention_task", None)
+        if task is not None:
+            task.cancel()
+            try:
+                await task
+            except (asyncio.CancelledError, Exception):  # noqa: BLE001
+                pass
+
+    app = FastAPI(title="AgentDrive Web", version=AGENTDRIVE_VERSION, lifespan=lifespan)
     app.state.auth_store = store
     app.state.login_limiter = LoginRateLimiter(max_attempts=5, window_s=60)
     app.state.started_at = time.time()
@@ -63,26 +82,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
     # here on a 5-minute cadence in the asyncio loop and chews through
     # the rest until the policy is met. A lock prevents overlapping
     # passes if a tick fires while one is still running.
-    import asyncio as _asyncio
-
-    app.state.retention_lock = _asyncio.Lock()
-
-    @app.on_event("startup")
-    async def _start_retention_loop():  # noqa: ANN202
-        if os.environ.get("AGENTDRIVE_DISABLE_RETENTION_LOOP") == "1":
-            app.state.retention_task = None
-            return
-        app.state.retention_task = _asyncio.create_task(_retention_loop(app))
-
-    @app.on_event("shutdown")
-    async def _stop_retention_loop():  # noqa: ANN202
-        task = getattr(app.state, "retention_task", None)
-        if task is not None:
-            task.cancel()
-            try:
-                await task
-            except (_asyncio.CancelledError, Exception):  # noqa: BLE001
-                pass
+    app.state.retention_lock = asyncio.Lock()
 
     # Order matters: request logging wraps everything (so the error
     # boundary's response and the CSRF rejection both carry a
