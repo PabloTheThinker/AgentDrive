@@ -1018,6 +1018,12 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         user: User = Depends(require_user),
         agent_id: str = "personal",
     ):
+        # Defense-in-depth sanitization of untrusted agent_id before any
+        # filesystem path construction (helps CodeQL py/path-injection).
+        from agentdrive.utils.safe_paths import safe_name
+
+        agent_id = safe_name(agent_id)
+
         return _render_snapshots(request, user, templates, agent_id=agent_id)
 
     @app.post("/snapshots")
@@ -1027,6 +1033,12 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         user: User = Depends(require_user),
         _cap=Depends(require_cap("backup", "write", resource_kind="agent", resource_id="personal")),
     ):
+        # Defense-in-depth sanitization of untrusted agent_id before any
+        # filesystem path construction (helps CodeQL py/path-injection).
+        from agentdrive.utils.safe_paths import safe_name
+
+        agent_id = safe_name(agent_id)
+
         manager = _snapshot_manager(agent_id)
         try:
             manager.take(cadence_id="web")
@@ -1047,6 +1059,12 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             require_cap("backup", "write", resource_kind="agent", resource_id_arg="agent_id")
         ),
     ):
+        # Defense-in-depth sanitization of untrusted agent_id before any
+        # filesystem path construction (helps CodeQL py/path-injection).
+        from agentdrive.utils.safe_paths import safe_name
+
+        agent_id = safe_name(agent_id)
+
         manager = _snapshot_manager(agent_id)
         try:
             manager.pin(snapshot_id, pinned=(pinned.lower() == "true"))
@@ -1066,6 +1084,12 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             require_cap("backup", "write", resource_kind="agent", resource_id_arg="agent_id")
         ),
     ):
+        # Defense-in-depth sanitization of untrusted agent_id before any
+        # filesystem path construction (helps CodeQL py/path-injection).
+        from agentdrive.utils.safe_paths import safe_name
+
+        agent_id = safe_name(agent_id)
+
         manager = _snapshot_manager(agent_id)
         try:
             entry = manager.get(snapshot_id)
@@ -1100,6 +1124,12 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
             require_cap("backup", "read", resource_kind="agent", resource_id_arg="agent_id")
         ),
     ):
+        # Defense-in-depth sanitization of untrusted agent_id before any
+        # filesystem path construction (helps CodeQL py/path-injection).
+        from agentdrive.utils.safe_paths import safe_name
+
+        agent_id = safe_name(agent_id)
+
         manager = _snapshot_manager(agent_id)
         try:
             hashes = manager.restore(snapshot_id)
@@ -1553,7 +1583,9 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                 form={"agent_id": agent_id, "label": label, "identity": identity},
                 error="Agent id must be a slug: lowercase letters, digits, hyphen, underscore. 2–64 chars.",
             )
-        # Extra defense using the project's recognized sanitizer (helps CodeQL)
+        # Extra defense using the project's recognized sanitizer (helps CodeQL py/path-injection).
+        # This directly addresses the "Uncontrolled data used in path expression" alerts
+        # in the onboarding agent identity write paths.
         from agentdrive.utils.safe_paths import safe_name
 
         safe_slug = safe_name(slug)
