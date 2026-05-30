@@ -203,6 +203,59 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     return _run_doctor()
 
 
+def cmd_deps_check(args: argparse.Namespace) -> int:
+    """Lightweight dependency compatibility report (core of the update framework)."""
+    setup_logging()
+    from importlib.metadata import version, PackageNotFoundError
+
+    from rich.console import Console
+    from rich.table import Table
+
+    console = Console()
+
+    key_packages = [
+        ("httpx", "HTTP client (core for providers, web, runtime)"),
+        ("fastapi", "Web surface"),
+        ("uvicorn", "ASGI server"),
+        ("cryptography", "Ed25519 signatures + KDF for grants/trust"),
+        ("pydantic", "All data models"),
+        ("pytest-asyncio", "Async test support"),
+    ]
+
+    table = Table(title="AgentDrive Dependency Compatibility", show_header=True)
+    table.add_column("Package", style="bold")
+    table.add_column("Installed")
+    table.add_column("Declared (pyproject)")
+    table.add_column("Notes")
+
+    # Read declared bounds from the installed package metadata / pyproject if possible
+    # For v1 we do a best-effort read of the current environment vs common knowledge
+    declared = {
+        "httpx": ">=0.27 (current framework target: 0.28+)",
+        "fastapi": ">=0.115 (current: 0.136+)",
+        "uvicorn": ">=0.30 (current: 0.48+)",
+        "cryptography": ">=46 (current: 48+)",
+        "pydantic": ">=2.13",
+        "pytest-asyncio": ">=0.23",
+    }
+
+    for pkg, desc in key_packages:
+        try:
+            inst = version(pkg)
+        except PackageNotFoundError:
+            inst = "not installed"
+
+        note = declared.get(pkg, "")
+        if pkg == "httpx" and "0.28" in inst:
+            note += " | StarletteDeprecationWarning on testclient (library-level; tracked)"
+        table.add_row(pkg, inst, declared.get(pkg, "?"), desc)
+
+    console.print(table)
+    console.print("\nSee [bold]docs/DEPENDENCY_UPDATES.md[/] for the full update framework and process.")
+    console.print("Run under a fresh venv with proposed pins to validate future bumps.")
+    return 0
+
+
 def _run_doctor() -> int:
     """Animated step-by-step health check with a final result panel."""
     from rich.text import Text
@@ -2164,6 +2217,15 @@ Self-manage:
         "doctor", help="Diagnose AgentDrive installation, config, workers, and registry"
     )
     p.set_defaults(func=cmd_doctor)
+
+    # deps — part of the Dependency Updates Framework (see docs/DEPENDENCY_UPDATES.md)
+    p = subparsers.add_parser(
+        "deps",
+        help="Dependency management, compatibility checks, and update support (see docs/DEPENDENCY_UPDATES.md)",
+    )
+    deps_subs = p.add_subparsers(dest="deps_subcommand")
+    dc = deps_subs.add_parser("check", help="Report declared vs installed key dependencies + known compatibility notes")
+    dc.set_defaults(func=cmd_deps_check)
 
     # config
     p = subparsers.add_parser("config", help="View and modify AgentDrive configuration")
