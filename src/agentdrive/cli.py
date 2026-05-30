@@ -372,6 +372,7 @@ def _run_doctor() -> int:
     # 8. Production operational checks (permissions, reconciliation, immune)
     try:
         from agentdrive.utils.safe_paths import safe_join
+
         home = get_agentdrive_home()
 
         # Check permissions on sensitive operational files
@@ -397,6 +398,7 @@ def _run_doctor() -> int:
         # Quick reconciliation health
         try:
             from agentdrive.reconciliation import ReconciliationRunner
+
             rec = ReconciliationRunner()
             status = rec.status() if hasattr(rec, "status") else {"healthy": True}
             if status.get("healthy", True):
