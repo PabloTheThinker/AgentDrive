@@ -1583,15 +1583,17 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                 form={"agent_id": agent_id, "label": label, "identity": identity},
                 error="Agent id must be a slug: lowercase letters, digits, hyphen, underscore. 2–64 chars.",
             )
-        # Extra defense using the project's recognized sanitizer (helps CodeQL py/path-injection).
+        # Extra defense using the project's recognized sanitizers (helps CodeQL py/path-injection).
         # This directly addresses the "Uncontrolled data used in path expression" alerts
-        # in the onboarding agent identity write paths.
-        from agentdrive.utils.safe_paths import safe_name
+        # (#41, #42, #43) in the onboarding agent identity write paths.
+        from agentdrive.utils.safe_paths import safe_join, safe_name
 
         safe_slug = safe_name(slug)
 
         home = get_agentdrive_home()
-        agent_dir = home / "agents" / safe_slug
+        # Use safe_join (which uses realpath + commonpath) at the construction site
+        # so CodeQL recognizes the taint barrier, even after safe_name.
+        agent_dir = safe_join(home / "agents", safe_slug)
         agent_dir.mkdir(parents=True, exist_ok=True)
         try:
             agent_dir.chmod(0o700)
@@ -1600,7 +1602,8 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         identity_body = identity.strip()
         if identity_body or label.strip():
             header = f"# {label.strip() or safe_slug}\n\n" if label.strip() else ""
-            (agent_dir / "identity.md").write_text(
+            safe_file = safe_join(agent_dir, "identity.md")
+            safe_file.write_text(
                 header + identity_body + ("\n" if identity_body else ""),
                 encoding="utf-8",
             )
@@ -1619,6 +1622,11 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
         slug = agent_id.strip().lower()
         if not _SLUG_RE.match(slug):
             return _onboarding_render(request, 3, agent_id=agent_id, error="Invalid agent id.")
+
+        # Defense-in-depth: sanitize before any path construction in write_runtime_config
+        from agentdrive.utils.safe_paths import safe_name
+
+        slug = safe_name(slug)
         if kind == "http_sse":
             if not url.strip():
                 return _onboarding_render(
