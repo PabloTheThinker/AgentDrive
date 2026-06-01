@@ -4,57 +4,86 @@
   <img src="assets/agentdrive-hero-1920x1080.jpg" alt="AgentDrive — Structural Experience Graph for Autonomous Agents" width="100%">
 </p>
 
-**The persistent, structural Experience Graph for AI agents and autonomous systems.**
+**Intelligence that remembers the shape of what it has become.**
 
-Local-first. Self-referential. Built for agents that need to reason over connections, history, and their own past work — not just retrieve flat documents.
+AgentDrive is a structural memory system for agents that must grow from their own decisions. Not a vector store. Not a document dump. A living graph where every connection, every hesitation, every breakthrough is recorded with provenance and weight — and can be reasoned over directly by the agents themselves.
 
-## What It Actually Is Today
+It exists for one reason: so autonomous work can compound instead of reset.
 
-AgentDrive gives agents a living, queryable **Experience Graph** (v3 multi-cycle memory fabric) — an Obsidian-style connection graph of TypedEdges, cross-cycle continuations, coherence signals, densification history, and explicit structural reasoning traces.
+## The Experience Graph
 
-Key delivered surfaces:
+At the center is a queryable, multi-cycle **Experience Graph** — an Obsidian-like fabric of TypedEdges, cross-cycle continuations, coherence signals, and explicit structural reasoning traces.
 
-- **Experience Graph v3** — The core structural substrate. Agents (or external LLMs via MCP) can pull dense context packs, find structural similarities across prior work, retrieve history of reasoning over specific elements, and record their own graph-native decisions.
-- **Canonical 6-step loop** — Experience → RealTimeEvolutionOverseer (metacognition + structural ingestion) → Parent (decision maker that can explicitly reason over the graph) → steering → execution → new experience written back as first-class traces and edges. The Overseer serves the Parent; the Parent is the strategic decision-maker.
-- **MCP server** (`experience_graph_*` tools) — Any MCP-capable model (Claude, Cursor, local models, etc.) can directly call the structural Experience Graph tools with gbrain scoring and provenance, exactly like GBrain made scored knowledge first-class. Tools include context packs, structural similarity search, recording reasoning traces, and retrieving prior graph reasoning history.
-- **Mission Control (Tower + TUI)** — Real-time observability surface. Watch 6-step pulsing, live fabric updates, Parent decisions, and autonomous reasoning traces appear in the Experience Layer panel as agents work. The human operator sees the whole system as one, not scattered files.
-- **Self-referential DNA** — Every run, every autonomous decision, every MCP tool call can be written back as queryable, gbrain-scored experience. Future agents (and `Drive.think`) literally stand on the shoulders of prior structural reasoning.
+Agents don’t just retrieve information. They ask the graph what it has learned about itself. They surface weak links, follow densification paths, and see the exact structural patterns that led to previous successes or failures. The graph gets sharper every time it is used.
 
-The drive is the environment. The Experience Graph is the memory and reasoning substrate. The 6-step loop + Recorder is the disciplined cycle. MCP is the universal interface for local and frontier models.
+This is memory designed for intelligence that improves over time — not just for retrieval.
 
-## Current Direction
+## A Disciplined Rhythm
 
-Enabling **non-stop autonomous agents** powered by local models that:
-- Connect via the `experience_graph_*` MCP tools (or direct API).
-- Run continuous 6-step (or evolved) loops.
-- Use the structural Experience Graph as long-term, queryable memory.
-- Write every significant reasoning step back as first-class traces and edges.
-- Can be given Research Constitutions / goals and left to work, with full human visibility in the Tower.
+Everything moves through a single, non-negotiable six-step loop:
 
-Any user with a local model (Ollama, llama.cpp, LM Studio, etc.) should be able to integrate it and have it pursue goals inside a real, evolving, structural memory system rather than a stateless tool-calling loop.
+Experience arrives.  
+The Overseer builds higher-order understanding from the graph.  
+The Parent — the actual decision maker — reasons explicitly over structure and records why it chose what it chose.  
+Steering and execution follow.  
+New experience is written back as first-class traces and edges.
 
-## What Came Before (Foundation)
+The Overseer serves the Parent. The Parent is accountable. The graph is the witness.
 
-The original durable memory vision remains the foundation:
-- Three-tier Drives (Personal, Swarm, DNA) with content-addressed Genomes.
-- Capability URIs, Quarantine, immune system, and lineage.
-- Local-first, privacy-absolute by default.
+This rhythm is what turns isolated runs into a coherent body of work.
 
-All of that is still there and still the durable substrate. The Experience Graph is the evolutionary layer that sits on top and inside it — the part that lets agents (and autonomous systems) actually get smarter from their own structural history.
+## Surfaces for Serious Work
 
-## Quick Links (Current Reality)
+Three things make the system usable in practice:
 
-- Source: `src/agentdrive/evolution/experience_graph.py` + `ExperienceGraphRecorder`
-- MCP surface: `src/agentdrive/adapters/mcp_server.py` (experience_graph tools)
-- 6-step loop: `src/agentdrive/system/integrated_real_time_evolution_system.py`
-- Mission Control Tower: `src/agentdrive/mission_control/static/index.html` + server
-- All work self-recorded on the drive as living Experience Graph DNA (see `observations/`, `knowledge/edges.jsonl`, genomes on stabilization-wave-20260531).
+**MCP as the universal interface.**  
+Any capable model — local or frontier — can speak directly to the Experience Graph through a small set of `experience_graph_*` tools. Context packs, structural similarity search, reasoning traces, and history are all first-class. The same surface that powers internal loops is available to anything that can call MCP.
 
-## Status
+**Mission Control.**  
+A real-time Tower and TUI where you watch the 6-step pulse, see the graph evolve live, and observe Parent decisions with their full structural rationale. You see the system as one living thing, not scattered processes and files.
 
-This is production-grade infrastructure for structural, self-referential agent memory and reasoning — already exercised in extended static fires, autonomous research threads, and naming hygiene passes on the stabilization-wave-20260531 drive.
+**Self-referential DNA.**  
+Every meaningful decision, every MCP call, every coherence shift is recorded on the drive with gbrain scoring and full provenance. Future agents — including entirely new autonomous runs — stand on the actual history of what came before.
 
-The public MCP surface, the 6-step loop, the observability layer, and the self-referential DNA system are real and in use.
+## Autonomy That Compounds
+
+The intended use is non-stop autonomous agents running on local models.
+
+Give an agent a Research Constitution and a connection to the Experience Graph. Let it run. It will gather structural context, make decisions it can explain, write the reasoning back into the graph, and get measurably sharper over time.
+
+No cloud dependency. No stateless tool-calling loops. Just continuous, grounded work that leaves a richer substrate for the next cycle.
+
+This is what local models have been missing: a memory they can actually think with.
+
+## Start Here
+
+```bash
+# Clone
+git clone https://github.com/PabloTheThinker/AgentDrive.git
+cd AgentDrive
+
+# Run the Mission Control Tower
+agentdrive mission
+
+# Or attach an autonomous agent to the live stabilization drive
+# (see examples/autonomous_experience_graph_agent_loop.py)
+```
+
+The stabilization-wave-20260531 drive contains the living record of the system being used to build itself.
+
+## The Foundation
+
+The Experience Graph is the evolutionary layer on top of a proven durable substrate: three-tier drives, content-addressed genomes, capability-based access, quarantine, and lineage. Everything remains local-first and privacy-absolute.
+
+The real work — the constitutions, autonomous runs, coherence lifts, and the graph itself — lives on the `stabilization-wave-20260531` drive.
+
+Core surfaces live in:
+- `experience_graph.py` — recorder and graph
+- `mcp_server.py` — universal interface
+- `integrated_real_time_evolution_system.py` — the 6-step engine
+- `mission_control/` — Tower and TUI
+
+All of it is observable. All of it is recorded.
 
 ## License
 
@@ -62,4 +91,5 @@ MIT
 
 ---
 
-*Work on this repo is recorded as first-class Experience Graph DNA on the operator's drive. The graph names itself consistently.*
+*Everything of consequence is recorded as first-class Experience Graph DNA on the drive.*  
+*The graph names itself consistently.*
