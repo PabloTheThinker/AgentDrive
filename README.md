@@ -1,5 +1,9 @@
 # AgentDrive
 
+<p align="center">
+  <img src="assets/agentdrive-hero-1920x1080.jpg" alt="AgentDrive — Structural Experience Graph for Autonomous Agents" width="100%">
+</p>
+
 **The persistent, structural Experience Graph for AI agents and autonomous systems.**
 
 Local-first. Self-referential. Built for agents that need to reason over connections, history, and their own past work — not just retrieve flat documents.
