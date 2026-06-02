@@ -1,0 +1,125 @@
+{% extends "_shell.html" %}
+{% block title %}Agent Drive Spec · Agent Drive{% endblock %}
+{% block content %}
+<div class="spec">
+  <h1>Agent Drive — Agent-Facing Contract</h1>
+  <p class="lead">Minimal, stable surface for any process (model-backed, tool-using, or native) to act as a first-class Agent Drive participant.</p>
+
+  <h2 id="overview">1. Overview</h2>
+  <p>Agent Drive is the substrate. Agents talk to it via:</p>
+  <ul>
+    <li><strong>HTTP + SSE</strong> (recommended for custom runtimes)</li>
+    <li><strong>Native Python</strong> (import <code>agentdrive</code> — the same substrate the TUI, web UI, and swarms use)</li>
+    <li>LLM fallback mode (when no dedicated runtime is configured)</li>
+  </ul>
+
+  <div class="arch">
+    <div>your agent (HTTP/SSE or native)</div>
+    <div>↓ POST /chat + stream</div>
+    <div>Agent Drive (Drive + genomes + KG + reconciliation + HealingFactor + durable jobs)</div>
+    <div>↓ optional</div>
+    <div style="opacity:0.7">│
+                          │
+                          ▼ fallback
+                  ┌──────────────────┐
+                  │  LLM provider    │
+                  │  (Anthropic etc) │
+                  └──────────────────┘</div>
+
+  <h2 id="runtime-json">2. runtime.json schema</h2>
+  <p>Path: <code>~/.agentdrive/agents/&lt;agent_id&gt;/runtime.json</code>. Permissions: <code>0600</code> (Agent Drive writes atomically).</p>
+  <h3>kind: <code>"http_sse"</code> — primary path</h3>
+<pre><code>{
+  "kind": "http_sse",
+  "url": "http://localhost:8081/chat",
+  "auth_env": "CONDUCTOR_RUNTIME_TOKEN",
+  "timeout_s": 120
+}</code></pre>
+  <p><code>auth_env</code> names a process env var; Agent Drive reads its value and sends <code>Authorization: Bearer &lt;value&gt;</code>. Omit for unauthenticated endpoints. <code>timeout_s</code> defaults to 120.</p>
+
+  <h3>kind: <code>"model"</code> — fallback</h3>
+<pre><code>{
+  "kind": "model",
+  "provider": "anthropic",
+  "model": "claude-sonnet-4.6"
+}</code></pre>
+  <p>Uses the operator's API key from <code>~/.agentdrive/.env</code>. If <code>runtime.json</code> is absent, Agent Drive defaults to <code>kind: "model"</code> and resolves provider/model from the agent's <code>providers.json</code> allow-list.</p>
+
+  <h2 id="sse">3. HTTP + SSE protocol</h2>
+  <p>What Agent Drive sends to your endpoint when a user posts a chat turn:</p>
+  <table>
+    <tr><th>Method</th><td><code>POST</code></td></tr>
+    <tr><th>Content-Type</th><td><code>application/json</code></td></tr>
+    <tr><th>Authorization</th><td><code>Bearer &lt;auth_env value&gt;</code> (optional)</td></tr>
+    <tr><th>Body</th><td><code>{"messages": [...], "agent_id": "&lt;id&gt;"}</code></td></tr>
+    <tr><th>Accept</th><td><code>text/event-stream</code></td></tr>
+  </table>
+  <p>Each message in <code>messages</code> is <code>{"role": "system" | "user" | "assistant", "content": "..."}</code>. The first message is the composed system prompt (identity + substrate block). Your agent SHOULD respond <code>text/event-stream</code> with:</p>
+<pre><code>data: {"text": "first chunk"}
+
+data: {"text": "next chunk"}
+
+event: done
+data: {}
+
+</code></pre>
+  <p>On error, emit either an HTTP 4xx/5xx with a text body, or an SSE error event:</p>
+<pre><code>event: error
+data: {"error": "rate limited"}
+
+</code></pre>
+
+  <h3>curl example</h3>
+<pre><code>curl -N -X POST https://your-agent.example/chat \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -d '{"messages":[{"role":"user","content":"hi"}],"agent_id":"conductor"}'</code></pre>
+
+  <h3>Minimal Python FastAPI handler</h3>
+<pre><code>from fastapi import FastAPI, Request
+from fastapi.responses import StreamingResponse
+import json
+
+app = FastAPI()
+
+@app.post("/chat")
+async def chat(req: Request):
+    body = await req.json()
+    messages = body["messages"]
+    async def stream():
+        # plug your model call here; yield SSE-shaped strings
+        for chunk in ["hello ", "from ", "my agent"]:
+            yield f"data: {json.dumps({'text': chunk})}\n\n"
+        yield "event: done\ndata: {}\n\n"
+    return StreamingResponse(stream(), media_type="text/event-stream")
+</code></pre>
+
+  <h2 id="native">4. Native Python integration (recommended for depth)</h2>
+  <p>Any Python process can be a full peer of the substrate:</p>
+<pre><code>from agentdrive import AgentDrive, DriveQuery
+
+with AgentDrive(name="my-substrate") as d:
+    g = d.ingest({"framework": {"steps": [...]}, "manifest": {"id": "my-skill-v1"}})
+    result = d.think("How do I ...", prefer_experience_layer=True)
+    print(result.answer)
+    print("Gaps:", [g.description for g in result.gaps])
+</code></pre>
+
+  <p>The same <code>Drive</code>, <code>ReconciliationRunner</code>, <code>HealingFactor</code>, <code>DurableJobSupervisor</code>, and <code>Genome</code> objects power the TUI, web UI, and every role-specialized swarm. Your native agent sees exactly the same durable state.</p>
+
+  <h2 id="genomes">5. Genomes are the unit of capability</h2>
+  <p>Successful runs are decomposed into typed, versioned, content-addressed genomes. They carry:</p>
+  <ul>
+    <li>framework steps (executable playbooks)</li>
+    <li>manifest (provenance, authors, evaluation scores)</li>
+    <li>page_type (for schema-pack boosts and experience layer routing)</li>
+    <li>optional experience-observation / daily-present / research-constitution payloads</li>
+  </ul>
+  <p>Query them, fork them, promote them through quarantine gates, evolve them. The pool only grows stronger.</p>
+
+  <h2 id="trust">6. Trust boundaries (never optional)</h2>
+  <p>Everything entering the live pool from outside — peer genomes, imported snapshots, third-party adapters — passes through <code>quarantine.submit</code> and the evaluator gate. <code>trust_level</code> only adjusts quorum; it never bypasses the gate.</p>
+
+  <p class="footer">This contract is stable. Changes are versioned through schema packs and experience layer evolution.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{
+  "schema_version": 3,
+  "page_type": "daily-present",
+  "type": "healing_attempt",
+  "id": "healing-attempt-observation-example@20260531",
+  "version": "0.1.0",
+  "created": "2026-05-31T00:00:00+00:00",
+  "content": {
+    "title": "Experience Layer Regeneration Closed Loop — Example Healing Attempt Observation",
+    "summary": "High-signal daily-present style observation from successful Regenerative HealingFactor Operator loop closure. Diagnosis via Drive.think(prefer_experience_layer=True) + run_synthesis (Gaps + Contradictions) + LineageImmune + graph signals. Proposal executed under DurableJobSupervisor 'healing' phase with full verification gates passed. Ingested with typed KG edges: healed_by, regenerated_from, damage_cause, strengthened_resilience. Becomes prevention content for future experience layer v3 fusion and role-swarm coherence.",
+    "healing_id": "heal-demo-20260531",
+    "correlation_id": "healing-demo-cid-20260531",
+    "signal_type": "synthesis_high_contradiction_cluster",
+    "diagnosis": {
+      "root_cause": "Persistent gaps + contradiction cluster in sparse experience layer region blocking coherence.",
+      "gaps_detected": 4,
+      "contradictions_detected": 3,
+      "immune_assessment": {"threat_level": "benign", "reasons": ["synthesis_coherence_gap"]},
+      "kg_neighborhood_size": 12,
+      "resilience_before": 0.58,
+      "resilience_after": 0.82
+    },
+    "proposal": {
+      "type": "experience_consolidation_genome",
+      "page_type": "daily-present",
+      "verification_gates_passed": ["lineage_immune_reassess", "quarantine_check", "scanner_run", "promotion_policy"]
+    },
+    "artifacts": [
+      "healing-attempt-observation-example",
+      "new_experience_consolidation_genome_demo"
+    ],
+    "kg_edges_emitted": [
+      {"relation": "healed_by", "from": "prior_contradiction_cluster", "to": "this_healing_attempt"},
+      {"relation": "strengthened_resilience", "from": "living-experience-region", "to": "this_healing_attempt", "delta": 0.24}
+    ],
+    "fusion_signals": {
+      "daily_present_priority": true,
+      "experience_layer_boost": 0.95,
+      "prevention_learning": true,
+      "role_swarm_immune_response": true
+    },
+    "source": "Regenerative HealingFactor Operator via DurableJobSupervisor healing phase"
+  },
+  "provenance": {
+    "lineage": [
+      {"parent": "healing-factor-regeneration-proposal-v1", "relation": "executed_from", "notes": "Closed the regeneration loop under verification"}
+    ],
+    "stabilization_wave": "20260531"
+  }
+}

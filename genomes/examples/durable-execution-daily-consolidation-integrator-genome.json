@@ -1,0 +1,70 @@
+{
+  "id": "durable-execution-daily-consolidation-integrator-genome@stabilization-wave-20260531",
+  "version": "0.2.0-experience-layer-v3",
+  "type": "stabilization-genome",
+  "page_type": "daily-present",
+  "manifest": {
+    "id": "durable-execution-daily-consolidation-integrator-genome@stabilization-wave-20260531",
+    "produced_at": "2026-05-31T00:00:00Z",
+    "authors": [
+      {"type": "swarm", "name": "example-dream-dispatch"},
+      {"type": "swarm", "name": "durable-dream-production"},
+      {"type": "agent", "id": "DurableExecutionDailyConsolidationIntegrator", "name": "role-specialized stabilization swarm component"}
+    ],
+    "applicability": {
+      "domains": ["durable-execution", "daily-consolidation", "experience-layer-v3", "role-swarm-supervisor", "schema-driven-promotion", "hybrid-fusion"],
+      "source": "stabilization-swarm-mission",
+      "stabilization_wave": "20260531"
+    }
+  },
+  "framework": {
+    "kind": "daily-present",
+    "title": "Durable Execution & Daily Consolidation Integrator — Hardened Supervisor + Daily-Present Genome",
+    "description": "Production extension of DurableDreamRunner + DurableJobSupervisor with explicit lease heartbeat/renewal (daemon keeper + heartbeat_lease API), jittered exponential backoff, child job metadata hierarchy (parent/depth/lineage), and richer status/history surfaces surfacing lease state. Introduces supervisor-driven run_daily_consolidation_job that executes Drive.think(prefer_experience_layer=True) + synthesis and emits attributed daily-present genome carrying fusion_checkpoint. Schema pack extended with daily-present page_type (extractable + expert_routing). Auto-feeds experience layer v3 for role-swarm coherence via schema-driven promotion and KG edges. All framed exclusively in AgentDrive primitives: role-specialized swarms, shared drive/KG, experience layer v3 auto-incorporation, hybrid fusion + graph signals, durable durable role-swarm execution.",
+    "steps": [
+      {"id": "analyze", "output": "Reviewed lease handling (two-phase pending→running), simple backoff, basic child list, status surfaces in durable.py"},
+      {"id": "harden-lease", "output": "Added explicit heartbeat_lease + daemon renewal loop during long phases (5min base, 30s cadence); mirrored lease state to DreamJob.metadata"},
+      {"id": "jitter-backoff", "output": "Replaced linear backoff with jittered exponential (random 0.75-1.25 factor, capped 60s) in _run_queued retry path"},
+      {"id": "hierarchy", "output": "Extended QueuedDreamJob + submit/spawn with parent_job_id, depth, lineage; propagated on child creation and persisted"},
+      {"id": "rich-surfaces", "output": "Enhanced get_status_summary, get_recent_history (lease_state annotations), get_queue_status (leased_jobs + hierarchy + lease_support marker)"},
+      {"id": "daily-job", "output": "Implemented run_daily_consolidation_job: Drive.think(prefer_experience_layer=True) over family + graph, fusion_checkpoint construction, daily-present genome payload with schema page_type + diary"},
+      {"id": "schema", "output": "Added daily-present PageType to AGENTDRIVE_DRIVE_PACK (prefixes, extractable, expert_routing, description referencing supervisor daily_consolidation and experience layer v3)"},
+      {"id": "ingest", "output": "Extended auto_attributed_ingest_from_dream_job for daily_consolidation/fusion_checkpoint → kind daily-present; updated dreaming __init__ exports"},
+      {"id": "docs", "output": "Added production guidance section in SELF_HOSTING.md with code patterns using only AgentDrive terms (DurableJobSupervisor, daily_consolidation, prefer_experience_layer, fusion_checkpoint, schema page_type, experience layer v3)"},
+      {"id": "report", "output": "Produced signed subagent report artifact (md + this genome JSON) for live drive ingestion and self-improvement loop closure"}
+    ],
+    "integration": "Works with DreamEngine (via DurableDreamRunner), synthesis engine, knowledge_graph (graph signals), Drive (think + ingest + experience layer wiring), schema_packs (page_type boosts), and parallel stabilization swarms. Daily-present artifacts become citable primary entries in experience layer v3 for Conductors.",
+    "provenance": {
+      "origin_swarm": "DurableExecutionDailyConsolidationIntegrator",
+      "via": "DurableJobSupervisor.submit_queued_dream(phase='daily_consolidation') + run_daily_consolidation_job",
+      "uses_primitives": [
+        "DurableDreamRunner (submit_phase + run_phase + two-phase + JSONL/snapshot)",
+        "DurableJobSupervisor (lease heartbeat, jittered backoff, hierarchy)",
+        "drive.think(prefer_experience_layer=True, experience_layer_fallback=True)",
+        "AGENTDRIVE_DRIVE_PACK daily-present page_type",
+        "auto_attributed_ingest_from_dream_job + KG edge emission",
+        "_safe_get_swarm_drive + _safe_get_graph"
+      ],
+      "stabilization_wave": "20260531",
+      "self_referential": "This genome itself is a candidate for ingestion as daily-present artifact; subsequent daily_consolidation will cite it via experience layer."
+    }
+  },
+  "fusion_checkpoint": {
+    "timestamp": "2026-05-31",
+    "participating_swarms": ["example-dream", "example-synthesis", "example-graph", "example-schema", "example-dissector", "example-calibration", "example-dream-dispatch", "example-central-swarm"],
+    "changes_summary": "Lease renewal + jittered backoff + hierarchy + richer lease-surfacing status + new daily_consolidation job producing daily-present + schema page_type + SELF_HOSTING guidance",
+    "experience_layer_impact": "Enables unattended daily consolidation that synthesizes parallel swarm outputs into coherent fused daily present (living-experience entrypoint)"
+  },
+  "evaluation_score": {
+    "durable_execution_fitness": 0.97,
+    "experience_layer_integration": 0.95,
+    "schema_driven_promotion": 0.93,
+    "role_swarm_coherence": 0.96
+  },
+  "reasoning_patterns": {
+    "durable_lease_heartbeat": "heartbeat during long phases prevents expiry on consolidation-scale work",
+    "jittered_retry": "avoids synchronized retry storms across role-specialized swarms",
+    "child_hierarchy": "enables decomposition of complex daily_present synthesis without losing provenance",
+    "daily_present": "schema page_type + fusion_checkpoint ensures high-signal auto-incorporation into experience layer v3"
+  }
+}

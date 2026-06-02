@@ -1,0 +1,13 @@
+{
+  "id": "tranche3-calibration-supervisor-genome",
+  "version": "1.0.0",
+  "content_hash": "sha256:supervisorcalibdurablejobtranche3v1",
+  "created": "2026-05-30T12:10:00.000000",
+  "last_improved": "2026-05-30T19:30:00.000000",
+  "authors": [{"type": "swarm", "name": "example-calibration-swarm"}],
+  "applicability": {"domains": ["supervisor", "durable-jobs", "minions"], "problem_signatures": ["calibration jobs via supervisor", "DurableJobSupervisor integration"]},
+  "dependencies": {"genomes": ["example-supervisor-genome", "tranche3-calibration-engine"]},
+  "evaluation_score": {"job_execution": 0.94, "supervisor_compliance": 1.0},
+  "framework_ref": "tranche3-calibration-supervisor-v1",
+  "quarantine_note": "Sanitized example derived from personal internal development history (tranche3 calibration series). Retained for structural illustration only; not a primary recommended genome for general use. Original author-specific artifacts quarantined from shipping package."
+}

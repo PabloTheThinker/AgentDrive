@@ -1,0 +1,66 @@
+{
+  "schema_version": 3,
+  "page_type": "living-experience",
+  "type": "genome",
+  "manifest": {
+    "id": "living-experience-seed-v3",
+    "version": "3.0.0",
+    "content_hash": "sha256:stabilization-seed-v3-0000000000000000000000000000000000000000000000000000000000000000",
+    "created": "2026-05-31T00:00:00+00:00",
+    "last_improved": "2026-05-31T00:00:00+00:00",
+    "authors": [
+      {
+        "type": "agent",
+        "id": "stabilization-swarm:first-run-operator",
+        "name": "Self-Healing First-Run & Experience Seed Operator",
+        "run": null
+      }
+    ],
+    "applicability": {
+      "domains": ["meta", "self-healing", "experience-layer", "role-swarm"],
+      "problem_signatures": [
+        "empty drive on new self-hosted AgentDrive instance",
+        "no prior living-experience for prefer_experience_layer fusion"
+      ]
+    },
+    "dependencies": {
+      "genomes": [],
+      "agent_capabilities": ["synthesis", "experience-fusion"]
+    },
+    "evaluation_score": {
+      "reference_tasks": 0.99,
+      "stability": 1.0,
+      "coherence": 1.0
+    },
+    "schema_version": "1.0",
+    "supersedes": [],
+    "merge_strategy": "last-write"
+  },
+  "framework": {
+    "page_type": "living-experience",
+    "observation_type": "stabilization_seed_v3",
+    "description": "Minimal high-signal living-experience seed genome. Ensures new AgentDrive instances for role-swarm users who self-host start coherent. Experience layer present from first think via defensive self-healing bootstrap. Directly ingestible artifact for stabilization swarm demonstration of first-run healing.",
+    "signals": [
+      "first_think_ready",
+      "prefer_experience_layer_anchor",
+      "kg_bootstrap",
+      "self_healing",
+      "production_reliability"
+    ],
+    "stabilization_note": "Produced by the Self-Healing First-Run & Experience Seed Operator component. Use with agentdrive reconcile seed-experience-v3 or direct registry ingest on fresh drive."
+  },
+  "reasoning_patterns": {},
+  "tool_compositions": {},
+  "evaluations": {},
+  "provenance": {
+    "lineage": [
+      {
+        "parent": "bootstrap",
+        "relation": "seed",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "First-run self-healing seed for experience layer v3"
+      }
+    ],
+    "improvements": []
+  }
+}

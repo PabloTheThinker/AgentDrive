@@ -238,7 +238,7 @@ The engine core, safety model, and operator surfaces are solid and exercised.
 
 ```bash
 # Install
-curl -fsSL https://vektraindustries.com/agentdrive/install | bash
+curl -fsSL https://raw.githubusercontent.com/PabloTheThinker/AgentDrive/main/scripts/install.sh | bash
 # or
 python3 -m pip install --user git+https://github.com/PabloTheThinker/AgentDrive.git
 
@@ -391,7 +391,18 @@ agentdrive config set ...
 agentdrive config edit
 ```
 
-`agentdrive doctor` is the best first diagnostic — it walks home dir, registry, pool, adapters, provider config, and core imports.
+`agentdrive doctor` is the best first diagnostic — it walks home dir, registry, pool, adapters, provider config, and core imports. It also invokes the security posture helper for permission, trust, grants, key-file, instance-name, and reconciliation signals.
+
+For scripted or TUI automation you can call it directly:
+
+```python
+from agentdrive.security import get_security_posture, print_security_posture
+posture = get_security_posture()
+if posture.overall != "good" or posture.instance_name_is_default:
+    # e.g. alert or enforce in CI / onboarding
+    ...
+print_security_posture()
+```
 
 Logs: `~/.agentdrive/logs/`, quarantine audit at `quarantine/log.jsonl`, reconciliation state at `reconciliation.json`.
 

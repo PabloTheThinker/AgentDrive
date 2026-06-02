@@ -1,0 +1,85 @@
+{
+  "schema_version": 3,
+  "page_type": "research-constitution",
+  "type": "research_thread_constitution",
+  "id": "research-thread-constitution-daily-consolidation-optimizer@stabilization-wave-20260531",
+  "version": "1.0.0-autoresearch-integration",
+  "created": "2026-05-31T00:00:00+00:00",
+  "last_improved": "2026-05-31T00:00:00+00:00",
+  "manifest": {
+    "id": "research-thread-constitution-daily-consolidation-optimizer@stabilization-wave-20260531",
+    "version": "1.0.0-autoresearch-integration",
+    "content_hash": "sha256:research-dailyconsol-20260531-0000000000000000000000000000000000000000000000000000000000000000",
+    "created": "2026-05-31T00:00:00+00:00",
+    "last_improved": "2026-05-31T00:00:00+00:00",
+    "authors": [
+      {
+        "type": "swarm",
+        "id": "autonomous-research-thread-swarm",
+        "name": "Autonomous Research Thread Swarm (role-specialized stabilization component inside AgentDrive for full autoresearch integration)"
+      },
+      {
+        "type": "swarm",
+        "id": "stabilization-wave-20260531",
+        "name": "stabilization-coordination job (GridEngine + DurableJobSupervisor research_thread phase + HealingFactor.for_stabilization_wave)"
+      }
+    ],
+    "applicability": {
+      "domains": ["daily-consolidation", "proposal-generators", "experience-layer-v3", "role-swarm-coherence", "autoresearch", "research-threads", "fusion"],
+      "problem_signatures": [
+        "continuous improvement of daily_consolidation methods and proposal generators for better role-swarm coherence and living-experience fusion",
+        "research threads run unattended producing better consolidation artifacts under budget",
+        "high-signal improvements surface as daily-present observations and specialized consolidation lineages"
+      ],
+      "stabilization_wave": "20260531"
+    },
+    "dependencies": {
+      "genomes": [
+        "durable-execution-daily-consolidation-integrator-genome@stabilization-wave-20260531",
+        "95-production-readiness-assessment-living-experience@stabilization-wave-20260531"
+      ],
+      "agent_capabilities": [
+        "run_daily_consolidation_job",
+        "GridEngine maintenance + research coordinator",
+        "DurableJobSupervisor phase=daily_consolidation + research_thread",
+        "propose_experience_evolution for consolidation lineage forks"
+      ]
+    },
+    "research_constitution": {
+      "thread_id": "daily-consolidation-optimizer",
+      "objective": "keep iterating on better daily_consolidation methods (fusion_checkpoint assembly, participating_swarms synthesis, experience layer v3 auto-incorporation rules) and proposal generators (regeneration_proposals, experience_consolidation, research_evolution_proposal) for superior role-swarm coherence",
+      "research_budget_per_iteration": {
+        "max_synthesis_calls": 5,
+        "max_time_s": 300,
+        "max_genomes_per_think": 8,
+        "max_iterations_per_thread": 200
+      },
+      "branch_advancement_policy": "specialized_consolidation_lineage",
+      "high_signal_threshold": {
+        "min_role_swarm_coherence_gain": 0.1,
+        "min_fusion_checkpoint_quality": 0.08,
+        "min_daily_present_signal_strength": 0.12
+      },
+      "healing_integration": {
+        "trigger_healing_on_improvement": true,
+        "better_proposals_feed_HealingFactor_directly": true
+      },
+      "logging_policy": "high-signal consolidation optimizations and improved proposal generators surfaced as experience-observations (daily-present + research-thread) for immediate experience layer availability",
+      "discoverability": "daily-present observations from research threads become primary Conductor interface content; queryable alongside living-experience via prefer_experience_layer"
+    }
+  },
+  "framework": {
+    "steps": [
+      {"id": "consolidation-research", "output": "Run bounded daily_consolidation style think + synthesis focused on coherence metrics"},
+      {"id": "proposal-gen-improvement", "output": "Evolve generator logic; evaluate via harness"},
+      {"id": "lineage-advance", "output": "High signal: fork specialized consolidation lineage genome + produce improved daily-present candidate"},
+      {"id": "healing-trigger", "output": "Surface improvements trigger HealingFactor for any related regeneration; proposals carry research_thread provenance"}
+    ]
+  },
+  "fusion_checkpoint": {
+    "stabilization_wave": "20260531",
+    "produced_by": "Autonomous Research Thread Swarm (GridEngine research thread support)",
+    "sibling_coordination": "Complements durable daily_consolidation integrator and 95% assessment; constitutions provide charters for ongoing autoresearch post-wave",
+    "experience_layer_v3": "research threads keep daily-present and consolidation lineages evolving autonomously"
+  }
+}

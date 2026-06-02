@@ -19,6 +19,13 @@ agentdrive drive status
 agentdrive genomes list
 ```
 
+`agentdrive doctor` surfaces `get_security_posture()` results (trust/grants hygiene, key file perms, instance name check, reconciliation signal). For code:
+
+```python
+from agentdrive.security import get_security_posture
+posture = get_security_posture()
+```
+
 All examples write only under `~/.agentdrive/` (or isolated temps) and are safe to re-run. Use unique agent/swarm IDs in your own code.
 
 ---

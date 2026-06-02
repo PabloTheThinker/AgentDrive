@@ -164,19 +164,19 @@ The fix list above closed productization. The v2 architecture milestones from `A
 | M5 | P-384 trust circle + cross-device sync | ✅ `trust/` module (crypto/models/store), voucher admission, sealed sync envelopes, disk persistence; 17 new tests |
 | M6 | Promotion gates + tiered sync (finish) | ✅ `promotion/` module (models/policy/service), `SwarmDrivePolicy.promotion_required` + `auto_approve_from`, `AgentDrive` upward ingest routes via `PromotionService`; 11 new tests |
 
-**M4 design calls (Pablo defaults):**
+**M4 design calls (initial defaults):**
 - `crdt-set` is add-only (G-Set). OR-Set deferred — removals would require tombstones and bigger on-disk state. Easy to upgrade later.
 - `merge_strategy` defaults to `"last-write"` so every existing Genome stays back-compat. The new fields are only included in the content hash when explicitly set (preserves pre-M4 hashes byte-for-byte).
 - Conflict suffix: `conflict-<sha8(version_vector)>-<sanitized_author>`. Deterministic so retrying the same losing write doesn't pile up duplicates.
 
-**M5 design calls (Pablo defaults):**
+**M5 design calls (initial defaults):**
 - Single sponsor signature admits a new device for v1. Quorum / multi-signer admission deferred — would expand the wire format and onboarding UX without clear v1 value.
 - Private key at rest is plaintext PEM under `~/.agentdrive/trust/self.json`, chmod 0600. Local-first stance: if the home directory is compromised, everything else is too. OS-keychain integration is a later option.
 - Curve choice: **P-384** via `cryptography` (already a declared dep). One library gives ECDSA + ECDH + HKDF + AES-256-GCM. No Noise / NaCl pull-in for v1.
 - `device_id` = first 16 hex chars of `SHA-256(public_pem)`. Stable, derivable, no separate id registry.
 - Replay protection: voucher ids logged to `trust/nonces.log`; a voucher used once cannot be used again on the same device. Different devices fail key-binding instead (see `prepare_invitee_keypair`).
 
-**M6 design calls (Pablo defaults):**
+**M6 design calls (initial defaults):**
 - `promotion_required=True`, `auto_approve_from="self"` — every upward write produces an auditable proposal, but self-originated proposals auto-approve so single-agent flows stay one logical step. Trusted-peer auto-approval is opt-in.
 - `PromotionRecord` is a separate artifact, not a Genome subtype. Smaller blast radius; existing Genome consumers don't grow a new case to handle.
 - Persistence: append-only JSONL at `<drive>/promotions/proposals.jsonl`. Status of a proposal is derived by replaying its records (latest decision wins).

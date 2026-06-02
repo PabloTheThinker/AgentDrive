@@ -5,7 +5,7 @@ publish) live here keyed by content hash, alongside Genomes inherited
 forward-only from direct ancestors via the ``Ancestry`` closure table.
 
 There is **no decay**: once a Genome is in the lineage, every descendant
-always has access. This matches the Avatar-style mental model Pablo
+always has access. This matches the Avatar-style mental model from the core design
 specified — your ancestors are always there when you reach back.
 
 This module is the *forward-only* half of the DNA layer. Sideways flow

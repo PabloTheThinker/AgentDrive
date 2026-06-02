@@ -15,8 +15,8 @@ Agent Drive gives AI agents persistent memory and the ability to evolve. Securit
 
 Instead:
 
-1. Email **pablo@vektraindustries.com** (or the address listed in the GitHub security advisories if available).
-2. Use GitHub's private vulnerability reporting: Go to the repo → Security → Report a vulnerability.
+1. Use GitHub's private vulnerability reporting: Go to the repo → Security → Report a vulnerability.
+2. Or contact the maintainers via the project's GitHub discussions / issues (mark as security if appropriate).
 
 Include:
 - Description of the issue and potential impact
@@ -67,9 +67,9 @@ The safest ways to install Agent Drive (in order):
    bash agentdrive-install.sh
    ```
 
-2. Use the branded URL only after you trust the project:
+2. Use the repository's canonical installer (recommended after review):
    ```bash
-   curl -fsSL https://vektraindustries.com/agentdrive/install | bash
+   curl -fsSL https://raw.githubusercontent.com/PabloTheThinker/AgentDrive/main/scripts/install.sh | bash
    ```
 
 3. Pin to a specific release tag when available:

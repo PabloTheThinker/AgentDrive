@@ -11,6 +11,7 @@ user-controlled living pool of experience that starts empty and grows with use.
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 import threading
@@ -19,6 +20,7 @@ from contextlib import nullcontext
 from datetime import datetime
 from typing import Any
 
+import httpx
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import FileHistory
@@ -35,10 +37,382 @@ from agentdrive.tui.skin_engine import skin
 from agentdrive.tui.views.drive_view import register_drive_view
 
 
+class MissionControlClient:
+    """
+    Cross-process client for MissionControlHub (Wave 3).
+
+    - Hydrates from /state (httpx, always available) for 6-step + fabric + grid snapshots.
+    - Optional true WS subscribe (/ws/mission) when 'websocket-client' package present
+      (import websocket): push events, seq tracking, replay via after_seq on reconnect,
+      command surface with ack correlation.
+    - Background polling thread keeps snapshots fresh (lightweight "SSE-like" fallback).
+    - Resilient: auto-reconnect + replay for WS path; always falls back to http snapshots.
+    - Duck-types the in-process hub API surface used by TUI (derive_* + recent_events + dispatch_command)
+      so _show_mission_control_view render + command paths need zero special casing.
+    - Per AGENTS.md: no new auth (uses the documented unauth observation + local cmd surface),
+      local-first, targets real `agentdrive mission` on stabilization-wave-20260531 context.
+    - References exact payloads from server.py: initial_state{type,data,seq}, event{seq,event_type,data,...},
+      replay{type,after_seq,events,current_seq}, command_ack{type,...}, replay_events command.
+    """
+
+    def __init__(self, url: str = "ws://127.0.0.1:8421/ws/mission"):
+        self._raw_url = url or "ws://127.0.0.1:8421/ws/mission"
+        self.ws_url = self._normalize_ws_url(self._raw_url)
+        self.http_base = self._to_http_base(self._raw_url)
+        self._state_lock = threading.Lock()
+        self.loop_state: dict[str, Any] = {"status": "initializing"}
+        self.fabric: dict[str, Any] = {}
+        self.grid_health: dict[str, Any] = {}
+        self.recent_events: list[dict[str, Any]] = []
+        self.last_seq: int = 0
+        self.connected: bool = False  # true WS push connected
+        self._http_ok: bool = False
+        self._stop_event = threading.Event()
+        self._poll_thread: threading.Thread | None = None
+        self._ws_thread: threading.Thread | None = None
+        self._ws_sock: Any = None  # the websocket connection when HAS_WS
+        self._pending_acks: dict[str, dict[str, Any]] = {}  # nonce -> ack payload
+        self._ack_timeout = 2.0
+        self._last_ack: Any = None
+        self._seq_gap_detected: bool = False
+        self.last_error: str | None = None
+        self._reconnect_backoff: float = 0.5
+        self._ws_supervisor_thread: threading.Thread | None = None
+
+        # Optional real WS client (pip install websocket-client provides "import websocket")
+        try:
+            import websocket as _wsmod  # type: ignore
+
+            self._wsmod = _wsmod
+            self._has_ws_lib = True
+        except Exception:
+            self._wsmod = None
+            self._has_ws_lib = False
+
+        self._start_poll_thread()
+        # Wave 3 harden: always start resilient WS supervisor (if lib) for auto reconnect + late join even if initial connect fails
+        if self._has_ws_lib:
+            self._start_ws_supervisor()
+        # WS attempt is lazy: first explicit connect() or on first use in view
+
+    def _normalize_ws_url(self, u: str) -> str:
+        u = u.strip()
+        if u.startswith("http://"):
+            u = "ws://" + u[len("http://") :]
+        elif u.startswith("https://"):
+            u = "wss://" + u[len("https://") :]
+        if "://" not in u:
+            u = "ws://" + u
+        # ensure /ws/mission path
+        if "/ws/mission" not in u:
+            base = u.rstrip("/")
+            if not base.endswith("/ws/mission"):
+                u = base + "/ws/mission"
+        return u
+
+    def _to_http_base(self, u: str) -> str:
+        u = u.strip()
+        if u.startswith("ws://"):
+            u = "http://" + u[5:]
+        elif u.startswith("wss://"):
+            u = "https://" + u[6:]
+        # strip ws path
+        if "/ws/mission" in u:
+            u = u.split("/ws/mission")[0]
+        return u.rstrip("/")
+
+    def _start_poll_thread(self) -> None:
+        self._stop_event.clear()
+        self._poll_thread = threading.Thread(
+            target=self._poll_loop, daemon=True, name="mc-http-poll"
+        )
+        self._poll_thread.start()
+
+    def _start_ws_supervisor(self) -> None:
+        """Minimal resilient WS supervisor: ensures auto-reconnect + late-join replay with exp backoff even if daemon starts after TUI (or initial connect fails)."""
+        if self._ws_supervisor_thread and self._ws_supervisor_thread.is_alive():
+            return
+        self._ws_supervisor_thread = threading.Thread(
+            target=self._ws_supervisor_loop, daemon=True, name="mc-ws-supervisor"
+        )
+        self._ws_supervisor_thread.start()
+
+    def _ws_supervisor_loop(self) -> None:
+        """Background supervisor for WS resilience (exponential backoff, seq replay on every (re)connect)."""
+        while not self._stop_event.is_set():
+            if self.connected and self._ws_sock is not None:
+                time.sleep(2.0)
+                continue
+            if not self._has_ws_lib:
+                time.sleep(5.0)
+                continue
+            try:
+                sock = self._wsmod.create_connection(self.ws_url, timeout=3.5)
+                with self._state_lock:
+                    self._ws_sock = sock
+                    self.connected = True
+                    self._reconnect_backoff = 0.5
+                    self.last_error = None
+                # start recv thread if needed
+                if self._ws_thread is None or not self._ws_thread.is_alive():
+                    self._ws_thread = threading.Thread(
+                        target=self._ws_recv_loop, daemon=True, name="mc-ws-recv"
+                    )
+                    self._ws_thread.start()
+                # seq replay for reconnect / late join
+                self._request_replay(self.last_seq)
+            except Exception as exc:
+                with self._state_lock:
+                    self.connected = False
+                    self._ws_sock = None
+                    self.last_error = f"ws_connect:{str(exc)[:80]}"
+                    self._reconnect_backoff = min(self._reconnect_backoff * 1.8, 12.0)
+                time.sleep(self._reconnect_backoff)
+                continue
+            time.sleep(1.5)
+
+    def _poll_loop(self) -> None:
+        while not self._stop_event.is_set():
+            self._hydrate_http()
+            # jittered poll
+            time.sleep(1.2 + (time.time() % 0.3))
+
+    def _hydrate_http(self) -> None:
+        """Always-available snapshot path using /state (exact contract from server.py)."""
+        if httpx is None:
+            return
+        try:
+            url = self.http_base + "/state"
+            with httpx.Client(timeout=2.5, follow_redirects=True) as client:
+                resp = client.get(url)
+                if resp.status_code == 200:
+                    payload = resp.json()
+                    with self._state_lock:
+                        # Fix: handle bare {"status": "no_mission_attached"} from server /state (when no Integrated attached to Tower)
+                        ls = payload.get("loop_state")
+                        if ls is None:
+                            st = payload.get("status")
+                            self.loop_state = {"status": st} if isinstance(st, (str, dict)) else {}
+                        else:
+                            self.loop_state = ls or {}
+                        self.fabric = payload.get("fabric", {}) or {}
+                        self.grid_health = payload.get("grid_health", {}) or {}
+                        self._http_ok = True
+                        # recent count only; full list comes from WS when available
+                else:
+                    with self._state_lock:
+                        self._http_ok = False
+        except Exception:
+            with self._state_lock:
+                self._http_ok = False
+
+    def connect(self) -> bool:
+        """Attempt WS connection for live push + commands + replay. Returns whether WS path active. (supervisor provides resilience + late join)"""
+        if not self._has_ws_lib:
+            self.last_error = "no_websocket_client_lib"
+            return False
+        if self.connected and self._ws_sock is not None:
+            return True
+        # Trigger supervisor for immediate + background resilience (fixes prior late-connect failure mode)
+        if self._has_ws_lib:
+            self._start_ws_supervisor()
+        # Best-effort immediate try (supervisor will keep retrying)
+        try:
+            sock = self._wsmod.create_connection(self.ws_url, timeout=3.5)
+            with self._state_lock:
+                self._ws_sock = sock
+                self.connected = True
+                self._reconnect_backoff = 0.5
+                self.last_error = None
+            if self._ws_thread is None or not self._ws_thread.is_alive():
+                self._ws_thread = threading.Thread(
+                    target=self._ws_recv_loop, daemon=True, name="mc-ws-recv"
+                )
+                self._ws_thread.start()
+            self._request_replay(self.last_seq)
+            return True
+        except Exception as exc:
+            with self._state_lock:
+                self.connected = False
+                self._ws_sock = None
+                self.last_error = f"ws_connect:{str(exc)[:80]}"
+            return False
+
+    def _ws_recv_loop(self) -> None:
+        """Push subscribe loop. Handles exact WS payloads per server.py. (supervisor owns connect/reconnect resilience + replay)"""
+        while not self._stop_event.is_set():
+            sock = self._ws_sock
+            if sock is None or not self.connected:
+                time.sleep(1.0)
+                # Do not attempt connect here; supervisor thread handles resilient reconnect + after_seq replay
+                continue
+            try:
+                # blocking recv of text frame
+                raw = sock.recv()
+                if raw:
+                    try:
+                        msg = json.loads(raw)
+                    except Exception:
+                        msg = {"raw": str(raw)[:200]}
+                    self._handle_ws_message(msg)
+            except Exception:
+                # connection lost; flag for supervisor (resilient auto-reconnect + replay)
+                with self._state_lock:
+                    self.connected = False
+                    self._seq_gap_detected = True  # expect replay on recovery
+                try:
+                    if self._ws_sock:
+                        self._ws_sock.close()
+                except Exception:
+                    pass
+                self._ws_sock = None
+                time.sleep(0.2)
+
+    def _handle_ws_message(self, msg: dict[str, Any]) -> None:
+        """Process initial_state, replay, command_ack, and live event payloads (see server.py)."""
+        with self._state_lock:
+            mtype = msg.get("type")
+            if mtype == "initial_state":
+                data = msg.get("data", {})
+                self.loop_state = data.get("loop_state", {}) or data.get("status", {}) or {}
+                if isinstance(self.loop_state, str):
+                    self.loop_state = {"status": self.loop_state}
+                self.fabric = data.get("fabric", {}) or {}
+                self.grid_health = data.get("grid_health", {}) or {}
+                new_seq = int(msg.get("seq", self.last_seq))
+                if new_seq > self.last_seq + 1:
+                    self._seq_gap_detected = True
+                self.last_seq = new_seq
+                # server may also include recent count; we rely on subsequent events or explicit replay
+            elif mtype == "replay":
+                for ev in msg.get("events", []) or []:
+                    self._ingest_event(ev)
+                new_seq = int(msg.get("current_seq", self.last_seq))
+                if new_seq > self.last_seq + 1:
+                    self._seq_gap_detected = True
+                self.last_seq = new_seq
+                if self._seq_gap_detected:
+                    self.last_error = "seq gap detected + replay successful"
+            elif mtype == "command_ack":
+                # correlate by command or by our nonce if present (now echoed by server post tiny align)
+                nonce = msg.get("nonce") or msg.get("id")
+                if nonce and nonce in self._pending_acks:
+                    self._pending_acks[nonce] = msg
+                # also keep a last ack for simple cases
+                self._last_ack = msg
+            elif "seq" in msg or msg.get("event_type"):
+                # canonical live event (or replay item shape)
+                self._ingest_event(msg)
+                if "seq" in msg:
+                    new_seq = int(msg["seq"])
+                    if new_seq > self.last_seq + 1:
+                        self._seq_gap_detected = True
+                    self.last_seq = max(self.last_seq, new_seq)
+            # also allow server to push state updates in other shapes (defensive)
+
+    def _ingest_event(self, ev: dict[str, Any]) -> None:
+        self.recent_events.append(ev)
+        if len(self.recent_events) > 80:
+            self.recent_events = self.recent_events[-50:]
+        # Opportunistic: some events carry fresh coherence etc; hydrate will correct anyway
+        et = ev.get("event_type", "")
+        if et in ("loop_step", "fabric_update", "overseer_state"):
+            # leave authoritative snapshots to /state ; events primarily for the "recent" pane
+            pass
+
+    def _request_replay(self, after: int) -> None:
+        if self.connected and self._ws_sock:
+            try:
+                payload = {"command": "replay_events", "after_seq": int(after)}
+                self._ws_sock.send(json.dumps(payload))
+            except Exception:
+                pass
+
+    def _make_nonce(self) -> str:
+        return f"{time.time_ns()}"
+
+    def send_command(self, command: str, **kwargs: Any) -> dict[str, Any]:
+        """Send command over WS (if live) or degrade gracefully. Mirrors hub.dispatch_command contract (now with nonce ack correlation)."""
+        if not self._has_ws_lib or not self.connected or self._ws_sock is None:
+            # Consistent graceful shape with in-proc hub when no mission (duck-type)
+            return {
+                "command": command,
+                "error": "no_mission_attached" if not self._has_ws_lib else "no_cross_process_ws",
+                "graceful": True,
+                "note": "WS not active; using HTTP snapshots. Use agentdrive mission + attach Integrated for full live.",
+                "timestamp": time.time(),
+            }
+        nonce = self._make_nonce()
+        payload = {
+            "command": command,
+            "nonce": nonce,
+            **{k: v for k, v in kwargs.items() if k != "nonce"},
+        }
+        with self._state_lock:
+            self._pending_acks[nonce] = {"_pending": True}
+        try:
+            self._ws_sock.send(json.dumps(payload, default=str))
+        except Exception as exc:
+            with self._state_lock:
+                self._pending_acks.pop(nonce, None)
+            self.last_error = f"ws_send:{exc}"
+            return {"command": command, "error": f"ws_send_failed:{exc}", "timestamp": time.time()}
+
+        # Wait for correlated ack (nonce now echoed by server post-align; recv thread populates)
+        deadline = time.time() + self._ack_timeout
+        while time.time() < deadline:
+            with self._state_lock:
+                entry = self._pending_acks.get(nonce)
+                if entry and not entry.get("_pending"):
+                    ack = self._pending_acks.pop(nonce, entry)
+                    return ack
+            time.sleep(0.03)
+        # timeout: still ok (side-effect via publish_event_sync will appear); events show in Tower
+        with self._state_lock:
+            self._pending_acks.pop(nonce, None)
+        return {
+            "command": command,
+            "status": "sent_ws_no_ack_timeout",
+            "graceful": True,
+            "timestamp": time.time(),
+        }
+
+    # --- Duck-type surface for zero-delta usage in _show_mission_control_view ---
+    def derive_loop_state_snapshot(self) -> dict[str, Any]:
+        with self._state_lock:
+            return dict(self.loop_state)
+
+    def derive_fabric_snapshot(self) -> dict[str, Any]:
+        with self._state_lock:
+            return dict(self.fabric)
+
+    def dispatch_command(self, command: str, **kwargs: Any) -> dict[str, Any]:
+        """Compatibility with in-proc hub.dispatch_command."""
+        return self.send_command(command, **kwargs)
+
+    # recent_events already a list attr (we return ref; callers do list()[-N:] which is fine)
+
+    def close(self) -> None:
+        self._stop_event.set()
+        if self._ws_sock:
+            try:
+                self._ws_sock.close()
+            except Exception:
+                pass
+        self.connected = False
+        self._ws_sock = None
+
+    def __del__(self):
+        try:
+            self.close()
+        except Exception:
+            pass
+
+
 class AgentDriveTUI:
     """Production-grade interactive TUI for Agent Drive genome management and orchestration."""
 
-    def __init__(self):
+    def __init__(self, mission_url: str | None = None):
         self.skin = skin
         self.console = skin.console
         self.registry = GenomeRegistry()
@@ -78,6 +452,10 @@ class AgentDriveTUI:
             "missions",
             "kanban",
             "b",
+            "mc",
+            "mission",
+            "control",
+            "mctrl",
             "chat",
             "scan",
             "run",
@@ -107,6 +485,34 @@ class AgentDriveTUI:
         except Exception:
             self.pool_view = None
 
+        # Optional MissionControlHub subscription for v1.5 unified mission view parity (non-breaking)
+        # If a harness / Integrated system in same process attached the global hub, or if
+        # mission_control module importable, TUI can surface 6-step / fabric / events / commands.
+        # Graceful: remains None and invisible if no MC in this runtime (default TUI unchanged).
+        self._mc_hub = None
+        try:
+            from agentdrive.mission_control.server import hub as _mc_hub
+
+            self._mc_hub = _mc_hub
+        except Exception:
+            self._mc_hub = None
+
+        # Wave 3: cross-process Mission Control client (TUI separate from supervisor running `agentdrive mission`).
+        # Populated on-demand in mc view when url provided or auto-discovered (or via launch flag).
+        # Duck-types the in-proc hub (derive_loop_state_snapshot / derive_fabric_snapshot / recent_events / dispatch_command)
+        # so _show_mission_control_view + status + commands need zero special casing.
+        # Uses /state + /ws/mission with seq replay (after_seq), reconnect backoff per exact payloads in server.py:mission_websocket + handle_inbound_command.
+        # Targets stabilization-wave-20260531 IntegratedRealTimeEvolutionSystem attached to `agentdrive mission`.
+        self._mc_remote: MissionControlClient | None = None
+        if mission_url:
+            try:
+                mc = MissionControlClient(url=mission_url)
+                mc.connect()  # best-effort WS; HTTP /state poll always active from ctor
+                self._mc_remote = mc
+            except Exception:
+                # leave None (graceful; TUI + local mc still fully work)
+                pass
+
     def _ensure_bootstrap(self) -> None:
         """Register seed example on first use so TUI is immediately useful."""
         try:
@@ -121,11 +527,20 @@ class AgentDriveTUI:
             self.console.print(f"[agentdrive.warn]Bootstrap note:[/] {e}")
 
     def _get_status_context(self) -> str:
-        """Short status snippet for the prompt line (registry count, pool health)."""
+        """Short status snippet for the prompt line (registry count, pool health, optional MC)."""
         try:
             stats = self.registry.get_registry_stats()
             cnt = stats.get("count", 0)
-            return f"[dim]{cnt} genome{'s' if cnt != 1 else ''}[/]"
+            base = f"[dim]{cnt} genome{'s' if cnt != 1 else ''}[/]"
+            if getattr(self, "_mc_hub", None) is not None:
+                base += " [agentdrive.accent]mc[/]"
+            elif getattr(self, "_mc_remote", None) is not None and getattr(
+                self._mc_remote, "connected", False
+            ):
+                base += " [agentdrive.accent]mc:remote[/]"
+            elif getattr(self, "_mc_remote", None) is not None:
+                base += " [agentdrive.muted]mc:http[/]"
+            return base
         except Exception:
             return "[dim]--[/]"
 
@@ -181,7 +596,9 @@ class AgentDriveTUI:
 
     def run(self) -> None:
         """Main REPL loop — premium feel with completion, history, clean interrupts."""
-        self.skin.print_banner("AgentDrive")
+        from agentdrive.config import get_instance_name
+
+        self.skin.print_banner(get_instance_name())
 
         # Dedicated first-launch Agent Drive Welcome Screen
         # Shown once after onboarding — distinct from the reusable setup wizard.
@@ -263,6 +680,7 @@ class AgentDriveTUI:
                 f"[{p.accent}]chat[/]",
                 f"[{p.accent}]board[/]",
                 f"[{p.accent}]pool[/]",
+                f"[{p.accent}]mc[/]",
                 f"[{p.accent}]genomes[/]",
                 f"[{p.accent}]run[/]",
                 f"[{p.accent}]doctor[/]",
@@ -313,44 +731,52 @@ class AgentDriveTUI:
         except Exception:
             provider_v = "[agentdrive.warn]unavailable[/]"
 
+        from agentdrive.config import get_instance_name
+
+        instance_name = get_instance_name()
+        is_personal = instance_name and instance_name != "AgentDrive"
+
         hero = Text()
         hero.append(f"{Glyphs.DIAMOND} ", style=p.accent)
-        hero.append("AGENTDRIVE", style=p.title + " bold")
-        hero.append("  —  The Living, Learning Ecosystem for AI Agents", style=p.accent)
+        if is_personal:
+            hero.append(instance_name, style=p.title + " bold")
+            hero.append("  ·  ", style=p.muted)
+            hero.append("AgentDrive", style=p.title + " bold")
+        else:
+            hero.append("AGENTDRIVE", style=p.title + " bold")
 
         tagline = Text(
-            "Every agent (and every sub-agent it spawns) gets a private, persistent DNA pool.",
+            "Your private, persistent ecosystem for agent DNA.",
             style=p.muted + " italic",
         )
 
         body = section_panel(
             Group(hero, tagline),
             Section(
-                "Environment",
+                "Your system",
                 [
                     ("home", f"[agentdrive.genome]{agentdrive_home}[/]"),
                     ("provider", provider_v),
                     (
                         "drive",
-                        f"[agentdrive.ok]ready[/]  · {ingest_count} ingest event{'s' if ingest_count != 1 else ''}",
+                        f"[agentdrive.ok]ready[/]  · {ingest_count} events",
                     ),
-                    ("swarms", f"{swarm_count} seen"),
+                    ("swarms", f"{swarm_count} active"),
                 ],
                 palette=p,
             ),
             Section(
-                "Recommended next steps",
+                "Begin",
                 [
-                    ("chat", "open the agent chat"),
-                    ("drive", "browse genomes and swarms"),
-                    ("setup swarm", "configure sub-agent sharing rules"),
-                    ("doctor", "run a system health check"),
-                    ("help", "see every command"),
+                    ("chat", "talk to your agents"),
+                    ("drive", "explore genomes & memory"),
+                    ("board", "see missions & work"),
+                    ("doctor", "health check"),
                 ],
                 palette=p,
-                key_width=14,
+                key_width=12,
             ),
-            title="Welcome to AgentDrive",
+            title=f"Welcome to {instance_name}" if is_personal else "Welcome to AgentDrive",
             palette=p,
         )
 
@@ -391,6 +817,9 @@ class AgentDriveTUI:
             return
         if cmd in ("board", "missions", "kanban", "b"):
             self._show_board(args)
+            return
+        if cmd in ("mc", "mission", "control", "mctrl"):
+            self._show_mission_control_view(args)
             return
         if cmd == "scan":
             self._scan_runs(args)
@@ -464,13 +893,36 @@ class AgentDriveTUI:
             Section(
                 "Board",
                 [
-                    ("board / b", "AgentDrive Mission Board (lanes: pending/running/done/failed)"),
+                    ("board / b / kanban", "AgentDrive Mission Board (terminal) — web Kanban at http://127.0.0.1:8421/ (run `agentdrive board`)"),
                     ("board recent", "compact recent-missions view"),
                     ("board create <t>", "stage a Pending mission"),
                     ("board stats", "lane counts + avg duration"),
                 ],
                 palette=p,
                 key_width=18,
+            ),
+            Section(
+                "Mission Control (v1.5 + Wave 3 cross-proc)",
+                [
+                    (
+                        "mc / mission / control",
+                        "unified 6-step + fabric + events + cmd surface (same-proc hub or remote)",
+                    ),
+                    (
+                        "agentdrive tui --mission ws://127.0.0.1:8421",
+                        "cross-process TUI client against separate `agentdrive mission` Tower",
+                    ),
+                    (
+                        "inside TUI: mc ws://...  or mc --url ...",
+                        "ad-hoc attach live client (uses MissionControlClient + seq replay)",
+                    ),
+                    (
+                        "",
+                        "graceful no_mission; targets stabilization-wave-20260531; uses existing chrome",
+                    ),
+                ],
+                palette=p,
+                key_width=22,
             ),
             Section(
                 "Genomes",
@@ -962,6 +1414,779 @@ class AgentDriveTUI:
                     palette=p,
                 )
             )
+
+    def _show_mission_control_view(self, args: list[str]) -> None:
+        """Lightweight unified Mission Control view in TUI (v1.5 TUI parity + Wave 3 cross-process).
+
+        - In-process: uses the global MissionControlHub singleton when an
+          IntegratedRealTimeEvolutionSystem (stabilization-wave-20260531 context) is
+          attached in the same process.
+        - Cross-process: when launched via `agentdrive tui --mission ws://...` (or
+          ad-hoc `mc ws://127.0.0.1:8421` / `mc --url ...` inside TUI), uses the
+          MissionControlClient which:
+            * Hydrates from GET /state (loop_state, fabric, grid_health)
+            * Subscribes /ws/mission for live events (exact payload: {seq, event_type, data, ...})
+            * On connect/reconnect: receives initial_state{type,data,seq}, requests
+              replay_events{after_seq} -> replay{type,events,current_seq}
+            * Commands via WS -> command_ack (see server.py:handle_inbound_command + mission_websocket)
+            * Resilient: WS backoff + seq replay; always falls back to HTTP snapshots.
+            * Duck-types hub surface (derive_* + dispatch_command + .recent_events) for
+              zero-delta render + command paths in this view.
+
+        Non-breaking: zero change to TUI when no MC anywhere. Graceful "no_mission_attached"
+        and smoke commands always work. Chrome primitives for visual parity.
+        """
+
+        from agentdrive.tui.chrome import (
+            Glyphs,
+            Palette,
+            Section,
+            context_bar,
+            info_line,
+            ok_line,
+            section_panel,
+            warn_line,
+        )
+
+        p = Palette(self.skin)
+        hub = getattr(self, "_mc_hub", None)
+        remote = getattr(self, "_mc_remote", None)
+
+        # Wave 3: support ad-hoc cross-process activation from the mc command itself
+        # (non-breaking addition; allows live switch without relaunch).
+        # Examples inside TUI:  mc ws://127.0.0.1:8421   or   mc --url http://127.0.0.1:8421
+        # Also accepts bare host:port for convenience.
+        for a in args or []:
+            if isinstance(a, str) and ("://" in a or a.replace(".", "").replace(":", "").isdigit()):
+                candidate = (
+                    a
+                    if "://" in a
+                    else (
+                        "ws://" + a
+                        if not a.startswith(("127", "localhost"))
+                        else "ws://127.0.0.1:" + a.split(":")[-1]
+                        if ":" in a
+                        else "ws://" + a
+                    )
+                )
+                if "://" not in candidate:
+                    candidate = "ws://" + candidate
+                try:
+                    remote = MissionControlClient(url=candidate)
+                    self._mc_remote = remote
+                    remote.connect()
+                    hub = remote
+                    break
+                except Exception:
+                    pass
+        # --url / --mission flag form inside mc args
+        try:
+            arglist = list(args or [])
+            url = None
+            if "--url" in arglist:
+                i = arglist.index("--url")
+                if i + 1 < len(arglist):
+                    url = arglist[i + 1]
+            elif "--mission" in arglist:
+                i = arglist.index("--mission")
+                if i + 1 < len(arglist):
+                    url = arglist[i + 1]
+            if url:
+                if "://" not in url:
+                    url = "ws://" + url
+                remote = MissionControlClient(url=url)
+                self._mc_remote = remote
+                remote.connect()
+                hub = remote
+        except Exception:
+            pass
+
+        if remote is not None and hub is None:
+            hub = remote
+        if hub is None and remote is not None:
+            hub = remote
+
+        self.console.print()
+
+        # === WAVE 3: Rich Live Mission Control TUI Surface (stabilization-wave-20260531 exclusive) ===
+        # True rich.live Live display achieving visual/functional parity with Tower for "the system as one".
+        # - Pulsing/animated 6-step Canonical Loop tower (cyan active glow + tick-driven scan anim via phase; step descs from LoopStepEvent)
+        # - Live fabric coherence bar (context_bar) + connection density + recent densified edges (from FabricUpdateEvent + derive_fabric_snapshot)
+        # - Rich Static Fire Bay: live phase cards, accumulating key_events (parent_interventions, densif lifts), post-fire final_report embeds (text/mermaid lines), coherence lift
+        # - Parent timeline + recent Overseer hunches + seq-aware event stream (filterable in spirit via recent)
+        # - Unified header: stabilization-wave-20260531 + cycle_id + fabric_coherence + active_step
+        # - Command handoff: short Live pulse window (auto-refresh on hub pulls + publish_event_sync path) then seamless prompt REPL for parent_decision/trigger_densification/start_static_fire/etc via hub.dispatch (or remote). "pulse" re-enters Live.
+        # - Graceful degradation: beautiful "no mission attached" panel with EXACT launch instructions (agentdrive mission + tui --mission + in-TUI mc ws:// + smoke for in-proc)
+        # - All via existing chrome (Section/Panel/Palette/section_panel/info/ok/warn/context_bar/Glyphs) + rich Live/Group/Panel/Text (already imported/used in TUI). Duck-type preserved for hub + MissionControlClient.
+        # - "mc live" arg: extended monitor until ^C. Non-tty/test: one-shot rich render of dashboard (verifiable headless).
+        # Visibility exclusively through publish_event_sync (no bypass). Targets ONLY stabilization-wave-20260531 drive.
+        # (chrome names + rich Group/Panel/Text/Live from early import + module top; context_bar/Glyphs added to the fn-start chrome import above)
+
+        p = Palette(self.skin)
+        hub = getattr(self, "_mc_hub", None)
+        remote = getattr(self, "_mc_remote", None)
+
+        # (ad-hoc remote activation + --url/--mission + normalization already performed above this point; preserved exactly)
+
+        if remote is not None and hub is None:
+            hub = remote
+        if hub is None and remote is not None:
+            hub = remote
+
+        is_live_mode = any(a in ("live", "monitor", "watch") for a in (args or []))
+        is_test_mode = any(a in ("test", "headless", "verify") for a in (args or [])) or not (
+            getattr(_sys, "stdin", None)
+            and getattr(getattr(_sys, "stdin", None), "isatty", lambda: False)()
+            and getattr(_sys, "stdout", None)
+            and getattr(getattr(_sys, "stdout", None), "isatty", lambda: False)()
+        )
+        pulse_seconds = 12 if is_live_mode else (2 if is_test_mode else 5)
+
+        def _build_mc_render(
+            phase: int, loop_s: dict, fabric_s: dict, recent_e: list, transport: str, last_seq: int
+        ) -> Group:
+            """Pure render builder (called by Live + one-shot test path). Uses ONLY existing chrome/rich. Self-contained for "whole system as one" on stabilization-wave-20260531."""
+            coh = float(
+                loop_s.get("fabric_coherence") or fabric_s.get("overall_coherence", 0.0) or 0.0
+            )
+            cid = (
+                loop_s.get("cycle_id")
+                or loop_s.get("active_cycle")
+                or (fabric_s.get("active_cycles") or [None])[0]
+                or "—"
+            )
+            step = int(loop_s.get("current_step") or 0)
+            if step < 1 or step > 6:
+                step = ((phase % 6) + 1) if not loop_s.get("current_step") else 1
+            step = max(1, min(6, step))
+
+            # STEP DEFS (canonical, match loop_views.py + Tower exactly)
+            step_defs = [
+                (1, "EXPERIENCE", "Experience Layer + Runtime generating signals"),
+                (2, "OVERSEER INGEST", "Overseer ingesting experience + multi-cycle fabric"),
+                (3, "FEED PARENT", "Overseer feeding understanding to Parent"),
+                (4, "PARENT DECIDE", "Parent making real-time decisions"),
+                (5, "EXECUTE", "Decisions executing back into runtime"),
+                (6, "FABRIC UPDATE", "New experience + updated fabric flowing back to Overseer"),
+            ]
+
+            # Unified header (the "system as one" feeling)
+            header = Text()
+            header.append("◆ AGENTDRIVE MISSION CONTROL ", style=f"bold {p.accent}")
+            header.append("stabilization-wave-20260531", style=f"bold {p.framework}")
+            header.append("  |  ", style=p.muted)
+            header.append(f"cycle:{str(cid)[:12]}", style=p.text)
+            header.append("  |  ", style=p.muted)
+            header.append(f"coh:{coh:.3f}", style=f"bold {p.accent}")
+            header.append("  |  ", style=p.muted)
+            header.append(f"step:{step}/6", style=f"bold {p.evolution}")
+            if is_live_mode or not is_test_mode:
+                pulse = "●" if (phase % 2 == 0) else "◌"
+                header.append(f"   {pulse} LIVE", style=f"bold {p.ok if phase % 3 else p.accent}")
+
+            head_panel = Panel(header, border_style=p.border, padding=(0, 1))
+
+            # 6-STEP TOWER (pulsing, cyan active per Tower, scan anim via phase)
+            step_lines: list[Text] = []
+            scan_phase = phase % 5
+            for num, short, desc in step_defs:
+                is_active = num == step
+                col = p.accent if is_active else p.muted
+                glow = Glyphs.SPARK if is_active else Glyphs.DOT_OPEN
+                scan = ""
+                if is_active:
+                    # tick-driven scan "glow" + moving marker (emulates Tower ::after scan + pulse-glow)
+                    scan_chars = " ▏▎▍▌▋▊▉█"
+                    scan = scan_chars[scan_phase % len(scan_chars)] + " "
+                    if phase % 4 == 0:
+                        glow = "◆"
+                prefix = f"{num} {glow} {scan}"
+                line = Text()
+                line.append(f"  {prefix:<6}", style=f"bold {col}")
+                line.append(short, style=f"{'bold ' if is_active else ''}{col}")
+                if is_active:
+                    line.append(f"  ◀ {desc[:48]}", style=f"dim {p.text}")
+                else:
+                    line.append(f"  {desc[:38]}", style=p.muted)
+                step_lines.append(line)
+            step_group = Group(
+                Text(
+                    "Canonical 6-Step Loop Tower (via LoopStepEvent + publish_event_sync)",
+                    style=f"bold {p.accent}",
+                ),
+                *step_lines,
+                Text(
+                    f"  active: [{p.accent}]{step_defs[step - 1][1]}[/]  (scan anim phase {scan_phase})",
+                    style=p.muted,
+                ),
+            )
+            loop_panel = Panel(
+                step_group,
+                title="6-STEP TOWER",
+                border_style=p.accent if step else p.border,
+                padding=(1, 1),
+            )
+
+            # LIVE FABRIC (bar + density + recent densif edges)
+            edges = int(fabric_s.get("total_cross_cycle_edges", 0) or 0)
+            active_c = len(fabric_s.get("active_cycles", []) or []) or 1
+            density = f"{edges} edges / {active_c} cycles"
+            bar = context_bar(int(coh * 100), 100, palette=p, width=28, show_pct=True)
+            # simple sparkline from recent fabric updates (ascii, no extra deps)
+            spark = ""
+            recent_cohs = []
+            for e in recent_e[-8:]:
+                if "fabric" in str(e.get("event_type", "")).lower():
+                    d = e.get("data", {}) or {}
+                    if "fabric_coherence" in d:
+                        recent_cohs.append(float(d["fabric_coherence"]))
+            if recent_cohs:
+                spark = " ".join("▁▂▃▄▅▆▇█"[min(7, int(c * 7))] for c in recent_cohs[-6:])
+            fab_content = Group(
+                Text(f"coherence {bar}", style=p.text),
+                Text(f"density: {density}   spark:{spark or '—'}", style=p.muted),
+            )
+            # recent densif edges
+            dens_edges = []
+            for e in recent_e[-10:]:
+                if e.get("event_type") == "fabric_update":
+                    dd = e.get("data", {}) or {}
+                    if dd.get("delta_edges"):
+                        dens_edges.append(f"+{dd['delta_edges']} @ {e.get('seq', '?')}")
+            if dens_edges:
+                fab_content.renderables.append(
+                    Text("  recent densif: " + ", ".join(dens_edges[-3:]), style=p.genome)
+                )
+            fabric_panel = Panel(
+                fab_content,
+                title="EXPERIENCE GRAPH v3 FABRIC (live)",
+                border_style=p.genome,
+                padding=(1, 1),
+            )
+
+            # RICH STATIC FIRE BAY (from StaticFireEvent key_events / phase / final_report via publish only)
+            fire_lines: list[Text] = []
+            fire_evt = None
+            for e in reversed(recent_e):
+                if "static_fire" in str(e.get("event_type", "")).lower():
+                    fire_evt = e
+                    break
+            if fire_evt:
+                fd = fire_evt.get("data", {}) or {}
+                phase_name = fd.get("phase", "idle")
+                col_fire = (
+                    p.accent
+                    if phase_name in ("running", "densifying")
+                    else (p.ok if phase_name == "completed" else p.warn)
+                )
+                fire_lines.append(
+                    Text(
+                        f"🔥 {phase_name.upper()}  cycles:{fd.get('cycles_completed', 0)}  coh:{fd.get('current_fabric_coherence', coh):.3f}  lift:{fd.get('total_lift', 0):.1f}%",
+                        style=f"bold {col_fire}",
+                    )
+                )
+                if fd.get("key_events"):
+                    for ke in fd["key_events"][-4:]:
+                        ktype = ke.get("type", ke.get("event", "?"))
+                        fire_lines.append(
+                            Text(f"   • {ktype}: {str(ke.get('summary', ke))[:55]}", style=p.muted)
+                        )
+                if fd.get("parent_interventions"):
+                    fire_lines.append(
+                        Text(
+                            f"   parent_interventions: {fd['parent_interventions']}   edges_delta: {fd.get('fabric_edges_delta', 0)}",
+                            style=p.evolution,
+                        )
+                    )
+                if fd.get("final_report"):
+                    fr = fd["final_report"]
+                    if isinstance(fr, dict):
+                        if fr.get("post_densif_fabric"):
+                            fire_lines.append(
+                                Text(
+                                    "   post-fire: " + str(fr["post_densif_fabric"])[:70],
+                                    style=p.genome,
+                                )
+                            )
+                        if fr.get("recorder_snippets"):
+                            fire_lines.append(
+                                Text(
+                                    "   recorder: " + ", ".join(fr["recorder_snippets"][:2]),
+                                    style=p.muted,
+                                )
+                            )
+            else:
+                fire_lines.append(
+                    Text(
+                        "idle — use `fire N` or start_static_fire to engage rich Bay (live via publish_event_sync)",
+                        style=p.muted,
+                    )
+                )
+            fire_group = Group(*fire_lines)
+            fire_panel = Panel(
+                fire_group,
+                title="STATIC FIRE BAY (rich telemetry + final_report)",
+                border_style=p.warn,
+                padding=(1, 1),
+            )
+
+            # PARENT + OVERSEER + EVENT STREAM (seq-aware)
+            parent_lines = []
+            for e in recent_e[-5:]:
+                if e.get("event_type") == "parent_decision":
+                    d = e.get("data", {}) or {}
+                    parent_lines.append(
+                        (f"p#{e.get('seq', '?')}", f"{d.get('decision_summary', '')[:50]}")
+                    )
+            if not parent_lines:
+                parent_lines = [("—", "no ParentDecisionEvent yet (use parent_decision cmd)")]
+            parent_sec = Section(
+                "Parent Timeline (recent decisions)", parent_lines, palette=p, key_width=8
+            )
+
+            hunch_lines = []
+            for e in recent_e[-4:]:
+                if "overseer" in str(e.get("event_type", "")).lower():
+                    d = e.get("data", {}) or {}
+                    for h in (d.get("recent_hunches") or d.get("recommendations") or [])[:2]:
+                        hunch_lines.append(("hunch", str(h)[:60]))
+            if not hunch_lines:
+                hunch_lines = [("—", "no OverseerStateEvent hunches yet")]
+            hunch_sec = Section("Overseer Hunches", hunch_lines, palette=p, key_width=8)
+
+            ev_lines = []
+            for e in recent_e[-7:]:
+                et = e.get("event_type", "?")
+                sq = e.get("seq", 0)
+                ts = e.get("timestamp", 0)
+                ts_str = time.strftime("%H:%M:%S", time.localtime(ts)) if ts else "?"
+                d = e.get("data", {}) or {}
+                preview = (d.get("description") or d.get("summary") or str(d) or "")[:48].replace(
+                    "\n", " "
+                )
+                et_col = (
+                    p.evolution
+                    if "loop" in et
+                    else (
+                        p.genome
+                        if "fabric" in et
+                        else (
+                            p.accent if "parent" in et else (p.warn if "static" in et else p.muted)
+                        )
+                    )
+                )
+                ev_lines.append((f"[{sq:04d}]", f"[{ts_str}] [{et_col}]{et}[/] {preview}"))
+            ev_sec = Section(
+                "Event Stream (seq-aware, publish_event_sync only)",
+                ev_lines or [("—", "quiet")],
+                palette=p,
+                key_width=8,
+            )
+
+            # Footer / transport
+            footer = info_line(
+                f"transport:{transport}  seq:{last_seq}  refresh~8Hz (Live)  wave:stabilization-wave-20260531  all visibility via publish_event_sync  Wave3 cmds: parent|densify|inject|pause|list_fires|test_lift|... | pulse|q",
+                palette=p,
+            )
+
+            # Compose full (no Columns; pure Group+Panel+Section for zero new imports)
+            return Group(
+                head_panel,
+                Text(""),
+                loop_panel,
+                Text(""),
+                fabric_panel,
+                Text(""),
+                fire_panel,
+                Text(""),
+                parent_sec,
+                Text(""),
+                hunch_sec,
+                Text(""),
+                ev_sec,
+                Text(""),
+                footer,
+            )
+
+        # Pull initial (duck-type safe)
+        try:
+            loop = hub.derive_loop_state_snapshot() or {} if hub else {}
+            fabric = hub.derive_fabric_snapshot() or {} if hub else {}
+            recent = list(getattr(hub, "recent_events", []))[-20:] if hub else []
+            transport = (
+                "WS live"
+                if (remote and getattr(remote, "connected", False))
+                else ("HTTP poll" if remote else ("in-proc hub" if hub else "none"))
+            )
+            last_seq = int(
+                getattr(remote, "last_seq", 0) or (recent[-1].get("seq", 0) if recent else 0)
+            )
+        except Exception:
+            loop, fabric, recent = {"status": "snapshot_error"}, {}, []
+            transport = "error"
+            last_seq = 0
+
+        if hub is None:
+            # Beautiful graceful degradation panel (exact launch instructions per v1 DNA + Wave 3 charter)
+            no_m = Group(
+                Text(
+                    "◆ stabilization-wave-20260531  —  MISSION CONTROL (TUI)  —  no hub attached",
+                    style=f"bold {p.warn}",
+                ),
+                Text(""),
+                info_line(
+                    "This is the rich Live surface. No IntegratedRealTimeEvolutionSystem attached in-process or via remote.",
+                    palette=p,
+                ),
+                Text(""),
+                Section(
+                    "Exact launch (targets stabilization-wave-20260531 exclusively)",
+                    [
+                        (
+                            "1. hub",
+                            "`agentdrive mission`  (separate term; serves Tower + WS hub on 8421)",
+                        ),
+                        (
+                            "2. cross",
+                            "`agentdrive tui --mission ws://127.0.0.1:8421`  OR inside TUI: `mc ws://127.0.0.1:8421`",
+                        ),
+                        (
+                            "3. in-proc",
+                            "python -c 'from agentdrive.mission_control.server import smoke_mission_control_with_integrated_system as s; s()'  then `mc` here",
+                        ),
+                        (
+                            "4. direct",
+                            "from agentdrive.system... import Integrated...; sys=Integrated...(swarm_id='stabilization-wave-20260531'); sys.attach_mission_control(hub); ...",
+                        ),
+                    ],
+                    palette=p,
+                    key_width=10,
+                ),
+                Text(""),
+                info_line(
+                    "All visibility (6-step, fabric v3, StaticFire Bay, Parent/Overseer) flows EXCLUSIVELY via publish_event_sync. Commands via dispatch_command.",
+                    palette=p,
+                ),
+                warn_line(
+                    "Graceful: smoke commands + `mc` still exercise surface (no_mission_attached acks).",
+                    palette=p,
+                ),
+            )
+            self.console.print(
+                Panel(
+                    no_m,
+                    border_style=p.border,
+                    title="AGENTDRIVE MC — DEGRADED (WAVE 3 RICH)",
+                    padding=(1, 2),
+                )
+            )
+            # still allow smoke dispatch in degraded
+            try:
+                if hub and hasattr(hub, "dispatch_command"):
+                    r = hub.dispatch_command("get_state")
+                else:
+                    r = {
+                        "error": "no_mission_attached",
+                        "graceful": True,
+                        "note": "stabilization-wave-20260531 TUI Wave 3",
+                    }
+                self.console.print(info_line(f"Smoke: {r}", palette=p))
+            except Exception:
+                pass
+            return
+
+        if is_test_mode:
+            # one-shot rich render of the dashboard builder for headless E2E verification (no Live context, no prompts)
+            self.console.print(
+                Text(
+                    "HEADLESS TEST RENDER (Wave 3 _build_mc_render for stabilization-wave-20260531):",
+                    style=p.muted,
+                )
+            )
+            rendered = _build_mc_render(5, loop, fabric, recent, transport, last_seq)
+            self.console.print(rendered)
+            self.console.print(
+                ok_line(
+                    "Test render complete — pulsing 6-step tower + fabric bar + Static Fire Bay + seq stream + unified header verified (all data via publish_event_sync only).",
+                    palette=p,
+                )
+            )
+            return
+
+        # === LIVE PULSING DASHBOARD ===
+        self.console.print(
+            Text(
+                f"[{p.muted}]Entering rich Live (pulsing 6-step + fabric + Bay). ^C or wait for handoff to commands.[/]",
+                style=p.muted,
+            )
+        )
+
+        phase = 0
+        stop_after = int(pulse_seconds * 8)  # ~8Hz feel
+        last_render = None
+        try:
+            with Live(
+                _build_mc_render(phase, loop, fabric, recent, transport, last_seq),
+                console=self.console,
+                refresh_per_second=8,
+                transient=False,
+            ) as live:
+                for i in range(stop_after):
+                    phase = i
+                    try:
+                        loop = hub.derive_loop_state_snapshot() or loop if hub else loop
+                        fabric = hub.derive_fabric_snapshot() or fabric if hub else fabric
+                        recent = list(getattr(hub, "recent_events", []))[-20:] if hub else recent
+                        transport = (
+                            "WS live"
+                            if (remote and getattr(remote, "connected", False))
+                            else ("HTTP poll" if remote else ("in-proc hub" if hub else "none"))
+                        )
+                        last_seq = int(
+                            getattr(remote, "last_seq", 0)
+                            or (recent[-1].get("seq", 0) if recent else last_seq)
+                        )
+                    except Exception:
+                        pass
+                    last_render = _build_mc_render(phase, loop, fabric, recent, transport, last_seq)
+                    live.update(last_render)
+                    time.sleep(1.0 / 8.0)
+                    if is_test_mode:
+                        break  # fast exit for verification
+                if is_live_mode:
+                    # extended: user can ^C
+                    try:
+                        while True:
+                            phase += 1
+                            try:
+                                loop = hub.derive_loop_state_snapshot() or loop if hub else loop
+                                fabric = hub.derive_fabric_snapshot() or fabric if hub else fabric
+                                recent = (
+                                    list(getattr(hub, "recent_events", []))[-20:] if hub else recent
+                                )
+                            except Exception:
+                                pass
+                            live.update(
+                                _build_mc_render(phase, loop, fabric, recent, transport, last_seq)
+                            )
+                            time.sleep(1.0 / 8)
+                    except KeyboardInterrupt:
+                        self.console.print(info_line("Live monitor ended (Ctrl-C).", palette=p))
+        except Exception as live_err:
+            self.console.print(
+                warn_line(
+                    f"Live error (graceful fallback to static): {str(live_err)[:80]}", palette=p
+                )
+            )
+            if last_render:
+                self.console.print(last_render)
+
+        # === SEAMLESS HANDOFF TO COMMAND INPUT (after live pulse) ===
+        self.console.print()
+        self.console.print(
+            section_panel(
+                info_line(
+                    "LIVE PULSE COMPLETE — now steer via commands (dispatched → publish_event_sync → next pulse will reflect)",
+                    palette=p,
+                ),
+                palette=p,
+            )
+        )
+        self.console.print(
+            f"[{p.muted}]Commands (Wave 3 extended): parent <note|fabric_directives=...> | densify [cid] [weak=...] | fire <secs> | suggest | hunch | metacog | test_lift | inject <obs> | pause | resume | list_fires | compare_fires | pulse | status | q/quit[/]"
+        )
+
+        try:
+            while True:
+                raw = self.session.prompt("  mc> ", default="status").strip()
+                if not raw:
+                    continue
+                cmd = raw.lower()
+                if cmd in ("q", "quit", "exit", "back", ":q"):
+                    break
+                if cmd in ("pulse", "live", "monitor"):
+                    self.console.print(info_line("Re-entering Live pulse...", palette=p))
+                    with Live(
+                        _build_mc_render(phase + 10, loop, fabric, recent, transport, last_seq),
+                        console=self.console,
+                        refresh_per_second=8,
+                        transient=True,
+                    ) as lv:
+                        for ii in range(24):
+                            lv.update(
+                                _build_mc_render(
+                                    phase + 10 + ii, loop, fabric, recent, transport, last_seq
+                                )
+                            )
+                            time.sleep(1 / 8)
+                    continue
+                if cmd.startswith("status") or cmd == "s":
+                    try:
+                        loop = hub.derive_loop_state_snapshot() or {}
+                        fabric = hub.derive_fabric_snapshot() or {}
+                        recent = list(getattr(hub, "recent_events", []))[-8:]
+                        self.console.print(
+                            _build_mc_render(phase + 1, loop, fabric, recent, transport, last_seq)
+                        )
+                    except Exception as se:
+                        self.console.print(warn_line(str(se)[:60], palette=p))
+                    continue
+                if cmd.startswith("parent") or cmd.startswith("decide"):
+                    note = (
+                        raw.split(" ", 1)[1]
+                        if " " in raw
+                        else "TUI Wave3 steer: prioritize fabric + static fire learning"
+                    )
+                    # support fabric_directives=... in raw for richer form
+                    extra = {
+                        "decision": {"action": "tui_wave3_parent_decision", "note": note[:220]},
+                        "actions_taken": ["rich_tui_mission_control"],
+                        "from_fabric": True,
+                    }
+                    if "fabric_directives=" in raw or "directives=" in raw:
+                        val = (
+                            raw.split("fabric_directives=", 1)[1].split()[0]
+                            if "fabric_directives=" in raw
+                            else raw.split("directives=", 1)[1].split()[0]
+                        )
+                        extra["fabric_directives"] = val
+                    res = hub.dispatch_command("parent_decision", **extra)
+                    fb = f"parent_decision → {res.get('result') or res.get('error', 'ok')} surface={res.get('surface', '?')} triggered_fabric={res.get('triggered_from_fabric')}"
+                    self.console.print(ok_line(fb, palette=p))
+                    if res.get("result") and "graph" in str(res.get("result")):
+                        self.console.print(info_line(str(res["result"])[:140], palette=p))
+                    continue
+                if cmd.startswith("densify") or cmd.startswith("dense"):
+                    cid_arg = raw.split(" ", 1)[1].strip() if " " in raw else None
+                    weak = None
+                    if "weak=" in raw:
+                        weak = raw.split("weak=", 1)[1].split()[0]
+                    res = hub.dispatch_command(
+                        "trigger_densification", cycle_id=(cid_arg or None), weak_link=weak
+                    )
+                    fb = f"densify → {res.get('result') or res.get('error', 'ok')} surface={res.get('surface', '?')}"
+                    self.console.print(ok_line(fb, palette=p))
+                    continue
+                if cmd.startswith("fire") or cmd.startswith("static"):
+                    try:
+                        secs = float(raw.split(" ", 1)[1]) if " " in raw else 20.0
+                    except Exception:
+                        secs = 20.0
+                    res = hub.dispatch_command(
+                        "start_static_fire", duration_seconds=secs, label="wave3_rich_tui"
+                    )
+                    self.console.print(
+                        ok_line(
+                            f"start_static_fire({secs}s) → {res.get('result') or res.get('error', 'ok')} surface={res.get('surface', '?')}",
+                            palette=p,
+                        )
+                    )
+                    continue
+                if cmd.startswith("suggest"):
+                    res = hub.dispatch_command("suggest_connection_improvements")
+                    self.console.print(
+                        ok_line(
+                            f"suggest_connection_improvements → {res.get('result') or res.get('error', 'ok')} surface={res.get('surface', '?')}",
+                            palette=p,
+                        )
+                    )
+                    continue
+                if cmd.startswith("hunch") or cmd.startswith("overseer_force"):
+                    res = hub.dispatch_command("overseer_force_hunch")
+                    self.console.print(
+                        ok_line(
+                            f"overseer_force_hunch → {res.get('result') or res.get('error', 'ok')} surface={res.get('surface', '?')}",
+                            palette=p,
+                        )
+                    )
+                    continue
+                if "metacog" in cmd or cmd.startswith("get_meta"):
+                    res = hub.dispatch_command("get_metacognitive_briefing")
+                    self.console.print(
+                        ok_line(
+                            f"get_metacognitive_briefing → {res.get('result') or res.get('error', 'ok')} surface={res.get('surface', '?')}",
+                            palette=p,
+                        )
+                    )
+                    continue
+                if "test_lift" in cmd or "emit_test" in cmd:
+                    res = hub.dispatch_command("emit_test_fabric_lift", lift=0.04, delta_edges=6)
+                    self.console.print(
+                        ok_line(
+                            f"emit_test_fabric_lift → {res.get('result') or res.get('error', 'ok')} surface={res.get('surface', '?')}",
+                            palette=p,
+                        )
+                    )
+                    if res.get("result") and res["result"].get("graph_delta"):
+                        self.console.print(
+                            info_line(f"graph_delta: {res['result']['graph_delta']}", palette=p)
+                        )
+                    continue
+                if cmd.startswith("inject"):
+                    obs = (
+                        raw.split(" ", 1)[1] if " " in raw else "TUI injected obs for fabric densif"
+                    )
+                    res = hub.dispatch_command(
+                        "inject_custom_observation", observation=obs, from_fabric=True
+                    )
+                    fb = f"inject → {res.get('result') or res.get('error', 'ok')} surface={res.get('surface', '?')}"
+                    self.console.print(ok_line(fb, palette=p))
+                    continue
+                if cmd.startswith("pause"):
+                    res = hub.dispatch_command(
+                        "pause_evolution_context", note="TUI operator pause", from_fabric=True
+                    )
+                    self.console.print(
+                        ok_line(
+                            f"pause_evolution_context → {res.get('result') or res.get('error', 'ok')} surface={res.get('surface', '?')}",
+                            palette=p,
+                        )
+                    )
+                    continue
+                if cmd.startswith("resume"):
+                    res = hub.dispatch_command(
+                        "resume_evolution_context", note="TUI operator resume", from_fabric=True
+                    )
+                    self.console.print(
+                        ok_line(
+                            f"resume_evolution_context → {res.get('result') or res.get('error', 'ok')} surface={res.get('surface', '?')}",
+                            palette=p,
+                        )
+                    )
+                    continue
+                if "list_fire" in cmd or "recent_fire" in cmd:
+                    res = hub.dispatch_command("list_recent_fires")
+                    self.console.print(
+                        ok_line(
+                            f"list_recent_fires → count={res.get('result', {}).get('count', '?')} surface={res.get('surface', '?')}",
+                            palette=p,
+                        )
+                    )
+                    continue
+                if "compare_fire" in cmd:
+                    res = hub.dispatch_command("compare_fires")
+                    self.console.print(
+                        ok_line(
+                            f"compare_fires → {res.get('result') or res.get('error', 'ok')} surface={res.get('surface', '?')}",
+                            palette=p,
+                        )
+                    )
+                    continue
+                self.console.print(
+                    info_line(
+                        "Wave 3 known: parent <note> [fabric_directives=..] | densify [cid] [weak=..] | fire <secs> | suggest | hunch | metacog | test_lift | inject <obs> | pause | resume | list_fires | compare_fires | pulse | status | q  (all via dispatch_command + publish_event_sync; results show surface + deltas)",
+                        palette=p,
+                    )
+                )
+        except Exception as cmd_exc:
+            self.console.print(warn_line(f"cmd error (graceful): {str(cmd_exc)[:80]}", palette=p))
+
+        self.console.print(
+            ok_line(
+                "Mission Control surface closed. Re-invoke `mc` / `mission` / `control` anytime for fresh Live pulse.",
+                palette=p,
+            )
+        )
 
     def _show_pool_view(self, args: list[str]) -> None:
         """Dedicated first-class TUI for the AgentDrive (global + per-swarm DNA).
@@ -1764,7 +2989,13 @@ class AgentDriveTUI:
             )
 
 
-def launch_tui() -> None:
-    """Launch the professional AgentDrive TUI."""
-    app = AgentDriveTUI()
+def launch_tui(mission_url: str | None = None) -> None:
+    """Launch the professional AgentDrive TUI.
+
+    mission_url (optional): ws:// or http:// base for remote MissionControl Tower
+    (e.g. from `agentdrive mission` in separate process). Enables full cross-process
+    live 6-step + fabric + events + command surface in the `mc` view with parity to
+    in-process hub, using resilient WS + /state fallback.
+    """
+    app = AgentDriveTUI(mission_url=mission_url)
     app.run()

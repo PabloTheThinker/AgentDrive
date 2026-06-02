@@ -1,0 +1,35 @@
+{
+  "id": "tranche3-calibration-engine",
+  "version": "1.0.0",
+  "content_hash": "sha256:tranche3calib001fusedexperienceclosedloop20260530",
+  "created": "2026-05-30T12:00:00.000000",
+  "last_improved": "2026-05-30T18:42:00.000000",
+  "authors": [
+    {
+      "type": "swarm",
+      "name": "example-calibration-swarm",
+      "id": "example-calibration-swarm",
+      "run": "run_tranche3_auto_calibration_job"
+    }
+  ],
+  "applicability": {
+    "domains": ["calibration", "contradiction-resolution", "synthesis", "knowledge-graph", "example-project"],
+    "problem_signatures": [
+      "auto-calibration from contradictions",
+      "temporal freshness scoring",
+      "closed-loop weight adjustment",
+      "reasoning-engine synthesis feedback"
+    ]
+  },
+  "dependencies": {
+    "genomes": ["example-synthesis-engine", "example-graph-hardener"],
+    "agent_capabilities": ["DurableJobSupervisor", "detect_contradictions", "run_synthesis"]
+  },
+  "evaluation_score": {
+    "contradiction_quality": 0.87,
+    "calibration_events": 14,
+    "fusion_improvement": 0.12
+  },
+  "framework_ref": "tranche3-calibration-engine-v1",
+  "quarantine_note": "Sanitized example derived from personal internal development history (tranche3 calibration series). Retained for structural illustration only; not a primary recommended genome for general use. Original author-specific artifacts quarantined from shipping package."
+}

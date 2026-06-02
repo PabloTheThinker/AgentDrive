@@ -1,0 +1,44 @@
+{
+  "schema_version": 3,
+  "page_type": "experience-observation",
+  "type": "research-thread-living-experience-observation",
+  "id": "research-thread-output-research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531",
+  "version": "1.0-dogfood",
+  "created": "2026-05-31T00:00:00+00:00",
+  "manifest": {
+    "id": "research-thread-output-research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531",
+    "authors": [{"type": "swarm", "id": "integration-dogfood-swarm", "name": "Integration & Dogfood Swarm"}],
+    "applicability": {"domains": ["gridengine", "daily-consolidation", "experience-layer-v3", "fork-merge", "research-thread"], "stabilization_wave": "20260531"},
+    "evaluation_score": {"overall_goodness": 0.761, "resilience_lift": 0.09}
+  },
+  "framework": {
+    "research_thread_id": "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531",
+    "governing_constitution": "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531",
+    "source_artifacts": ["/home/pablothethinker/agentdrive/genomes/examples/research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531.json", "research-constitutions-fusion-experience-observation@stabilization-wave-20260531"],
+    "iteration": 1,
+    "high_signal": true,
+    "evaluation": {
+      "scores": {"contradiction_reduction": 0.61, "resilience_lift": 0.09, "experience_layer_coherence": 0.84, "simplicity": 0.68, "future_prediction_power": 0.79, "overall_goodness": 0.761},
+      "decision": "keep_promote_with_lineage"
+    },
+    "keep_discard_outcome": {"decision": "keep_promote_with_lineage", "action_taken": "experience_genome_fork_promoted_with_lineage"},
+    "branch_advance": {"proposed": "improved_daily_present_quality_criteria_and_fusion_checkpoint_assembly", "via": "propose_experience_evolution + fork"},
+    "lineage": {"parent": "research-constitutions-fusion-experience-observation@stabilization-wave-20260531", "relation": "produced_by_research_thread", "notes": "Integration & Dogfood Swarm experiment under GridEngine constitution + harness + ResearchBudget on fork/merge rules"},
+    "fusion_checkpoint": {
+      "timestamp": "2026-05-31T00:00:00+00:00",
+      "participating_swarms": ["Integration-Dogfood-Swarm", "GridEngine", "Constrained-Evolutionary-Search-Swarm"],
+      "research_org_roles": ["Consolidator (daily-present + lineage)", "Verifier (harness)", "Diagnoser (synthesis for consolidation gaps)"],
+      "harness_applied": true,
+      "budget_consumed": {"tokens": 210, "time_s": 1.9},
+      "resilience_delta": 0.09,
+      "experience_layer_v3_fusion_ready": true,
+      "drive": "stabilization-wave-20260531"
+    },
+    "self_referential": "This research-thread observation is itself a daily-present candidate per the GridEngine constitution it was governed by. Will be considered in next daily_consolidation fusion_checkpoint."
+  },
+  "provenance": {
+    "lineage": [{"parent": "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531", "relation": "governed_research_thread_experiment"}],
+    "source_swarm": "Integration & Dogfood Swarm",
+    "signed": "Integration & Dogfood Swarm — stabilization-wave-20260531 — 2026-05-31"
+  }
+}

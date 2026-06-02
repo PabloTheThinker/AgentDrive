@@ -145,10 +145,11 @@ def run_onboarding() -> bool:
     )
 
     body_text = Text.from_markup(
-        "Every agent (and every sub-agent it spawns) gets a private, persistent\n"
-        "[bold]AgentDrive[/] — DNA made of frameworks, reasoning patterns, and outcomes.\n\n"
-        "Pools start empty. They grow with real, lived experience.\n"
-        "[bold]You[/] decide every sharing rule. Full sovereignty."
+        "This is now your personal AgentDrive.\n\n"
+        "Every agent you run — and every sub-agent it spawns — gets its own private,\n"
+        "persistent pool of DNA: frameworks, reasoning patterns, and real outcomes.\n\n"
+        "It starts empty. It grows only with experience you choose to keep.\n"
+        "You own the rules. Complete sovereignty."
     )
 
     console.print()
@@ -156,7 +157,7 @@ def run_onboarding() -> bool:
         section_panel(
             Group(hero, tagline),
             body_text,
-            title="Welcome to AgentDrive",
+            title="Welcome to your AgentDrive",
             palette=PALETTE,
         )
     )
@@ -178,11 +179,70 @@ def run_onboarding() -> bool:
         )
         return False
 
+    # ── Apple-level: Name your AgentDrive (instance identity) ─────────
+    from agentdrive.config import get_instance_name, set_instance_name
+
+    current_name = get_instance_name()
+    if current_name == "AgentDrive":
+        console.print()
+        name_hero = Text()
+        name_hero.append("This is ", style=PALETTE.muted)
+        name_hero.append("yours", style=f"bold {PALETTE.title}")
+        name_hero.append(".", style=PALETTE.muted)
+
+        console.print(
+            section_panel(
+                name_hero,
+                Text.from_markup(
+                    "Give your AgentDrive a name that feels like home.\n"
+                    "Examples:  [bold]My Research Drive[/],  [bold]Vektra Core[/],  [bold]Team Orion[/]"
+                ),
+                title="Name this AgentDrive",
+                palette=PALETTE,
+            )
+        )
+
+        try:
+            from prompt_toolkit import PromptSession
+
+            session = PromptSession()
+            suggested = os.environ.get("USER", "My") + " AgentDrive"
+            user_name = session.prompt(
+                f"[{PALETTE.accent}]Name[/] (Enter for default): ",
+                default=suggested,
+            ).strip()
+            if user_name:
+                set_instance_name(user_name)
+                console.print()
+                console.print(
+                    result_panel(
+                        "Your AgentDrive is ready",
+                        [f"Named: [bold]{user_name}[/]"],
+                        success=True,
+                        palette=PALETTE,
+                    )
+                )
+        except Exception:
+            # Fallback to simple input
+            user_name = input("Name (or press Enter): ").strip()
+            if user_name:
+                set_instance_name(user_name)
+
     # ── Step 1: Home directory ────────────────────────────────────────
     _print_step(
         1, TOTAL_STEPS, "Home directory", "Agent Drive stores your data, config, and DNA here."
     )
     ensure_agentdrive_home()
+    # Expanded first-run self-healing for role-swarm self-host users.
+    # Ensures experience layer v3 seed etc. even during interactive onboarding
+    # so new instances start coherent and experience layer is present from first think.
+    try:
+        from agentdrive.constants import get_default_drive_path
+        from agentdrive.drive.bootstrap import ensure_experience_layer_seed
+
+        ensure_experience_layer_seed(get_default_drive_path())
+    except Exception:
+        pass
     console.print(
         ok_line(
             f"Ready at [agentdrive.genome]{home}[/]",
@@ -307,11 +367,31 @@ def init_minimal_config() -> None:
 
     Leaves `onboarded: false` so `agentdrive doctor` still nudges the user
     toward `agentdrive setup` when they next sit down at a real terminal.
+
+    Respects live AGENTDRIVE_INSTANCE_NAME from env on first-run.
+
+    Now also triggers first-run self-healing bootstrap so even non-interactive
+    fresh AgentDrive instances (role-swarm self-host) start with coherent
+    experience layer v3 seed etc.
     """
     ensure_agentdrive_home()
+    from agentdrive.config import get_instance_name
+
+    inst = get_instance_name()
     cfg = {
         "onboarded": False,
-        "agentdrive": {"log_level": "INFO"},
+        "agentdrive": {
+            "log_level": "INFO",
+            "instance_name": inst if inst != "AgentDrive" else None,
+        },
         "pool": {"global": {"isolation_level": "subagent"}},
     }
     save_config(cfg)
+    # Defensive healing for production reliability on headless first-run
+    try:
+        from agentdrive.constants import get_default_drive_path
+        from agentdrive.drive.bootstrap import ensure_experience_layer_seed
+
+        ensure_experience_layer_seed(get_default_drive_path())
+    except Exception:
+        pass

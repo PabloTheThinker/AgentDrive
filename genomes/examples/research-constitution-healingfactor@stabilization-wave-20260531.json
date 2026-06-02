@@ -1,0 +1,203 @@
+{
+  "schema_version": 3,
+  "page_type": "research-constitution",
+  "type": "research_constitution",
+  "id": "research-constitution-healingfactor@stabilization-wave-20260531",
+  "version": "1.0.0-experience-layer-regeneration",
+  "created": "2026-05-31T00:00:00+00:00",
+  "last_improved": "2026-05-31T00:00:00+00:00",
+  "manifest": {
+    "id": "research-constitution-healingfactor@stabilization-wave-20260531",
+    "version": "1.0.0-experience-layer-regeneration",
+    "content_hash": "sha256:healingfactor-constitution-20260531-0000000000000000000000000000000000000000000000000000000000000000",
+    "created": "2026-05-31T00:00:00+00:00",
+    "last_improved": "2026-05-31T00:00:00+00:00",
+    "authors": [
+      {
+        "type": "swarm",
+        "id": "research-constitution-architect-swarm",
+        "name": "Research Constitution Architect Swarm (role-specialized stabilization component inside AgentDrive for autonomous experience layer regeneration)"
+      },
+      {
+        "type": "swarm",
+        "id": "stabilization-wave-20260531",
+        "name": "stabilization-coordination job (DurableJobSupervisor + HealingFactor.for_stabilization_wave + GridEngine)"
+      }
+    ],
+    "applicability": {
+      "domains": ["healingfactor", "experience-layer-regeneration", "regeneration-proposal", "diagnosis-report", "multi-metric-evaluation", "schema-pack-governed-evolution", "meta-stabilization"],
+      "problem_signatures": [
+        "need criteria for high-quality diagnosis inside HealingFactor closed-loop",
+        "need allowed proposal types that remain first-class artifacts only (never raw patches)",
+        "need objective multi-metric evaluation harness for successful regeneration: contradiction reduction + resilience lift via graph signals + experience layer coherence + simplicity + future prediction power",
+        "self-referential improvement of HealingFactor itself via the same loop"
+      ],
+      "stabilization_wave": "20260531"
+    },
+    "dependencies": {
+      "genomes": [
+        "living-experience-seed-v3",
+        "healing-factor-regeneration-proposal-v1@stabilization-wave-20260531",
+        "95-production-readiness-assessment-living-experience@stabilization-wave-20260531",
+        "stabilization-wave-20260531-closure-living-experience-observation"
+      ],
+      "agent_capabilities": [
+        "drive.think",
+        "run_synthesis",
+        "DurableJobSupervisor",
+        "HealingFactor",
+        "DiagnosisReport",
+        "LineageImmuneSystem",
+        "schema_packs",
+        "knowledge_graph",
+        "GridEngine"
+      ]
+    },
+    "evaluation_score": {
+      "reference_tasks": 0.96,
+      "stability": 0.98,
+      "coherence": 0.97,
+      "resilience_boost": 0.92,
+      "prediction_power": 0.89
+    }
+  },
+  "framework": {
+    "page_type": "research-constitution",
+    "constitution_type": "healingfactor",
+    "description": "Research Constitution for HealingFactor: criteria for high-quality diagnosis, allowed proposal types, objective multi-metric evaluation for successful regeneration. Schema-pack governed, versionable artifact (research-constitution page_type) directly usable by GridEngine, HealingFactor, and daily_consolidation. All in pure AgentDrive language. Self-referential on stabilization-wave-20260531 drive.",
+    "high_quality_diagnosis_criteria": {
+      "mandatory_signals": [
+        "correlation_id (mandatory via using_correlation_id / new_correlation_id)",
+        "rich_context from HealingSignalEvent (signal_type, source_component, error_details or equivalent)",
+        "Drive.think(prefer_experience_layer=True, experience_layer_fallback=True) results: gaps, contradictions, graph_hits, damage_signals",
+        "explicit run_synthesis call for Gaps + Contradictions clusters + composite scores + fusion_checkpoint",
+        "LineageImmuneSystem assessment (ThreatLevel + reasons + incident memory)",
+        "knowledge_graph neighborhood signals (TypedEdge relations including healed_by, strengthened_resilience)",
+        "security_posture (overall + needs_attention + immune signals)",
+        "stale_experience_items count from experience layer v3 query",
+        "resilience_before score (graph-signal density inverse + contradiction load)"
+      ],
+      "diagnosis_quality_standards": [
+        "root_cause must be traceable to one or more of the 7 damage signal categories (worker exhaustion, supervisor job failure, reconciliation corruption, synthesis contradiction cluster, security needs_attention, promotion/immune CRITICAL, first-run cold-start)",
+        "evidence dict must contain quantitative signals (gap count, contradiction count, resilience_before, graph signal salience summary)",
+        "recommended_proposal_types must map to allowed proposal types only",
+        "diagnosis must be self-referential: note that the DiagnosisReport itself may become input to future HealingFactor loops"
+      ],
+      "role_swarm_consultation": "Drive queries over swarm-artifact page types + daily-present + prior healing_attempt observations for cross-swarm integrity signals before final root_cause declaration."
+    },
+    "allowed_proposal_types": {
+      "permitted": [
+        "experience_consolidation (page_type_hint: daily-present or experience-consolidation; carries fusion_checkpoint + diary_markdown style summary)",
+        "healing_attempt_observation (page_type_hint: experience-observation; records diagnosis + execution trace for prevention learning)",
+        "immune_rule_update (page_type_hint: genome or schema-pack; extends LineageImmuneSystem known patterns or adaptive memory rules with full provenance)",
+        "correction_observation (page_type_hint: experience-observation or synthesis-artifact; high-level concrete correction steps + citations to source genomes/gaps + verification_gates)",
+        "safe_evolution_proposal (promotion candidate style with before/after evaluation deltas via graph-signal resilience scoring; schema-pack evolution hints only, no raw source)"
+      ],
+      "forbidden": [
+        "raw source patches of any kind",
+        "direct file writes outside Drive.ingest + promotion + quarantine path",
+        "untraced proposals lacking correlation_id and verification_gates"
+      ],
+      "mandatory_proposal_fields": [
+        "correlation_id",
+        "healing_signal reference",
+        "diagnosis_summary",
+        "verification_gates (lineage_immune_reassess, quarantine_check, scanner_run, promotion_policy, experience_layer_fusion)",
+        "self_referential note: 'This proposal participates in experience layer regeneration and may itself be improved by future HealingFactor loops'",
+        "stabilization_wave: 'stabilization-wave-20260531'",
+        "page_type_hint aligned to schema pack",
+        "fusion_checkpoint with resilience_delta_target"
+      ]
+    },
+    "objective_multi_metric_evaluation_harness": {
+      "successful_regeneration_definition": "A regeneration experiment (healing job under DurableJobSupervisor 'healing' phase) is successful only when all gates pass and post-closure metrics show net positive lift across the five axes. Single-axis regression blocks promotion of the healing_attempt observation into experience layer v3.",
+      "metrics": {
+        "contradiction_reduction": {
+          "measurement": "delta in synthesis_contradictions count + contradiction cluster severity (pre vs post via run_synthesis on same query family + experience layer items)",
+          "success_threshold": "net reduction >= 1 high-severity cluster or >= 30% load reduction; measured via fusion_checkpoint in healing_attempt observation",
+          "weight": 0.25
+        },
+        "resilience_lift": {
+          "measurement": "increase in graph-signal density (TypedEdge weight*confidence sums around affected nodes) + new strengthened_resilience edges emitted + LineageImmune incident memory positive updates; resilience_before to resilience_after delta",
+          "success_threshold": "delta >= +0.15 on normalized 0-1 scale (or +0.20 in high-damage cases); confirmed by KG query post-closure",
+          "weight": 0.25
+        },
+        "experience_layer_coherence": {
+          "measurement": "reduction in stale_experience_items + increase in prefer_experience_layer hit rate + daily-present / living-experience genome density + reduction in gaps returned by Drive.think(prefer_experience_layer=True) on core coherence queries",
+          "success_threshold": "net coherence lift >= +0.12 (composite of recency + graph connectivity + gap load inverse)",
+          "weight": 0.20
+        },
+        "simplicity": {
+          "measurement": "net change in framework complexity (number of active steps / rules / genomes referenced in diagnosis family) + reduction in redundant synthesis paths; prefer proposals that consolidate rather than proliferate artifacts",
+          "success_threshold": "simplicity delta >= 0 (no increase) or positive reduction; measured via manifest size + dependency count delta in post-healing genomes",
+          "weight": 0.15
+        },
+        "future_prediction_power": {
+          "measurement": "post-closure reduction in recurrence rate of the same damage signal class (tracked via correlation patterns + incident_log in LineageImmune + healing_attempt observation citations in subsequent diagnoses)",
+          "success_threshold": "zero recurrence of identical signal within 24h window in stabilization drive; or measurable drop in prediction error on synthetic replay of pre-closure signals",
+          "weight": 0.15
+        }
+      },
+      "composite_score": "weighted average of the five deltas. Promotion into experience layer v3 as daily-present or living-experience update requires composite >= 0.18 with no single metric below -0.05. Adversary role may challenge any metric computation for robustness.",
+      "harness_usage": "HealingFactor _execute_proposal_under_durable_healing records pre/post snapshots. GridEngine maintenance loop + daily_consolidation re-run the harness on recent healing_attempt observations. Results feed keep/discard decisions in constrained evolutionary search."
+    },
+    "self_referential_improvement": "This constitution itself is a candidate for experience_consolidation or immune_rule_update proposals. Future HealingFactor diagnoses may reference this genome for criteria evolution. Ingest triggers research-constitution page_type resolution + KG edges (governs, documents, strengthened_by).",
+    "fusion_checkpoint": {
+      "timestamp": "2026-05-31T00:00:00+00:00",
+      "correlation_id": "healingfactor-constitution-cid-20260531",
+      "stabilization_wave": "20260531",
+      "participating_primitives": [
+        "HealingFactor._diagnose + DiagnosisReport",
+        "HealingFactor._generate_regeneration_proposals",
+        "DurableJobSupervisor healing phase + verification gates",
+        "Drive.think(prefer_experience_layer=True) + run_synthesis",
+        "LineageImmuneSystem + knowledge_graph TypedEdge",
+        "schema_packs research-constitution resolution"
+      ],
+      "resilience_delta_target": 0.22,
+      "self_referential": "This constitution participates in experience layer regeneration. HealingFactor may diagnose gaps in its own criteria and propose updates via the identical loop.",
+      "evaluation_harness_reference": "objective_multi_metric_evaluation_harness embedded above"
+    },
+    "coordination_protocol_note": "Diagnoser role produces DiagnosisReport against these criteria. Proposer emits only allowed proposal types. Verifier runs the multi-metric harness post-execution. Consolidator incorporates successful healing_attempt into daily-present. Adversary may inject synthetic contradiction signals to test harness robustness."
+  },
+  "reasoning_patterns": {
+    "diagnosis_traceability": "Every root_cause must cite at least one concrete damage signal + quantitative evidence from Drive primitives.",
+    "proposal_safety": "Only schema-pack typed artifacts with full verification_gates and self_referential notes are permitted; this prevents framework drift.",
+    "metric_balance": "No single metric dominates; simplicity and prediction_power prevent over-engineering while resilience and coherence protect the living experience layer v3."
+  },
+  "tool_compositions": {},
+  "evaluations": {
+    "constitution_self_test": "When ingested, this constitution raises experience layer coherence in subsequent Drive.think(prefer_experience_layer=True) calls on 'HealingFactor diagnosis quality' queries. Measured via daily_consolidation fusion_checkpoint."
+  },
+  "provenance": {
+    "lineage": [
+      {
+        "parent": "HEALING_FACTOR_REGENERATIVE_ARCHITECTURE.md",
+        "relation": "documents_and_formalizes",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "Architecture diagnosis/proposal/execution/close loop + DiagnosisReport surface formalized into objective criteria + harness for autonomous use"
+      },
+      {
+        "parent": "research-constitution-role-specialized-swarm-research-org@stabilization-wave-20260531",
+        "relation": "specializes_role_for",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "HealingFactor constitution consumes Diagnoser/Proposer/Verifier roles defined in swarm research org constitution"
+      },
+      {
+        "parent": "stabilization-wave-20260531-closure-living-experience-observation",
+        "relation": "anchored_by",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "95% baseline + closed large-scale healing cycle provides the reference state for all metric thresholds"
+      }
+    ],
+    "improvements": [],
+    "source_swarm": "Research Constitution Architect Swarm",
+    "via": "self-referential synthesis on stabilization-wave-20260531 drive + Drive.think(prefer_experience_layer=True) over all prior healing artifacts + schema-pack governance",
+    "signed": "Research Constitution Architect Swarm — stabilization-wave-20260531"
+  },
+  "kg_edges_proposed": [
+    {"source": "research-constitution-healingfactor@stabilization-wave-20260531", "target": "healing-factor-regeneration-proposal-v1@stabilization-wave-20260531", "relation": "governs", "weight": 0.95},
+    {"source": "research-constitution-healingfactor@stabilization-wave-20260531", "target": "experience_layer_v3", "relation": "strengthened_resilience", "weight": 0.88},
+    {"source": "HealingFactor", "target": "research-constitution-healingfactor@stabilization-wave-20260531", "relation": "documented_by", "weight": 0.92}
+  ]
+}

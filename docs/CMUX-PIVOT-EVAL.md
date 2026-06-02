@@ -1,6 +1,6 @@
 # Agent Drive — cmux-style pivot evaluation
 
-**Status:** draft for Pablo's review. No code touched. No commits.
+**Status:** draft for review. No code touched. No commits.
 **Date:** 2026-05-24
 
 ---
@@ -97,7 +97,7 @@ On the third path — integrate instead of clone:
 
 **My reaction:** agree on substance, disagree on sequencing. Codex's
 "headless first, adapters second, console third" is right architecturally but
-understates Pablo's current pain — Agent Drive already feels invisible, and
+understates the current UX pain — Agent Drive already feels invisible, and
 shipping a protocol without a felt UX upgrade trades elegance for another
 quarter of users not seeing the pool grow. Invert: ship the observability
 console (UX-PROPOSAL Patterns 3+4 — pool ribbon + live sub-agent tree) on
@@ -126,9 +126,9 @@ company.
 
 ## 6. Naming options
 
-Five from Codex (verbatim) plus three from this pass. All Vektra-register —
-short, declarative, technical. No franchise references. No animal/coffee
-cuteness.
+Five from Codex (verbatim) plus three from this pass. All short, declarative,
+technical names from the project register. No franchise references. No
+animal/coffee cuteness.
 
 **From Codex:**
 
@@ -161,7 +161,7 @@ adapter user materializes — promote the event bus to a Unix-socket JSON-RPC
 control plane and ship a cmux adapter. Do not build a Agent Drive-branded
 multiplexer. Do not rewrite in Swift. Do not become a terminal company.
 
-**Open question Pablo has to answer to lock this in:** does the umbrella
+**Open question for the project maintainer to answer to lock this in:** does the umbrella
 product brand change? If Agent Drive remains the umbrella, §6 is dead and the
 naming work is just for an eventual shell adapter. If the federated-learning
 substrate gets a new umbrella name (Axon / Lattice / Mycel) and "Agent Drive"

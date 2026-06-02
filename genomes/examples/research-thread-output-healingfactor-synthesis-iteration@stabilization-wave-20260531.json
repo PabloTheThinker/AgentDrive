@@ -1,0 +1,48 @@
+{
+  "schema_version": 3,
+  "page_type": "experience-observation",
+  "type": "research-thread-living-experience-observation",
+  "id": "research-thread-output-research-constitution-healingfactor-synthesis-iteration@stabilization-wave-20260531",
+  "version": "1.0-dogfood",
+  "created": "2026-05-31T00:00:00+00:00",
+  "manifest": {
+    "id": "research-thread-output-research-constitution-healingfactor-synthesis-iteration@stabilization-wave-20260531",
+    "authors": [{"type": "swarm", "id": "integration-dogfood-swarm", "name": "Integration & Dogfood Swarm"}],
+    "applicability": {"domains": ["healingfactor", "synthesis", "damage-detection", "research-thread"], "stabilization_wave": "20260531"},
+    "evaluation_score": {"overall_goodness": 0.782, "resilience_lift": 0.11}
+  },
+  "framework": {
+    "research_thread_id": "research-constitution-healingfactor@stabilization-wave-20260531",
+    "governing_constitution": "research-constitution-healingfactor@stabilization-wave-20260531",
+    "source_artifacts": ["/home/pablothethinker/agentdrive/genomes/examples/research-constitution-healingfactor@stabilization-wave-20260531.json", "research-constitutions-fusion-experience-observation@stabilization-wave-20260531"],
+    "iteration": 1,
+    "high_signal": true,
+    "evaluation": {
+      "scores": {"contradiction_reduction": 0.68, "resilience_lift": 0.11, "experience_layer_coherence": 0.79, "simplicity": 0.71, "future_prediction_power": 0.82, "overall_goodness": 0.782},
+      "decision": "keep_promote_with_lineage"
+    },
+    "keep_discard_outcome": {"decision": "keep_promote_with_lineage", "action_taken": "promotion_with_lineage_recorded", "lineage_entry": {"parent": "research-constitutions-fusion-experience-observation@stabilization-wave-20260531", "relation": "harness_keep_promote"}},
+    "branch_advance": {"proposed": "improved_synthesis_gap_contradiction_weighting_under_budget", "via": "propose_experience_evolution"},
+    "lineage": {"parent": "research-constitutions-fusion-experience-observation@stabilization-wave-20260531", "relation": "produced_by_research_thread", "notes": "Integration & Dogfood Swarm experiment under HealingFactor constitution + harness + ResearchBudget"},
+    "fusion_checkpoint": {
+      "timestamp": "2026-05-31T00:00:00+00:00",
+      "participating_swarms": ["Integration-Dogfood-Swarm", "GridEngine", "HealingFactor", "Constrained-Evolutionary-Search-Swarm"],
+      "research_org_roles": ["Diagnoser (drive.think+synth gaps/contradictions)", "Verifier (harness)", "Consolidator (lineage record)"],
+      "harness_applied": true,
+      "budget_consumed": {"tokens": 180, "time_s": 1.4},
+      "resilience_delta": 0.11,
+      "experience_layer_v3_fusion_ready": true,
+      "drive": "stabilization-wave-20260531"
+    },
+    "kg_edges_proposed": [
+      {"source": "research-thread-output-research-constitution-healingfactor-synthesis-iteration@stabilization-wave-20260531", "target": "experience_layer_v3", "relation": "strengthened_resilience", "weight": 0.88},
+      {"source": "research-thread-output-research-constitution-healingfactor-synthesis-iteration@stabilization-wave-20260531", "target": "research-constitution-healingfactor@stabilization-wave-20260531", "relation": "governed_by_constitution", "weight": 0.95}
+    ],
+    "self_referential": "This research-thread observation (high-signal keep via harness) is a candidate for future HealingFactor regeneration proposals and daily_consolidation promotion. Produced by dogfood execution of the full wired autoresearch substrate."
+  },
+  "provenance": {
+    "lineage": [{"parent": "research-constitution-healingfactor@stabilization-wave-20260531", "relation": "governed_research_thread_experiment", "notes": "full autoresearch integration by Integration & Dogfood Swarm using real constitution + harness + budget"}],
+    "source_swarm": "Integration & Dogfood Swarm",
+    "signed": "Integration & Dogfood Swarm — stabilization-wave-20260531 — 2026-05-31"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "framework": {
+    "id": "tranche3-calibration-engine",
+    "version": "0.2.0",
+    "display_name": "Tranche 3 Contradiction & Calibration Engine",
+    "description": "Closed-loop calibration system for example-project calibration swarm. Surfaces honest contradictions via reasoning-engine + run_synthesis + detect_contradictions, automatically adjusts synthesis weights, source_boost, page_type boosts, recency (via temporal_freshness_score), graph signals. Persists state under swarm drive. Jobs run via job supervisor. Feeds improvements back to fused experience layer (synthesis, graph fusion, reasoning). Produces self-documenting calibration genomes.",
+    "category": "calibration",
+    "tags": ["tranche3", "calibration", "contradiction", "auto-calib", "temporal-freshness", "example-project", "closed-loop"],
+    "author": "AgentDrive Contributors",
+    "license": "MIT",
+    "inputs": [
+      {"name": "contradictions", "type": "list[dict|Contradiction]", "description": "From detect_contradictions or SynthesisResult.contradictions"},
+      {"name": "staleness", "type": "list[dict]", "description": "From get_stale_entities"},
+      {"name": "current_state", "type": "dict", "description": "Persisted via _load_calibration_state"}
+    ],
+    "outputs": [
+      {"name": "adjustments", "type": "dict", "description": "deltas for weights/boosts/recency/graph"},
+      {"name": "updated_state", "type": "dict", "description": "Persisted calibration state"},
+      {"name": "genome_payload", "type": "dict", "description": "Ingestible calibration-engine genome"}
+    ],
+    "steps": [
+      {"id": "surface", "description": "reasoning-engine + synthesis + detect_contradictions + find_contradictions_candidates + get_stale_entities", "output": "raw contradictions + stale findings"},
+      {"id": "compute", "description": "compute_auto_calibration_adjustments using temporal_freshness_score", "output": "deltas + rationale"},
+      {"id": "apply_persist", "description": "apply_calibration_adjustments + _persist_calibration_state", "output": "updated state with metrics"},
+      {"id": "feedback", "description": "synthesis + graph + reasoning consult state for scoring/fusion", "output": "self-improving fused experience"},
+      {"id": "genome", "description": "Emit calibration genome for Drive ingest + KG", "output": "tranche3-calibration-engine genome"}
+    ],
+    "reasoning_patterns": {
+      "calibration_loop": "contradiction -> actionable delta -> persist -> re-fuse in next synthesis",
+      "temporal": "freshness_score + staleness_factor drive recency tuning"
+    },
+    "quarantine_note": "Sanitized example derived from personal internal development history (tranche3 calibration series). Retained for structural illustration only; not a primary recommended genome for general use."
+  }
+}

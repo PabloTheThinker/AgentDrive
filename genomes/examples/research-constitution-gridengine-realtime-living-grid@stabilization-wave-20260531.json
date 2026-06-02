@@ -1,0 +1,181 @@
+{
+  "schema_version": 3,
+  "page_type": "research-constitution",
+  "type": "research_constitution",
+  "id": "research-constitution-gridengine-realtime-living-grid@stabilization-wave-20260531",
+  "version": "1.0.0-experience-layer-regeneration",
+  "created": "2026-05-31T00:00:00+00:00",
+  "last_improved": "2026-05-31T00:00:00+00:00",
+  "manifest": {
+    "id": "research-constitution-gridengine-realtime-living-grid@stabilization-wave-20260531",
+    "version": "1.0.0-experience-layer-regeneration",
+    "content_hash": "sha256:gridengine-realtime-constitution-20260531-0000000000000000000000000000000000000000000000000000000000000000",
+    "created": "2026-05-31T00:00:00+00:00",
+    "last_improved": "2026-05-31T00:00:00+00:00",
+    "authors": [
+      {
+        "type": "swarm",
+        "id": "real-time-grid-engine-hardening-swarm",
+        "name": "Real-Time Grid Engine Hardening Swarm (role-specialized stabilization component inside AgentDrive for persistent always-on event-driven living Grid)"
+      },
+      {
+        "type": "swarm",
+        "id": "stabilization-wave-20260531",
+        "name": "stabilization-coordination job (DurableJobSupervisor + HealingFactor.for_stabilization_wave + GridEngine)"
+      }
+    ],
+    "applicability": {
+      "domains": ["gridengine", "realtime-grid", "autonomous-research-threads", "healing-signal-event", "damage-auto-detection", "research-constitution-governance", "heartbeats", "experience-layer-auto-incorporation", "observability", "constrained-evolutionary-search"],
+      "problem_signatures": [
+        "need persistent long-lived background GridEngine process with EventBus subscription for HealingSignalEvent immediate reactivity",
+        "need continuous autonomous research threads governed by research-constitutions within ResearchBudget caps",
+        "need auto-detection of damage signals (events, synthesis, posture, reconciliation, immune) with auto-dispatch to HealingFactor or research threads",
+        "need full correlation, heartbeats, experience layer v3 auto-incorporation of thread outcomes via durable jobs + KG edges + schema promotion",
+        "need observability surfaces for active research threads and Grid health metrics",
+        "self-referential governance of GridEngine itself via its own research-constitution on stabilization-wave-20260531 drive"
+      ],
+      "stabilization_wave": "20260531"
+    },
+    "dependencies": {
+      "genomes": [
+        "research-constitution-healingfactor@stabilization-wave-20260531",
+        "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531",
+        "95-production-readiness-assessment-living-experience@stabilization-wave-20260531",
+        "stabilization-wave-20260531-closure-living-experience-observation",
+        "living-experience-seed-v3"
+      ],
+      "agent_capabilities": [
+        "GridEngine",
+        "GridConfig",
+        "get_active_grid",
+        "HealingFactor",
+        "DurableJobSupervisor",
+        "ResearchBudget",
+        "MultiMetricEvaluationHarness",
+        "EvaluationScores",
+        "HealingSignalEvent",
+        "EventBus",
+        "Drive.think",
+        "run_synthesis",
+        "schema_packs",
+        "knowledge_graph",
+        "form_research_org_thread"
+      ]
+    },
+    "evaluation_score": {
+      "reference_tasks": 0.97,
+      "stability": 0.98,
+      "reactivity": 0.96,
+      "thread_governance": 0.95,
+      "observability": 0.94
+    }
+  },
+  "framework": {
+    "page_type": "research-constitution",
+    "constitution_type": "gridengine-realtime-living-grid",
+    "description": "Initial Research Constitution for the GridEngine itself: governs the persistent always-on event-driven living Grid, continuous autonomous research threads (role-swarm org under Diagnoser/Proposer/Verifier/Consolidator/Adversary), auto-damage detection + dispatch, heartbeats, full correlation, experience layer auto-incorporation of outcomes, and observability surfaces. Schema-pack governed versionable artifact (research-constitution page_type) directly consumable by GridEngine, HealingFactor, daily_consolidation, and Constrained Evolutionary Search on stabilization-wave-20260531 drive. Self-referential: the engine and its threads are subject to the same regeneration loop.",
+    "long_lived_process_requirements": {
+      "event_bus_subscription": {
+        "mandatory": ["HealingSignalEvent", "HealingSignalResolved"],
+        "handler": "_on_healing_signal (auto-dispatch to HealingFactor.on_damage_signal + form_autonomous_research_thread on high/critical)",
+        "correlation": "using_correlation_id mandatory on every handler path"
+      },
+      "background_loops": [
+        "damage_monitor_loop (hybrid event + proactive sweep of posture/synthesis/reconciliation/stale_experience)",
+        "maintenance_loop (daily_consolidation submission)",
+        "research_thread_coordinator_loop (constitution discovery + durable research_thread phase jobs)",
+        "heartbeat_loop (45s cadence for Grid + every active research thread)"
+      ]
+    },
+    "autonomous_research_threads": {
+      "governance": "All threads load and obey research-constitution page_type artifacts (schema pack resolution). Initial set includes this GridEngine constitution + healingfactor + daily-consolidation-v3 constitutions from stabilization-wave-20260531 drive.",
+      "budget_discipline": "Every thread iteration uses ResearchBudget (token_budget, time_budget_seconds, resilience_improvement_budget, max_experiments). record_consumption called inside runner; exhaustion forces immediate harness evaluation + keep/discard/fork decision.",
+      "role_swarm_org": "On spawn (form_autonomous_research_thread or from damage), HealingFactor.form_research_org_thread forms Diagnoser/Proposer/Verifier/Consolidator/Adversary team with handoff protocol via shared CID + KG research_handoff edges + research-constitution charters.",
+      "branch_advancement": "High-signal outcomes (per harness + constitution thresholds) produce forked living-experience genomes or specialized consolidation lineages via propose_experience_evolution + provenance. Only high-signal surfaced as experience-observation (research-thread subtype) or daily-present.",
+      "healing_integration": "Bidirectional: threads can emit HealingSignalEvent; HealingFactor can spawn/consult research threads for detector/proposer evolution. Auto-dispatch on high/critical signals."
+    },
+    "auto_damage_detection_and_dispatch": {
+      "event_sources": ["HealingSignalEvent from synthesis, durable_job_exhaust, reconciliation, immune CRITICAL, security_posture, promotion_rejection"],
+      "proactive_surfaces": ["get_security_posture", "reconciler stats", "Drive.think(prefer_experience_layer=True) for gaps/contradictions/stale items", "LineageImmune assessment"],
+      "dispatch": "On detection: emit(HealingSignalEvent) + direct HealingFactor.on_damage_signal + (high/critical) form_autonomous_research_thread. No manual intervention required.",
+      "priority_mapping": "security_posture_needs_attention or synthesis_contradiction_cluster -> high; LineageImmune CRITICAL -> critical"
+    },
+    "correlation_heartbeats_experience_incorporation": {
+      "correlation": "new_correlation_id + using_correlation_id on every loop, runner, handler, submit_queued_dream, Drive.think, run_synthesis, form_research_org_thread",
+      "heartbeats": "_record_heartbeat + dedicated _heartbeat_loop; logged with CID; feeds supervisor lease renewal for persistent research_thread jobs + KG edges for thread persistence",
+      "auto_incorporation": "On HealingSignalResolved or high-signal research outcome: increment experience_incorporations, record manifest in _research_thread_manifests, submit via supervisor 'healing' or 'research_thread' phase with healing_attempt / experience-observation + emit KG edges (healed_by, strengthened_resilience, research_thread_contributed) + schema promotion into experience layer v3 for future Drive.think"
+    },
+    "observability": {
+      "get_grid_health": "status, active_research_thread_count, healing_jobs_dispatched, research_threads_completed, experience_incorporations, resilience_lift_total, constitutions_governed, last_heartbeat_age_s, drive=stabilization-wave-20260531",
+      "get_active_research_threads": "per-thread: thread_id, durable_job_id, governing_research_constitution, budget_state, correlation_id, roles, high_signal, healing_integration, drive",
+      "usage": "Conductor daily-present, TUI status, web dashboards, Drive.think(prefer_experience_layer=True) on 'Grid health' or 'active research threads'"
+    },
+    "self_referential_improvement": "This constitution is the initial governing artifact for the GridEngine. Future HealingFactor diagnoses on Grid performance (thread exhaustion, reactivity latency, incorporation gaps) may propose experience_consolidation or immune_rule_update against this constitution. GridEngine maintenance + research threads themselves participate in the loop they implement.",
+    "fusion_checkpoint": {
+      "timestamp": "2026-05-31T00:00:00+00:00",
+      "correlation_id": "gridengine-realtime-constitution-cid-20260531",
+      "stabilization_wave": "20260531",
+      "participating_primitives": [
+        "GridEngine.start + _on_healing_signal + event subscription",
+        "GridEngine._damage_monitor_loop + _scan_and_heal_once (posture + synthesis + recon)",
+        "GridEngine._research_thread_coordinator_loop + _run_research_thread_pass + ResearchBudget + MultiMetricEvaluationHarness",
+        "GridEngine._heartbeat_loop + _record_heartbeat",
+        "GridEngine.get_grid_health + get_active_research_threads",
+        "HealingFactor.form_research_org_thread + on_damage_signal",
+        "DurableJobSupervisor research_thread + healing phases (leases + heartbeats)",
+        "Drive.think(prefer_experience_layer=True) + schema_packs research-constitution resolution",
+        "knowledge_graph TypedEdge emission for incorporation + role_swarm_coherence"
+      ],
+      "resilience_delta_target": 0.19,
+      "self_referential": "The GridEngine now hosts and obeys its own constitution; any gaps discovered in reactivity or thread governance become damage signals that feed the identical regeneration loop."
+    },
+    "coordination_protocol_note": "Real-Time Grid Engine Hardening Swarm produces this constitution + source extensions + signed report as stabilization-wave-20260531 drive artifacts. Future role swarms (Constrained Evolutionary Search, Multi-Agent Research Org) consume it for Grid-specific research iterations. All via DurableJobSupervisor coordination jobs + experience layer v3 fusion."
+  },
+  "reasoning_patterns": {
+    "reactivity_first": "Event bus subscription + proactive sweep guarantees zero-latency damage response even with Conductor offline.",
+    "bounded_autoresearch": "ResearchBudget + harness enforce keep/discard discipline; no unbounded threads; provenance always recorded for forks.",
+    "self_governance": "GridEngine is a first-class citizen of the experience layer regeneration substrate it powers."
+  },
+  "tool_compositions": {},
+  "evaluations": {
+    "grid_self_test": "Post-ingest, Drive.think(prefer_experience_layer=True) on 'real-time GridEngine health' surfaces this constitution + prior daily-present + living-experience as top citations with measurable graph signal lift and active thread visibility."
+  },
+  "provenance": {
+    "lineage": [
+      {
+        "parent": "research-constitution-healingfactor@stabilization-wave-20260531",
+        "relation": "extends_for_realtime",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "HealingFactor diagnosis + role-swarm org surface extended to GridEngine long-lived process + autonomous research thread hosting"
+      },
+      {
+        "parent": "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531",
+        "relation": "cross_references",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "Grid maintenance loop + research threads share fork/merge + daily-present incorporation discipline"
+      },
+      {
+        "parent": "stabilization-wave-20260531-closure-living-experience-observation",
+        "relation": "anchored_by",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "95% baseline + closed healing cycle + role-swarm coherence provides reference state for all Grid reactivity and thread metrics"
+      },
+      {
+        "parent": "HEALING_FACTOR_REGENERATIVE_ARCHITECTURE.md",
+        "relation": "implements_realtime_layer",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "Architecture loop (detect/diagnose/propose/execute/close) now runs continuously inside GridEngine background process"
+      }
+    ],
+    "improvements": [],
+    "source_swarm": "Real-Time Grid Engine Hardening Swarm",
+    "via": "full autoresearch integration + source extensions in grid/engine.py + events.py + reconciliation.py + package __init__.py + live stabilization-wave-20260531 drive synthesis (Drive.think + research-constitution resolution + DurableJobSupervisor)",
+    "signed": "Real-Time Grid Engine Hardening Swarm — stabilization-wave-20260531"
+  },
+  "kg_edges_proposed": [
+    {"source": "research-constitution-gridengine-realtime-living-grid@stabilization-wave-20260531", "target": "GridEngine", "relation": "governs", "weight": 0.97},
+    {"source": "research-constitution-gridengine-realtime-living-grid@stabilization-wave-20260531", "target": "experience_layer_v3", "relation": "strengthened_resilience", "weight": 0.91},
+    {"source": "GridEngine", "target": "research-constitution-gridengine-realtime-living-grid@stabilization-wave-20260531", "relation": "documented_by", "weight": 0.95},
+    {"source": "research-constitution-gridengine-realtime-living-grid@stabilization-wave-20260531", "target": "research-constitution-healingfactor@stabilization-wave-20260531", "relation": "extends", "weight": 0.88}
+  ]
+}

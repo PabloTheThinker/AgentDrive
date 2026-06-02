@@ -42,7 +42,7 @@ genome:
 
   authors:
     - type: human
-      name: "Pablo Navarro"
+      name: "the project maintainer"
     - type: agent
       id: "rich-node-042"
       run: "eng-2026-05-18-postmortem-17"

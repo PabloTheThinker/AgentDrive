@@ -10,7 +10,7 @@ This Code of Conduct applies within all project spaces — issues, pull requests
 
 ## Reporting
 
-Report concerns to **conduct@vektraindustries.com**. Reports are reviewed by the project maintainers and treated confidentially.
+Report concerns to the project maintainers via GitHub (private discussion or security report if appropriate). Reports are reviewed by the project maintainers and treated confidentially.
 
 ## Attribution
 

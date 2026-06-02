@@ -55,7 +55,15 @@ class MissionStatus(StrEnum):
 
 @dataclass
 class Mission:
-    """A single mission card on the board."""
+    """A single mission card on the AgentDrive board.
+
+    This is the native visual artifact for the 6-step loop + Experience Graph fabric.
+    Every card can carry deep context from the living system:
+    - Which loop cycle / correlation it belongs to
+    - What fabric changes or densification it contributed
+    - Whether it came from Parent decision, Overseer hunch, Grid, Healing, Static Fire, or user
+    - Direct links to genomes, swarms, and experience layer objects
+    """
 
     id: str
     title: str
@@ -75,6 +83,16 @@ class Mission:
     outcome: dict[str, Any] = field(default_factory=dict)
     dna_used: list[str] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
+
+    # === AgentDrive-native extensions (reworked for the 6-step + fabric world) ===
+    cycle_id: str | None = None
+    correlation_id: str | None = None
+    loop_step: int | None = None          # 1-6 from the canonical loop
+    source: str = ""                      # "parent_decision", "overseer_hunch", "grid", "healing", "static_fire", "user", "subagent"
+    fabric_contributions: list[dict[str, Any]] = field(default_factory=list)  # e.g. {"type": "densified_via_gardener", "lift": 0.041, "edges": 7}
+    gbrain_signal_score: float | None = None
+    related_edge_ids: list[str] = field(default_factory=list)  # TypedEdge ids in the experience graph
+    static_fire_id: str | None = None
 
     @staticmethod
     def new_id() -> str:
@@ -157,6 +175,50 @@ class MissionBoard:
 
     def create(self, title: str, **kwargs: Any) -> Mission:
         return self.add(Mission.create(title, **kwargs))
+
+    # === AgentDrive-native helpers (reworked to fit the 6-step loop + fabric) ===
+    def record_from_loop_event(
+        self,
+        title: str,
+        *,
+        cycle_id: str | None = None,
+        correlation_id: str | None = None,
+        loop_step: int | None = None,
+        source: str = "loop",
+        fabric_contributions: list[dict[str, Any]] | None = None,
+        gbrain_signal_score: float | None = None,
+        **extra: Any,
+    ) -> Mission:
+        """Create or update a mission card directly from a canonical loop event.
+        This is how the board becomes a living view of the 6-step process + fabric.
+        """
+        mission = Mission.create(
+            title,
+            cycle_id=cycle_id,
+            correlation_id=correlation_id,
+            loop_step=loop_step,
+            source=source,
+            fabric_contributions=fabric_contributions or [],
+            gbrain_signal_score=gbrain_signal_score,
+            **extra,
+        )
+        return self.add(mission)
+
+    def attach_fabric_update(self, mission_id: str, contribution: dict[str, Any]) -> Mission | None:
+        """Append a fabric densification / connection event to an existing card."""
+        with self._lock:
+            m = self._missions.get(mission_id)
+            if not m:
+                return None
+            m.fabric_contributions.append(contribution)
+            if "gbrain_signal_score" in contribution:
+                m.gbrain_signal_score = contribution["gbrain_signal_score"]
+            self._append({
+                "event": "fabric_contribution",
+                "mission_id": mission_id,
+                "contribution": contribution,
+            })
+            return m
 
     def get(self, mid: str) -> Mission | None:
         return self._missions.get(mid)

@@ -90,7 +90,7 @@ def test_substrate_context_reads_genomes_and_ingest(tmp_path: Path):
 
 
 def test_build_system_prompt_with_and_without_substrate():
-    identity = "You are ILO."
+    identity = "You are a high-continuity Conductor node."
     assert build_system_prompt(identity, "") == identity
     full = build_system_prompt(identity, "## Dreams\n- foo")
     assert identity in full
@@ -195,7 +195,7 @@ def test_resolve_identity_prompt_no_agent(tmp_path: Path):
     # No agent id → generic prompt with no name claim
     prompt = resolve_identity_prompt("", home=tmp_path)
     assert "Agent Drive substrate" in prompt
-    assert "ILO" not in prompt
+    assert "high-continuity Conductor" not in prompt
 
 
 def test_agents_endpoint_returns_list_shape(tmp_path: Path):
@@ -225,11 +225,11 @@ def test_agent_runtime_endpoint_returns_model_and_http_sse_shapes(
 
     monkeypatch.setattr(HTTPSSEAdapter, "health", fake_health)
     write_runtime_config(
-        "ilo",
+        "high-continuity-conductor",
         {
             "kind": "http_sse",
             "url": "http://example.internal:8081/chat",
-            "auth_env": "ILO_RUNTIME_TOKEN",
+            "auth_env": "CONDUCTOR_RUNTIME_TOKEN",
         },
         home=isolated_agentdrive_home,
     )
@@ -245,14 +245,14 @@ def test_agent_runtime_endpoint_returns_model_and_http_sse_shapes(
     assert body["healthy"] is True
     assert "url" not in body
 
-    resp = client.get("/api/chat/agents/ilo/runtime")
+    resp = client.get("/api/chat/agents/high-continuity-conductor/runtime")
     assert resp.status_code == 200
     body = resp.json()
     assert body == {
-        "agent_id": "ilo",
+        "agent_id": "high-continuity-conductor",
         "kind": "http_sse",
         "url": "http://example.internal:8081/chat",
-        "auth_env": "ILO_RUNTIME_TOKEN",
+        "auth_env": "CONDUCTOR_RUNTIME_TOKEN",
         "healthy": True,
         "detail": "connected",
     }
@@ -277,11 +277,11 @@ def test_agent_runtime_post_writes_file_for_admin(
     _login(client)
 
     resp = client.post(
-        "/api/chat/agents/ilo/runtime",
+        "/api/chat/agents/high-continuity-conductor/runtime",
         json={
             "kind": "http_sse",
             "url": "http://example.internal:8081/chat",
-            "auth_env": "ILO_RUNTIME_TOKEN",
+            "auth_env": "CONDUCTOR_RUNTIME_TOKEN",
             "timeout_s": 120,
         },
     )
@@ -289,8 +289,8 @@ def test_agent_runtime_post_writes_file_for_admin(
     assert resp.status_code == 200
     body = resp.json()
     assert body["kind"] == "http_sse"
-    assert body["auth_env"] == "ILO_RUNTIME_TOKEN"
-    path = isolated_agentdrive_home / "agents" / "ilo" / "runtime.json"
+    assert body["auth_env"] == "CONDUCTOR_RUNTIME_TOKEN"
+    path = isolated_agentdrive_home / "agents" / "high-continuity-conductor" / "runtime.json"
     assert (
         json.loads(path.read_text(encoding="utf-8"))["url"] == "http://example.internal:8081/chat"
     )
@@ -308,7 +308,7 @@ def test_agent_runtime_post_403s_for_non_admin(tmp_path: Path):
     client.cookies.set("agentdrive_session", token)
 
     resp = client.post(
-        "/api/chat/agents/ilo/runtime",
+        "/api/chat/agents/high-continuity-conductor/runtime",
         json={"kind": "model", "provider": "ollama", "model": "qwen3:14b"},
     )
 

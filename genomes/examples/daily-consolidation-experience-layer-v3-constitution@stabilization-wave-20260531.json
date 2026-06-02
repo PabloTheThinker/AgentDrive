@@ -1,0 +1,180 @@
+{
+  "schema_version": 3,
+  "page_type": "research-constitution",
+  "type": "daily-consolidation-experience-layer-v3-constitution",
+  "id": "daily-consolidation-experience-layer-v3-constitution@stabilization-wave-20260531",
+  "version": "1.0.0-research-constitutions",
+  "created": "2026-05-31T00:00:00+00:00",
+  "manifest": {
+    "id": "daily-consolidation-experience-layer-v3-constitution@stabilization-wave-20260531",
+    "version": "1.0.0-research-constitutions",
+    "content_hash": "sha256:daily-consol-v3-constitution-20260531-stable",
+    "created": "2026-05-31T00:00:00+00:00",
+    "last_improved": "2026-05-31T00:00:00+00:00",
+    "authors": [
+      {
+        "type": "swarm",
+        "id": "research-constitution-architect-swarm",
+        "name": "Research Constitution Architect Swarm (role-specialized stabilization component inside AgentDrive)"
+      }
+    ],
+    "applicability": {
+      "domains": [
+        "daily_consolidation",
+        "experience-layer-v3",
+        "living-experience-fusion",
+        "fork-vs-merge",
+        "role-swarm-coherence",
+        "daily-present-genomes",
+        "research-constitutions",
+        "stabilization-wave-20260531"
+      ],
+      "problem_signatures": [
+        "GridEngine periodic maintenance triggering daily_consolidation job",
+        "need for criteria on high-quality daily-present observations",
+        "decision to fork vs merge living-experience lineages",
+        "auto-incorporation of graph hardener + calibration outputs into experience layer"
+      ],
+      "stabilization_wave": "20260531"
+    },
+    "dependencies": {
+      "genomes": [
+        "durable-execution-daily-consolidation-integrator-genome@stabilization-wave-20260531",
+        "living-experience-seed-v3",
+        "95-production-readiness-assessment-living-experience@stabilization-wave-20260531"
+      ],
+      "agent_capabilities": [
+        "run_daily_consolidation_job",
+        "DurableJobSupervisor.submit_queued_dream(phase='daily_consolidation')",
+        "Drive.think(prefer_experience_layer=True)",
+        "propose_experience_evolution",
+        "Genome.fork + promotion",
+        "hybrid fusion + fusion_checkpoint assembly",
+        "schema pack daily-present + living-experience page_types"
+      ]
+    }
+  },
+  "content": {
+    "title": "Daily Consolidation & Experience Layer v3 Fusion Constitution — Criteria for Good Daily-Present Observations and Fork/Merge Discipline (stabilization-wave-20260531 drive)",
+    "summary": "Schema-pack governed Research Constitution (page_type=research-constitution) for GridEngine._maintenance_loop, DurableJobSupervisor daily_consolidation phase, and experience layer v3 auto-incorporation. Defines observable quality signals for daily-present genomes produced by run_daily_consolidation_job and the precise conditions under which living-experience lineages should fork versus merge. Directly loadable by GridEngine, daily_consolidation jobs, synthesis propose_experience_evolution, and promotion paths. Self-referential: governs fusion of its own future updates into the experience layer.",
+    "core_principles": [
+      "Every daily_consolidation execution produces one attributed daily-present genome (page_type=daily-present, schema-driven promotion) carrying complete fusion_checkpoint: participating_swarms, drive_think_results (gaps/contradictions/citations), graph_signals_summary, calibration_state_snapshot, experience_layer_preference=true.",
+      "Good daily-present observations are the authoritative 'all work together' role-swarm coherence artifact. High signal = high participating_swarms breadth + fusion_checkpoint completeness + KG edge emission (has_daily_present_entry, fused_from_stabilization, role_swarm_coherence_achieved) + feeds_experience_layer=true.",
+      "Living-experience lineages are forkable genome families (via Genome.fork + propose_experience_evolution). Merge (auto-incorporation) is the default for high-value deltas from calibration/graph/synthesis. Fork only on explicit high-novelty or unresolved contradiction signals.",
+      "All fusion flows through hybrid mechanism: prefer_experience_layer + source_boost (from schema page_type) + graph signals + recency + trust + calibration boosts. daily-present artifacts receive strongest boost for Conductor daily entrypoint.",
+      "Fork vs merge decisions are themselves evaluated by the constrained evolutionary search harness (see sibling constitution) before promotion. Self-referential updates to this constitution must pass the same gate."
+    ],
+    "good_daily_present_observation_criteria": {
+      "required_fields_in_payload": [
+        "id",
+        "page_type",
+        "manifest",
+        "framework.steps",
+        "fusion_checkpoint",
+        "living_experience_context",
+        "provenance"
+      ],
+      "fusion_checkpoint_must_contain": [
+        "participating_swarms (min 5 from SWARM_FAMILY + central + dispatch + calibration)",
+        "drive_think_results with gaps + contradictions + citations",
+        "graph_signals_summary",
+        "calibration_state_snapshot",
+        "gaps_identified",
+        "contradictions_addressed (count)",
+        "citation_count",
+        "experience_layer_preference: true",
+        "fusion_method: hybrid...",
+        "schema_page_type: daily-present"
+      ],
+      "quality_thresholds": {
+        "min_participating_swarms": 5,
+        "min_citations": 3,
+        "min_coherence_from_fusion_checkpoint": 0.72,
+        "must_emit_kg_edges": ["has_daily_present_entry", "fused_from_stabilization", "role_swarm_coherence_achieved"]
+      },
+      "auto_promotion_signals": [
+        "feeds_experience_layer: true",
+        "schema_page_type resolution to daily-present",
+        "high fusion_checkpoint quality",
+        "authored_by swarm attribution"
+      ]
+    },
+    "fork_vs_merge_rules": {
+      "default_behavior": "merge (auto-incorporation via propose_experience_evolution + promotion + Genome.record_improvement into current living-experience head)",
+      "fork_conditions": [
+        "Persistent high contradiction load (synthesis_contradictions > 4 after 2 daily_consolidation cycles) not resolved by merge attempt",
+        "High-novelty research thread output (new research-constitution charter or major GridEngine autonomous research advance) with future_prediction_power > 0.80",
+        "Resilience regression detected (post < pre in harness evaluation of consolidation candidate)",
+        "Explicit Conductor or form_research_org_thread directive for parallel lineage (e.g. stabilization micro-wave or adversarial branch)",
+        "Major schema evolution (new page_type family or genome schema bump) requiring separate living-experience v3.x lineage"
+      ],
+      "merge_conditions": [
+        "overall_goodness from MultiMetricEvaluationHarness >= 0.55 on the consolidation candidate",
+        "experience_layer_coherence lift positive",
+        "simplicity score >= 0.60 (no explosion of new artifacts)",
+        "resilience_lift >= 0.03 or contradiction_reduction >= 0.15",
+        "No open fork directive from research-org thread or Adversary specialist"
+      ],
+      "decision_capture": "Every fork/merge records in target living-experience provenance.lineage + ImprovementEvent + KG research_thread or fused_from edge. Harness EvaluationScores.decision captures the outcome."
+    },
+    "experience_layer_v3_fusion_mechanics": {
+      "primary_entry": "Drive.think(..., prefer_experience_layer=True) always surfaces current living-experience genome head + latest daily-present + open evolution proposals first",
+      "auto_incorporation_triggers": [
+        "high-value synthesis output (low gap/contradiction, high citation)",
+        "graph hardener densification (centrality or salience edges above threshold)",
+        "calibration engine boost updates or contradiction resolutions",
+        "daily_consolidation daily-present genomes (strongest signal)",
+        "HealingFactor successful regeneration artifacts (post keep decision)"
+      ],
+      "lineage_model": "Versioned forkable family. Best descendants bubble via selection in hybrid fusion scoring + Conductor preference. Obsolete branches remain queryable via explicit lineage traversal but receive low boost."
+    }
+  },
+  "framework": {
+    "kind": "research-constitution",
+    "title": "Daily Consolidation & Experience Layer v3 Fusion Constitution v1.0 — stabilization-wave-20260531",
+    "description": "Governs GridEngine maintenance loop daily_consolidation submissions, run_daily_consolidation_job execution, fusion_checkpoint construction, and all living-experience fork/merge decisions via propose_experience_evolution + promotion. Rules are machine-readable in framework.rules and loadable for runtime enforcement inside daily jobs and synthesis engine.",
+    "rules": {
+      "good_daily_present_observation_criteria": "see content.good_daily_present_observation_criteria",
+      "fork_vs_merge_rules": "see content.fork_vs_merge_rules",
+      "experience_layer_v3_fusion_mechanics": "see content.experience_layer_v3_fusion_mechanics",
+      "fusion_checkpoint_template": {
+        "experience_layer_preference": true,
+        "schema_page_type": "daily-present",
+        "fusion_method": "hybrid: drive.think(prefer_experience_layer) + synthesis + graph + calibration + role-swarm synthesis"
+      }
+    },
+    "integration_points": {
+      "grid_engine": "_maintenance_loop triggers supervisor.submit_queued_dream(phase='daily_consolidation') using this constitution for quality gate on produced daily-present",
+      "durable_job_supervisor": "run_daily_consolidation_job must emit daily-present payload meeting good_ criteria; auto_attributed_ingest_from_dream_job routes via page_type",
+      "synthesis_engine": "propose_experience_evolution consults fork_vs_merge_rules before emitting proposal; run_synthesis surfaces daily-present with highest boost",
+      "drive": "Drive.think(prefer_experience_layer=True) + hybrid fusion engine enforce living-experience head selection per lineage rules",
+      "healing_factor": "successful regeneration proposals that pass harness are fused via Consolidator role using daily-present or experience-consolidation page_type",
+      "schema_pack": "daily-present and living-experience page_types + research-constitution for this charter itself receive expert_routing and high extractable signal"
+    },
+    "self_referential_clause": "This constitution was produced on the stabilization-wave-20260531 drive and is itself a daily-present candidate for fusion. Any future daily_consolidation or HealingFactor proposal that improves fusion quality or fork/merge discipline will be evaluated against the exact criteria defined herein by the harness. Updates merge by default unless a fork condition (e.g. new v3.1 experience layer mechanics) is met."
+  },
+  "provenance": {
+    "lineage": [
+      {
+        "parent": "durable-execution-daily-consolidation-integrator-genome@stabilization-wave-20260531",
+        "relation": "codifies_runtime_behavior_of",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "Extracted good observation criteria and fusion_checkpoint requirements directly from run_daily_consolidation_job + auto_attributed_ingest"
+      },
+      {
+        "parent": "stabilization-wave-20260531-closure-living-experience-observation",
+        "relation": "synthesized_from_wave_closure_fusion_checkpoint",
+        "timestamp": "2026-05-31T00:00:00+00:00"
+      },
+      {
+        "parent": "living-experience-seed-v3",
+        "relation": "governs_evolution_lineage_of",
+        "timestamp": "2026-05-31T00:00:00+00:00"
+      }
+    ],
+    "stabilization_wave": "20260531",
+    "produced_by": "Research Constitution Architect Swarm self-referentially on stabilization-wave-20260531 drive. Inspected live durable.py run_daily_consolidation_job, fusion_checkpoint assembly, propose_experience_evolution, Genome.fork, schema_packs daily-present paths, swarm_family, and all prior stabilization artifacts. Pure AgentDrive language only.",
+    "signature": "Signed 2026-05-31 by Research Constitution Architect Swarm. Ingest via page_type=research-constitution to make fork/merge discipline and daily-present quality enforceable by GridEngine and daily_consolidation jobs on this drive.",
+    "forward_directive": "Ingest alongside the other three research-constitutions. GridEngine will load research-constitution artifacts for autonomous research thread governance. Future daily_consolidation improvements (e.g. richer calibration snapshot or new handoff protocol) are proposed as research_evolution_proposal and evaluated by harness against these rules."
+  }
+}

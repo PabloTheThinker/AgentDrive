@@ -1,6 +1,6 @@
 # Agent Drive Skills — design + first 12 skill brainstorm
 
-**Status:** draft for Pablo's review. Nothing built yet.
+**Status:** draft for review. Nothing built yet.
 **Premise:** A agentdrive is someone with exceptional, narrow-domain prodigy. The product should embrace that literally — each skill is a *agentdrive*: a small, focused, world-class capability in one specific thing. The agent doesn't try to be good at everything; it consults the right agentdrive for the task.
 
 This is the the reference CLI Phase-3 move (Jan→Feb 2026 in their arc): the moment the product stops being "an agent" and becomes "a thing you extend."
@@ -113,7 +113,7 @@ These are deliberately *not* deep-domain (no "lawyer", no "doctor" — those nee
 
 ---
 
-## Open questions for Pablo
+## Open questions for the project maintainer
 
 1. **Naming.** "Skill" is what the reference CLI calls it and what most agents call it. Want to keep "Skill" (clear, conventional) or rename to something Agent Drive-native like "agentdrive" (each skill literally IS a agentdrive)? My instinct: keep "Skill" in the *code* but in user-facing copy treat them as agentdrives — `/skills` lists "the agentdrives on your bench". Costs nothing, embraces the metaphor.
 2. **Are the 12 above the right first set?** Anything obvious I missed, anything you'd cut?

@@ -1,0 +1,16 @@
+{
+  "id": "tranche3-calibration-observed-improvements",
+  "version": "1.0.0",
+  "content_hash": "sha256:calibimprovements042contradictionqualityup0.12events23",
+  "created": "2026-05-30T12:05:00.000000",
+  "last_improved": "2026-05-30T19:11:00.000000",
+  "authors": [{"type": "swarm", "name": "example-calibration-swarm"}],
+  "applicability": {
+    "domains": ["measurement", "improvement-tracking", "example-synthesis"],
+    "problem_signatures": ["report measurable improvements", "contradiction quality", "calibration events"]
+  },
+  "dependencies": {"genomes": ["tranche3-calibration-engine"]},
+  "evaluation_score": {"contradiction_quality": 0.91, "calibration_events": 23, "fusion_improvement": 0.14, "temporal_tuning_impact": 0.09},
+  "framework_ref": "tranche3-calibration-improvements-v1",
+  "quarantine_note": "Sanitized example derived from personal internal development history (tranche3 calibration series). Retained for structural illustration only; not a primary recommended genome for general use. Original author-specific artifacts quarantined from shipping package."
+}

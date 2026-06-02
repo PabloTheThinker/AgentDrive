@@ -8,7 +8,7 @@ and a TTL after which the grant stops issuing new access.
 
 Note the careful wording: **the grant gates new issuance, not data
 already received.** Once a grantee pulls a Genome through a grant, it's
-theirs forever — matches the Avatar mental model Pablo specified (no
+theirs forever — matches the Avatar mental model specified in the design (no
 decay, inheritance is permanent). The TTL stops the *flow*, not the
 already-flowed.
 

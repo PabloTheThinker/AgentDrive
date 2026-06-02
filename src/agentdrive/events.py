@@ -276,6 +276,43 @@ class ReconciliationDelta(Event):
     updated_genomes: list[str] = field(default_factory=list)
 
 
+@dataclass
+class HealingSignalEvent(Event):
+    """Role-swarm immune response trigger for experience layer regeneration.
+    Captures autonomous damage signals (worker/adapter exhaustion after retries,
+    DurableJobSupervisor job failure after leases+backoff, reconciliation corruption,
+    high synthesis contradiction clusters or persistent gaps, security posture
+    "needs_attention", promotion/ingest rejections, LineageImmune CRITICAL threats,
+    first-run/sparse cold-start reasoning failures) with mandatory correlation_id
+    for full trace continuity across Drive.think, run_synthesis, LineageImmuneSystem,
+    and durable healing jobs.
+
+    Rich context always includes: error/trace details, affected genomes + KG neighborhood
+    (graph signals), recent experience layer items (living-experience / daily-present etc
+    via schema pack), LineageImmune assessment (ThreatLevel + incident memory).
+    """
+
+    signal_type: str = ""  # e.g. "worker_execution_exhaust", "durable_job_exhaust", ...
+    correlation_id: str = ""
+    context: dict = field(default_factory=dict)
+    source_component: str = ""
+    recommended_priority: str = "medium"  # low | medium | high | critical for healing job priority
+
+
+@dataclass
+class HealingSignalResolved(Event):
+    """Successful closure of an experience layer regeneration loop.
+    Emitted after healing_attempt ingest + typed KG edges (healed_by, regenerated_from,
+    damage_cause, strengthened_resilience) for high-signal prevention learning.
+    """
+
+    signal_event_id: str = ""
+    healing_id: str = ""
+    correlation_id: str = ""
+    artifacts_ingested: list[str] = field(default_factory=list)
+    resilience_delta: float = 0.0
+
+
 # ---------------------------------------------------------------------------
 # EventBus
 # ---------------------------------------------------------------------------
@@ -453,6 +490,8 @@ __all__ = [
     "PeerSyncCompleted",
     "ReconciliationCompleted",
     "ReconciliationDelta",
+    "HealingSignalEvent",
+    "HealingSignalResolved",
     "EventBus",
     "EventRecorder",
     "SubscriptionToken",

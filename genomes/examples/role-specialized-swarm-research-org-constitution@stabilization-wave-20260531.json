@@ -1,0 +1,169 @@
+{
+  "schema_version": 3,
+  "page_type": "research-constitution",
+  "type": "role-specialized-swarm-research-org-constitution",
+  "id": "role-specialized-swarm-research-org-constitution@stabilization-wave-20260531",
+  "version": "1.0.0-research-constitutions",
+  "created": "2026-05-31T00:00:00+00:00",
+  "manifest": {
+    "id": "role-specialized-swarm-research-org-constitution@stabilization-wave-20260531",
+    "version": "1.0.0-research-constitutions",
+    "content_hash": "sha256:role-swarm-research-org-constitution-20260531-stable",
+    "created": "2026-05-31T00:00:00+00:00",
+    "last_improved": "2026-05-31T00:00:00+00:00",
+    "authors": [
+      {
+        "type": "swarm",
+        "id": "research-constitution-architect-swarm",
+        "name": "Research Constitution Architect Swarm (role-specialized stabilization component inside AgentDrive)"
+      }
+    ],
+    "applicability": {
+      "domains": [
+        "role-swarm-coordination",
+        "multi-agent-research-org",
+        "diagnoser-proposer-verifier-consolidator-adversary",
+        "autonomous-research-threads",
+        "research-org-handoff-protocols",
+        "temporary-specialist-spawn",
+        "research-constitutions",
+        "stabilization-wave-20260531"
+      ],
+      "problem_signatures": [
+        "high-damage or persistent gap signals requiring dynamic specialist team formation",
+        "need for explicit role charters and handoff discipline inside HealingFactor/GridEngine",
+        "cross-swarm research thread coordination with shared CID + KG edges",
+        "when and how to spawn temp specialists (Diagnoser, Adversary) via supervisor research-org phase"
+      ],
+      "stabilization_wave": "20260531"
+    },
+    "dependencies": {
+      "genomes": [
+        "healing-factor-regeneration-proposal-v1@stabilization-wave-20260531",
+        "95-production-readiness-assessment-living-experience@stabilization-wave-20260531",
+        "durable-execution-daily-consolidation-integrator-genome@stabilization-wave-20260531"
+      ],
+      "agent_capabilities": [
+        "HealingFactor.form_research_org_thread",
+        "HealingFactor._diagnose (research_org_consult)",
+        "DurableJobSupervisor (phase='research-org' and 'healing')",
+        "SWARM_FAMILY + cross-swarm Drive queries",
+        "typed KG research_handoff + research_thread edges",
+        "schema pack research-constitution + swarm-artifact page_types"
+      ]
+    }
+  },
+  "content": {
+    "title": "Role-Specialized Swarm Research Org Constitution — Multi-Agent Research Organization Structure, Role Charters, and Coordination Protocols (stabilization-wave-20260531 drive)",
+    "summary": "First-class Research Constitution (page_type=research-constitution) defining the Multi-Agent Research Org Swarm structure for AgentDrive regenerative systems. Codifies the five core specialist roles (Diagnoser, Proposer, Verifier, Consolidator, Adversary), their charters, handoff protocols, and conditions for dynamic team formation / temp specialist spawn. Directly referenced by HealingFactor.form_research_org_thread, _diagnose (research_org_consult), _generate_regeneration_proposals (role_charter_ref), GridEngine autonomous research threads, and DurableJobSupervisor research-org phase. Enables 'all work together' role-swarm coherence on the stabilization-wave-20260531 drive.",
+    "core_principles": [
+      "Role-swarm is the native coordination model: every autonomous research thread or large-scale healing cycle decomposes across specialist roles with explicit charters, shared correlation_id, and typed KG handoff edges (research_handoff, research_thread).",
+      "Standard loop uses implicit roles inside HealingFactor. High-load or persistent signals trigger explicit form_research_org_thread which spawns a temporary specialist team via supervisor 'research-org' phase.",
+      "All handoffs are traceable: shared CID + research_thread metadata + KG edges + charter_refs in proposals. No silent coordination.",
+      "Temporary specialists are short-lived, budget-capped (see sibling constrained evolutionary search constitution), and always produce ingestible artifacts (research-constitution subtype or experience-observation) for experience layer v3 fusion.",
+      "Adversary role is mandatory for self-referential safety: every major proposal or constitution update receives weakness scan before Verifier gate."
+    ],
+    "five_core_roles": {
+      "Diagnoser": {
+        "charter": "Deep root cause analysis using full diagnostic primitives (Drive.think(prefer_experience_layer=True) + synthesis Gaps/Contradictions + immune + posture + stale scan + graph). Produces high-quality DiagnosisReport. Consults research-constitution:healingfactor-constitution for quality criteria. Hands off to Proposer with rich evidence + research_org_consult payload.",
+        "spawn_trigger": "Any damage signal; explicit in form_research_org_thread for complex cases",
+        "output_artifact_types": ["diagnosis_evidence", "synthesis_artifact"],
+        "page_type_hints": ["experience-observation", "synthesis-artifact"]
+      },
+      "Proposer": {
+        "charter": "Generates only safe first-class regeneration or evolution proposals (allowed types from healingfactor-constitution). Embeds verification_gates, role_charter_ref, research_budget_units, self_referential. Consults research-constitution for allowed types and proposal_requirements. Hands off to Adversary for critique then Verifier.",
+        "spawn_trigger": "Post-Diagnoser handoff or standard HealingFactor._generate path",
+        "output_artifact_types": ["regeneration-proposal", "research_evolution_proposal", "experience_consolidation"],
+        "page_type_hints": ["regeneration-proposal", "research-constitution", "daily-present"]
+      },
+      "Verifier": {
+        "charter": "Enforces all gates including the new research_org_verifier_budget gate + runs MultiMetricEvaluationHarness on experiment outcome. Applies keep/discard/fork decision with full provenance. Rejects proposals that violate budget or low harness scores. Consults research-constitution:constrained-evolutionary-search-constitution for harness weights/thresholds.",
+        "spawn_trigger": "Post-Proposer/Adversary; always present in healing and research-org phases",
+        "output_artifact_types": ["evaluation_scores", "harness_decision", "healing_attempt_observation"],
+        "page_type_hints": ["experience-observation", "research-constitution"]
+      },
+      "Consolidator": {
+        "charter": "Executes daily_consolidation and post-healing fusion. Produces daily-present genomes meeting the quality criteria in daily-consolidation-experience-layer-v3-constitution. Emits role-swarm coherence KG edges. Merges high-value deltas into living-experience (default) or forks per rules. Primary author of 'all work together' artifacts for Conductor daily present.",
+        "spawn_trigger": "GridEngine._maintenance_loop, post-successful healing close, form_research_org_thread Consolidator phase",
+        "output_artifact_types": ["daily-present", "experience-consolidation", "living-experience update"],
+        "page_type_hints": ["daily-present", "experience-consolidation"]
+      },
+      "Adversary": {
+        "charter": "Weakness scanning, self-referential attack simulation, failure mode coverage, escalation path validation. Critiques every high-stakes proposal (including updates to any research-constitution) before Verifier. Triggers escalation or additional research-org threads on persistent patterns. Essential for immune response and 95%+ production hardening.",
+        "spawn_trigger": "High contradiction load, self-referential signals against HealingFactor/GridEngine, explicit in form_research_org_thread for coverage, post-proposal critique",
+        "output_artifact_types": ["adversary_critique", "failure_mode_report", "escalation_signal"],
+        "page_type_hints": ["healing-damage", "experience-observation", "research-constitution"]
+      }
+    },
+    "coordination_protocols": {
+      "handoff_discipline": "Diagnoser evidence -> Proposer proposal (with role_charter_ref) -> Adversary critique (optional parallel) -> Verifier harness/budget gate -> Consolidator fusion + KG edges + ingest. Every step shares the same correlation_id and emits research_handoff TypedEdge.",
+      "dynamic_team_formation": "HealingFactor.form_research_org_thread(signal, roles=[...], research_budget=...) submits supervisor 'research-org' phase job. Returns manifest with charter_refs, thread_id, handoff_protocol. Temporary specialists dissolve after thread completion; artifacts remain in experience layer.",
+      "when_to_spawn_specialists": [
+        "signal load high (multiple concurrent damage types or synthesis contradiction clusters > 3)",
+        "persistent gaps after 2 standard HealingFactor cycles",
+        "self-referential damage to HealingFactor or research-constitution itself",
+        "GridEngine autonomous research thread directive or high future_prediction_power opportunity",
+        "explicit Conductor request for parallel exploration (e.g. 98% micro-wave planning)"
+      ],
+      "cross_swarm_research_threads": "Query SWARM_FAMILY + new research-constitution artifacts via Drive.think. Emit research_thread edges linking parallel stabilization swarms. Use shared CID for traceability across DurableJobSupervisor jobs."
+    },
+    "research_org_manifest_template": {
+      "research_thread_id": "cid-prefix-research-org",
+      "roles_formed": ["Diagnoser", "Proposer", "Adversary", "Verifier", "Consolidator"],
+      "budget_units": 2000,
+      "handoff_protocol": "Diagnoser(deep analysis) -> Proposer(constrained proposals) -> Adversary(weakness) -> Verifier(budgeted harness) -> Consolidator(living-experience fusion)",
+      "drive": "stabilization-wave-20260531",
+      "charter_refs": [
+        "research-constitution:diagnoser-charter",
+        "research-constitution:proposer-charter",
+        "research-constitution:verifier-charter",
+        "research-constitution:consolidator-charter",
+        "research-constitution:adversary-charter"
+      ]
+    }
+  },
+  "framework": {
+    "kind": "research-constitution",
+    "title": "Role-Specialized Swarm Research Org Constitution v1.0 — stabilization-wave-20260531",
+    "description": "Defines the complete Multi-Agent Research Org structure and charters for autonomous research threads inside the Grid. Loaded by HealingFactor.form_research_org_thread and GridEngine for dynamic role formation. Machine-readable role charters and protocols enable runtime enforcement and experience layer queryability.",
+    "rules": {
+      "five_core_roles": "see content.five_core_roles",
+      "coordination_protocols": "see content.coordination_protocols",
+      "when_to_spawn_specialists": "see content.coordination_protocols.when_to_spawn_specialists",
+      "manifest_template": "see content.research_org_manifest_template"
+    },
+    "integration_points": {
+      "healing_factor": "form_research_org_thread primary entry; _diagnose and _generate embed research_org_consult + role_charter_ref using these charters",
+      "grid_engine": "Autonomous research threads (damage_monitor + maintenance) use form_research_org_thread + research-constitution page_type routing for specialist handoff",
+      "durable_job_supervisor": "research-org phase for temp team execution; healing phase for role-executed proposals; lease/heartbeat applies to long research threads",
+      "knowledge_graph": "TypedEdge relations: research_handoff, research_thread, role_swarm_coherence_achieved, synthesized_from_swarm",
+      "schema_pack": "research-constitution + swarm-artifact page_types for charter storage and expert routing of role-swarm coordination artifacts",
+      "synthesis_and_drive": "Drive.think on 'research org status' or role names surfaces the active charters + open threads with highest boost"
+    },
+    "self_referential_clause": "This constitution defines the org structure that produced it (Research Constitution Architect Swarm as a temporary specialist role spawned under stabilization-wave-20260531 coordination). Future damage to role-swarm coherence or new research org requirements will trigger form_research_org_thread that consults (and may evolve) this charter set. All five roles applied self-referentially during production of the four constitutions in this deliverable set."
+  },
+  "provenance": {
+    "lineage": [
+      {
+        "parent": "95-production-readiness-assessment-living-experience@stabilization-wave-20260531",
+        "relation": "codifies_role_swarm_coherence_achieved",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "Role charters distilled from executed large-scale healing cycle phases and fusion_checkpoint participating_swarms"
+      },
+      {
+        "parent": "STABILIZATION_SUBAGENT_REPORT-95-fusion-assessment-operator.md",
+        "relation": "synthesized_from_parallel_swarm_coordination",
+        "timestamp": "2026-05-31T00:00:00+00:00"
+      },
+      {
+        "parent": "healingfactor-constitution@stabilization-wave-20260531",
+        "relation": "complements_diagnosis_and_proposal_roles",
+        "timestamp": "2026-05-31T00:00:00+00:00"
+      }
+    ],
+    "stabilization_wave": "20260531",
+    "produced_by": "Research Constitution Architect Swarm (acting as temporary Multi-Agent Research Org specialist) self-referentially on stabilization-wave-20260531 drive. Inspected HealingFactor form_research_org_thread + research_org_consult paths, DurableJobSupervisor phases, prior swarm reports, and schema pack descriptions. Pure AgentDrive language.",
+    "signature": "Signed 2026-05-31. Ingest all four research-constitution genomes to activate full Multi-Agent Research Org governance. GridEngine and HealingFactor will form specialist teams using these charters for all future autonomous research threads.",
+    "forward_directive": "Reference charter_refs in all new regeneration proposals and research_evolution_proposals. Spawn new temp roles or cross-swarm threads for 98%+ targets or novel failure modes. This constitution itself is a candidate for Adversary critique + Verifier harness evaluation in the next regeneration cycle."
+  }
+}

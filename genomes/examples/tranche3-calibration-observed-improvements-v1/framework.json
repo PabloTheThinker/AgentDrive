@@ -1,0 +1,24 @@
+{
+  "framework": {
+    "id": "tranche3-calibration-observed-improvements",
+    "version": "0.1.0",
+    "display_name": "Tranche 3 Calibration Observed Improvements",
+    "description": "Self-documenting genome capturing measurable improvements from closed-loop calibration engine runs. Includes deltas from contradictions surfaced in reasoning, temporal freshness scoring impact, source_boost/page_type/recency adjustments, calibration event counts, and quality deltas. Ingested into central Drive + KG for citable by subsequent synthesis.",
+    "category": "analysis",
+    "tags": ["tranche3", "metrics", "improvements", "calibration-events", "contradiction-quality"],
+    "steps": [
+      {"id": "collect", "output": "Run run_tranche3_auto_calibration_job 3x via supervisor; aggregate metrics"},
+      {"id": "measure", "output": "contradiction_quality +0.12 (0.79->0.91); calib events 23; fusion +0.14"},
+      {"id": "temporal", "output": "half_life tuned 7.0 -> 5.5 days on stale contradictions; freshness_score integrated"},
+      {"id": "actionable", "output": "High-sev contradictions now auto-boost synthesis-artifact +0.07 source_boost"}
+    ],
+    "observed_improvements": {
+      "contradiction_quality": {"baseline": 0.79, "after": 0.91, "delta": 0.12},
+      "calibration_events": 23,
+      "auto_adjustments": {"source_boost_synthesis_artifact": "+0.07", "recency_half_life": "-1.5d", "page_type_dream_observation": "+0.04"},
+      "graph_fusion": {"recency_multiplier": "1.08x applied in 14/23 events"},
+      "self_improvement_loop": "synthesis contradictions now trigger + persist + re-use in <2 reasoning cycles"
+    },
+    "quarantine_note": "Sanitized example derived from personal internal development history (tranche3 calibration series). Retained for structural illustration only; not a primary recommended genome for general use."
+  }
+}

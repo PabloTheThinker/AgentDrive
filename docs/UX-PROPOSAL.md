@@ -1,6 +1,6 @@
 # Agent Drive UX Proposal — what to learn from the reference CLI, what to build
 
-**Status:** draft for Pablo's review. Nothing committed.
+**Status:** draft for review. Nothing committed.
 **Premise:** the reference CLI feels smooth. Agent Drive doesn't (yet). The patterns are recreatable in Python+Rich without copying Ink. Below: 5 patterns ordered by user-impact ÷ build-cost, plus the one thing genuinely hard to recreate and how to work around it.
 
 ---
@@ -135,7 +135,7 @@ Each node shows: status spinner, current tool, elapsed, tokens, cost, optional "
 
 ---
 
-## Open questions for Pablo
+## Open questions for the project maintainer
 
 1. **Spike first, or full commit?** I lean spike — the composer/Live concurrency is the only real unknown, and a half-day prototype answers it cheaply.
 2. **In-flight tree placement.** Above or below the streaming row? the reference CLI puts it in an activity lane; Agent Drive could put it inline in the transcript or pin it above the status rule. My instinct: pin above the status rule so it scrolls off after the swarm finishes.

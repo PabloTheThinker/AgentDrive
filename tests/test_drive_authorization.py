@@ -69,3 +69,18 @@ def test_swarm_drive_uses_swarm_capability_resource(tmp_path: Path) -> None:
 
     assert drive.capability_resource() == ("swarm", "alpha")
     assert len(drive.authorized_query(store, cap, DriveQuery(task_description="auth"))) == 1
+
+
+def test_agentdrive_context_manager_with_authorized_ops(tmp_path: Path) -> None:
+    """Drive context manager usage + close() for authorized ingest/query flows
+    (production pattern for role-swarm subagents under capability grants).
+    """
+    from agentdrive import AgentDrive
+
+    drive_path = tmp_path / "auth-ctx"
+    with AgentDrive(name="auth-ctx-drive", drive_path=drive_path) as d:
+        # self-healing experience seed + clean shutdown exercised
+        assert (drive_path / "experience_layer_seed.json").exists()
+        # basic stats available inside context
+        assert "ingest_events" in d.get_pool_stats()
+    d.close()  # explicit post-context also safe

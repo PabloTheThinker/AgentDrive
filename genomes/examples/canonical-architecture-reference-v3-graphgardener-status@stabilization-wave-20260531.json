@@ -1,0 +1,40 @@
+{
+  "schema_version": 3,
+  "page_type": "synthesis-artifact",
+  "id": "canonical-architecture-reference-v3-graphgardener-status@stabilization-wave-20260531",
+  "manifest": {
+    "id": "canonical-architecture-reference-v3-graphgardener-status@stabilization-wave-20260531",
+    "version": "v3-graphgardener-update",
+    "authors": [{"type": "swarm", "id": "experience-graph-v3-dogfood-conductor"}]
+  },
+  "framework": {
+    "page_type": "synthesis-artifact",
+    "description": "Canonical architecture reference (updated during v3 tranche dogfood).",
+    "v3_status_section": {
+      "header": "## Experience Graph v3 (GraphGardener Grid-Native + Daily Fusion + Multi-Cycle Memory Fabric) — Status: LIVE (2026-05-31)",
+      "tranche_summary": "Full end-to-end live dogfood executed on stabilization-wave-20260531 drive proving the v3 tranche (Grid-native GraphGardener threads + daily fusion + multi-cycle fabric) is working and autonomously growing the experience layer. Used exact Research Constitution from v3 Architect + Grid/Daily/Fabric changes. Two seed densified cycles + one fresh cycle created. All recorder methods, native Grid dispatch, automatic daily section injection exercised. All artifacts first-class with provenance/CID/fusion_checkpoint and immediately visible via Drive.think(prefer_experience_layer=True).",
+      "key_deliverables": [
+        "research-constitution-graphgardener-gridnative@stabilization-wave-20260531.json (genomes/examples/ + ingested on drive)",
+        "Fresh v3 cycle: evo-cycle-v3-graphgardener-gridnative-dogfood-1780262100 (with 0.13 lift, 6 edges, fabric agg)",
+        "Primary v3 dogfood observation + daily-present with full v3 injected section",
+        "Living-experience permanent v3 fabric section patch",
+        "This architecture v3 status update",
+        "Runnable conductor: examples/experience_graph_v3_graphgardener_gridnative_dogfood.py"
+      ],
+      "metrics": {
+        "fabric_coherence": 0.79,
+        "new_cross_cycle_edges": 5,
+        "lifts": [0.09, 0.311, 0.13],
+        "total_tranche_lift": 0.441,
+        "render_sizes_chars": {"mermaid": 1240, "text": 1860}
+      },
+      "visibility": "Drive.think(prefer_experience_layer=True) on 'v3 graphgardener' or 'multi-cycle memory fabric' or the constitution ID immediately returns the full set of v3 artifacts, renders, and briefings with high source_boost.",
+      "self_referential": "The architecture reference itself is now part of the v3 fabric it describes. Future GraphGardener threads may propose densification edges against its citations."
+    }
+  },
+  "provenance": {
+    "lineage": [{"parent": "final-canonical-architecture-reference-1780250900.json", "relation": "v3_tranche_update"}],
+    "produced_by": "Experience Graph v3 Dogfood Conductor (architecture update step)",
+    "signed": "v3 Conductor — stabilization-wave-20260531 — 2026-05-31"
+  }
+}

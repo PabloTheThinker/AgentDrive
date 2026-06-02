@@ -1,97 +1,46 @@
-"""FastAPI web surface for AgentDrive.
+"""
+Legacy localhost web UI has been removed.
 
-Jinja2-templated, served at ``http://127.0.0.1:8421`` by default.
-The visual direction matches ``~/agentdrive-wireframes/`` — IBM Plex Sans
-+ JetBrains Mono, dotted-grid canvas, icon-rail shell, inspector aside.
+The old Jinja2-templated web page (served at http://127.0.0.1:8421 by default)
+has been wiped as part of starting over with a new and better interface.
+
+Core backend functionality (Drive, Grid, Evolution, chat client, etc.) remains intact.
+The previous web/ presentation layer (templates + static assets) is archived.
+
+New UI will be built from scratch in a future iteration.
 """
 
 from __future__ import annotations
 
-import asyncio
 import os
-import time
-from contextlib import asynccontextmanager
-from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Any
 
-from fastapi import Depends, FastAPI, Form, HTTPException, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi import FastAPI
 
 from agentdrive import AGENTDRIVE_VERSION
-from agentdrive.backup import SnapshotError, SnapshotManager
-from agentdrive.constants import get_agentdrive_home, get_default_drive_path
-from agentdrive.drive.drive import AgentDrive
-from agentdrive.web.auth import (
-    AuthStore,
-    User,
-    default_db_path,
-    is_signup_disabled,
-    secure_cookie_enabled,
-)
-from agentdrive.web.authz import require_cap
-from agentdrive.web.observability import (
-    LoginRateLimiter,
-    OriginCSRFMiddleware,
-    RequestLoggingMiddleware,
-    client_ip,
-    configure_logging,
-    install_error_boundary,
-)
-
-SESSION_COOKIE = "agentdrive_session"
-
-_HERE = Path(__file__).parent
-_TEMPLATES_DIR = _HERE / "templates"
-_STATIC_DIR = _HERE / "static"
 
 
 def create_app(auth_db: Path | None = None) -> FastAPI:
-    configure_logging(level=os.environ.get("AGENTDRIVE_LOG_LEVEL", "INFO"))
+    """Stub app after legacy web UI removal."""
+    app = FastAPI(
+        title=f"AgentDrive (Legacy Web UI Removed)",
+        version=AGENTDRIVE_VERSION,
+    )
 
-    store = AuthStore(auth_db or default_db_path())
-    store.bootstrap_from_env()
+    @app.get("/")
+    async def root():
+        return {
+            "message": "Legacy web UI has been removed.",
+            "status": "new UI in development",
+            "core_functionality": "fully available via Python API, TUI (if present), and CLI"
+        }
 
-    @asynccontextmanager
-    async def lifespan(app: FastAPI):
-        # Startup
-        if os.environ.get("AGENTDRIVE_DISABLE_RETENTION_LOOP") == "1":
-            app.state.retention_task = None
-        else:
-            app.state.retention_task = asyncio.create_task(_retention_loop(app))
-        yield
-        # Shutdown
-        task = getattr(app.state, "retention_task", None)
-        if task is not None:
-            task.cancel()
-            try:
-                await task
-            except (asyncio.CancelledError, Exception):  # noqa: BLE001
-                pass
+    @app.get("/health")
+    async def health():
+        return {"status": "ok", "ui": "removed"}
 
-    app = FastAPI(title="AgentDrive Web", version=AGENTDRIVE_VERSION, lifespan=lifespan)
-    app.state.auth_store = store
-    app.state.login_limiter = LoginRateLimiter(max_attempts=5, window_s=60)
-    app.state.started_at = time.time()
-
-    # ── background retention sweep ──────────────────────────────────
-    # Inline take() does a bounded prune (50 deletes/pass) so a 10k
-    # backlog can't stall a web request. The full retention pass runs
-    # here on a 5-minute cadence in the asyncio loop and chews through
-    # the rest until the policy is met. A lock prevents overlapping
-    # passes if a tick fires while one is still running.
-    app.state.retention_lock = asyncio.Lock()
-
-    # Order matters: request logging wraps everything (so the error
-    # boundary's response and the CSRF rejection both carry a
-    # request_id). CSRF check runs on every non-safe method.
-    app.add_middleware(RequestLoggingMiddleware)
-    app.add_middleware(OriginCSRFMiddleware)
-    install_error_boundary(app)
-
-    app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
+    return app
     templates = Jinja2Templates(directory=_TEMPLATES_DIR)
     app.state.templates = templates
 
@@ -346,7 +295,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                 "action": "/signup",
                 "submit_label": "Request access",
                 "password_autocomplete": "new-password",
-                "footnote": "Vektra Industries · AgentDrive v" + AGENTDRIVE_VERSION,
+                "footnote": f"{AGENTDRIVE_INSTANCE_NAME} v" + AGENTDRIVE_VERSION,
             },
         )
 
@@ -375,7 +324,7 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
                     "password_autocomplete": "new-password",
                     "username": username,
                     "error": str(exc),
-                    "footnote": "Vektra Industries · AgentDrive v" + AGENTDRIVE_VERSION,
+                    "footnote": f"{AGENTDRIVE_INSTANCE_NAME} v" + AGENTDRIVE_VERSION,
                 },
                 status_code=400,
             )
@@ -1856,7 +1805,7 @@ def _login_page(
                 if is_signup_disabled()
                 else 'Need access? <a href="/signup">Request an account</a>.'
             ),
-            "footnote": "Vektra Industries · AgentDrive v" + AGENTDRIVE_VERSION,
+            "footnote": "AgentDrive v" + AGENTDRIVE_VERSION,
         },
         status_code=status_code,
     )

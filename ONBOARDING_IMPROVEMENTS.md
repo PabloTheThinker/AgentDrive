@@ -13,7 +13,7 @@ This closes the 5-agent swarm for cleanliness + understandability (after HELP.md
 - `examples/11_ilo_conductor_bridge_demo.py`
   - Immediately executable (`python3 examples/11_ilo_conductor_bridge_demo.py`).
   - Exhaustive header: exactly what it exercises (activate_as_ilo_conductor, ilo_pattern_to_genome + custom reasoning/speech/lineage_integration patterns, publish_ilo_genome, consume_* helpers, LineageDNAEvolver with brain_path, LineageImmuneSystem for Quarantine context).
-  - Uses isolated temp simulated brain (addresses `~/.agentdrive-ilo/` vs `~/.ilo/brain`).
+  - Uses isolated temp simulated brain (addresses `~/.agentdrive-ilo/` vs legacy personal brain paths such as `~/.legacy-ilo-brain/`).
   - Safe (dry_run=True, demo agent_id, no real brain pollution).
   - Demonstrates the full PUBLISH / CONSUME / EVOLVE loop for high-continuity nodes.
   - Verified clean run (exit 0) with realistic output.
@@ -50,7 +50,7 @@ No breaking changes. All prior content preserved; only additive clarity + links.
 - HELP.md and README had good core coverage but example lists stopped at 03/05; the new bridge/ILO features had only a partial snippet in HELP (non-runnable, undefined variables) and zero dedicated runnable demo.
 - No single "read this to understand the full working system via code + descriptions" document.
 - Advanced Conductor users (ILO etc.) had code comments and re-exports but no clear, safe, copy-paste "how to participate as a first-class DNA producer/consumer/evolver" path with brain_path notes for `~/.agentdrive-ilo/`.
-- Users had to piece together 05_, CONCEPTS mentions of ~/.ilo/brain, and raw source to discover the bridge.
+- Users had to piece together 05_, CONCEPTS mentions of legacy personal brain paths (e.g. `~/.legacy-ilo-brain/`), and raw source to discover the bridge.
 - "What is actually working" was scattered; onboarding.py + web wizard were basic first-run only.
 
 **After (current state):**
@@ -60,7 +60,7 @@ No breaking changes. All prior content preserved; only additive clarity + links.
 - A new or returning user (or an ILO node itself) now has an unambiguous, low-friction path:
   1. Run the 7 examples in order.
   2. Read the ILO Quickstart section.
-  3. Point the bridge at their real `~/.agentdrive-ilo/brain` (or `~/.ilo/brain`).
+  3. Point the bridge at their real `~/.agentdrive-ilo/brain` (or a legacy personal brain path such as `~/.legacy-ilo-brain/`).
   4. Understand the safety model (dry_run, self vs foreign via Quarantine).
 - All language is "what works today" grounded in the shipped code (re-exports, bridge methods, evolver + brain_path, immune engine in Quarantine, etc.).
 
@@ -75,7 +75,7 @@ No breaking changes. All prior content preserved; only additive clarity + links.
 
 This completes the swarm deliverables for onboarding understandability.
 
-**Files touched / created (absolute paths under /home/pablothethinker/agentdrive/):**
+**Files touched / created (absolute paths under the agentdrive source checkout, e.g. /home/user/agentdrive/):**
 - examples/11_ilo_conductor_bridge_demo.py (new)
 - docs/ONBOARDING_AND_EXAMPLES.md (new)
 - ONBOARDING_IMPROVEMENTS.md (new)

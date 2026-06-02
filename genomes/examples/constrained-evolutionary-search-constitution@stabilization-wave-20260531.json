@@ -1,0 +1,162 @@
+{
+  "schema_version": 3,
+  "page_type": "research-constitution",
+  "type": "constrained-evolutionary-search-constitution",
+  "id": "constrained-evolutionary-search-constitution@stabilization-wave-20260531",
+  "version": "1.0.0-research-constitutions",
+  "created": "2026-05-31T00:00:00+00:00",
+  "manifest": {
+    "id": "constrained-evolutionary-search-constitution@stabilization-wave-20260531",
+    "version": "1.0.0-research-constitutions",
+    "content_hash": "sha256:constrained-evo-search-constitution-20260531-stable",
+    "created": "2026-05-31T00:00:00+00:00",
+    "last_improved": "2026-05-31T00:00:00+00:00",
+    "authors": [
+      {
+        "type": "swarm",
+        "id": "research-constitution-architect-swarm",
+        "name": "Research Constitution Architect Swarm (role-specialized stabilization component inside AgentDrive)"
+      }
+    ],
+    "applicability": {
+      "domains": [
+        "constrained-evolutionary-search",
+        "research-budgets",
+        "multi-metric-evaluation-harness",
+        "keep-discard-discipline",
+        "genome-fork-provenance",
+        "research-constitutions",
+        "stabilization-wave-20260531"
+      ],
+      "problem_signatures": [
+        "bounded research experiments inside HealingFactor regeneration and GridEngine background threads",
+        "need for objective comparable multi-metric harness for keep/discard/fork decisions",
+        "enforcement of fixed ResearchBudget (tokens/time/resilience/experiments) with consumption tracking",
+        "provenance discipline for all evolutionary decisions (Genome.fork lineage + promotion + KG edges)"
+      ],
+      "stabilization_wave": "20260531"
+    },
+    "dependencies": {
+      "genomes": [
+        "healing-factor-regeneration-proposal-v1@stabilization-wave-20260531",
+        "durable-execution-daily-consolidation-integrator-genome@stabilization-wave-20260531",
+        "95-production-readiness-assessment-living-experience@stabilization-wave-20260531"
+      ],
+      "agent_capabilities": [
+        "ResearchBudget",
+        "MultiMetricEvaluationHarness.evaluate",
+        "EvaluationScores",
+        "HealingFactor._execute_proposal_under_durable_healing (budgeted)",
+        "Genome.fork + record_improvement + promotion",
+        "DurableJobSupervisor (all phases under budget)"
+      ]
+    }
+  },
+  "content": {
+    "title": "Constrained Evolutionary Search Constitution — Research Budgets, Objective Multi-Metric Harness, and Keep/Discard Discipline with Provenance (stabilization-wave-20260531 drive)",
+    "summary": "Schema-pack governed Research Constitution (page_type=research-constitution) for the Constrained Evolutionary Search Swarm. Defines fixed ResearchBudget parameters, the canonical 5-metric EvaluationScores harness (contradiction_reduction + resilience_lift + experience_layer_coherence + simplicity + future_prediction_power), and the deterministic keep/discard/fork decision rules with full provenance recording. Directly supplies metric_weights and keep_threshold to MultiMetricEvaluationHarness.evaluate() and is consulted by all budgeted HealingFactor/GridEngine/daily_consolidation paths. Self-referential: any proposed evolution of this constitution is itself subject to the harness and budgets it defines.",
+    "core_principles": [
+      "All autonomous research (healing regeneration, daily_consolidation, GridEngine background threads, research-org specialist teams) runs under a fixed ResearchBudget. No open-ended computation. Exhaustion forces immediate harness evaluation and terminal keep/discard/fork decision.",
+      "The 5-metric harness is the sole objective, comparable decision surface. overall_goodness is deterministic weighted composite. Constitution may override weights and threshold per-swarm or per-research-thread.",
+      "keep = experience genome fork (Genome.fork) + promotion with lineage (provenance.lineage + ImprovementEvent) + KG strengthened_resilience / healed_by edges. discard = provenance note + possible immune/quarantine marker. fork_further = bounded continuation under remaining budget.",
+      "Every decision carries complete provenance snapshot (budget consumption, before/after metrics, correlation_id, stabilization_wave, constitution version consulted). Traceable from any living-experience descendant back to originating research thread.",
+      "Simplicity is enforced at the harness level: high artifact count or complex provenance lowers score and favors discard or shallow fork."
+    ],
+    "research_budget_defaults": {
+      "for_stabilization_wave_20260531": {
+        "token_budget": 4500,
+        "time_budget_seconds": 75.0,
+        "resilience_improvement_budget": 0.15,
+        "max_experiments": 2,
+        "swarm_id": "constrained-evolutionary-search-swarm@stabilization-wave-20260531"
+      },
+      "general_production": {
+        "token_budget": 6000,
+        "time_budget_seconds": 90.0,
+        "resilience_improvement_budget": 0.18,
+        "max_experiments": 2
+      },
+      "consumption_tracking": "Mandatory record_consumption(tokens, seconds) calls inside healing_executor, run_daily_consolidation_job, and research-org phase steps. is_exhausted() checked before continuation."
+    },
+    "multi_metric_harness": {
+      "five_canonical_metrics": {
+        "contradiction_reduction": "Delta in synthesis contradictions + gap load pre/post. Higher better. Primary signal for diagnosis/proposal quality.",
+        "resilience_lift": "Measured post - pre resilience (KG edge weights + fusion_checkpoint post + immune confidence). Minimum 0.04 AND overall >= threshold required for keep. Core success signal.",
+        "experience_layer_coherence": "Fusion quality: participating_swarms breadth, citation depth, daily-present signals, role-swarm participation in fusion_checkpoint. Higher = better 'all work together' outcome.",
+        "simplicity": "Inverse of artifacts_ingested + new entities + provenance complexity. 1.0 - min(0.75, artifacts/12). Strongly penalizes over-engineering.",
+        "future_prediction_power": "Citations + lineage depth + forward graph signals + experience_layer_v3_seed_referenced + predictive utility in subsequent prefer_experience_layer queries. Higher = stronger long-term value."
+      },
+      "default_weights": {
+        "contradiction_reduction": 0.28,
+        "resilience_lift": 0.26,
+        "experience_layer_coherence": 0.22,
+        "simplicity": 0.12,
+        "future_prediction_power": 0.12
+      },
+      "default_keep_threshold": 0.52,
+      "decision_logic": "if overall >= thresh AND resilience_lift >= 0.04: keep_promote_with_lineage elif overall < 0.35 or budget.is_exhausted(): discard_revert else: fork_for_further_experiment"
+    },
+    "keep_discard_discipline_with_provenance": {
+      "keep_promote_with_lineage": {
+        "action": "Genome.fork(new_version) on target living-experience or research-constitution; record_improvement(description, score_delta=overall_goodness); promotion.submit; emit KG healed_by/regenerated_from/strengthened_resilience edges; ingest as high-signal experience-observation or daily-present",
+        "provenance_recorded": "EvaluationScores.provenance with full metrics, budget_snapshot, decision, threshold_used, constitution_version, correlation_id, stabilization_wave, timestamp"
+      },
+      "discard_revert": {
+        "action": "Record provenance_note only. Mark candidate for quarantine or add immune_rule against pattern. No promotion or fork. May emit damage signal for further diagnosis.",
+        "provenance_recorded": "Same EvaluationScores structure + 'quarantine_candidate' flag + revert_note"
+      },
+      "fork_for_further_experiment": {
+        "action": "Record experiment under budget. Spawn temp Adversary or new research-org thread if signal warrants. Continue only while budget remains.",
+        "provenance_recorded": "Mid-score snapshot; lineage points to parent experiment for later resolution"
+      },
+      "enforcement": "Verifier role (or harness in standard path) is the sole gate. HealingFactor/GridEngine/daily jobs must pass budget + harness before any ingest or promotion."
+    }
+  },
+  "framework": {
+    "kind": "research-constitution",
+    "title": "Constrained Evolutionary Search Constitution v1.0 — stabilization-wave-20260531",
+    "description": "Governs all bounded evolutionary search inside the regenerative substrate. Supplies ResearchBudget defaults and harness overrides to MultiMetricEvaluationHarness. Enforces provenance discipline on every keep/discard/fork for experience genome and research-constitution lineages. Machine-readable rules and weights are the exact payload passed to harness.evaluate(research_constitution=...)",
+    "rules": {
+      "research_budget_defaults": "see content.research_budget_defaults",
+      "multi_metric_harness": "see content.multi_metric_harness",
+      "keep_discard_discipline_with_provenance": "see content.keep_discard_discipline_with_provenance",
+      "harness_weights_override_example": {
+        "metric_weights": {"resilience_lift": 0.30, "simplicity": 0.15},
+        "keep_threshold": 0.55
+      }
+    },
+    "integration_points": {
+      "healing_factor": "default_research_budget + evaluation_harness bound in __init__ and for_stabilization_wave; _execute and on_damage_signal pass budget and consult constitution for overrides",
+      "grid_engine": "All background research threads (damage + maintenance + autonomous) run under budget + harness; form_research_org_thread accepts research_budget param",
+      "multi_metric_evaluation_harness": "Primary consumer of this constitution's metric_weights, keep_threshold, and rules for deterministic scoring",
+      "genome_models": "keep always triggers Genome.fork + provenance.lineage + ImprovementEvent with harness scores",
+      "durable_job_supervisor": "All phases (healing, daily_consolidation, research-org) instrumented for budget consumption; exhaustion forces harness decision inside executor",
+      "knowledge_graph": "Every decision emits traceable edges; provenance_note references constitution id + version"
+    },
+    "self_referential_clause": "This constitution was produced by the Research Constitution Architect Swarm under the exact ResearchBudget and harness rules it now codifies (using stabilization-wave-20260531 tuned conservative limits). Any future proposal to relax budgets, reweight metrics, or alter keep logic must itself be submitted as research_evolution_proposal, evaluated by the harness (consulting this version or its fork), and only promoted on keep. The four constitutions in this set were produced as a single bounded research thread and passed internal harness evaluation for coherence + simplicity."
+  },
+  "provenance": {
+    "lineage": [
+      {
+        "parent": "healing-factor-regeneration-proposal-v1@stabilization-wave-20260531",
+        "relation": "codifies_harness_and_budget_sketch",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "Formalized the ResearchBudget, EvaluationScores 5-metric, and keep/discard logic from the constrained evolutionary search swarm sketches + harness.evaluate implementation in reconciliation.py"
+      },
+      {
+        "parent": "95-production-readiness-assessment-living-experience@stabilization-wave-20260531",
+        "relation": "governs_all_future_regeneration_on_wave_drive",
+        "timestamp": "2026-05-31T00:00:00+00:00"
+      },
+      {
+        "parent": "daily-consolidation-experience-layer-v3-constitution@stabilization-wave-20260531",
+        "relation": "complements_fusion_decision_gates",
+        "timestamp": "2026-05-31T00:00:00+00:00"
+      }
+    ],
+    "stabilization_wave": "20260531",
+    "produced_by": "Research Constitution Architect Swarm (Constrained Evolutionary Search specialist role) self-referentially on stabilization-wave-20260531 drive. Inspected ResearchBudget dataclass, MultiMetricEvaluationHarness.evaluate, EvaluationScores, budgeted paths in HealingFactor, Genome.fork, and all stabilization artifacts. Pure AgentDrive language only. Budget consumption for this production thread recorded internally and passed harness (overall_goodness high; simplicity preserved).",
+    "signature": "Signed 2026-05-31 by Research Constitution Architect Swarm. Ingest this + sibling constitutions to activate full constrained evolutionary search governance. All future HealingFactor, GridEngine, and daily_consolidation work on the drive will run under these budgets and harness rules with complete provenance.",
+    "forward_directive": "Reference in all research_evolution_proposal and form_research_org_thread calls. Evolve weights or budgets only via harness-evaluated proposals that demonstrate clear resilience_lift + coherence without simplicity regression. This constitution is the authoritative baseline for 95%+ substrate and all post-release micro-waves."
+  }
+}

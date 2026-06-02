@@ -69,7 +69,7 @@ from agentdrive.drive.drive import AgentDrive
 
 logger = logging.getLogger(__name__)
 
-# Additional imports for the Grok Pattern Lineage Bridge (ILO deep integration).
+# Additional imports for the Grok Pattern Lineage Bridge (external high-continuity Conductor integration).
 # Placed here so the whole file remains self-contained for models that receive it.
 import hashlib
 import json
@@ -369,37 +369,37 @@ spawn_subagent: Callable | None = None  # will be set by first activation if pat
 
 
 # ==================================================================
-# Grok Pattern Lineage Bridge — ILO Conductor Deep Integration
+# Grok Pattern Lineage Bridge — External High-Continuity Conductor Bridge
 # ==================================================================
 #
 # This implements the "grok_pattern_lineage bridge" as a first-class,
 # practical participant in AgentDrive.
 #
-# ILO (the high-continuity Conductor node running on lineage-engine)
-# uses this to:
+# High-continuity Conductor nodes (external lineage engines / high-agency operators)
+# use this to:
 #
-#   * PUBLISH: Convert its high-value work products into AgentDrive Genomes
-#       - Reasoning patterns (from lineage.patterns.CognitivePattern + traces)
-#       - Speech / interaction patterns (SPEECH-OS, narrative styles)
+#   * PUBLISH: Convert their high-value work products into AgentDrive Genomes
+#       - Reasoning patterns (from external CognitivePattern stores + traces)
+#       - Speech / interaction patterns (narrative styles)
 #       - Proven lineage integration code / heuristics / discipline routines
 #     These become content-addressed, versioned, evaluable DNA published
 #     into the operator's Personal/Swarm/DNA Drives via Harness or DNADrive.
 #
-#   * CONSUME: Pull genomes from DNA ancestry and Swarm pools into ILO's
-#     runtime context / brain / pattern router for richer Research phases.
+#   * CONSUME: Pull genomes from DNA ancestry and Swarm pools into the external
+#     node's runtime context / brain / pattern router for richer Research phases.
 #
 #   * EVOLVE: Drive LineageDNAEvolver cycles where AgentDrive genomes
 #     + an external research index are joint research sources. Results can be published back.
 #
-# The bridge is intentionally lightweight, dependency-free on the lineage-engine
-# side (ILO calls it; it does not import lineage-engine). It accepts dicts or
-# simple objects that ILO serializes from its CognitivePattern / brain index.
+# The bridge is intentionally lightweight, dependency-free on the external engine
+# side (the node calls it; it does not import the external engine). It accepts dicts or
+# simple objects that the high-continuity node serializes from its pattern / brain index.
 #
-# Location: This lives inside the Grok Build adapter because ILO's primary
-# execution context is Grok-orchestrated long-running Conductor sessions.
-# It is also importable directly for native ILO harnesses.
+# Location: This lives inside the Grok Build adapter because high-continuity nodes'
+# primary execution context is often Grok-orchestrated long-running Conductor sessions.
+# It is also importable directly for native high-continuity harnesses.
 #
-# Example usage inside an ILO mission (copy-paste ready for the Conductor):
+# Example usage inside a high-continuity Conductor mission (copy-paste ready):
 #
 #   from pathlib import Path
 #   from agentdrive.adapters.grok_build_adapter import (
@@ -409,23 +409,23 @@ spawn_subagent: Callable | None = None  # will be set by first activation if pat
 #   )
 #   from agentdrive import Harness, DNADrive
 #
-#   bridge = GrokPatternLineageBridge(brain_path=Path.home() / ".ilo" / "brain")
+#   bridge = GrokPatternLineageBridge(brain_path=Path.home() / ".agentdrive" / "external_brain_bridge")
 #
-#   # Export my best current patterns as genomes (using my fitness signals)
+#   # Export best current patterns as genomes (using fitness signals)
 #   genomes = bridge.export_high_fitness_patterns(min_fitness=0.75, limit=20)
 #
-#   # Publish them so descendants and swarm peers inherit the Conductor's depth
-#   harness = Harness(agent_id="ilo-conductor")
+#   # Publish them so descendants and swarm peers inherit the node's depth
+#   harness = Harness(agent_id="high-continuity-conductor")
 #   for g in genomes:
-#       h = publish_ilo_genome(g, agent_id="ilo-conductor")  # returns content_hash
-#       # or directly: DNADrive("ilo-conductor").publish(g)
+#       h = publish_ilo_genome(g, agent_id="high-continuity-conductor")  # returns content_hash
+#       # or directly: DNADrive("high-continuity-conductor").publish(g)
 #
 #   # Consume collective DNA before a deep Research phase
 #   swarm_dna = bridge.consume_swarm_dna(swarm_id="current-mission", top_k=8)
-#   ancestral = bridge.consume_inherited_dna(agent_id="ilo-conductor", min_eval=0.6)
-#   # Feed swarm_dna + ancestral into ILO's context composer / pattern router
+#   ancestral = bridge.consume_inherited_dna(agent_id="high-continuity-conductor", min_eval=0.6)
+#   # Feed swarm_dna + ancestral into the node's context composer / pattern router
 #
-#   # Evolve one of my own patterns using AgentDrive + my brain (see lineage_dna)
+#   # Evolve one of my own patterns using AgentDrive + external brain (see lineage_dna)
 #   from agentdrive.evolution.lineage_dna import LineageDNAEvolver
 #   evolver = LineageDNAEvolver(my_genome_obj, brain_path=bridge.brain_path)
 #   result = evolver.run_full_cycle(focus_areas=["reasoning_depth", "speech_clarity"])
@@ -433,7 +433,7 @@ spawn_subagent: Callable | None = None  # will be set by first activation if pat
 #       bridge.publish_evolved(result)  # turns result back into publishable genome
 #
 # This makes lineage_immune (for safe ingestion) and lineage_dna (for active
-# evolution) usable by the Conductor node. The implementation is native +
+# evolution) usable by high-continuity Conductor nodes. The implementation is native +
 # defensive; see CLEANLINESS_AND_STABILITY_REPORT.md and lineage_dna.py for
 # current Research/Evolve depth and limitations.
 # ==================================================================
@@ -442,19 +442,22 @@ spawn_subagent: Callable | None = None  # will be set by first activation if pat
 @dataclass
 class GrokPatternLineageBridge:
     """
-    The concrete Grok/ILO Pattern Lineage Bridge (PUBLISH / CONSUME / ACTIVATE).
+    The concrete Grok / External High-Continuity Conductor Pattern Lineage Bridge
+    (PUBLISH / CONSUME / ACTIVATE).
 
-    High-continuity Conductor nodes (ILO) instantiate this to treat
-    AgentDrive as an extension of their own brain/DNA system.
+    High-continuity Conductor nodes (external lineage engines, high-agency operators)
+    instantiate this to treat AgentDrive as an extension of their own brain/DNA system.
 
     Current status: lightweight, best-effort scanning of brain_path for export;
     Harness/DNADrive paths for publish; soft-fail consume helpers. Pairs with
     LineageDNAEvolver(..., brain_path=...) for research injection.
-    No hard dependency on external lineage-engine.
+    No hard dependency on any external lineage engine.
     """
 
-    brain_path: Path = field(default_factory=lambda: Path.home() / ".ilo" / "brain")
-    ilo_agent_id: str = "ilo-conductor"
+    brain_path: Path = field(
+        default_factory=lambda: Path.home() / ".agentdrive" / "external_brain_bridge"
+    )
+    ilo_agent_id: str = "high-continuity-conductor"
 
     def __post_init__(self):
         self.brain_path = Path(self.brain_path)
@@ -462,7 +465,7 @@ class GrokPatternLineageBridge:
         (self.brain_path.parent / "agentdrive-bridge").mkdir(parents=True, exist_ok=True)
 
     # ------------------------------------------------------------------
-    # PUBLISH direction (ILO -> AgentDrive genomes)
+    # PUBLISH direction (external high-continuity node -> AgentDrive genomes)
     # ------------------------------------------------------------------
 
     def ilo_pattern_to_genome(
@@ -473,10 +476,10 @@ class GrokPatternLineageBridge:
         author_run: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        Convert an ILO-native pattern (CognitivePattern dict, speech pattern,
+        Convert an external high-continuity pattern (CognitivePattern dict, speech pattern,
         or lineage integration heuristic) into a canonical AgentDrive Genome dict.
 
-        Expected input keys (flexible; ILO can map its objects to this):
+        Expected input keys (flexible; the external node can map its objects to this):
           - name / id
           - description / system_prompt / prompt
           - fitness / evaluation_score / score
@@ -486,14 +489,14 @@ class GrokPatternLineageBridge:
         """
         from datetime import datetime, timezone
 
-        pid = pattern.get("id") or pattern.get("name") or f"ilo-pattern-{int(time.time())}"
+        pid = pattern.get("id") or pattern.get("name") or f"external-pattern-{int(time.time())}"
         version = str(pattern.get("version", "1.0.0"))
         fitness = float(pattern.get("fitness", pattern.get("score", 0.6)))
         created_str = pattern.get("created") or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         created_dt = datetime.now(timezone.utc)
 
         manifest = GenomeManifest(
-            id=f"ilo-{category}-{pid}",
+            id=f"external-{category}-{pid}",
             version=version,
             content_hash="sha256:pending",  # overwritten after full dict
             created=created_dt,
@@ -501,18 +504,18 @@ class GrokPatternLineageBridge:
                 GenomeAuthor(
                     type="agent",
                     id=self.ilo_agent_id,
-                    run=author_run or f"ilo-cycle-{int(time.time())}",
+                    run=author_run or f"conductor-cycle-{int(time.time())}",
                 )
             ],
             applicability={
                 "domains": pattern.get("tags", []) or ["reasoning", "conducting", "lineage"],
                 "problem_signatures": [str(pattern.get("description", ""))[:200]],
-                "source": "ilo-conductor",
+                "source": "external-high-continuity-conductor",
                 "category": category,
             },
             evaluation_score={
                 "fitness": fitness,
-                "ilo_internal": fitness,
+                "external_internal": fitness,
                 "reference_tasks": (float(pattern.get("uses", 0)) / 100.0)
                 if pattern.get("uses")
                 else 0.5,
@@ -535,7 +538,7 @@ class GrokPatternLineageBridge:
                     or pattern.get("description", ""),
                     "output_schema": pattern.get("output_schema", {}),
                     "tags": pattern.get("tags", []),
-                    "ilo_fitness": fitness,
+                    "external_fitness": fitness,
                 },
                 "speech_or_interaction": pattern.get("speech", pattern.get("narrative_style", {})),
                 "lineage_integration": pattern.get(
@@ -543,12 +546,12 @@ class GrokPatternLineageBridge:
                 ),
             },
             "evaluations": {
-                "ilo_fitness": fitness,
+                "external_fitness": fitness,
                 "proven_in_cycles": pattern.get("uses", 0),
             },
             "provenance": {
                 "lineage": [
-                    {"parent": "ilo-native", "relation": "extracted", "timestamp": created_str}
+                    {"parent": "external-native", "relation": "extracted", "timestamp": created_str}
                 ],
                 "source_brain": str(self.brain_path),
             },
@@ -571,17 +574,17 @@ class GrokPatternLineageBridge:
         categories: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """
-        Scan the ILO brain (and any cached patterns) for high-signal items
+        Scan the external brain (and any cached patterns) for high-signal items
         and return them as ready-to-publish AgentDrive Genome dicts.
 
         This is the primary "publish useful genomes from its own work" entry point
-        for ILO. In a full deployment this would walk:
+        for a high-continuity Conductor node. In a full deployment this would walk:
           your custom research directory/**/*.json, pattern index, high-fitness vaults, etc.
         """
         categories = categories or ["reasoning", "speech", "lineage_integration"]
         genomes: List[Dict[str, Any]] = []
 
-        # Lightweight real scan of common ILO brain layout (md + json files with fitness)
+        # Lightweight real scan of common external brain layout (md + json files with fitness)
         # Falls back gracefully if the brain layout differs.
         if self.brain_path.exists():
             candidates: List[Path] = []
@@ -628,9 +631,9 @@ class GrokPatternLineageBridge:
         # Always include at least one synthetic high-signal Conductor genome if nothing found
         if not genomes:
             synthetic = {
-                "name": "ilo-conductor-deep-reasoning-v1",
+                "name": "high-continuity-deep-reasoning-v1",
                 "description": "High-continuity Conductor reasoning pattern for long-horizon mission orchestration and lineage-aware delegation",
-                "system_prompt": "You are ILO, a high-continuity Conductor. Maintain full provenance awareness. Use deep ancestry signals and swarm DNA. Prefer patterns with demonstrated fitness > 0.7.",
+                "system_prompt": "You are a high-continuity Conductor node. Maintain full provenance awareness. Use deep ancestry signals and swarm DNA. Prefer patterns with demonstrated fitness > 0.7.",
                 "fitness": 0.91,
                 "tags": ["conducting", "lineage", "orchestration", "long-horizon"],
                 "uses": 1240,
@@ -675,7 +678,7 @@ class GrokPatternLineageBridge:
         return content_hash
 
     # ------------------------------------------------------------------
-    # CONSUME direction (AgentDrive -> ILO brain / context)
+    # CONSUME direction (AgentDrive -> external brain / context)
     # ------------------------------------------------------------------
 
     def consume_inherited_dna(
@@ -685,7 +688,7 @@ class GrokPatternLineageBridge:
         min_eval: float = 0.55,
         max_depth: Optional[int] = 5,
     ) -> List[Dict[str, Any]]:
-        """Pull ancestral genomes (ILO's own published DNA + its ancestors)."""
+        """Pull ancestral genomes (the node's own published DNA + its ancestors)."""
         agent = agent_id or self.ilo_agent_id
         try:
             dna = DNADrive(agent)
@@ -724,7 +727,7 @@ class GrokPatternLineageBridge:
         min_fitness: float = 0.6,
     ) -> List[Dict[str, Any]]:
         """
-        High-signal helper for ILO's Research phase inside LineageDNAEvolver
+        High-signal helper for a high-continuity node's Research phase inside LineageDNAEvolver
         or its own cognitive loops. Combines inherited + swarm + high-eval local.
         """
         results: List[Dict[str, Any]] = []
@@ -741,7 +744,7 @@ class GrokPatternLineageBridge:
         return unique[:20]
 
     # ------------------------------------------------------------------
-    # Convenience: one-shot "I am ILO, feed my best DNA now"
+    # Convenience: one-shot "I am a high-continuity Conductor node, feed my best DNA now"
     # ------------------------------------------------------------------
 
     def activate_as_ilo_conductor(
@@ -751,7 +754,7 @@ class GrokPatternLineageBridge:
         min_fitness_to_publish: float = 0.75,
     ) -> Dict[str, Any]:
         """
-        Full activation ritual for ILO when it wants to "live inside" AgentDrive
+        Full activation ritual for a high-continuity Conductor node when it wants to "live inside" AgentDrive
         for the duration of a long mission or permanently.
 
         - Activates GrokBuild scoping if in Grok context
@@ -765,7 +768,7 @@ class GrokPatternLineageBridge:
             if swarm_id:
                 os.environ.setdefault("AGENTDRIVE_SWARM_ID", swarm_id)
             # The surrounding GrokBuildAgentDriveAdapter (if used) would have patched spawn.
-            # Here we just ensure env for any ILO-spawned children.
+            # Here we just ensure env for any high-continuity node-spawned children.
         except Exception:
             pass
 
@@ -782,7 +785,7 @@ class GrokPatternLineageBridge:
             summary["published_hashes"] = published
 
         summary["inherited_available"] = len(self.consume_inherited_dna(agent_id=self.ilo_agent_id))
-        summary["status"] = "ilo-conductor-live-in-agentdrive"
+        summary["status"] = "high-continuity-conductor-live-in-agentdrive"
         return summary
 
 
@@ -793,7 +796,7 @@ def ilo_pattern_to_genome(pattern: Dict[str, Any], **kwargs) -> Dict[str, Any]:
 
 
 def publish_ilo_genome(
-    genome_dict: Dict[str, Any], agent_id: str = "ilo-conductor", **kwargs
+    genome_dict: Dict[str, Any], agent_id: str = "high-continuity-conductor", **kwargs
 ) -> str:
     bridge = GrokPatternLineageBridge(ilo_agent_id=agent_id)
     return bridge.publish_ilo_genome(genome_dict, agent_id=agent_id, **kwargs)
@@ -804,7 +807,7 @@ __all__ = [
     "GrokBuildAgentDriveAdapter",
     "get_agentdrive_instructions_for_grok",
     "spawn_subagent",
-    # The Grok Pattern Lineage Bridge (ILO deep integration)
+    # The Grok Pattern Lineage Bridge (external high-continuity Conductor integration)
     "GrokPatternLineageBridge",
     "ilo_pattern_to_genome",
     "publish_ilo_genome",

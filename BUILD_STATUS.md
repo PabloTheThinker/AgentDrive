@@ -37,7 +37,7 @@ The entire team is working together on this mission. We are building the "Exo La
 
 Status will be updated as subagents report back.
 
-**Mission owner**: Pablo + Grok + Swarm
+**Mission owner**: the project maintainer + Grok + Swarm
 **Target**: Fully functional, documented, multi-model swarm DNA system ready for real use with the Grok build system and other agents.
 
 ## Latest Main-Thread Additions (while swarm works)

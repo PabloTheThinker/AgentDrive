@@ -19,7 +19,7 @@ framework:
   - reasoning
   - calibration
   - patterns
-  author: pablothethinker
+  author: AgentDrive Contributors
   license: CC-BY-4.0
   inputs:
   - name: observations
@@ -63,13 +63,13 @@ framework:
   steps:
   - id: observation__audit_inputs
     type: tool_call
-    agent: ilo-core
+    agent: agentdrive-core
     inputs:
     - observations
     output: audit
   - id: synthesis__induce_schema
     type: tool_call
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - observation__audit_inputs
     inputs:
@@ -77,7 +77,7 @@ framework:
     output: induced_schema
   - id: synthesis__synthesize_framework
     type: tool_call
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - observation__audit_inputs
     inputs:
@@ -85,7 +85,7 @@ framework:
     output: synthesis
   - id: synthesis__infer_pattern
     type: tool_call
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - observation__audit_inputs
     inputs:
@@ -93,7 +93,7 @@ framework:
     output: inferred_pattern
   - id: detection__anomalies
     type: tool_call
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - synthesis__synthesize_framework
     inputs:
@@ -102,7 +102,7 @@ framework:
     output: anomalies
   - id: detection__cross_domain_joins
     type: tool_call
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - synthesis__synthesize_framework
     inputs:
@@ -110,7 +110,7 @@ framework:
     output: joins
   - id: detection__contradictions
     type: tool_call
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - synthesis__synthesize_framework
     inputs:
@@ -118,7 +118,7 @@ framework:
     output: contradictions
   - id: reasoning__reconstruct_trace
     type: tool_call
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - detection__anomalies
     - detection__cross_domain_joins
@@ -126,7 +126,7 @@ framework:
     output: reasoning_trace
   - id: reasoning__mine_causality
     type: tool_call
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - reasoning__reconstruct_trace
     with:
@@ -136,7 +136,7 @@ framework:
     output: causality
   - id: learning__recognize_pattern
     type: tool_call
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - synthesis__infer_pattern
     inputs:
@@ -145,7 +145,7 @@ framework:
     output: pattern_matches
   - id: learning__calibrate
     type: tool_call
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - reasoning__mine_causality
     inputs:
@@ -153,7 +153,7 @@ framework:
     output: calibration
   - id: compose_artifact
     type: validate
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - observation__audit_inputs
     - synthesis__induce_schema

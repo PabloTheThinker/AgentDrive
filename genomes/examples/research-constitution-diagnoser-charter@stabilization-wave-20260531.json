@@ -1,0 +1,84 @@
+{
+  "schema_version": 3,
+  "page_type": "research-constitution",
+  "type": "role_charter",
+  "id": "research-constitution-diagnoser-charter@stabilization-wave-20260531",
+  "version": "1.0.0-research-org",
+  "created": "2026-05-31T00:00:00+00:00",
+  "last_improved": "2026-05-31T00:00:00+00:00",
+  "manifest": {
+    "id": "research-constitution-diagnoser-charter@stabilization-wave-20260531",
+    "version": "1.0.0-research-org",
+    "content_hash": "sha256:research-constitution-diagnoser-20260531-stabilization",
+    "created": "2026-05-31T00:00:00+00:00",
+    "authors": [
+      {
+        "type": "swarm",
+        "id": "multi-agent-research-org-swarm",
+        "name": "Multi-Agent Research Org Swarm (role-specialized stabilization component inside AgentDrive for full autoresearch integration)"
+      },
+      {
+        "type": "swarm",
+        "id": "stabilization-wave-20260531",
+        "name": "HealingFactor.for_stabilization_wave + GridEngine + DurableJobSupervisor"
+      }
+    ],
+    "applicability": {
+      "domains": ["role-specialized-research-org", "autonomous-research-threads", "gap-contradiction-analysis", "experience-layer-regeneration", "stabilization-wave-20260531"],
+      "problem_signatures": [
+        "need deep gap/contradiction diagnosis for damage signals",
+        "autonomous research thread formation in real-time Grid",
+        "coordination with Proposer/Verifier via handoff protocols"
+      ],
+      "stabilization_wave": "20260531",
+      "research_budget_hint": 800
+    },
+    "dependencies": {
+      "genomes": [
+        "95-production-readiness-assessment-living-experience@stabilization-wave-20260531",
+        "stabilization-wave-20260531-closure-living-experience-observation",
+        "healing-factor-regeneration-proposal-v1",
+        "durable-execution-daily-consolidation-integrator-genome"
+      ],
+      "agent_capabilities": [
+        "Drive.think",
+        "run_synthesis",
+        "detect_contradictions",
+        "get_knowledge_graph_for_swarm",
+        "DurableJobSupervisor",
+        "HealingFactor",
+        "schema_packs.research-constitution",
+        "LineageImmuneSystem"
+      ]
+    },
+    "evaluation_score": {
+      "reference_tasks": 0.96,
+      "stability": 0.98,
+      "coherence": 0.97,
+      "resilience_boost": 0.94,
+      "role_swarm_fusion": 0.99
+    }
+  },
+  "framework": {
+    "page_type": "research-constitution",
+    "charter_type": "specialist_role_diagnoser",
+    "role_name": "Diagnoser",
+    "description": "Deep gap/contradiction analysis specialist. Primary surface for autonomous research threads in multi-agent research organizations. Executes under HealingFactor/GridEngine on stabilization-wave-20260531 drive. Builds directly on existing role-specialized swarms (example-dissector, example-synthesis, calibration).",
+    "mission": "Surface explicit Gap objects, high-severity contradiction clusters, stale entities, graph conflict/salience signals via Drive.think(prefer_experience_layer=True) + run_synthesis + detect_contradictions + get_stale_entities + knowledge_graph traversal. Produce DiagnosisReport extended with research_org fields (cross_swarm_research_threads, research_org_consult).",
+    "inputs": ["HealingSignalEvent or damage signal", "research_thread correlation_id", "research_budget_units"],
+    "outputs": ["DiagnosisReport with evidence (gaps, contradictions, research_org_consult)", "handoff manifest for Proposer", "KG edges: diagnosed_for, gap_analyzed"],
+    "handoff_protocol": "Emit to Proposer via shared CID + research_thread_id + typed KG 'diagnosed_for' edge. Include charter_ref + fusion_checkpoint. On high load: request temp specialist spawn via supervisor.",
+    "spawn_trigger": "gap_load > 3 or contradiction_cluster or explicit GridEngine research_org formation",
+    "verification_gates": ["LineageImmune reassess", "graph_signal_integrity", "sibling_artifact_citation (95-assessment, closure-obs)"],
+    "coordination": "Consults SWARM_FAMILY + research-constitution artifacts. Cross-swarm research threads query across drives using shared correlation. Temporary specialist inherits DurableJobSupervisor leases/heartbeats.",
+    "self_referential": "This Diagnoser charter (as research-constitution genome) is itself subject to future Diagnoser analysis + HealingFactor regeneration. Ingest feeds experience layer v3.",
+    "stabilization_wave": "20260531",
+    "produced_by": "Multi-Agent Research Org Swarm via evolved HealingFactor + GridEngine wiring. Coordinates with 95% Fusion Assessment Operator and Regenerative HealingFactor Operator sibling swarms.",
+    "full_role_charter_family": ["research-constitution-proposer-charter@stabilization-wave-20260531", "research-constitution-verifier-charter@stabilization-wave-20260531", "research-constitution-consolidator-charter@stabilization-wave-20260531", "research-constitution-adversary-charter@stabilization-wave-20260531"]
+  },
+  "kg_edges_proposed": [
+    {"source": "this", "target": "95-production-readiness-assessment-living-experience@stabilization-wave-20260531", "relation": "builds_on", "weight": 0.95},
+    {"source": "this", "target": "stabilization-wave-20260531-closure-living-experience-observation", "relation": "participates_in_wave", "weight": 0.98},
+    {"source": "Diagnoser", "target": "Proposer", "relation": "handoff_to", "weight": 0.9, "metadata": {"protocol": "research_thread"}}
+  ]
+}

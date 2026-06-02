@@ -1,6 +1,6 @@
 # AgentDrive Pool Evolution — a continuous learning loop
 
-**Status:** proposal for Pablo's review. AgentDrive's federated learning
+**Status:** proposal for review. AgentDrive's federated learning
 surface — what the internal pool engine does between turns and across
 instances.
 
@@ -156,7 +156,7 @@ end-to-end as "your sub-agents bring lessons home with an audit trail."
 
 ---
 
-## 6. Open questions for Pablo
+## 6. Open questions for the project maintainer
 
 1. **Reconciliation cadence.** Background poll every N minutes, on every
    `subagent.done`, or operator-triggered only? Each has a different
@@ -170,7 +170,7 @@ end-to-end as "your sub-agents bring lessons home with an audit trail."
    faster; declared is auditable.
 4. **Name for the reconciliation routine in user-facing copy.** "Pool
    reconciliation" is precise but cold. Alternatives: "pool sync",
-   "ingest pass", "absorption cycle". Need a Vektra-register pick.
+   "ingest pass", "absorption cycle". Need a project name pick.
 5. **Cut scope confirmation.** A behavioral-bias profile (operator-level
    ranking drift learned from accept/reject) is deferred above on
    echo-chamber risk. Confirm we hold, or want it scoped back in.

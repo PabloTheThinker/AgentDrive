@@ -1,0 +1,18 @@
+{
+  "framework": {
+    "id": "tranche3-calibration-supervisor-genome",
+    "version": "0.1.0",
+    "display_name": "Tranche 3 Calibration via DurableJobSupervisor",
+    "description": "Genome documenting how run_tranche3_auto_calibration_job is submitted and executed via DurableJobSupervisor.submit_queued_dream(phase='tranche3-auto-calibration', runner_callable=..., immediate=True). Ensures calibration jobs are crash-safe, queued, attributed, auto-ingested as synthesis-artifact genomes enriching the KG and experience layer.",
+    "category": "orchestration",
+    "tags": ["supervisor", "durable", "tranche3-calibration", "example-dream-dispatch"],
+    "steps": [
+      {"id": "submit", "output": "DurableJobSupervisor.submit_queued_dream(phase='tranche3-auto-calibration', runner_callable=run_tranche3_auto_calibration_job, priority=80)"},
+      {"id": "lease_run", "output": "process_one dispatches; two-phase persist"},
+      {"id": "emit_genome", "output": "calibration_genome_payload auto-attributed + ingested"},
+      {"id": "feedback", "output": "state drives synthesis in parallel swarms (Graph Hardener + Experience Layer)"}
+    ],
+    "integration": "Works with Graph Fabric Hardener (edge signals) + Experience Layer (fused retrieval) + main Conductor.",
+    "quarantine_note": "Sanitized example derived from personal internal development history (tranche3 calibration series). Retained for structural illustration only; not a primary recommended genome for general use. Original author-specific artifacts quarantined from shipping package."
+  }
+}

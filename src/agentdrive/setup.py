@@ -117,6 +117,18 @@ def section_home() -> bool:
         return False
 
     ensure_agentdrive_home()
+    # Invoke Self-Healing First-Run & Experience Seed Operator (bootstrap)
+    # so that even during setup, new AgentDrive instances for role-swarm
+    # self-host users have experience layer v3 seed, KG bootstrap, etc.
+    # Guarantees: new instances start coherent, experience layer present from
+    # first think, defensive healing for production reliability.
+    try:
+        from agentdrive.constants import get_default_drive_path
+        from agentdrive.drive.bootstrap import ensure_experience_layer_seed
+
+        ensure_experience_layer_seed(get_default_drive_path())
+    except Exception:
+        pass
     console.print()
     console.print(ok_line(f"Ready at [{PALETTE.genome}]{home}[/]", palette=PALETTE))
 

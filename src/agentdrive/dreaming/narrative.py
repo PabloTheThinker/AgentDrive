@@ -2,7 +2,7 @@
 narrative — write Dream Diary entries as a byproduct of substantive dream work.
 
 Design goals:
-- Keep diary generation secondary to actual consolidation and ISO emergence.
+- Keep diary generation secondary to actual consolidation and hypothetical agent emergence.
 - Preserve phase context and provenance for auditability.
 - No new magic — just disciplined composition + Agent Drive / Genome idioms.
 """
@@ -52,7 +52,7 @@ class DreamNarrator:
         prompt_lines = [
             f"Run: {run_id}",
             f"Phase: {phase}",
-            "Summarize the Loom's reflection in Tron-like but operationally precise terms.",
+            "Summarize the Loom's reflection in operationally precise terms.",
         ]
         metrics = payload.get("metrics")
         if metrics:

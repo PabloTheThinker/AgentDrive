@@ -89,4 +89,4 @@ The system must be:
 
 Current date in mission: 2026-05-23
 
-Mission owner: Pablo + Grok + Swarm
+Mission owner: the project maintainer + Grok + Swarm

@@ -84,7 +84,7 @@ docker/               # docker-compose self-host artifact
 |-----------------------|---------------|
 | Bug report            | [Issues](https://github.com/PabloTheThinker/agentdrive/issues) — use the bug template |
 | Feature proposal      | [Discussions → Ideas](https://github.com/PabloTheThinker/agentdrive/discussions/categories/ideas) first, then PR |
-| Security report       | conduct@vektraindustries.com (see [`SECURITY.md`](SECURITY.md)) |
+| Security report       | GitHub Security (private) or see [`SECURITY.md`](SECURITY.md) |
 | Docs typo / small fix | Direct PR is fine |
 
 ## Releasing

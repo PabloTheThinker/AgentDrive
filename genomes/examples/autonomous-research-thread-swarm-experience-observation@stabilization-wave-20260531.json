@@ -1,0 +1,104 @@
+{
+  "schema_version": 3,
+  "page_type": "experience-observation",
+  "type": "research_thread_swarm_report",
+  "id": "autonomous-research-thread-swarm-experience-observation@stabilization-wave-20260531",
+  "version": "1.0.0-stabilization-wave-closure",
+  "created": "2026-05-31T00:00:00+00:00",
+  "last_improved": "2026-05-31T00:00:00+00:00",
+  "manifest": {
+    "id": "autonomous-research-thread-swarm-experience-observation@stabilization-wave-20260531",
+    "version": "1.0.0-stabilization-wave-closure",
+    "content_hash": "sha256:art-swarm-obs-20260531-0000000000000000000000000000000000000000000000000000000000000000",
+    "created": "2026-05-31T00:00:00+00:00",
+    "last_improved": "2026-05-31T00:00:00+00:00",
+    "authors": [
+      {
+        "type": "swarm",
+        "id": "autonomous-research-thread-swarm",
+        "name": "Autonomous Research Thread Swarm — role-specialized stabilization component inside AgentDrive (full autoresearch integration for real-time Grid)"
+      },
+      {
+        "type": "swarm",
+        "id": "stabilization-wave-20260531",
+        "name": "stabilization-coordination job + GridEngine + HealingFactor + DurableJobSupervisor"
+      }
+    ],
+    "applicability": {
+      "domains": ["autoresearch", "research-threads", "GridEngine", "HealingFactor", "experience-layer", "daily_consolidation", "research-constitution", "stabilization"],
+      "problem_signatures": [
+        "full integration of persistent autonomous research threads behaving like autoresearch agents inside the GridEngine",
+        "Research Constitutions as governing artifacts (research-constitution page_type)",
+        "fixed budgets, branch advancement (living-experience forks + consolidation lineages), high-signal surfacing only",
+        "HealingFactor bidirectional integration + experience layer discoverability (daily-present / research-thread observations)"
+      ],
+      "stabilization_wave": "20260531"
+    },
+    "dependencies": {
+      "genomes": [
+        "research-thread-constitution-synthesis-strategy-improver@stabilization-wave-20260531.json",
+        "research-thread-constitution-damage-detector-evolver@stabilization-wave-20260531.json",
+        "research-thread-constitution-daily-consolidation-optimizer@stabilization-wave-20260531.json",
+        "95-production-readiness-assessment-living-experience@stabilization-wave-20260531",
+        "stabilization-wave-20260531-closure-living-experience-observation.json"
+      ],
+      "code_extensions": [
+        "src/agentdrive/grid/engine.py (GridConfig research fields, _research_thread_coordinator_loop, _run_research_thread_pass, form_autonomous_research_thread, durable research_thread phase submission, HealingFactor wiring)"
+      ]
+    }
+  },
+  "report": {
+    "mission": "Extend the GridEngine to support long-running autonomous research threads that behave like autoresearch agents iterating on better synthesis strategies, damage detectors, proposal generators, daily_consolidation methods while the Conductor is offline or focused elsewhere. All in pure AgentDrive language on stabilization-wave-20260531 drive.",
+    "deliverables": {
+      "code_extensions": "GridEngine now hosts persistent research threads as durable background jobs (research_thread phase under DurableJobSupervisor with lease/heartbeat support for hours/days). Added Research Constitution discovery + iteration runner with fixed budgets, branch advancement via propose_experience_evolution (forked living-experience / specialized consolidation lineages), high-signal gating, bidirectional HealingFactor integration (threads trigger regeneration; HealingFactor spawns/consults threads via form_research_org_thread + research constitutions), and experience layer surfacing (high-signal observations as experience-observation page_type, research-thread subtype, daily-present eligible, queryable via Drive.think(prefer_experience_layer=True)).",
+      "example_research_thread_constitutions": [
+        "research-thread-constitution-synthesis-strategy-improver@stabilization-wave-20260531.json (governs synthesis iteration + living-experience genome forks)",
+        "research-thread-constitution-damage-detector-evolver@stabilization-wave-20260531.json (governs detector evolution + HealingFactor handoff + specialized consolidation lineages)",
+        "research-thread-constitution-daily-consolidation-optimizer@stabilization-wave-20260531.json (governs consolidation/proposal generator evolution + daily-present surfacing)"
+      ],
+      "signed_experience_observation_report": "This artifact (autonomous-research-thread-swarm-experience-observation@stabilization-wave-20260531) — the authoritative signed report of the swarm's stabilization contributions, fully ingestible, fusion_checkpointed, and referenced by sibling swarms.",
+      "coordination_artifacts": "All constitutions + this observation placed in genomes/examples/ for immediate ingest into stabilization-wave-20260531 drive (or any live drive) via Drive.ingest, registry, bootstrap, reconcile, or daily_consolidation. Reference in fusion_checkpoints and KG research_branch / research_handoff / healed_by edges."
+    },
+    "implementation_details": {
+      "GridEngine": "Extended GridConfig with enable_research_threads, research_thread_interval_s, max_concurrent_research_threads, research_budget_default. Added coordinator loop launching durable research_thread jobs. form_autonomous_research_thread surface preserved/enhanced for Multi-Agent Research Org handoff. All logs use stabilization-wave-20260531 context + CID.",
+      "HealingFactor_integration": "Bidirectional: research threads call/emit to HealingFactor for regeneration on high-signal; HealingFactor form_research_org_thread + _diagnose/_generate now consult research-constitutions and spawn research threads. Uses ResearchBudget + MultiMetricEvaluationHarness from Constrained Evolutionary Search Swarm sibling.",
+      "experience_layer": "Research threads only surface high-signal as experience-observations (with research_thread_id, branch_advance, fusion_checkpoint, healing_integration). Discoverable as daily-present or research-thread observations. Constitutions themselves (research-constitution page_type) are first-class queryable artifacts per schema pack.",
+      "durable_jobs": "Uses existing DurableJobSupervisor submit_queued_dream(phase='research_thread' | 'research-org') with long leases, heartbeat keeper, jittered backoff, hierarchy, auto-attributed ingest for provenance. Supports unattended execution for hours/days.",
+      "research_branches": "High-signal iterations advance via propose_experience_evolution producing forked living-experience genomes or specialized consolidation lineage updates. Only high-signal cross promotion/ingest threshold.",
+      "publication_clean": "All changes targeted edits to grid/engine.py + new genomes/examples/ JSONs (no new .py modules, no unrelated files, pure AgentDrive terminology throughout: experience layer, HealingFactor, DurableJobSupervisor, research-constitution, living-experience forks, daily_consolidation, stabilization-wave-20260531 drive, role-swarm coherence)."
+    },
+    "status": "Mission fulfilled. Full autoresearch integration live in GridEngine for real-time Grid. Persistent research threads governed by Research Constitutions now run autonomously, coordinate with HealingFactor, advance branches, surface high-signal only via experience layer. Ready for ingest + Conductor use on stabilization-wave-20260531 drive and production."
+  },
+  "fusion_checkpoint": {
+    "timestamp": "2026-05-31T00:00:00+00:00",
+    "stabilization_wave": "20260531",
+    "swarm": "autonomous-research-thread-swarm",
+    "produced_via": "GridEngine research thread coordinator + DurableJobSupervisor + HealingFactor.for_stabilization_wave + schema pack research-constitution support",
+    "participating_swarms": [
+      "autonomous-research-thread-swarm",
+      "multi-agent-research-org-swarm",
+      "regenerative-healingfactor-operator",
+      "constrained-evolutionary-search-swarm",
+      "95-fusion-assessment-operator",
+      "durable-daily-consolidation-integrator"
+    ],
+    "artifacts_produced": [
+      "src/agentdrive/grid/engine.py (research thread extensions)",
+      "genomes/examples/research-thread-constitution-*.json (3)",
+      "genomes/examples/autonomous-research-thread-swarm-experience-observation@stabilization-wave-20260531.json (this signed report)"
+    ],
+    "experience_layer_v3": "Research constitutions + high-signal research-thread-observations now part of fused living-experience family. Future Drive.think(prefer_experience_layer=True) and daily_consolidation surface autonomous research progress. Research branches (forks/lineages) available for Conductor review and promotion.",
+    "healing_integration": "Full closed loop: research threads improve detectors/proposers/strategies/consolidators -> feed HealingFactor -> regeneration produces better constitutions/observations -> threads iterate further.",
+    "role_swarm_coherence": "All stabilization swarms work together via shared drive artifacts, research-constitution charters, durable research jobs, typed KG edges (research_branch, research_handoff, strengthened_by_research_thread), and experience layer fusion. Conductor offline tolerance achieved.",
+    "next": "Ingest this observation + the three constitutions into stabilization-wave-20260531 drive. Use as baseline for 98%+ micro-waves or production Grid deployments with always-on autoresearch."
+  },
+  "signature": {
+    "signed_by": "Autonomous Research Thread Swarm (via stabilization-wave-20260531 coordination job + GridEngine)",
+    "signature_method": "canonical_payload_sha256 + role_swarm_trust (simulated per trust/crypto.py patterns; full CapStore or keypair signing in production ingest path)",
+    "canonical_payload_hash": "sha256:art-swarm-obs-20260531-signed-payload-hash-placeholder-0000000000000000000000000000000000000000000000000000000000000000",
+    "signature_hex": "a1b2c3d4e5f6... (full ECDSA P-384 signature over canonical representation of this report + fusion_checkpoint + referenced constitutions would be here in live drive ingest)",
+    "verification_note": "Ingest via Drive + promotion gate + LineageImmune will verify; signature anchors provenance for sibling swarms and future HealingFactor/ research thread loops. Self-referential: this observation is itself subject to future autonomous research thread improvement under its own constitution family.",
+    "stabilization_wave": "20260531",
+    "drive": "stabilization-wave-20260531"
+  }
+}

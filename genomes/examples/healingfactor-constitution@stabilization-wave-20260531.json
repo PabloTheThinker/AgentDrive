@@ -1,0 +1,188 @@
+{
+  "schema_version": 3,
+  "page_type": "research-constitution",
+  "type": "healingfactor-constitution",
+  "id": "healingfactor-constitution@stabilization-wave-20260531",
+  "version": "1.0.0-research-constitutions",
+  "created": "2026-05-31T00:00:00+00:00",
+  "manifest": {
+    "id": "healingfactor-constitution@stabilization-wave-20260531",
+    "version": "1.0.0-research-constitutions",
+    "content_hash": "sha256:healingfactor-constitution-20260531-stable",
+    "created": "2026-05-31T00:00:00+00:00",
+    "last_improved": "2026-05-31T00:00:00+00:00",
+    "authors": [
+      {
+        "type": "swarm",
+        "id": "research-constitution-architect-swarm",
+        "name": "Research Constitution Architect Swarm (role-specialized stabilization component inside AgentDrive)"
+      }
+    ],
+    "applicability": {
+      "domains": [
+        "healingfactor",
+        "experience-layer-regeneration",
+        "diagnosis-quality",
+        "regeneration-proposals",
+        "role-swarm-immune-response",
+        "research-constitutions",
+        "stabilization-wave-20260531"
+      ],
+      "problem_signatures": [
+        "damage signal requiring root cause diagnosis via experience layer primitives",
+        "need for safe first-class regeneration proposals only",
+        "evaluation of regeneration success for keep/discard/fork decisions",
+        "self-referential improvement of HealingFactor itself"
+      ],
+      "stabilization_wave": "20260531"
+    },
+    "dependencies": {
+      "genomes": [
+        "living-experience-seed-v3",
+        "95-production-readiness-assessment-living-experience@stabilization-wave-20260531",
+        "stabilization-wave-20260531-closure-living-experience-observation"
+      ],
+      "agent_capabilities": [
+        "HealingFactor._diagnose",
+        "HealingFactor._generate_regeneration_proposals",
+        "Drive.think(prefer_experience_layer=True)",
+        "run_synthesis(Gaps+Contradictions)",
+        "LineageImmuneSystem",
+        "MultiMetricEvaluationHarness",
+        "schema pack research-constitution page_type"
+      ]
+    }
+  },
+  "content": {
+    "title": "HealingFactor Constitution — High-Quality Diagnosis, Allowed Proposals, and Successful Regeneration Criteria (stabilization-wave-20260531 drive)",
+    "summary": "First-class schema-pack governed Research Constitution (page_type=research-constitution) for the Regenerative HealingFactor Operator. Defines what constitutes a high-quality diagnosis, restricts all proposals to safe first-class artifacts only, and codifies the multi-metric evaluation criteria for successful experience layer regeneration. Directly consumable by HealingFactor._diagnose, _generate, _execute, form_research_org_thread, and MultiMetricEvaluationHarness on the stabilization-wave-20260531 drive. Self-referential: this constitution is itself a genome subject to the same HealingFactor loop and harness evaluation it governs.",
+    "core_principles": [
+      "All diagnosis must use pure AgentDrive primitives: Drive.think(prefer_experience_layer=True) + experience_layer_fallback + run_synthesis for explicit Gaps + Contradictions + graph signals + LineageImmune.assess + security_posture + stale living-experience item scan.",
+      "High-quality diagnosis produces specific root_cause, rich evidence dict (gaps, contradictions, immune, kg, security, stale count, research_org_consult), and recommended_proposal_types strictly from the allowed set.",
+      "Every proposal is a first-class schema-governed artifact (experience_consolidation / healing_attempt_observation / immune_rule_update / correction_observation / research_evolution_proposal). Never raw source patches. Must embed correlation_id, verification_gates (incl. research_org_verifier_budget), self_referential note, stabilization_wave, role_charter_ref.",
+      "Successful regeneration is measured objectively by the 5-metric harness (contradiction_reduction, resilience_lift, experience_layer_coherence, simplicity, future_prediction_power). Keep decision requires overall_goodness >= keep_threshold (default 0.52) AND resilience_lift >= 0.04, resulting in Genome.fork + promotion + lineage provenance + KG strengthened_resilience edges.",
+      "Simplicity is a first-class virtue: fewer new artifacts, cleaner provenance, lower proposal complexity yields higher score. Role-swarm handoff (Diagnoser -> Proposer -> Adversary critique -> Verifier budget/harness -> Consolidator fusion) is mandatory for high-damage or persistent signals."
+    ],
+    "diagnosis_quality_criteria": {
+      "required_primitives": [
+        "Drive.think with prefer_experience_layer=True and experience_layer_fallback=True",
+        "run_synthesis for Gaps + Contradictions clusters + damage_signals",
+        "LineageImmuneSystem.assess_genome",
+        "get_security_posture",
+        "drive.list_experience_layer_items for stale detection",
+        "knowledge_graph neighborhood + TypedEdge signals"
+      ],
+      "required_evidence_keys": [
+        "gaps",
+        "contradictions",
+        "synthesis_gaps",
+        "synthesis_contradictions",
+        "immune_assessment",
+        "security_posture",
+        "stale_experience_items",
+        "graph_signals",
+        "research_org_consult"
+      ],
+      "min_quality_signals": 6,
+      "root_cause_must_be": "specific, actionable, derived from highest-signal gap or contradiction cluster, never generic"
+    },
+    "allowed_proposal_types": [
+      "experience_consolidation",
+      "healing_attempt_observation",
+      "immune_rule_update",
+      "correction_observation",
+      "research_evolution_proposal"
+    ],
+    "proposal_requirements": {
+      "mandatory_fields": [
+        "correlation_id",
+        "healing_signal",
+        "diagnosis_summary",
+        "verification_gates",
+        "self_referential",
+        "stabilization_wave",
+        "page_type_hint",
+        "role_charter_ref"
+      ],
+      "verification_gates_must_include": [
+        "lineage_immune_reassess",
+        "quarantine_check",
+        "scanner_run",
+        "promotion_policy",
+        "experience_layer_fusion",
+        "research_org_verifier_budget"
+      ],
+      "page_type_hints": {
+        "experience_consolidation": "daily-present",
+        "healing_attempt_observation": "experience-observation",
+        "immune_rule_update": "immune-genome",
+        "research_evolution_proposal": "research-constitution"
+      }
+    },
+    "successful_regeneration_criteria": {
+      "metrics": {
+        "contradiction_reduction": "Higher better. Measured as delta in synthesis contradictions + gap load pre/post regeneration.",
+        "resilience_lift": "Higher better. Measured via KG edge weights (strengthened_resilience), immune confidence, fusion_checkpoint post-resilience. Minimum 0.04 required for keep.",
+        "experience_layer_coherence": "Higher better. Fusion quality: participating_swarms breadth, citation depth, daily-present signals, role-swarm coherence in fusion_checkpoint.",
+        "simplicity": "Higher better (inverse complexity). Fewer artifacts_ingested, fewer new entities, cleaner lineage/provenance.",
+        "future_prediction_power": "Higher better. Strength of forward citations, lineage depth, experience_layer_v3_seed_referenced, predictive utility in subsequent Drive.think(prefer_experience_layer=True)."
+      },
+      "keep_decision_rule": "overall_goodness >= keep_threshold (constitution-overridable, default 0.52 from harness) AND resilience_lift >= 0.04 => keep_promote_with_lineage",
+      "actions_on_keep": "Genome.fork(new_version) + record_improvement + promotion.submit + typed KG edges (healed_by, regenerated_from, strengthened_resilience) + ingest as living-experience or daily-present",
+      "actions_on_discard": "provenance_note only; candidate for quarantine or immune_rule against pattern; no promotion",
+      "actions_on_fork_further": "Record mid-score experiment; spawn temp Adversary specialist or new research-org thread under budget"
+    }
+  },
+  "framework": {
+    "kind": "research-constitution",
+    "title": "HealingFactor Constitution v1.0 — stabilization-wave-20260531",
+    "description": "Governs the 5-step closed-loop experience layer regeneration (detect/diagnose/generate/execute/close) executed by HealingFactor.for_stabilization_wave and DurableJobSupervisor healing phase. Integrates Multi-Agent Research Org roles and Constrained Evolutionary Search harness. All rules expressed in pure AgentDrive language and directly loadable as dict for harness.evaluate(research_constitution=...) and HealingFactor proposal paths.",
+    "rules": {
+      "diagnosis_quality_criteria": "see content.diagnosis_quality_criteria",
+      "allowed_proposal_types": "see content.allowed_proposal_types",
+      "proposal_requirements": "see content.proposal_requirements",
+      "successful_regeneration_criteria": "see content.successful_regeneration_criteria",
+      "metric_weights_override": {
+        "contradiction_reduction": 0.28,
+        "resilience_lift": 0.26,
+        "experience_layer_coherence": 0.22,
+        "simplicity": 0.12,
+        "future_prediction_power": 0.12
+      },
+      "keep_threshold": 0.52
+    },
+    "integration_points": {
+      "healing_factor": "consulted in _diagnose (quality gate), _generate_regeneration_proposals (allowed types + role_charter_ref), on_damage_signal, _execute (harness + budget), form_research_org_thread (charter refs)",
+      "grid_engine": "damage_monitor_loop and _maintenance_loop feed signals; autonomous research threads governed by this constitution",
+      "multi_metric_evaluation_harness": "supplies metric_weights_override and keep_threshold to evaluate()",
+      "durable_job_supervisor": "all proposals execute as 'healing' or 'research-org' phase jobs with leases + verifier gate",
+      "schema_pack": "page_type=research-constitution enables source_boost + expert_routing for constitution artifacts in Drive.think(prefer_experience_layer=True)",
+      "genome_lineage": "keep decisions always produce Genome.fork + provenance.lineage entry + ImprovementEvent"
+    },
+    "self_referential_clause": "This constitution was produced by the Research Constitution Architect Swarm on the stabilization-wave-20260531 drive. It is itself an ingestible research-constitution genome. Future damage signals against HealingFactor or regeneration quality will trigger HealingFactor diagnosis that consults this (and evolved forks of this) constitution for criteria. The MultiMetricEvaluationHarness will score any proposed updates to this constitution using the exact metrics and rules defined herein."
+  },
+  "provenance": {
+    "lineage": [
+      {
+        "parent": "stabilization-wave-20260531-closure-living-experience-observation",
+        "relation": "synthesized_from_wave_closure",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "Derived criteria directly from executed large-scale healing cycle, 95% assessment fusion_checkpoint, HealingFactor source, durable daily_consolidation, and constrained harness sketches in reconciliation.py"
+      },
+      {
+        "parent": "healing-factor-regeneration-proposal-v1@stabilization-wave-20260531",
+        "relation": "evolved_from_healing_proposal_pattern",
+        "timestamp": "2026-05-31T00:00:00+00:00"
+      },
+      {
+        "parent": "95-production-readiness-assessment-living-experience@stabilization-wave-20260531",
+        "relation": "governs_next_regeneration_cycle",
+        "timestamp": "2026-05-31T00:00:00+00:00"
+      }
+    ],
+    "stabilization_wave": "20260531",
+    "produced_by": "Research Constitution Architect Swarm (role-specialized stabilization component) self-referentially on the stabilization-wave-20260531 drive using live source inspection of HealingFactor, GridEngine, synthesis, genome models, schema_packs, and prior swarm artifacts. All content in pure AgentDrive language only.",
+    "signature": "Signed 2026-05-31 by Research Constitution Architect Swarm. Ingest this genome (page_type=research-constitution) into stabilization-wave-20260531 drive (or any production drive) via Drive.ingest / registry / reconcile to activate. Future HealingFactor and GridEngine autonomous research threads will load and enforce these rules.",
+    "forward_directive": "Use as baseline for HealingFactor regeneration proposals that improve diagnosis quality or proposal discipline. Evolve via propose_experience_evolution or form_research_org_thread when new failure modes or higher coherence targets emerge. Pair with the other three research-constitutions in this set for full Multi-Agent Research Org coverage."
+  }
+}

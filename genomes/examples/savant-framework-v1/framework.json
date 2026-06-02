@@ -14,7 +14,7 @@
       "calibration",
       "patterns"
     ],
-    "author": "pablothethinker",
+    "author": "AgentDrive Contributors",
     "license": "CC-BY-4.0",
     "inputs": [
       {
@@ -55,7 +55,7 @@
       {
         "id": "observation__audit_inputs",
         "type": "tool_call",
-        "agent": "ilo-core",
+        "agent": "agentdrive-core",
         "inputs": [
           "observations"
         ],
@@ -64,7 +64,7 @@
       {
         "id": "synthesis__induce_schema",
         "type": "tool_call",
-        "agent": "ilo-core",
+        "agent": "agentdrive-core",
         "depends_on": [
           "observation__audit_inputs"
         ],
@@ -76,7 +76,7 @@
       {
         "id": "synthesis__synthesize_framework",
         "type": "tool_call",
-        "agent": "ilo-core",
+        "agent": "agentdrive-core",
         "depends_on": [
           "observation__audit_inputs"
         ],
@@ -88,7 +88,7 @@
       {
         "id": "synthesis__infer_pattern",
         "type": "tool_call",
-        "agent": "ilo-core",
+        "agent": "agentdrive-core",
         "depends_on": [
           "observation__audit_inputs"
         ],
@@ -100,7 +100,7 @@
       {
         "id": "detection__anomalies",
         "type": "tool_call",
-        "agent": "ilo-core",
+        "agent": "agentdrive-core",
         "depends_on": [
           "synthesis__synthesize_framework"
         ],
@@ -113,7 +113,7 @@
       {
         "id": "detection__cross_domain_joins",
         "type": "tool_call",
-        "agent": "ilo-core",
+        "agent": "agentdrive-core",
         "depends_on": [
           "synthesis__synthesize_framework"
         ],
@@ -125,7 +125,7 @@
       {
         "id": "detection__contradictions",
         "type": "tool_call",
-        "agent": "ilo-core",
+        "agent": "agentdrive-core",
         "depends_on": [
           "synthesis__synthesize_framework"
         ],
@@ -137,7 +137,7 @@
       {
         "id": "reasoning__reconstruct_trace",
         "type": "tool_call",
-        "agent": "ilo-core",
+        "agent": "agentdrive-core",
         "depends_on": [
           "detection__anomalies",
           "detection__cross_domain_joins",
@@ -148,7 +148,7 @@
       {
         "id": "reasoning__mine_causality",
         "type": "tool_call",
-        "agent": "ilo-core",
+        "agent": "agentdrive-core",
         "depends_on": [
           "reasoning__reconstruct_trace"
         ],
@@ -163,7 +163,7 @@
       {
         "id": "learning__recognize_pattern",
         "type": "tool_call",
-        "agent": "ilo-core",
+        "agent": "agentdrive-core",
         "depends_on": [
           "synthesis__infer_pattern"
         ],
@@ -176,7 +176,7 @@
       {
         "id": "learning__calibrate",
         "type": "tool_call",
-        "agent": "ilo-core",
+        "agent": "agentdrive-core",
         "depends_on": [
           "reasoning__mine_causality"
         ],
@@ -188,7 +188,7 @@
       {
         "id": "compose_artifact",
         "type": "validate",
-        "agent": "ilo-core",
+        "agent": "agentdrive-core",
         "depends_on": [
           "observation__audit_inputs",
           "synthesis__induce_schema",

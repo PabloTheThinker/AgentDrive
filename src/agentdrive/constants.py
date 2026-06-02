@@ -2,9 +2,25 @@
 
 Import-safe module with no heavy dependencies — can be imported from anywhere
 without risk of circular imports. Designed for consistency across the agent ecosystem.
+
+Correlation ID (tracing) support:
+    Lightweight context-local correlation IDs (backed by contextvars for
+    thread + async safety) for production observability. Used across Drive
+    hot paths, synthesis, reconciliation scans, and optionally bridged from
+    the web layer's request_id.
+
+    Public helpers (also re-exported at package root):
+        get_correlation_id() -> str | None
+        set_correlation_id(cid: str | None) -> Token
+        new_correlation_id() -> str
+        using_correlation_id(cid: str | None = None) -> contextmanager[str]
+
+    Non-breaking: defaults to None. Hot paths auto-provision on first use
+    when no ID is active. Include the value in structured logs for grep/join.
 """
 
 import os
+import uuid
 from contextlib import contextmanager
 from contextvars import ContextVar, Token
 from pathlib import Path
@@ -17,6 +33,9 @@ _AGENTDRIVE_HOME_OVERRIDE: ContextVar[str | object] = ContextVar(
 # Swarm and sub-agent scoping for per-swarm / per-subagent isolated pools
 _SWARM_ID_CTX: ContextVar[str | object] = ContextVar("_SWARM_ID_CTX", default=_UNSET)
 _SUBAGENT_ID_CTX: ContextVar[str | object] = ContextVar("_SUBAGENT_ID_CTX", default=_UNSET)
+
+# Production tracing: lightweight correlation ID for Drive, synthesis, reconciliation, etc.
+_CORRELATION_ID_CTX: ContextVar[str | object] = ContextVar("_CORRELATION_ID_CTX", default=_UNSET)
 
 
 def set_agentdrive_home_override(path: str | Path | None) -> Token:
@@ -72,6 +91,32 @@ def reset_current_subagent_id(token: Token) -> None:
     _SUBAGENT_ID_CTX.reset(token)
 
 
+def get_correlation_id() -> str | None:
+    """Return the current correlation ID for tracing (if set)."""
+    v = _CORRELATION_ID_CTX.get()
+    if v is not _UNSET and v:
+        return str(v)
+    return None
+
+
+def set_correlation_id(correlation_id: str | None) -> Token:
+    """Set a correlation ID for the current context (for tracing across Drive/synthesis/reconciliation)."""
+    value: str | object = _UNSET if correlation_id is None else str(correlation_id)
+    return _CORRELATION_ID_CTX.set(value)
+
+
+def new_correlation_id() -> str:
+    """Generate and set a new random correlation ID."""
+    cid = uuid.uuid4().hex
+    set_correlation_id(cid)
+    return cid
+
+
+def reset_correlation_id(token: Token) -> None:
+    """Restore previous correlation context."""
+    _CORRELATION_ID_CTX.reset(token)
+
+
 def get_current_subagent_id() -> str | None:
     """Active subagent_id: context or AGENTDRIVE_SUBAGENT_ID env (each spawned child gets unique)."""
     v = _SUBAGENT_ID_CTX.get()
@@ -95,6 +140,50 @@ def using_swarm(swarm_id: str, subagent_id: str | None = None):
     finally:
         reset_current_subagent_id(t_sub)
         reset_current_swarm_id(t_swarm)
+
+
+@contextmanager
+def using_correlation_id(correlation_id: str | None = None):
+    """
+    Context manager to scope a block of code with a correlation ID for end-to-end tracing
+    across the experience layer v3.
+
+    Role-specialized swarms sharing the central Drive + knowledge_graph use this for
+    hybrid fusion with graph signals. The ID propagates through Drive.think, synthesis
+    (with explicit Gap objects + contradictions), reconciliation delta emission, and
+    durable execution via DurableJobSupervisor + two-phase leases (submit_phase,
+    submit_queued_dream, _run_queued).
+
+    If ``correlation_id`` is None, a fresh UUID4 hex is generated (and set).
+    The ID is visible to Drive.ingest/query/think, synthesis, reconciliation,
+    and web request handlers (when wired). Callers submitting durable stabilization
+    jobs can safely wrap submit_queued_dream (or the runner_callable) ; the supervisor
+    paths capture and restore via the context so synthesis and recon steps inside
+    queued jobs observe the same CID for full trace.
+
+    Genomes with provenance, schema packs, and calibration loops all inherit the
+    correlation context for production traceability.
+
+    Example (direct):
+        with using_correlation_id():
+            drive.ingest(genome)  # carries auto-generated correlation
+
+    Example (durable stabilization job submission for role-swarm):
+        with using_correlation_id("stabilization-trace-abc123"):
+            supervisor = DurableJobSupervisor(...)
+            supervisor.submit_queued_dream(
+                phase="stabilization-pass",
+                runner_callable=do_drive_think_and_synthesis_then_recon,
+                immediate=True,
+            )
+        # Inside the callable and downstream synthesis/recon: get_correlation_id() == "stabilization-trace-abc123"
+    """
+    cid = correlation_id or new_correlation_id()
+    token = set_correlation_id(cid)
+    try:
+        yield cid
+    finally:
+        reset_correlation_id(token)
 
 
 def get_agentdrive_home() -> Path:
@@ -148,6 +237,36 @@ def get_swarms_dir() -> Path:
     return get_agentdrive_home() / "swarms"
 
 
+# User-facing name for this specific AgentDrive instance.
+# Set AGENTDRIVE_INSTANCE_NAME to give your self-hosted runtime a personal name
+# (e.g. "My Research Drive", "Vektra Core", "Team Orion AgentDrive").
+# This is the recommended way for users to brand their own hosting system.
+AGENTDRIVE_INSTANCE_NAME: str = os.environ.get("AGENTDRIVE_INSTANCE_NAME", "AgentDrive")
+
+
+def get_agentdrive_instance_name() -> str:
+    """Live value of the instance name.
+
+    Consults os.environ every call (plus the module attr after set_instance_name)
+    so first-run, env overrides, and post-onboarding naming are always respected
+    without relying on import-time snapshots. Prefer over direct
+    AGENTDRIVE_INSTANCE_NAME in new code for robustness.
+    """
+    # Prefer any runtime-updated module attr (from set_instance_name), else live env.
+    import sys
+
+    mod = sys.modules.get(__name__)
+    if mod is not None:
+        val = getattr(mod, "AGENTDRIVE_INSTANCE_NAME", None)
+        if isinstance(val, str) and val:
+            # If it still looks like the default but env differs, env wins for first-run.
+            env_val = os.environ.get("AGENTDRIVE_INSTANCE_NAME", "")
+            if env_val and env_val != "AgentDrive":
+                return env_val
+            return val
+    return os.environ.get("AGENTDRIVE_INSTANCE_NAME", "AgentDrive")
+
+
 def get_swarm_drive_path(swarm_id: str, subagent_id: str | None = None) -> Path:
     """Path to the shared Drive for a swarm.
 
@@ -155,7 +274,7 @@ def get_swarm_drive_path(swarm_id: str, subagent_id: str | None = None) -> Path:
     Drive at ``<swarms>/<swarm_id>/drive/``. Sub-agents namespace their writes
     via the Genome author field (``manifest.authors[*].id = "sub:<sub_id>"``);
     reads are unrestricted across siblings. This is the "we work together"
-    experience pool — the sibling-learning primitive Pablo asked for.
+    experience pool — the sibling-learning primitive requested in the core design.
 
     ``subagent_id`` is accepted for backwards compatibility with v1 callers
     but is now informational. It does NOT affect the returned path. Code that
@@ -197,5 +316,13 @@ __all__ = [
     "reset_current_subagent_id",
     "get_current_subagent_id",
     "using_swarm",
+    # Correlation / tracing IDs (lightweight, contextvar-backed, for Drive/synthesis/recon/web)
+    "get_correlation_id",
+    "set_correlation_id",
+    "new_correlation_id",
+    "reset_correlation_id",
+    "using_correlation_id",
     "AGENTDRIVE_VERSION",
+    "AGENTDRIVE_INSTANCE_NAME",
+    "get_agentdrive_instance_name",
 ]

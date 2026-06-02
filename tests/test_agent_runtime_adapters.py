@@ -22,7 +22,7 @@ async def test_http_sse_adapter_parses_text_events() -> None:
         )
 
     adapter = HTTPSSEAdapter(
-        "ilo",
+        "high-continuity-conductor",
         {"kind": "http_sse", "url": "https://runtime.test/chat"},
         transport=httpx.MockTransport(handler),
     )
@@ -38,30 +38,30 @@ async def test_http_sse_adapter_surfaces_http_error_as_chunk() -> None:
         return httpx.Response(502, content=b"bad gateway")
 
     adapter = HTTPSSEAdapter(
-        "ilo",
+        "high-continuity-conductor",
         {"kind": "http_sse", "url": "https://runtime.test/chat"},
         transport=httpx.MockTransport(handler),
     )
 
     chunks = [piece async for piece in adapter.stream([{"role": "user", "content": "hi"}])]
 
-    assert chunks == ["[runtime ilo error: HTTP 502: bad gateway]"]
+    assert chunks == ["[runtime high-continuity-conductor error: HTTP 502: bad gateway]"]
 
 
 @pytest.mark.anyio
 async def test_http_sse_adapter_uses_auth_env(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("ILO_RUNTIME_TOKEN", "secret-value")
+    monkeypatch.setenv("CONDUCTOR_RUNTIME_TOKEN", "secret-value")
 
     async def handler(request: httpx.Request) -> httpx.Response:
         assert request.headers["Authorization"] == "Bearer secret-value"
         return httpx.Response(200, content=b"data: [DONE]\n\n")
 
     adapter = HTTPSSEAdapter(
-        "ilo",
+        "high-continuity-conductor",
         {
             "kind": "http_sse",
             "url": "https://runtime.test/chat",
-            "auth_env": "ILO_RUNTIME_TOKEN",
+            "auth_env": "CONDUCTOR_RUNTIME_TOKEN",
         },
         transport=httpx.MockTransport(handler),
     )

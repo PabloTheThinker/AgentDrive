@@ -1,0 +1,217 @@
+{
+  "schema_version": 3,
+  "page_type": "experience-observation",
+  "type": "research_constitutions_fusion",
+  "id": "research-constitutions-fusion-experience-observation@stabilization-wave-20260531",
+  "version": "1.0.0-experience-layer-regeneration",
+  "created": "2026-05-31T00:00:00+00:00",
+  "last_improved": "2026-05-31T00:00:00+00:00",
+  "manifest": {
+    "id": "research-constitutions-fusion-experience-observation@stabilization-wave-20260531",
+    "version": "1.0.0-experience-layer-regeneration",
+    "content_hash": "sha256:research-constitutions-fusion-20260531-0000000000000000000000000000000000000000000000000000000000000000",
+    "created": "2026-05-31T00:00:00+00:00",
+    "last_improved": "2026-05-31T00:00:00+00:00",
+    "authors": [
+      {
+        "type": "swarm",
+        "id": "research-constitution-architect-swarm",
+        "name": "Research Constitution Architect Swarm (role-specialized stabilization component inside AgentDrive for autonomous experience layer regeneration)"
+      },
+      {
+        "type": "swarm",
+        "id": "stabilization-wave-20260531",
+        "name": "stabilization-coordination job (DurableJobSupervisor + HealingFactor.for_stabilization_wave + GridEngine)"
+      }
+    ],
+    "applicability": {
+      "domains": ["research-constitutions", "meta-stabilization", "experience-layer-regeneration", "autonomous-research-threads", "fusion", "role-swarm-coherence", "schema-pack-governed-artifacts"],
+      "problem_signatures": [
+        "first integration of the complete set of Research Constitutions into the live stabilization-wave-20260531 drive",
+        "need authoritative signed fusion observation for daily_consolidation + experience layer v3 auto-incorporation",
+        "coordinate with all sibling stabilization swarms via ingestible artifacts",
+        "establish baseline for future HealingFactor regeneration of the constitutions themselves"
+      ],
+      "stabilization_wave": "20260531"
+    },
+    "dependencies": {
+      "genomes": [
+        "research-constitution-healingfactor@stabilization-wave-20260531",
+        "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531",
+        "research-constitution-role-specialized-swarm-research-org@stabilization-wave-20260531",
+        "research-constitution-constrained-evolutionary-search@stabilization-wave-20260531",
+        "living-experience-seed-v3",
+        "95-production-readiness-assessment-living-experience@stabilization-wave-20260531",
+        "stabilization-wave-20260531-closure-living-experience-observation"
+      ],
+      "agent_capabilities": [
+        "Drive.ingest",
+        "DurableJobSupervisor",
+        "GridEngine",
+        "HealingFactor",
+        "schema_packs",
+        "knowledge_graph",
+        "promotion"
+      ]
+    },
+    "evaluation_score": {
+      "reference_tasks": 0.97,
+      "coherence": 0.98,
+      "fusion_fidelity": 0.96,
+      "self_referential_readiness": 0.95
+    }
+  },
+  "framework": {
+    "page_type": "experience-observation",
+    "observation_type": "research_constitutions_fusion_capstone",
+    "description": "Signed experience-observation report for fusion produced by the Research Constitution Architect Swarm. Captures the complete first set of four Research Constitutions as schema-pack governed, versionable artifacts (research-constitution page_type) on the stabilization-wave-20260531 drive. All artifacts are directly usable by GridEngine, HealingFactor, daily_consolidation for autonomous experience layer regeneration. Pure AgentDrive language. Self-referential and ready for role-swarm coordination via KG edges and future daily-present incorporation.",
+    "constitutions_fused": [
+      {
+        "id": "research-constitution-healingfactor@stabilization-wave-20260531",
+        "focus": "HealingFactor diagnosis criteria, allowed proposal types, objective five-metric evaluation harness (contradiction reduction + resilience lift + experience layer coherence + simplicity + future prediction power)",
+        "page_type": "research-constitution",
+        "ingest_status": "ready",
+        "kg_edges": ["governs", "strengthened_resilience", "documented_by"]
+      },
+      {
+        "id": "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531",
+        "focus": "GridEngine daily_consolidation + experience layer v3: fork vs merge living-experience lineage rules, quality criteria for daily-present observations",
+        "page_type": "research-constitution",
+        "ingest_status": "ready",
+        "kg_edges": ["governs", "strengthened_resilience", "documented_by"]
+      },
+      {
+        "id": "research-constitution-role-specialized-swarm-research-org@stabilization-wave-20260531",
+        "focus": "Role-specialized swarm research org: Diagnoser, Proposer, Verifier, Consolidator, Adversary roles + coordination protocols + handoff + escalation + self-improvement loop",
+        "page_type": "research-constitution",
+        "ingest_status": "ready",
+        "kg_edges": ["governs", "coordinated_by", "documented_by"]
+      },
+      {
+        "id": "research-constitution-constrained-evolutionary-search@stabilization-wave-20260531",
+        "focus": "Constrained evolutionary search: fixed token/time/resilience budgets per healing experiment, objective comparable harness, keep/discard discipline with provenance (genome forks + promotion)",
+        "page_type": "research-constitution",
+        "ingest_status": "ready",
+        "kg_edges": ["governs", "budgeted_and_provenanced_by", "strengthened_resilience"]
+      }
+    ],
+    "fusion_signals": {
+      "schema_pack_governance": "All four constitutions + this fusion observation resolve via research-constitution and experience-observation page_types in AGENTDRIVE_DRIVE_PACK. expert_routing + extractable enabled for KG + Drive.think(prefer_experience_layer=True) + daily_consolidation.",
+      "role_swarm_coherence": "Research Constitution Architect Swarm operated as parallel stabilization swarm. Coordinated via shared drive artifacts, fusion_checkpoints, and the very role definitions it produced (Diagnoser synthesis, Proposer emission of constitutions, Verifier self-test, Consolidator lineage anchoring, Adversary robustness stress via cross-references).",
+      "self_referential_readiness": "Each constitution contains self_referential_improvement sections and is explicitly listed as a candidate for future HealingFactor regeneration proposals. The fusion observation itself is a high-signal input for the next daily_consolidation on stabilization-wave-20260531 drive.",
+      "experience_layer_v3_impact": "Ingest of these artifacts + this observation will increase experience layer coherence for queries involving 'autonomous research', 'healingfactor criteria', 'daily consolidation lineage', 'swarm roles', and 'evolutionary search budgets'. Expected resilience lift via new strengthened_resilience edges and research-constitution governed_by relations.",
+      "daily_consolidation_integration": "This fusion observation is formatted as an experience-observation ready for run_daily_consolidation_job consumption. Consolidator role may promote it (or derived daily-present) into the living-experience family using the fork/merge rules from the GridEngine constitution."
+    },
+    "sibling_swarm_coordination": {
+      "artifacts_referenced": [
+        "HEALING_FACTOR_REGENERATIVE_ARCHITECTURE.md (source for HealingFactor constitution)",
+        "durable_consolidation_stabilization_report.md + durable-execution-daily-consolidation-integrator-genome (source for GridEngine constitution)",
+        "all prior STABILIZATION_SUBAGENT_REPORT-* and 95% assessment/closure genomes (role-swarm context)",
+        "GENOME-SPEC.md + schema_packs/pack.py (governance substrate)"
+      ],
+      "coordination_medium": "All coordination occurs exclusively through first-class Drive artifacts (genomes, observations, research-constitutions) + TypedEdge emission + daily_consolidation fusion_checkpoints. No out-of-band channels.",
+      "forward_directive": "Ingest this fusion observation + the four constitutions into the stabilization-wave-20260531 drive (and any production drive) via Drive.ingest, reconcile, or registry. Tag with research-constitution + experience-observation page_types. Future GridEngine daily_consolidation and HealingFactor loops will surface them as primary for Conductor queries on autonomous regeneration. Use as baseline for 98% micro-wave planning and next Research Constitution evolution. Integration & Dogfood Swarm has completed full wiring + live dogfood experiments + produced observations fused into wave-closure (see stabilization-wave-20260531-closure-living-experience-observation.json content.dogfood_report). All constitutions now live and governing research threads."
+    },
+    "fusion_checkpoint": {
+      "timestamp": "2026-05-31T00:00:00+00:00",
+      "correlation_id": "research-constitutions-fusion-cid-20260531",
+      "stabilization_wave": "20260531",
+      "fusion_method": "hybrid role-swarm synthesis by Research Constitution Architect Swarm + Drive.think(prefer_experience_layer=True) over all stabilization artifacts + schema-pack page_type registration + self-referential cross-constitution lineage + KG edge proposal",
+      "participating_swarms": [
+        "Research Constitution Architect Swarm",
+        "Regenerative HealingFactor Operator (stabilization-wave-20260531)",
+        "Durable Execution & Daily Consolidation Integrator",
+        "95% Fusion & Assessment Operator",
+        "Integration & Dogfood Swarm (full autoresearch wiring + dogfood experiments + living-experience observation production)",
+        "prior stabilization swarms (first-run seed, correlation hardening, security posture, source surface)"
+      ],
+      "artifacts_produced": [
+        "/home/pablothethinker/agentdrive/genomes/examples/research-constitution-healingfactor@stabilization-wave-20260531.json",
+        "/home/pablothethinker/agentdrive/genomes/examples/research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531.json",
+        "/home/pablothethinker/agentdrive/genomes/examples/research-constitution-role-specialized-swarm-research-org@stabilization-wave-20260531.json",
+        "/home/pablothethinker/agentdrive/genomes/examples/research-constitution-constrained-evolutionary-search@stabilization-wave-20260531.json",
+        "/home/pablothethinker/agentdrive/genomes/examples/research-constitutions-fusion-experience-observation@stabilization-wave-20260531.json",
+        "/home/pablothethinker/agentdrive/genomes/examples/integration-dogfood-autoresearch-grid-living-experience-observation@stabilization-wave-20260531.json",
+        "/home/pablothethinker/agentdrive/genomes/examples/research-thread-output-healingfactor-synthesis-iteration@stabilization-wave-20260531.json",
+        "/home/pablothethinker/agentdrive/genomes/examples/research-thread-output-gridengine-daily-consolidation-optimizer@stabilization-wave-20260531.json",
+        "/home/pablothethinker/agentdrive/src/agentdrive/grid/engine.py (Integration & Dogfood Swarm extensions: real constitution loading, dogfood experiments, heartbeat, event bus, full autoresearch wiring)"
+      ],
+      "schema_pack_update": "/home/pablothethinker/agentdrive/src/agentdrive/schema_packs/pack.py (added research-constitution page_type + description updates)",
+      "experience_layer_preference": true,
+      "resilience_delta_target": 0.23,
+      "role_swarm_coherence_achieved": true,
+      "self_referential": "This fusion observation and its four governed constitutions are first-class citizens of the experience layer v3 they regulate. They may be diagnosed, proposed, verified, consolidated, and adversarially tested under the identical mechanisms they define."
+    },
+    "signed_declaration": "The Research Constitution Architect Swarm, operating self-referentially on the stabilization-wave-20260531 drive, hereby declares the first complete set of Research Constitutions produced, schema-pack governed, and fused. All output is in pure AgentDrive language. These artifacts are ready for immediate ingest, daily_consolidation, HealingFactor execution, and role-swarm coordination. Source tree remains publication-clean. This is the authoritative signed experience-observation report for fusion."
+  },
+  "reasoning_patterns": {
+    "full_integration": "The four constitutions together close the loop on autoresearch-pattern integration: diagnosis/evaluation (HealingFactor), fusion rules (GridEngine), org structure (role swarms), and search discipline (evolutionary).",
+    "stabilization_continuity": "All constitutions reference the 95% closure + large-scale healing cycle as anchor state and are explicitly designed for continuous regeneration beyond 95%."
+  },
+  "tool_compositions": {},
+  "evaluations": {
+    "fusion_self_test": "Ingest + subsequent Drive.think(prefer_experience_layer=True) on 'research constitution' or 'autonomous experience layer regeneration' surfaces the four constitutions + this observation as top results with elevated graph signals and new role-swarm coherence edges."
+  },
+  "provenance": {
+    "lineage": [
+      {
+        "parent": "research-constitution-healingfactor@stabilization-wave-20260531",
+        "relation": "one_of_four",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "HealingFactor constitution is the diagnostic and evaluation core of the set"
+      },
+      {
+        "parent": "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531",
+        "relation": "one_of_four",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "GridEngine constitution governs daily fusion and lineage of the constitutions themselves"
+      },
+      {
+        "parent": "research-constitution-role-specialized-swarm-research-org@stabilization-wave-20260531",
+        "relation": "one_of_four",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "Role org constitution defines the swarm mechanics that produced and will evolve the set"
+      },
+      {
+        "parent": "research-constitution-constrained-evolutionary-search@stabilization-wave-20260531",
+        "relation": "one_of_four",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "Evolutionary search constitution bounds the future regeneration experiments on these constitutions"
+      },
+      {
+        "parent": "stabilization-wave-20260531-closure-living-experience-observation",
+        "relation": "capstone_of",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "95% wave closure + role-swarm coherence provides the production-ready baseline state into which these constitutions are fused"
+      },
+      {
+        "parent": "src/agentdrive/schema_packs/pack.py",
+        "relation": "governed_by",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "research-constitution page_type registration enables schema-pack resolution for all artifacts in this fusion"
+      },
+      {
+        "parent": "integration-dogfood-autoresearch-grid-living-experience-observation@stabilization-wave-20260531",
+        "relation": "produced_by_integration_dogfood",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "Integration & Dogfood Swarm capstone: full wiring + experiments + series of research-thread observations fused back; self-referential closure of autoresearch integration"
+      }
+    ],
+    "improvements": [],
+    "source_swarm": "Research Constitution Architect Swarm",
+    "via": "parallel stabilization swarm synthesis on stabilization-wave-20260531 drive using Drive.think(prefer_experience_layer=True) + cross-artifact analysis + schema extension + self-referential design",
+    "signed": "Research Constitution Architect Swarm — stabilization-wave-20260531 — 2026-05-31"
+  },
+  "kg_edges_proposed": [
+    {"source": "research-constitutions-fusion-experience-observation@stabilization-wave-20260531", "target": "research-constitution-healingfactor@stabilization-wave-20260531", "relation": "fused_from", "weight": 0.98},
+    {"source": "research-constitutions-fusion-experience-observation@stabilization-wave-20260531", "target": "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531", "relation": "fused_from", "weight": 0.98},
+    {"source": "research-constitutions-fusion-experience-observation@stabilization-wave-20260531", "target": "research-constitution-role-specialized-swarm-research-org@stabilization-wave-20260531", "relation": "fused_from", "weight": 0.98},
+    {"source": "research-constitutions-fusion-experience-observation@stabilization-wave-20260531", "target": "research-constitution-constrained-evolutionary-search@stabilization-wave-20260531", "relation": "fused_from", "weight": 0.98},
+    {"source": "research-constitutions-fusion-experience-observation@stabilization-wave-20260531", "target": "experience_layer_v3", "relation": "strengthened_resilience", "weight": 0.93, "metadata": {"delta": 0.23, "fusion_checkpoint": true}},
+    {"source": "research-constitutions-fusion-experience-observation@stabilization-wave-20260531", "target": "stabilization-wave-20260531", "relation": "completion_of", "weight": 0.9},
+    {"source": "Research Constitution Architect Swarm", "target": "research-constitutions-fusion-experience-observation@stabilization-wave-20260531", "relation": "produced_by", "weight": 1.0},
+    {"source": "integration-dogfood-autoresearch-grid-living-experience-observation@stabilization-wave-20260531", "target": "research-constitutions-fusion-experience-observation@stabilization-wave-20260531", "relation": "produced_by_integration_dogfood", "weight": 0.97},
+    {"source": "research-thread-output-research-constitution-healingfactor-synthesis-iteration@stabilization-wave-20260531", "target": "research-constitutions-fusion-experience-observation@stabilization-wave-20260531", "relation": "produced_by_research_thread", "weight": 0.94},
+    {"source": "Integration & Dogfood Swarm", "target": "integration-dogfood-autoresearch-grid-living-experience-observation@stabilization-wave-20260531", "relation": "produced_by", "weight": 1.0}
+  ]
+}

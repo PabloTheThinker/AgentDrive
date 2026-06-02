@@ -38,10 +38,31 @@ class AgentDriveScanError(AgentDriveError):
     pass
 
 
+class AgentDriveDriveError(AgentDriveError):
+    """Errors during Drive operations (ingest, query, think, evolution)."""
+
+    pass
+
+
+class AgentDriveSecurityError(AgentDriveError):
+    """Security-related errors (permissions, trust, grants, signatures)."""
+
+    pass
+
+
+class AgentDriveReconciliationError(AgentDriveError):
+    """Errors during background reconciliation or healing."""
+
+    pass
+
+
 __all__ = [
     "AgentDriveError",
     "AgentDriveConfigError",
     "AgentDriveRegistryError",
     "AgentDriveWorkerError",
     "AgentDriveScanError",
+    "AgentDriveDriveError",
+    "AgentDriveSecurityError",
+    "AgentDriveReconciliationError",
 ]

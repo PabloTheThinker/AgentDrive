@@ -201,7 +201,7 @@ def test_approve_ingests_into_pool_only_if_validation_passes(
     good_dir = _make_valid_genome_dir(tmp_path, gid="good-genome")
     good_entry = q.submit(good_dir, source_peer="peer-good")
 
-    released_good = q.approve(good_entry.quarantine_id, pool, note="vetted by pablo")
+    released_good = q.approve(good_entry.quarantine_id, pool, note="vetted")
     assert released_good is True
     refreshed_good = q.get(good_entry.quarantine_id)
     assert refreshed_good is not None

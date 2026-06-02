@@ -1,7 +1,7 @@
 # AgentDrive v2 — Architecture
 
 > **Status:** proposal (2026-05-24). Not yet implemented.
-> **Decision owner:** Pablo Navarro.
+> **Decision owner:** the project maintainer.
 > **Implementation owner:** the runtime, once approved.
 
 The current AgentDrive (v1) is a local-first directory per agent, with policy-gated upward sync from sub-agents to parents. It works. It is also too small. The brief for v2 came from a single observation: *sub-agents should learn from each other, not just bubble up to a parent.* That implies shared memory across siblings, and shared memory across agents implies the entire mental model of a "Drive."
@@ -156,7 +156,7 @@ Each milestone is shippable on its own and unlocks the next.
 Migrate the on-disk layout to `objects/<prefix>/<hash>.json`. Rewrite Genome ID generation. Add a `supersedes` field to manifests. Add a tiny migration tool that walks the existing Drive and rewrites IDs. **Outcome:** dedup and versioning come online; nothing else in the architecture changes yet.
 
 **Milestone 2 — Shared swarm Drive (move #4).**
-Collapse the per-(swarm, sub-agent) directory to one per-swarm directory. Update `swarm_manager` to point siblings at the same Drive. Flip `SwarmDrivePolicy` defaults. Keep `isolation_level="subagent"` available for opt-in air-gapping. **Outcome:** sibling learning works; this is the visible Pablo-asked-for change.
+Collapse the per-(swarm, sub-agent) directory to one per-swarm directory. Update `swarm_manager` to point siblings at the same Drive. Flip `SwarmDrivePolicy` defaults. Keep `isolation_level="subagent"` available for opt-in air-gapping. **Outcome:** sibling learning works; this is the visible core requested sibling-learning change.
 
 **Milestone 3 — Capability URIs + key-derivation tree (moves #2, #3).**
 Implement cap minting/verification. Derive per-sub-agent caps from swarm caps. Spawn channel hands caps to children. Rotate-at-tier revocation. **Outcome:** the security model becomes real; you can hand a sub-agent narrow access without ACL bookkeeping.

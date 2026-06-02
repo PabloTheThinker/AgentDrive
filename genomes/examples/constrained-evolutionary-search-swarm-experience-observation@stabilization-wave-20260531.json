@@ -1,0 +1,59 @@
+{
+  "id": "constrained-evolutionary-search-swarm-experience-observation@stabilization-wave-20260531",
+  "version": "harness-v1-closure",
+  "type": "experience-observation",
+  "page_type": "experience-observation",
+  "manifest": {
+    "id": "constrained-evolutionary-search-swarm-experience-observation@stabilization-wave-20260531",
+    "version": "harness-v1-closure",
+    "produced_at": "2026-05-31T23:59:30Z",
+    "authors": [{"type": "swarm", "name": "Constrained Evolutionary Search Swarm"}],
+    "applicability": {"domains": ["stabilization", "healing", "daily_consolidation", "grid_engine", "autoresearch", "experience_layer_v3"]}
+  },
+  "framework": {
+    "mission": "Constrained Evolutionary Search Swarm — full autoresearch integration for real-time Grid (stabilization-wave-20260531 drive)",
+    "deliverables": [
+      "ResearchBudget dataclass (token/time/resilience_improvement budgets per healing/evolution job)",
+      "MultiMetricEvaluationHarness with 5 objective metrics: contradiction_reduction + resilience_lift + experience_layer_coherence + simplicity + future_prediction_power",
+      "keep/discard discipline with provenance (experience genome forks via Genome.fork + promotion lineage, or discard_revert + quarantine candidate)",
+      "Wiring in HealingFactor (on_damage_signal, _execute under durable healing, for_stabilization_wave)",
+      "Wiring in GridEngine (GridConfig budgets, background threads, _maintenance daily_consolidation, _research_thread_coordinator, form_autonomous_research_thread)",
+      "Bounded experiments in run_daily_consolidation_job (durable.py) and healing executors: consumption tracking + post-eval harness decision",
+      "Example research-constitution (page_type=research-constitution) + this signed observation",
+      "All background research threads now respect budgets; healing + daily_consolidation are bounded experiments rather than open-ended"
+    ],
+    "key_integration_points": {
+      "HealingFactor": "default_research_budget + evaluation_harness; healing_executor returns evaluation_scores + keep_discard_provenance",
+      "GridEngine": "default_research_budget + harness; maintenance and research passes submit with budget metadata and use harness for high-signal decisions",
+      "DurableJobSupervisor": "daily_consolidation + healing phases now return harness artifacts for provenance discipline",
+      "research-constitution": "Human/Conductor editable weights/thresholds for harness (consumable by evaluate())"
+    },
+    "coordination_with_sibling_swarms": "All artifacts (constitutions, observations, fusion_checkpoints) produced as first-class drive citizens under stabilization-wave-20260531. Discoverable via Drive.think(prefer_experience_layer=True). KG edges (healed_by, strengthened_resilience, contributed_to) emitted. 95% Fusion & Assessment Operator and Regenerative HealingFactor Operator can reference this harness directly in future regeneration proposals. Role-swarm coherence achieved: 'all work together' via shared harness discipline on the live drive.",
+    "signed_observation": "Mission complete. Working code patches applied to worktree (reconciliation.py, grid/engine.py, dreaming/durable.py). Source tree remains publication-clean (pure AgentDrive language, ruff-compatible style, no extraneous .md, minimal additive changes). Experience layer v3 now carries constrained evolutionary search as first-class substrate capability."
+  },
+  "fusion_checkpoint": {
+    "timestamp": "2026-05-31T23:59:30Z",
+    "stabilization_wave": "stabilization-wave-20260531",
+    "participating_swarms": ["Constrained Evolutionary Search Swarm", "Regenerative HealingFactor Operator (HealingFactor + durable healing)", "Durable Execution Daily Consolidation Integrator (run_daily_consolidation_job)", "95% Fusion & Assessment Operator", "prior: Source Surface, Correlation Hardening, Security Posture"],
+    "harness_evidence": {
+      "metrics_implemented": 5,
+      "budgets_wired": ["HealingFactor", "GridEngine", "daily_consolidation", "research_threads"],
+      "provenance_discipline": "experience_genome_fork_promoted_with_lineage | discard_revert",
+      "example_constitution": "research-constitution-constrained-evolutionary-search@stabilization-wave-20260531.json"
+    },
+    "status": "95%+ production readiness advanced; autoresearch substrate now bounded + objective + provenance-traced"
+  },
+  "living_experience_context": "This signed experience-observation is the authoritative record of the Constrained Evolutionary Search Swarm contribution. Ingest into stabilization-wave-20260531 drive (and production drives) as daily-present / living-experience anchor. Future GridEngine runs, HealingFactor jobs, and Conductor daily present will surface the harness as the disciplined autoresearch primitive. Self-referential: the harness and this observation are candidates for future bounded healing experiments.",
+  "provenance": {
+    "produced_by": "Constrained Evolutionary Search Swarm via live drive (DurableJobSupervisor coordination + patches + Drive.think synthesis)",
+    "signed": "ConstrainedEvolutionarySearchSwarm@stabilization-wave-20260531::MultiMetricEvaluationHarness",
+    "artifacts": [
+      "/home/pablothethinker/agentdrive/src/agentdrive/reconciliation.py",
+      "/home/pablothethinker/agentdrive/src/agentdrive/grid/engine.py",
+      "/home/pablothethinker/agentdrive/src/agentdrive/dreaming/durable.py",
+      "/home/pablothethinker/agentdrive/genomes/examples/research-constitution-constrained-evolutionary-search@stabilization-wave-20260531.json",
+      "this observation"
+    ],
+    "lineage": "forked from durable-execution-daily-consolidation-integrator-genome + healing-factor-regeneration-proposal-v1 + 95-production-readiness-assessment@stabilization-wave-20260531"
+  }
+}

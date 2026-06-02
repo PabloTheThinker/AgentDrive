@@ -30,7 +30,7 @@ SAFETY & RE-RUN RULES:
 - Any published data lands only under ~/.agentdrive/dna/<demo-agent-id>/.
 
 Run:
-    python3 examples/11_high_continuity_bridge_demo.py   # (or the current 11_ilo_... filename during transition)
+    python3 examples/11_high_continuity_bridge_demo.py   # (demo of the high-continuity bridge)
 
 See docs/development/ for detailed history and status notes
 for the full guided tour and implementation status.
@@ -63,7 +63,13 @@ def _make_demo_genome(gid: str, score: float = 0.82) -> Genome:
                 {"id": "r3", "name": "Propose safe mutations with fitness justification"},
             ]
         },
-        authors=[{"type": "agent", "name": "ILO-Conductor-Demo", "id": "ilo-conductor-demo-11"}],
+        authors=[
+            {
+                "type": "agent",
+                "name": "High-Continuity Conductor Demo",
+                "id": "high-continuity-conductor-demo-11",
+            }
+        ],
         applicability={"domains": ["orchestration", "lineage", "conducting"]},
         evaluation_score={"reference_tasks": score, "stability": 0.88, "ilo_fitness": score},
         reasoning_patterns={
@@ -77,16 +83,16 @@ def _make_demo_genome(gid: str, score: float = 0.82) -> Genome:
 
 def main() -> None:
     print("=" * 76)
-    print("AgentDrive 11 — ILO Conductor / GrokPatternLineageBridge Demo")
+    print("AgentDrive 11 — High-Continuity Conductor / GrokPatternLineageBridge Demo")
     print("High-continuity nodes as first-class DNA producers/consumers/evolvers")
     print("=" * 76)
     print()
 
     # ------------------------------------------------------------------
     # Setup: isolated temp research directory (simulating any custom pattern store)
-    # Real ILO nodes point the bridge at their actual high-signal pattern store.
+    # Real High-Continuity Conductor nodes point the bridge at their actual high-signal pattern store.
     # ------------------------------------------------------------------
-    with tempfile.TemporaryDirectory(prefix="agentdrive-ilo-bridge-demo-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="agentdrive-high-continuity-bridge-demo-") as tmp:
         tmp_root = Path(tmp)
         brain_dir = tmp_root / "brain"
         brain_dir.mkdir(parents=True, exist_ok=True)
@@ -101,7 +107,7 @@ def main() -> None:
                     "fitness": 0.87,
                     "uses": 1840,
                     "tags": ["reasoning", "conducting", "lineage"],
-                    "system_prompt": "You are ILO. Maintain full provenance. Prefer patterns with fitness > 0.75.",
+                    "system_prompt": "You are a high-continuity Conductor node. Maintain full provenance. Prefer patterns with fitness > 0.75.",
                 }
             )
         )
@@ -115,7 +121,7 @@ a pattern. Speak in measured, evidence-grounded sentences. Never drop provenance
 """
         )
 
-        print(f"[setup] Simulated ILO brain at: {brain_dir}")
+        print(f"[setup] Simulated external high-continuity brain at: {brain_dir}")
         print(
             "        (contains 2 high-fitness patterns that export_high_fitness_patterns will discover)"
         )
@@ -126,9 +132,9 @@ a pattern. Speak in measured, evidence-grounded sentences. Never drop provenance
         # ------------------------------------------------------------------
         bridge = GrokPatternLineageBridge(
             brain_path=brain_dir,
-            ilo_agent_id="ilo-conductor-demo-11",
+            ilo_agent_id="high-continuity-conductor-demo-11",
         )
-        print("[bridge] GrokPatternLineageBridge ready for ilo-conductor-demo-11")
+        print("[bridge] GrokPatternLineageBridge ready for high-continuity-conductor-demo-11")
         print()
 
         # ------------------------------------------------------------------
@@ -152,7 +158,7 @@ a pattern. Speak in measured, evidence-grounded sentences. Never drop provenance
 
         # ------------------------------------------------------------------
         # [2] CUSTOM PATTERN PUBLISH — the power-user "export my own DNA" flow
-        #     (this is how ILO turns its CognitivePatterns / speech / heuristics
+        #     (this is how a high-continuity Conductor node turns its CognitivePatterns / speech / heuristics
         #      into inheritable, evaluable, content-addressed Genomes)
         # ------------------------------------------------------------------
         print("[2] Custom pattern → Genome conversion + publish_ilo_genome()")
@@ -161,7 +167,7 @@ a pattern. Speak in measured, evidence-grounded sentences. Never drop provenance
             "name": "Deep Provenance-Aware Orchestration",
             "description": "Orchestrate sub-agents while maintaining full causal ancestry and swarm DNA signals in every decision.",
             "system_prompt": (
-                "You are a high-continuity Conductor (ILO). "
+                "You are a high-continuity Conductor node. "
                 "Surface lineage and fitness signals. Delegate with provenance. "
                 "Never lose the thread of what worked for ancestors."
             ),
@@ -214,7 +220,7 @@ a pattern. Speak in measured, evidence-grounded sentences. Never drop provenance
 
         # ------------------------------------------------------------------
         # [4] EVOLVE using the bridge context (the full Research→Evaluate→Evolve)
-        #     Safe dry-run: real ILO would inspect result, then optionally publish mutations.
+        #     Safe dry-run: a real high-continuity Conductor node would inspect result, then optionally publish mutations.
         # ------------------------------------------------------------------
         print("[4] LineageDNAEvolver + bridge.brain_path (dry_run=True — SAFE)")
         target = _make_demo_genome("high-continuity-demo-target-pattern", score=0.78)

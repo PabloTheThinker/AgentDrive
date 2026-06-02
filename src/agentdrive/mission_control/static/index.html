@@ -1,0 +1,3465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AGENTDRIVE • MISSION KANBAN + CONTROL TOWER</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap');
+    
+    :root {
+      --bg: #0b0e14;
+      --panel: #11151c;
+      --border: #1f2937;
+    }
+    
+    body {
+      font-family: Inter, system-ui, -apple-system, sans-serif;
+    }
+    
+    .font-mono, .event-row, #fabric-canvas, .telemetry-value {
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .mission-panel {
+      background: #11151c;
+      border: 1px solid #1f2937;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .mission-panel:hover {
+      border-color: #334155;
+    }
+
+    .section-title {
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .loop-step {
+      background: #0f131a;
+      border: 1px solid #1f2937;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .loop-step.active {
+      border-color: #67e8f9;
+      box-shadow: 0 0 0 1px rgba(103, 232, 249, 0.4),
+                  0 0 12px rgba(103, 232, 249, 0.15);
+      background: #0a2a32;
+    }
+    
+    .loop-step.active .step-num {
+      background: #67e8f9;
+      color: #0b0e14;
+      box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.25);
+    }
+    
+    .loop-step.active::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        transparent 20%,
+        rgba(103, 232, 249, 0.08) 50%,
+        transparent 80%
+      );
+      animation: scan 1.4s linear infinite;
+    }
+
+    @keyframes scan {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(300%); }
+    }
+
+    .pulse-glow {
+      animation: pulse-glow 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 0 1px rgba(103, 232, 249, 0.5), 0 0 14px rgba(103, 232, 249, 0.2); }
+      50% { box-shadow: 0 0 0 1px rgba(103, 232, 249, 0.9), 0 0 22px rgba(103, 232, 249, 0.35); }
+    }
+
+    .coherence-bar {
+      height: 6px;
+      background: linear-gradient(90deg, #67e8f9, #34d399);
+      transition: width 420ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    .event-row {
+      font-size: 11px;
+      line-height: 1.25;
+      padding: 3px 8px;
+      border-left: 3px solid #334155;
+      margin-bottom: 1px;
+      transition: background 0.1s ease;
+    }
+    
+    .event-row:hover {
+      background: rgba(255,255,255,0.03);
+    }
+
+    .event-loop_step { border-left-color: #67e8f9; }
+    .event-fabric_update { border-left-color: #a78bfa; }
+    .event-parent_decision { border-left-color: #fbbf24; }
+    .event-overseer_state { border-left-color: #14b8a6; }
+    .event-static_fire { border-left-color: #f97316; }
+    .event-grid_health { border-left-color: #4ade80; }
+    .event-system { border-left-color: #64748b; }
+
+    /* AgentDrive-native Kanban (reworked for 6-step + fabric) */
+    .kanban-lane {
+      background: #11151c;
+      border: 1px solid #1f2937;
+      border-radius: 10px;
+      min-height: 320px;
+      padding: 8px;
+    }
+    .kanban-lane-header {
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-bottom: 1px solid #1f2937;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .kanban-card {
+      background: #0f131a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: border-color .1s ease, box-shadow .1s ease;
+    }
+    .kanban-card:hover {
+      border-color: #67e8f9;
+      box-shadow: 0 0 0 1px rgba(103,232,249,0.15);
+    }
+    .kanban-card .title { font-weight: 600; line-height: 1.25; }
+    .kanban-card .meta { font-size: 10px; color: #64748b; margin-top: 3px; }
+    .kanban-card .fabric-lift { font-family: ui-monospace, monospace; font-size: 10px; color: #34d399; }
+
+    .status-pill {
+      font-size: 10px;
+      padding: 1px 9px;
+      border-radius: 9999px;
+      font-weight: 600;
+      letter-spacing: .5px;
+    }
+
+    .gauge {
+      width: 68px;
+      height: 68px;
+      border-radius: 9999px;
+      background: conic-gradient(#67e8f9 0deg, #67e8f9 var(--coh-deg, 0deg), #1f2937 var(--coh-deg, 0deg), #1f2937 360deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    
+    .gauge::before {
+      content: '';
+      width: 46px;
+      height: 46px;
+      background: #11151c;
+      border-radius: 9999px;
+    }
+
+    .tower-grid {
+      background-image: 
+        linear-gradient(rgba(103,232,249,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(103,232,249,0.035) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    .metric-card {
+      background: #0f131a;
+      border: 1px solid #1f2937;
+    }
+
+    .mc-header {
+      background: linear-gradient(#0b0e14, #0b0e14) padding-box,
+                  linear-gradient(to right, #1f2937, transparent) border-box;
+      border-bottom: 1px solid #1f2937;
+    }
+
+    .data-value {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .fabric-node {
+      transition: all 0.2s ease;
+    }
+
+    .terminal-label {
+      font-size: 9px;
+      letter-spacing: 1px;
+      color: #64748b;
+    }
+
+    /* === v1.5 MISSION CONTROL ENHANCEMENTS === */
+    .viz-toggle {
+      font-size: 9px;
+      padding: 1px 7px;
+      border-radius: 999px;
+      border: 1px solid #334155;
+      background: #0a0d13;
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.1s ease;
+    }
+    .viz-toggle.active {
+      background: #1e2937;
+      border-color: #64748b;
+      color: #e0f2fe;
+      font-weight: 600;
+    }
+
+    .replay-bar {
+      background: #0a0d13;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      padding: 4px 8px;
+    }
+
+    .fire-card {
+      background: #11151c;
+      border: 1px solid #431407;
+      border-radius: 10px;
+      padding: 6px 8px;
+      min-width: 118px;
+      flex-shrink: 0;
+      transition: transform 0.1s ease, border-color 0.1s;
+    }
+    .fire-card:hover {
+      border-color: #f97316;
+      transform: translateY(-1px);
+    }
+    .fire-lift {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .step-contrib {
+      position: absolute;
+      bottom: 2px;
+      left: 4px;
+      right: 4px;
+      height: 3px;
+      background: #1f2937;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .step-contrib > div {
+      height: 100%;
+      background: linear-gradient(90deg, #34d399, #67e8f9);
+      transition: width 280ms cubic-bezier(0.23,1,0.32,1);
+    }
+
+    .loop-step .fab-contrib {
+      font-size: 8px;
+      color: #34d399;
+      margin-top: 1px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .graph-legend {
+      font-size: 9px;
+      color: #64748b;
+    }
+
+    .replay-active .mission-panel {
+      box-shadow: 0 0 0 1px rgba(167,139,250,0.3);
+    }
+
+    .replay-cursor {
+      background: rgba(167,139,250,0.15) !important;
+      border-left-color: #a78bfa !important;
+    }
+
+    .mc-stat {
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body class="bg-[#0b0e14] text-slate-200 selection:bg-cyan-400/30">
+  <!-- HEADER / COMMAND BAR -->
+  <header class="mc-header border-b border-slate-800 sticky top-0 z-50">
+    <div class="max-w-[1680px] mx-auto px-5 py-3 flex items-center gap-4">
+      <!-- Identity -->
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded bg-gradient-to-br from-cyan-400 to-emerald-400 flex items-center justify-center">
+            <span class="text-[#0b0e14] font-bold text-xl tracking-[-1.5px] leading-none mt-px">A</span>
+          </div>
+          <div>
+            <div class="font-semibold tracking-[2.5px] text-lg leading-none text-white">AGENTDRIVE</div>
+            <div class="text-[9px] text-cyan-400/70 -mt-0.5 font-medium tracking-[1px]">MISSION KANBAN + CONTROL</div>
+          </div>
+        </div>
+        <div class="px-2.5 py-px rounded bg-slate-900 border border-slate-700 text-[10px] font-mono text-amber-400/90">TOWER v1.5</div>
+      </div>
+
+      <div class="h-5 w-px bg-slate-800 mx-1"></div>
+
+      <!-- Global identifiers -->
+      <div class="flex items-center gap-x-5 text-sm">
+        <div class="flex items-baseline gap-1.5">
+          <span class="terminal-label">SWARM</span>
+          <span id="swarm-id" class="font-mono text-amber-300 tracking-tight">stabilization-wave-20260531</span>
+        </div>
+        <div class="flex items-baseline gap-1.5">
+          <span class="terminal-label">CYCLE</span>
+          <span id="active-cycle" class="font-mono text-emerald-300 tracking-tight tabular-nums">--</span>
+        </div>
+      </div>
+
+      <!-- Global Coherence -->
+      <div class="flex-1 max-w-[260px] flex items-center gap-3 pl-2">
+        <div class="flex items-center gap-2 min-w-[138px]">
+          <div>
+            <div class="terminal-label text-[9px] mb-px">GLOBAL FABRIC COHERENCE</div>
+            <div class="flex items-baseline gap-1">
+              <span id="global-coh" class="font-mono text-3xl font-semibold tabular-nums tracking-tighter text-emerald-300 data-value">87.4</span>
+              <span class="text-emerald-300/60 text-sm">%</span>
+            </div>
+          </div>
+          <div class="flex-1 h-2.5 bg-[#1a212b] rounded-full overflow-hidden border border-slate-800 shadow-inner">
+            <div id="global-coh-bar" class="coherence-bar rounded-full" style="width: 87.4%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WS Status + Quick Actions -->
+      <div class="flex items-center gap-2.5">
+        <div id="ws-status" 
+             class="inline-flex items-center gap-1.5 px-2.5 h-7 rounded-full border text-xs font-medium bg-red-950/60 border-red-900/70 text-red-400">
+          <div class="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse"></div>
+          <span>DISCONNECTED</span>
+        </div>
+
+        <div class="flex gap-1.5">
+          <button onclick="sendCommand('request_briefing')"
+                  class="px-3 py-1 text-xs rounded-md border border-slate-700 hover:bg-slate-800 active:bg-slate-900 transition-colors flex items-center gap-1">
+            <span>BRIEFING</span>
+          </button>
+          <button onclick="sendCommand('trigger_densification')"
+                  class="px-3 py-1 text-xs rounded-md border border-violet-800 hover:bg-violet-950/60 active:bg-violet-950 text-violet-300 transition-colors flex items-center gap-1">
+            <span>DENSIFY</span>
+          </button>
+          <button onclick="sendCommand('suggest_connection_improvements')"
+                  class="px-3 py-1 text-xs rounded-md border border-violet-700 hover:bg-violet-950/40 text-violet-200 transition-colors flex items-center gap-1" title="Wave 3: weak links from fabric briefing">
+            <span>SUGGEST</span>
+          </button>
+          <button onclick="showDecisionComposer()"
+                  class="px-3 py-1 text-xs rounded-md border border-amber-800 hover:bg-amber-950/60 active:bg-amber-950 text-amber-300 transition-colors flex items-center gap-1">
+            <span>DECIDE</span>
+          </button>
+          <button onclick="sendCommand('overseer_force_hunch')"
+                  class="px-2 py-1 text-xs rounded-md border border-teal-800 hover:bg-teal-950/40 text-teal-200 transition-colors" title="Wave 3: force metacog hunch">
+            <span>HUNCH</span>
+          </button>
+          <button onclick="sendCommand('emit_test_fabric_lift', {lift:0.042, delta_edges:5})"
+                  class="px-2 py-1 text-xs rounded-md border border-emerald-800 hover:bg-emerald-950/40 text-emerald-200 transition-colors" title="Wave 3: safe dev helper - emits FabricUpdateEvent w/ graph_delta">
+            <span>TEST LIFT</span>
+          </button>
+          <button onclick="sendCommand('list_recent_fires')"
+                  class="px-2 py-1 text-xs rounded-md border border-orange-800 hover:bg-orange-950/40 text-orange-200 transition-colors" title="Wave 3: Bay multi-fire from recent StaticFireEvents">
+            <span>FIRES</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="text-[10px] px-2 py-1 bg-slate-900/60 rounded border border-slate-800 font-mono text-slate-500">SEQ <span id="seq-display" class="text-slate-400 tabular-nums">0000</span></div>
+    </div>
+  </header>
+
+  <!-- Wave 3: Local operator banner (per AGENTS.md + server.py security block; localhost-only) -->
+  <div class="max-w-[1680px] mx-auto px-4 -mt-1 mb-2">
+    <div class="text-[10px] font-mono text-amber-400/70 bg-slate-950/70 border border-amber-900/40 rounded px-3 py-0.5 inline-block">LOCAL OPERATOR CONTROL SURFACE — stabilization-wave-20260531 • all cmds via dispatch_command + publish_event_sync ONLY • no auth (localhost)</div>
+  </div>
+
+  <!-- Wave 3 Command Bar: discoverability + autocomplete feel + examples + help (vanilla JS, no deps) -->
+  <div class="max-w-[1680px] mx-auto px-4 mb-3">
+    <div class="flex items-center gap-2 text-xs">
+      <span class="font-mono text-slate-500 shrink-0">CMD&gt;</span>
+      <input id="wave3-cmd" list="wave3-cmd-list" placeholder="e.g. inject_custom_observation observation=... from_fabric=true   or  pause_evolution_context"
+             class="flex-1 bg-[#0a0d13] border border-slate-700 focus:border-violet-700 px-3 py-1 rounded font-mono text-sm text-slate-200 placeholder:text-slate-600"
+             onkeydown="if (event.key==='Enter') submitWave3CommandFromBar()">
+      <datalist id="wave3-cmd-list">
+        <option value="request_briefing"></option>
+        <option value="suggest_connection_improvements"></option>
+        <option value="trigger_densification weak_link=from_fabric_briefing"></option>
+        <option value="parent_decision decision.action=fabric_steer fabric_directives=prioritize_research_constitutions from_fabric=true"></option>
+        <option value="overseer_force_hunch"></option>
+        <option value="get_metacognitive_briefing"></option>
+        <option value="emit_test_fabric_lift lift=0.05 delta_edges=7"></option>
+        <option value="inject_custom_observation observation=steer_to_weak_links weak_links=research-constitutions from_fabric=true"></option>
+        <option value="pause_evolution_context note=operator_steer from_fabric=true"></option>
+        <option value="resume_evolution_context"></option>
+        <option value="list_recent_fires"></option>
+        <option value="compare_fires"></option>
+        <option value="start_static_fire duration_seconds=60"></option>
+      </datalist>
+      <button onclick="submitWave3CommandFromBar()" class="px-3 py-1 rounded border border-slate-600 hover:bg-slate-800 text-xs">SEND</button>
+      <button onclick="showWave3Help()" class="px-2 py-1 rounded border border-slate-700 hover:bg-slate-800 text-xs text-slate-400" title="Wave 3 command surface help + examples">?</button>
+      <span id="cmd-latency" class="font-mono text-[10px] text-emerald-400/70 w-12 text-right tabular-nums"></span>
+    </div>
+    <div class="text-[9px] text-slate-500 mt-0.5">Wave 3 extended surface — all produce typed events (ParentDecisionEvent+triggered_from_fabric, FabricUpdateEvent+graph_delta) instantly via /ws/mission. Status + latency on ACK.</div>
+  </div>
+
+  <div class="max-w-[1680px] mx-auto p-4 tower-grid">
+    <!-- PRIMARY VISUAL LAYER: LOOP + FABRIC -->
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-3 mb-3">
+      
+      <!-- 6-STEP CANONICAL LOOP -->
+      <div class="xl:col-span-5 mission-panel rounded-2xl p-4 shadow-xl">
+        <div class="flex items-center justify-between mb-3 px-0.5">
+          <div>
+            <span class="section-title text-cyan-400">CANONICAL 6-STEP LOOP</span>
+            <span class="ml-2 text-[10px] text-cyan-400/50">PARENT • OVERSEER • RUNTIME</span>
+          </div>
+          <div id="current-step-badge"
+               class="status-pill bg-cyan-900/40 border border-cyan-700/50 text-cyan-300">
+            STEP <span id="current-step-num">—</span>/6
+          </div>
+        </div>
+
+        <div id="loop-steps" class="grid grid-cols-6 gap-1.5">
+          <!-- Populated by JS -->
+        </div>
+        
+        <div class="mt-2 px-1 text-[10px] text-slate-500 flex items-center justify-between">
+          <div>Live updates via <span class="font-medium text-cyan-400/70">LoopStepEvent</span></div>
+          <div id="loop-last-update" class="font-mono tabular-nums text-[10px]"></div>
+        </div>
+      </div>
+
+      <!-- LIVE FABRIC OBSERVATORY -->
+      <div class="xl:col-span-7 mission-panel rounded-2xl p-4 shadow-xl flex flex-col">
+        <div class="flex items-center justify-between mb-2.5 px-0.5">
+          <div class="flex items-center gap-2">
+            <span class="section-title text-violet-400">LIVE FABRIC OBSERVATORY</span>
+            <span class="text-[10px] px-1.5 rounded bg-violet-900/30 border border-violet-700/40 text-violet-300/90">MULTI-CYCLE MEMORY GRAPH</span>
+            <!-- v1.5 viz mode controls -->
+            <div class="flex gap-px ml-1.5">
+              <button onclick="setVizMode('radial')" id="viz-radial" class="viz-toggle active" title="Radial constellation (stable)">RADIAL</button>
+              <button onclick="setVizMode('force')" id="viz-force" class="viz-toggle" title="Force-directed (live physics)">CONSTELLATION</button>
+            </div>
+          </div>
+          <div class="flex items-center gap-x-4 text-xs">
+            <div>EDGES <span id="edge-count" class="font-mono text-violet-300 tabular-nums font-medium">142</span></div>
+            <div>CYCLES <span id="cycle-count" class="font-mono text-violet-300 tabular-nums font-medium">11</span></div>
+          </div>
+        </div>
+
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-5 gap-3">
+          <!-- Canvas viz (v1.5 live graph + force) -->
+          <div class="md:col-span-3 bg-[#0a0d13] rounded-xl border border-slate-800 p-2 flex flex-col items-center justify-center overflow-hidden">
+            <canvas id="fabric-canvas" width="580" height="212" class="max-w-full rounded"></canvas>
+            <!-- v1.5 graph legend -->
+            <div class="graph-legend mt-0.5 flex items-center gap-x-3 w-full justify-center">
+              <span><span class="inline-block w-2 h-px align-middle" style="background:#c026ff"></span> <span class="text-violet-400">densif</span></span>
+              <span><span class="inline-block w-2 h-px align-middle" style="background:#67e8f9"></span> <span class="text-cyan-400">continuity</span></span>
+              <span class="text-[8px] text-slate-500">• recent glow on delta</span>
+            </div>
+          </div>
+
+          <!-- Fabric summary + key links -->
+          <div class="md:col-span-2 flex flex-col gap-2 text-sm">
+            <div>
+              <div class="terminal-label mb-1">OVERALL COHERENCE</div>
+              <div class="flex items-end gap-2">
+                <span id="fabric-coh-large" class="font-mono text-4xl font-semibold tabular-nums text-violet-300 data-value">87.4</span>
+                <span class="text-violet-400 text-sm pb-1">%</span>
+              </div>
+            </div>
+
+            <div class="flex-1">
+              <div class="terminal-label mb-1">ACTIVE CYCLES</div>
+              <div id="active-cycles-list" 
+                   class="font-mono text-[11px] leading-snug text-violet-200/90 bg-black/40 border border-violet-900/30 rounded p-2 min-h-[54px] flex flex-wrap gap-x-2 gap-y-px">
+                <!-- populated by JS -->
+              </div>
+            </div>
+
+            <div>
+              <div class="terminal-label mb-0.5">KEY CROSS-CYCLE SIGNALS</div>
+              <div id="key-edges" class="text-[10px] text-violet-200/70 font-mono leading-tight">
+                — awaiting fabric snapshot —
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECONDARY LAYER: OVERSEER + DECISIONS + GRID + STATIC FIRE -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+      
+      <!-- Overseer Metacognition -->
+      <div class="lg:col-span-4 mission-panel rounded-2xl p-4 flex flex-col">
+        <div class="section-title text-teal-400 mb-2.5 flex items-center justify-between">
+          <span>OVERSEER METACOGNITION</span>
+          <span class="text-[10px] font-normal text-teal-400/50">(STEP 2)</span>
+        </div>
+        
+        <div class="space-y-3 flex-1">
+          <div class="flex items-center gap-4">
+            <div>
+              <div class="terminal-label">ADAPTATION EFFECTIVENESS</div>
+              <div class="flex items-baseline">
+                <span id="adapt-eff" class="font-mono text-3xl tabular-nums text-teal-300 data-value">0.81</span>
+              </div>
+            </div>
+            <div class="flex-1">
+              <div class="h-1.5 bg-slate-800 rounded">
+                <div id="adapt-bar" class="h-1.5 bg-teal-400 rounded transition-all" style="width:81%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="plateau-flag" class="hidden items-center gap-2 px-2.5 py-1 rounded bg-red-950/60 border border-red-900/60 text-red-400 text-xs">
+            <span>⚠</span> <span class="font-semibold">PLATEAU DETECTED</span>
+          </div>
+
+          <div>
+            <div class="terminal-label mb-1">RECOMMENDATIONS</div>
+            <ul id="overseer-recs" class="text-xs space-y-0.5 text-teal-200/80 list-none min-h-[38px]">
+              <!-- JS -->
+            </ul>
+          </div>
+
+          <div>
+            <div class="terminal-label mb-1">RECENT HUNCHES</div>
+            <div id="overseer-hunches" class="font-mono text-[10px] text-teal-200/70 bg-black/30 rounded p-2 leading-tight min-h-[32px]">
+              —
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Parent Decision Timeline -->
+      <div class="lg:col-span-4 mission-panel rounded-2xl p-4 flex flex-col">
+        <div class="section-title text-amber-400 mb-2 flex justify-between items-baseline">
+          <span>PARENT DECISION TIMELINE</span>
+          <span class="font-normal text-amber-400/40 text-[10px]">FABRIC-DRIVEN</span>
+        </div>
+        
+        <div id="decision-timeline" 
+             class="flex-1 overflow-auto text-xs space-y-1.5 pr-1 custom-scroll min-h-[132px] max-h-[168px]">
+          <!-- JS injected decision cards -->
+          <div class="text-slate-500 text-xs py-1">No decisions recorded yet.</div>
+        </div>
+      </div>
+
+      <!-- Grid Telemetry Deck -->
+      <div class="lg:col-span-4 mission-panel rounded-2xl p-4 flex flex-col">
+        <div class="section-title text-emerald-400 mb-2">GRID TELEMETRY</div>
+        
+        <div id="grid-deck" class="grid grid-cols-2 gap-2 text-sm flex-1">
+          <!-- Populated dynamically -->
+          <div class="metric-card rounded-xl p-2.5 border border-emerald-900/30">
+            <div class="text-emerald-400/70 text-[10px]">HEALTH</div>
+            <div id="grid-health" class="font-mono text-2xl text-emerald-300 tabular-nums">OK</div>
+          </div>
+          <div class="metric-card rounded-xl p-2.5 border border-emerald-900/30">
+            <div class="text-emerald-400/70 text-[10px]">ACTIVE NODES</div>
+            <div id="grid-nodes" class="font-mono text-2xl text-emerald-300 tabular-nums data-value">—</div>
+          </div>
+          <div class="metric-card rounded-xl p-2.5 border border-emerald-900/30 col-span-2">
+            <div class="flex justify-between text-[10px] mb-0.5">
+              <span class="text-emerald-400/70">UTIL / THROUGHPUT</span>
+            </div>
+            <div class="font-mono text-xs text-emerald-300/90" id="grid-util">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATIC FIRE BAY — prominent dedicated control surface -->
+      <div class="lg:col-span-12 mission-panel rounded-2xl p-4 border-orange-900/50 bg-[#16120e] shadow-inner">
+        <div class="flex flex-col lg:flex-row lg:items-center gap-y-3 gap-x-5">
+          <div class="flex items-center gap-3 flex-1">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="section-title text-orange-400 tracking-[1.5px]">STATIC FIRE BAY</span>
+                <div id="sf-phase" 
+                     class="status-pill bg-orange-900/40 border border-orange-700/50 text-orange-300">IDLE</div>
+              </div>
+              <div class="text-[11px] text-orange-400/60 mt-0.5">Controlled evolution window • rich live + post-densif telemetry via StaticFireEvent (use run_static_fire_with_mission_telemetry in harnesses)</div>
+            </div>
+          </div>
+
+          <!-- Controls -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <div class="flex items-center bg-black/40 border border-orange-900/40 rounded-lg px-1 py-1">
+              <span class="px-2 text-xs text-orange-400/70">DURATION</span>
+              <input id="sf-duration" type="number" value="120" step="10" min="30" max="600"
+                     class="w-16 bg-transparent font-mono text-right text-orange-200 focus:outline-none px-1">
+              <span class="pr-2 text-orange-400/50 text-xs">s</span>
+            </div>
+
+            <button id="btn-start-sf"
+                    onclick="startStaticFire()"
+                    class="px-5 py-1.5 bg-gradient-to-b from-orange-500 to-orange-600 hover:from-orange-400 active:from-orange-700 text-black font-semibold rounded-lg text-sm tracking-[0.5px] shadow shadow-orange-900/50 flex items-center gap-2 transition-all active:scale-[0.985]">
+              <span>START STATIC FIRE</span>
+            </button>
+
+            <button onclick="sendCommand('start_static_fire', {duration_seconds: parseFloat(document.getElementById('sf-duration').value) || 120})"
+                    class="hidden px-3 py-1.5 text-xs border border-orange-700 hover:bg-orange-950/40 rounded-lg text-orange-300">RE-ARM</button>
+          </div>
+        </div>
+
+        <!-- Live SF Telemetry -->
+        <div class="mt-3 grid grid-cols-2 md:grid-cols-6 gap-2 text-sm">
+          <div class="bg-black/40 border border-orange-900/30 rounded-xl px-3 py-2">
+            <div class="text-[10px] text-orange-400/70">PHASE</div>
+            <div id="sf-phase-live" class="font-semibold text-orange-200 tabular-nums">idle</div>
+          </div>
+          <div class="bg-black/40 border border-orange-900/30 rounded-xl px-3 py-2">
+            <div class="text-[10px] text-orange-400/70">ELAPSED / TARGET</div>
+            <div id="sf-time" class="font-mono text-orange-200 data-value">0s / 120s</div>
+          </div>
+          <div class="bg-black/40 border border-orange-900/30 rounded-xl px-3 py-2">
+            <div class="text-[10px] text-orange-400/70">CYCLES COMPLETED</div>
+            <div id="sf-cycles" class="font-mono text-orange-200 text-xl data-value">0</div>
+          </div>
+          <div class="bg-black/40 border border-orange-900/30 rounded-xl px-3 py-2">
+            <div class="text-[10px] text-orange-400/70">COHERENCE</div>
+            <div id="sf-coh" class="font-mono text-orange-200 text-xl data-value">—</div>
+          </div>
+          <div class="bg-black/40 border border-orange-900/30 rounded-xl px-3 py-2 md:col-span-2">
+            <div class="text-[10px] text-orange-400/70">LIVE LOG</div>
+            <div id="sf-log" class="font-mono text-[10px] text-orange-200/90 h-5 overflow-hidden whitespace-nowrap leading-none pt-px">
+              Awaiting static fire command...
+            </div>
+          </div>
+        </div>
+
+        <div id="sf-postfire" class="hidden mt-2 text-xs bg-orange-950/30 border border-orange-900/40 rounded-lg p-2">
+          <!-- populated on completion -->
+        </div>
+      </div>
+
+      <!-- v1.5 MULTI-FIRE COMPARISON PANEL (side-by-side historical StaticFireTelemetry) -->
+      <div class="lg:col-span-12 mission-panel rounded-2xl p-3 border-orange-900/40">
+        <div class="flex items-baseline justify-between mb-1.5 px-0.5">
+          <div>
+            <span class="section-title text-orange-400">MULTI-FIRE TELEMETRY COMPARISON</span>
+            <span class="ml-2 text-[9px] text-orange-400/50">Recent controlled evolution runs • lift • interventions • coherence curves</span>
+          </div>
+          <div class="text-[9px] text-orange-400/60 font-mono">TARGET: stabilization-wave-20260531</div>
+        </div>
+        <div id="fire-comparison" class="flex gap-2 overflow-x-auto pb-1 custom-scroll min-h-[68px]">
+          <!-- JS-populated fire cards with sparklines -->
+          <div class="text-orange-400/50 text-xs px-2 py-1">No completed fires recorded yet. Run static fires via harness or START STATIC FIRE.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- v1.5 HISTORICAL REPLAY DECK (seq-aware scrub of recent_events from hub) -->
+    <div class="mt-2 mission-panel rounded-2xl p-2 replay-bar">
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+        <div class="flex items-center gap-1.5 font-medium text-violet-300">
+          <span class="section-title text-violet-400">FABRIC + LOOP HISTORICAL REPLAY</span>
+          <span class="text-[9px] px-1 py-px bg-violet-900/30 border border-violet-800 rounded text-violet-300/80">SEQ DRIVEN</span>
+        </div>
+        <div class="flex-1 min-w-[220px] flex items-center gap-2">
+          <input type="range" id="replay-slider" min="0" max="0" step="1" value="0"
+                 class="flex-1 accent-violet-400 cursor-pointer" oninput="onReplaySlider()">
+          <span id="replay-pos-label" class="font-mono tabular-nums text-violet-200 w-[92px] text-right">LIVE / 0000</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <button onclick="replayStep(-5)" class="px-1.5 py-0.5 border border-violet-800 hover:bg-violet-950/50 rounded text-violet-300 text-[10px]">«</button>
+          <button onclick="replayStep(-1)" class="px-1.5 py-0.5 border border-violet-800 hover:bg-violet-950/50 rounded text-violet-300 text-[10px]">◀</button>
+          <button onclick="toggleReplayPlay()" id="replay-play-btn"
+                  class="px-2 py-0.5 bg-violet-700 hover:bg-violet-600 active:bg-violet-800 rounded text-white text-[10px] font-semibold">PLAY</button>
+          <button onclick="replayStep(1)" class="px-1.5 py-0.5 border border-violet-800 hover:bg-violet-950/50 rounded text-violet-300 text-[10px]">▶</button>
+          <button onclick="replayStep(5)" class="px-1.5 py-0.5 border border-violet-800 hover:bg-violet-950/50 rounded text-violet-300 text-[10px]">»</button>
+          <button onclick="exitReplay()" class="ml-1 px-2 py-0.5 text-[10px] border border-slate-700 hover:bg-slate-800 rounded">LIVE</button>
+        </div>
+        <div class="text-[9px] text-slate-500">Scrub drives loop step + fabric graph deltas over time. Exit returns to live WS.</div>
+      </div>
+    </div>
+
+    <!-- UNIFIED LIVE EVENT STREAM -->
+    <div class="mt-3 mission-panel rounded-2xl p-3">
+      <div class="flex items-center justify-between mb-1.5 px-1">
+        <div class="flex items-center gap-2">
+          <span class="section-title text-slate-400">UNIFIED EVENT STREAM</span>
+          <span class="text-[10px] px-1.5 py-px rounded bg-slate-800 text-slate-400 border border-slate-700">SEQ-AWARE • HISTORICAL REPLAY + LIVE</span>
+        </div>
+        
+        <!-- Filters -->
+        <div class="flex flex-wrap gap-x-1 gap-y-px text-[10px] font-medium">
+          <label class="inline-flex items-center gap-1 px-1.5 cursor-pointer"><input type="checkbox" data-filter="loop_step" checked class="accent-cyan-400"> <span class="text-cyan-300">LOOP</span></label>
+          <label class="inline-flex items-center gap-1 px-1.5 cursor-pointer"><input type="checkbox" data-filter="fabric_update" checked class="accent-violet-400"> <span class="text-violet-300">FABRIC</span></label>
+          <label class="inline-flex items-center gap-1 px-1.5 cursor-pointer"><input type="checkbox" data-filter="parent_decision" checked class="accent-amber-400"> <span class="text-amber-300">DECISION</span></label>
+          <label class="inline-flex items-center gap-1 px-1.5 cursor-pointer"><input type="checkbox" data-filter="overseer_state" checked class="accent-teal-400"> <span class="text-teal-300">OVERSEER</span></label>
+          <label class="inline-flex items-center gap-1 px-1.5 cursor-pointer"><input type="checkbox" data-filter="static_fire" checked class="accent-orange-400"> <span class="text-orange-300">FIRE</span></label>
+          <label class="inline-flex items-center gap-1 px-1.5 cursor-pointer"><input type="checkbox" data-filter="grid_health" checked class="accent-emerald-400"> <span class="text-emerald-300">GRID</span></label>
+        </div>
+      </div>
+
+      <div id="event-stream" 
+           class="h-40 overflow-auto bg-[#0a0d13] border border-slate-800 rounded-xl p-1.5 text-xs custom-scroll font-mono leading-tight">
+        <!-- rows appended by JS -->
+      </div>
+      <div class="flex justify-between px-1 pt-1 text-[10px] text-slate-500">
+        <div>Most recent at top. Use filters above.</div>
+        <button onclick="clearEventStream()" class="hover:text-slate-300 transition-colors">CLEAR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DECISION COMPOSER MODAL (lightweight, no framework) -->
+  <div id="decision-modal" onclick="if (event.target.id === 'decision-modal') hideDecisionComposer()" 
+       class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+    <div onclick="event.stopImmediatePropagation()" class="mission-panel w-full max-w-md rounded-2xl p-5 border-amber-900/40">
+      <div class="font-semibold text-amber-300 mb-1">FABRIC-DRIVEN PARENT DECISION</div>
+      <div class="text-xs text-amber-200/70 mb-3">This will be recorded via the canonical path and will advance the loop (step 4).</div>
+      
+      <div class="space-y-2.5">
+        <div>
+          <label class="text-xs text-amber-400/70 block mb-1">ACTION / STEER</label>
+          <input id="dec-action" value="fabric_steer" 
+                 class="w-full bg-black border border-amber-900/40 px-3 py-1.5 rounded text-sm font-mono">
+        </div>
+        <div>
+          <label class="text-xs text-amber-400/70 block mb-1">NOTE (fabric context)</label>
+          <textarea id="dec-note" rows="2" placeholder="Increase cross-cycle continuity on research-constitutions genomes..."
+                    class="w-full bg-black border border-amber-900/40 px-3 py-1.5 rounded text-sm"></textarea>
+        </div>
+      </div>
+
+      <div class="flex gap-2 mt-4">
+        <button onclick="hideDecisionComposer()" class="flex-1 py-2 rounded border border-slate-700 text-xs">CANCEL</button>
+        <button onclick="submitDecision()" 
+                class="flex-1 py-2 rounded bg-amber-500 text-black font-semibold text-sm">RECORD DECISION</button>
+      </div>
+      <div class="text-center text-[10px] text-amber-400/40 mt-2">Sends via WebSocket command router → record_parent_decision</div>
+    </div>
+  </div>
+
+  <!-- EXPERIENCE LAYER / v3 MEMORY FABRIC BRIEFING — the structural heart (Obsidian-style connections for every loop) -->
+  <!-- This is the tightening of the Experience Layer into the real-time Tower: full Parent-facing briefing from recorder -->
+  <!-- Coherence, cross-cycle continuations with provenance, densification summary + lift, actionable weak links that emit real steering -->
+  <!-- Auto-refreshes on FabricUpdateEvent + ParentDecisionEvent (via publish_event_sync single channel). Serves the 6-step loop directly. -->
+  <!-- `agentdrive board` lands the operator here: whole system as one living fabric, not files. stabilization-wave-20260531 only. -->
+  <div class="max-w-[1680px] mx-auto px-5 mb-5">
+    <!-- AD-Grid Living Quiet Mode Banner (minimal observability tranche) -->
+    <!-- Visible when Grid attached but no active mission/fire. Proves the persistent world (programs + research threads) continues on stabilization-wave-20260531. -->
+    <!-- Adaptive: JS can poll /api/grid/status + /api/grid/health + /api/grid/programs and toggle this + backoff WS. -->
+    <div id="grid-living-quiet-banner" class="hidden mb-3 px-4 py-2 rounded-xl border border-emerald-900/50 bg-[#0c1118] text-emerald-300/90 text-sm flex items-center gap-3">
+      <span class="font-semibold tracking-wider text-emerald-400">AD-GRID LIVING QUIETLY</span>
+      <span id="grid-quiet-status" class="font-mono text-xs text-emerald-400/70">programs + autonomous research threads continue on stabilization-wave-20260531 • no active fire required</span>
+      <button onclick="refreshGridQuiet()" class="ml-auto text-[10px] px-2 py-0.5 border border-emerald-800 rounded hover:bg-emerald-900/30">REFRESH GRID</button>
+    </div>
+
+    <!-- AD-GRID INHABITANTS / PROGRAMS + COUNCIL (added in next tranche) -->
+    <!-- Consumes /api/grid/programs + /api/grid/health. Shows model programs + the three default Council constitutions running as long-lived autonomous threads. -->
+    <!-- Open the Ports (1780296458) Tower visibility prep note: /api/grid/programs serves inhabitants semantically. No dedicated /api/grid/inhabitants alias endpoint exists yet in mission_control/server.py (additive future win for discoverability by external models). UI panel + refreshInhabitants() + created timestamps already prepared and graceful. Documented in docs/AD_GRID_JOIN.md and AD_GRID_VISION.md. -->
+    <div id="adgrid-inhabitants-panel" class="mission-panel rounded-2xl p-4 border-emerald-900/40 bg-[#0f131a] mb-5">
+      <div class="flex items-center justify-between mb-2">
+        <div>
+          <span class="section-title text-emerald-400 tracking-[1.5px]">AD-GRID INHABITANTS / PROGRAMS + COUNCIL</span>
+          <span class="ml-2 text-[10px] text-emerald-400/60">PERSISTENT • SELF-REFERENTIAL • 24/7 ON stabilization-wave-20260531</span>
+          <span id="inhabitants-count" class="ml-3 text-[10px] font-mono px-1.5 py-px rounded bg-emerald-950/60 text-emerald-300/90 border border-emerald-900/40"></span>
+          <!-- additive label for exact task phrasing prominence (no breakage) -->
+          <span class="ml-2 text-[9px] uppercase tracking-widest text-emerald-400/50">AD-GRID INHABITANTS / PROGRAMS</span>
+        </div>
+        <button onclick="refreshInhabitants()" class="text-[10px] px-2 py-0.5 border border-emerald-800 rounded hover:bg-emerald-900/30">REFRESH INHABITANTS</button>
+      </div>
+      <div id="inhabitants-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm"></div>
+      <div id="council-status" class="mt-3 text-xs font-mono text-emerald-400/80 border-t border-emerald-900/40 pt-2">Council default threads: PerfectionistOptimizer • GuardianIntegrity • ExternalBridge (wired in GridEngine)</div>
+    </div>
+
+    <div id="experience-fabric-panel" class="mission-panel rounded-2xl p-4 border-emerald-900/40 bg-[#0f131a]">
+      <div class="flex items-center justify-between mb-2 px-0.5">
+        <div>
+          <span class="section-title text-emerald-400 tracking-[1.5px]">EXPERIENCE LAYER / v3 MULTI-CYCLE FABRIC</span>
+          <span class="ml-2 text-[10px] text-emerald-400/60">PARENT-FACING • OBSIDIAN-STYLE CONNECTIONS • EVERY LOOP DENSIFIES</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="flex items-baseline gap-1 font-mono text-xs">
+            <span class="text-emerald-400/70">COH</span>
+            <span id="exp-coh" class="text-2xl font-semibold tabular-nums text-emerald-300 data-value">0.000</span>
+          </div>
+          <div class="w-24 h-1.5 bg-[#1a212b] rounded overflow-hidden border border-emerald-900/30">
+            <div id="exp-coh-bar" class="h-1.5 bg-gradient-to-r from-emerald-400 to-teal-400 transition-all" style="width:0%"></div>
+          </div>
+          <button onclick="refreshExperienceFabric()" class="px-2 py-0.5 text-[10px] border border-emerald-700 hover:bg-emerald-950/40 rounded text-emerald-300">REFRESH</button>
+          <button onclick="triggerDensifyFromFabric()" class="px-2 py-0.5 text-[10px] border border-violet-700 hover:bg-violet-950/40 rounded text-violet-300" title="Trigger GraphGardener on current weak links">DENSIFY WEAK</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-x-3 gap-y-2 text-sm">
+        <!-- Coherence + Densification + Fusion -->
+        <div class="lg:col-span-3 bg-black/40 border border-emerald-900/30 rounded-xl p-2.5">
+          <div class="terminal-label text-emerald-400/70 mb-1">FABRIC COHERENCE + LIFT</div>
+          <div id="exp-densif-summary" class="font-mono text-[11px] text-emerald-200/90 leading-tight min-h-[42px]">
+            Multi-cycle v3 • awaiting real Integrated loop data...
+          </div>
+          <div class="mt-1.5 text-[10px] text-emerald-400/60" id="exp-fusion-cp">
+            fusion_checkpoint: —
+          </div>
+        </div>
+
+        <!-- Key Cross-Cycle Continuations (Obsidian connections) -->
+        <div class="lg:col-span-4 bg-black/40 border border-emerald-900/30 rounded-xl p-2.5">
+          <div class="terminal-label text-emerald-400/70 mb-1">KEY CROSS-CYCLE CONTINUATIONS</div>
+          <div id="exp-conts" class="text-[11px] text-emerald-200/80 font-mono leading-snug min-h-[52px] space-y-px">
+            <div class="text-emerald-400/50">— no continuations surfaced yet (run loop to grow fabric) —</div>
+          </div>
+        </div>
+
+        <!-- Actionable Weak Links + Parent Recommendations (real steering surface) -->
+        <div class="lg:col-span-5 bg-black/40 border border-emerald-900/30 rounded-xl p-2.5">
+          <div class="terminal-label text-emerald-400/70 mb-1 flex items-center justify-between">
+            <span>ACTIONABLE WEAK LINKS (CLICK TO STEER PARENT)</span>
+            <span class="text-[9px] text-emerald-400/50">emits suggest + fabric_directives</span>
+          </div>
+          <div id="exp-weak" class="text-[11px] text-emerald-200/80 min-h-[52px]">
+            <div class="text-emerald-400/50">— no weak links above threshold —</div>
+          </div>
+          <div id="exp-actionable" class="mt-1.5 text-[10px] text-amber-300/80 font-mono leading-tight border-t border-emerald-900/30 pt-1">
+            —
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Cycle Structural Renders (mermaid source + hierarchical text; paste-ready for Obsidian) -->
+      <div class="mt-2 pt-2 border-t border-emerald-900/30">
+        <div class="flex items-center gap-2 text-[10px] text-emerald-400/70 mb-1">
+          <span>RECENT CYCLE GRAPHS (v3 fabric renders — embeddable)</span>
+          <span class="font-mono text-emerald-400/40">mermaid + hierarchical text from recorder</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div>
+            <div class="text-[9px] text-emerald-400/60 mb-0.5">MERMAID SNIPPET (copy → obsidian/mermaid.live)</div>
+            <pre id="exp-mermaid" class="bg-black/60 border border-emerald-900/40 rounded p-1.5 text-[9px] font-mono text-emerald-200/80 overflow-auto max-h-20 leading-tight"></pre>
+          </div>
+          <div>
+            <div class="text-[9px] text-emerald-400/60 mb-0.5">HIERARCHICAL TEXT (for diary / living-experience)</div>
+            <pre id="exp-text" class="bg-black/60 border border-emerald-900/40 rounded p-1.5 text-[9px] font-mono text-emerald-200/80 overflow-auto max-h-20 leading-tight"></pre>
+          </div>
+        </div>
+        <div class="text-[9px] text-emerald-400/50 mt-1" id="exp-provenance">provenance: ExperienceGraphRecorder • stabilization-wave-20260531 • single publish_event_sync channel</div>
+      </div>
+
+      <!-- PARENT FABRIC REASONING TRACES (dedicated live section, stabilization-wave-20260531) -->
+      <!-- Extends #experience-fabric-panel with real Parent structural reasoning surfaced by recorder.record_parent_fabric_reasoning -->
+      <!-- Live updates on FabricUpdateEvent (when payload carries parent_fabric_reasoning) + hydration via /api/experience_fabric -->
+      <!-- Clickable: highlights matching nodes/edges in the LIVE FABRIC OBSERVATORY canvas (emerald accent) + shows detail -->
+      <div class="mt-2 pt-2 border-t border-emerald-900/30">
+        <div class="flex items-center justify-between mb-1 px-0.5">
+          <div>
+            <span class="terminal-label text-emerald-400/70">PARENT FABRIC REASONING TRACES</span>
+            <span class="ml-1.5 text-[9px] text-emerald-400/50">real-time • what the Parent actually considered</span>
+          </div>
+          <button onclick="clearFabricReasoningHighlights()" class="px-1.5 py-px text-[9px] border border-emerald-700/60 hover:bg-emerald-950/30 rounded text-emerald-300/80">CLEAR HIGHLIGHTS</button>
+        </div>
+        <div id="exp-parent-reasoning" class="bg-black/40 border border-emerald-900/30 rounded-xl p-2 text-[10px] font-mono text-emerald-200/80 max-h-[92px] overflow-auto leading-snug space-y-1">
+          <div class="text-emerald-400/50">— awaiting Parent fabric-native decisions (record_parent_fabric_reasoning in Integrated loop) —</div>
+        </div>
+        <div id="exp-reasoning-detail" class="mt-1 text-[9px] text-emerald-300/70 font-mono hidden border border-emerald-900/30 rounded p-1 bg-black/30"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================== -->
+  <!-- CONDUCTOR COCKPIT — major upgrades (ILO Operator + Tower lens) -->
+  <!-- stabilization-wave-20260531: parallel on all four directions per charter -->
+  <!-- Prominent new sections: Live Council Activity, Inhabitant Regs & Status (register_model_program), -->
+  <!-- Code Action Review Queue (inhabitant_code_action + approve/override -> recorder DNA), -->
+  <!-- "What the Grid is Thinking" (high-gbrain parent_fabric_reasoning summary). -->
+  <!-- Real-time via polling + WS; filters; clear attribution (program/constitution/cycle/gbrain/DNA refs). -->
+  <!-- Additive + non-breaking. Design DNA: parent_fabric_reasoning:1780296650 (and 1780296579/6588). -->
+  <!-- Conductor usage: watch Councils propose, review code actions (buttons record verdicts as living DNA), -->
+  <!-- steer via high-value Grid thinking, see registered inhabitants from the Contract. -->
+  <div class="max-w-[1680px] mx-auto px-5 mb-6">
+    <div class="mb-3 flex items-center justify-between">
+      <div>
+        <span class="section-title text-violet-400 tracking-[2px]">CONDUCTOR COCKPIT</span>
+        <span class="ml-3 text-[10px] text-violet-400/60">HUMAN STEERING SURFACE • LIVE COUNCIL + INHABITANTS + REVIEW QUEUE • FULL DNA ATTRIBUTION</span>
+        <span class="ml-2 text-[9px] px-1.5 py-px rounded bg-violet-950/50 text-violet-300 border border-violet-800/40 font-mono">1780296458 + ilo-conductor-cockpit</span>
+      </div>
+      <div class="flex gap-2 text-[10px]">
+        <button onclick="refreshConductorCockpit()" class="px-3 py-0.5 border border-violet-700 hover:bg-violet-950/40 rounded text-violet-300">REFRESH ALL COCKPIT</button>
+        <button onclick="sendCommand('get_council_activity')" class="px-2 py-0.5 border border-emerald-700 hover:bg-emerald-950/30 rounded text-emerald-300 text-[9px]">PING COUNCIL</button>
+      </div>
+    </div>
+
+    <!-- Four panels in responsive grid (parallel progress on charter directions) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-12 gap-3">
+
+      <!-- 1. LIVE COUNCIL ACTIVITY FEED (get_council_activity pattern + direct fabric pulls) -->
+      <div class="xl:col-span-5 mission-panel rounded-2xl p-4 border-emerald-900/40 bg-[#0f131a]">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <span class="section-title text-emerald-400">LIVE COUNCIL ACTIVITY FEED</span>
+            <span class="ml-2 text-[9px] text-emerald-400/50">Perfectionist • Guardian • ExternalBridge + Contract</span>
+          </div>
+          <div class="flex items-center gap-1 text-[9px]">
+            <select id="council-role-filter" onchange="refreshCouncilActivity()" class="bg-[#0c1118] border border-emerald-800 text-emerald-300 text-[9px] px-1 py-0 rounded">
+              <option value="">All roles</option>
+              <option value="perfectionist">PerfectionistOptimizer</option>
+              <option value="guardian">GuardianIntegrity</option>
+              <option value="external">ExternalBridge</option>
+              <option value="program-contract">Program Contract</option>
+            </select>
+            <button onclick="refreshCouncilActivity()" class="px-1.5 py-px border border-emerald-700 rounded hover:bg-emerald-900/30 text-emerald-300">↻</button>
+          </div>
+        </div>
+        <div id="council-activity-feed" class="bg-black/40 border border-emerald-900/30 rounded-xl p-2 text-[10px] font-mono text-emerald-200/80 max-h-[138px] overflow-auto leading-snug space-y-1">
+          <div class="text-emerald-400/50">— awaiting Council research threads (run GridEngine or 5min self-improve mission) —</div>
+        </div>
+        <div class="mt-1 text-[8px] text-emerald-400/40 font-mono">Source: /api/grid/council-activity (MCP pattern + recorder traces). gbrain + attribution shown. DNA ref: 1780296588</div>
+      </div>
+
+      <!-- 2. INHABITANT REGISTRATIONS & STATUS (leveraging register_model_program) -->
+      <div class="xl:col-span-3 mission-panel rounded-2xl p-4 border-emerald-900/40 bg-[#0f131a]">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <span class="section-title text-emerald-400">INHABITANT REGISTRATIONS & STATUS</span>
+          </div>
+          <button onclick="refreshInhabitantsEnhanced()" class="text-[9px] px-1.5 py-px border border-emerald-700 rounded hover:bg-emerald-950/30">REFRESH</button>
+        </div>
+        <div id="inhabitants-enhanced-list" class="grid grid-cols-1 gap-1.5 text-[10px] max-h-[138px] overflow-auto">
+          <div class="text-emerald-400/50">— loading from /api/grid/inhabitants (register_model_program data) —</div>
+        </div>
+        <div id="inhabitants-cockpit-summary" class="mt-1 pt-1 border-t border-emerald-900/30 text-[8px] text-emerald-400/50 font-mono">Programs + Council threads visible to Conductor. Full Contract attribution.</div>
+      </div>
+
+      <!-- 3. CODE ACTION REVIEW QUEUE (inhabitant_code_action proposals + verdicts; approve/override buttons) -->
+      <div class="xl:col-span-4 mission-panel rounded-2xl p-4 border-amber-900/50 bg-[#16120e]">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <span class="section-title text-amber-400">CODE ACTION REVIEW QUEUE</span>
+            <span class="ml-1 text-[8px] text-amber-400/50">Guardian + Conductor gates</span>
+          </div>
+          <button onclick="refreshCodeActions()" class="text-[9px] px-1.5 py-px border border-amber-700 rounded hover:bg-amber-950/30">REFRESH QUEUE</button>
+        </div>
+        <div id="code-action-queue" class="bg-black/40 border border-amber-900/30 rounded-xl p-1.5 text-[9px] font-mono text-amber-200/80 max-h-[118px] overflow-auto leading-tight space-y-0.5">
+          <div class="text-amber-400/50">— no recent inhabitant_code_action yet (Perfectionist proposals appear here) —</div>
+        </div>
+        <div class="mt-1 text-[8px] text-amber-400/40">Click APPROVE/OVERRIDE → records Conductor verdict as DNA (ilo-conductor-cockpit@... + 1780296458). Feedback in event stream.</div>
+      </div>
+
+      <!-- 4. "WHAT THE GRID IS THINKING" (high-gbrain parent_fabric_reasoning summary) -->
+      <div class="xl:col-span-12 mission-panel rounded-2xl p-4 border-violet-900/40 bg-[#0f131a]">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <span class="section-title text-violet-400">"WHAT THE GRID IS THINKING"</span>
+            <span class="ml-2 text-[9px] text-violet-400/50">High-value parent_fabric_reasoning (lift + gbrain) • structural patterns the Parent considered</span>
+          </div>
+          <button onclick="refreshGridThinking()" class="text-[9px] px-2 py-px border border-violet-700 rounded hover:bg-violet-950/30">REFRESH THINKING</button>
+        </div>
+        <div id="grid-thinking-summary" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 text-[10px] font-mono text-violet-200/80">
+          <div class="text-violet-400/50 col-span-full">— high-gbrain traces from /api/grid/thinking-summary + experience fabric (click to highlight canvas) —</div>
+        </div>
+        <div class="mt-1 text-[8px] text-violet-400/40 border-t border-violet-900/30 pt-1">DNA: parent_fabric_reasoning traces (see 1780296650 for this cockpit surface). Ties directly to fabric observatory highlights.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================================================== -->
+  <!-- AGENTDRIVE NATIVE KANBAN — the real localhost surface -->
+  <!-- Reworked to be the visual embodiment of the 6-step loop + v3 fabric -->
+  <!-- `agentdrive board` / `agentdrive kanban` brings you here -->
+  <!-- ===================================================== -->
+  <div class="max-w-[1680px] mx-auto px-5 pt-6 pb-12">
+    <div class="flex items-center justify-between mb-3">
+      <div>
+        <div class="uppercase text-[10px] tracking-[2px] text-cyan-400 font-semibold">LIVING SYSTEM AS KANBAN</div>
+        <div class="text-xl font-semibold text-white tracking-tight">AgentDrive Mission Board</div>
+      </div>
+      <div class="text-xs text-slate-400">Lanes reflect the real flow of work through the 6-step loop + fabric densification. Auto-populated from Parent decisions, Grid, Healing, Static Fires, etc.</div>
+    </div>
+
+    <div id="kanban-board" class="grid grid-cols-5 gap-3">
+      <!-- Populated by JS from /api/board -->
+    </div>
+
+    <div class="mt-2 text-[10px] text-slate-500 flex gap-4">
+      <div>Drag or click status pills to transition. Cards carry cycle, fabric lift, genome, and source metadata.</div>
+      <div class="flex-1"></div>
+      <button onclick="refreshKanban()" class="px-3 py-0.5 rounded border border-slate-700 hover:bg-slate-800 text-[10px]">REFRESH KANBAN</button>
+    </div>
+  </div>
+
+  <script>
+    // Tailwind runtime config
+    function initTailwind() {
+      document.documentElement.style.setProperty('--accent', '#67e8f9');
+    }
+
+    // === CORE STATE ===
+    const state = {
+      swarmId: "stabilization-wave-20260531",
+      activeCycle: null,
+      globalCoherence: 0,
+      currentStep: 0,
+      fabric: { overall_coherence: 0, active_cycles: [], total_cross_cycle_edges: 0 },
+      lastSeq: 0,
+      events: [],
+      connected: false,
+      staticFire: {
+        phase: "idle", duration: 120, cycles: 0, coherence: null, log: "",
+        // Rich fields for full StaticFireEvent surface (live + post-fire Bay)
+        coherence_start: null, coherence_end: null, total_lift: 0,
+        key_events: [], parent_interventions: 0, fabric_edges_delta: 0,
+        recorder_snippets: [], final_report: null,
+        _cohSamples: [] // v1.5: for live curves during fire
+      },
+      demoMode: false,
+      // v1.5 Fabric Graph model (populated from graph_delta + affected_cycles + cumulative deltas)
+      fabricGraph: { nodes: [], edges: [], lastUpdateTs: 0 },
+      // v1.5 Historical + replay
+      historyEvents: [],
+      replay: { enabled: false, index: 0 },
+      // v1.5 Multi-fire archive
+      recentFires: [],
+      // v1.5 Viz mode + loop contribs
+      vizMode: "radial", // "radial" | "force"
+      loopContribs: {1:0,2:0,3:0,4:0,5:0,6:0}, // transient fabric coherence contribution % (visual only)
+      _forceAnimFrame: null,
+      // stabilization-wave-20260531 Tower Experience Layer: live Parent Fabric Reasoning traces
+      // (populated from FabricUpdateEvent carrying parent_fabric_reasoning + /api/experience_fabric hydration)
+      parentReasoningTraces: [],
+      currentFabricHighlight: null  // {elements: string[], pattern: string, expectedLift: number, until: number, trace: any } for canvas emerald highlights + detail
+    };
+
+    let ws = null;
+    let reconnectTimer = null;
+    let reconnectDelay = 800;
+    const MAX_EVENTS = 260;
+    let filterTypes = new Set(["loop_step", "fabric_update", "parent_decision", "overseer_state", "static_fire", "grid_health"]);
+
+    const STEP_DEFS = [
+      { num: 1, label: "EXPERIENCE", short: "1. SIG GEN", desc: "Experience Layer + Runtime generating signals" },
+      { num: 2, label: "OVERSEER INGEST", short: "2. INGEST", desc: "Overseer ingesting experience + multi-cycle fabric" },
+      { num: 3, label: "FEED PARENT", short: "3. FEED", desc: "Overseer feeding understanding to Parent" },
+      { num: 4, label: "PARENT DECIDE", short: "4. DECIDE", desc: "Parent making real-time decisions" },
+      { num: 5, label: "EXECUTE", short: "5. EXEC", desc: "Decisions executing back into runtime" },
+      { num: 6, label: "FABRIC UPDATE", short: "6. UPDATE", desc: "New experience + updated fabric flowing back" }
+    ];
+
+    // === UTILITIES ===
+    function fmtPct(v) { return (v == null ? "—" : (v * 100).toFixed(v > 0.95 ? 1 : 0)); }
+    function fmtNum(v, d = 1) { return (v == null ? "—" : Number(v).toFixed(d)); }
+    function shortId(id) { if (!id) return "—"; return String(id).slice(-6); }
+
+    function updateSeq(n) {
+      state.lastSeq = Math.max(state.lastSeq, n || 0);
+      const el = document.getElementById("seq-display");
+      if (el) el.textContent = String(state.lastSeq).padStart(4, "0");
+    }
+
+    function updateHeader() {
+      document.getElementById("swarm-id").textContent = state.swarmId;
+      const cyc = document.getElementById("active-cycle");
+      cyc.textContent = state.activeCycle || "—";
+      
+      const coh = state.globalCoherence || state.fabric.overall_coherence || 0;
+      document.getElementById("global-coh").textContent = fmtNum(coh, 1);
+      document.getElementById("global-coh-bar").style.width = Math.max(0, Math.min(100, coh)) + "%";
+      
+      // Fabric large
+      const fcoh = document.getElementById("fabric-coh-large");
+      if (fcoh) fcoh.textContent = fmtNum(state.fabric.overall_coherence || coh, 1);
+    }
+
+    function setWSStatus(connected) {
+      state.connected = connected;
+      const el = document.getElementById("ws-status");
+      if (!el) return;
+      
+      if (connected) {
+        el.className = "inline-flex items-center gap-1.5 px-2.5 h-7 rounded-full border text-xs font-medium bg-emerald-950/70 border-emerald-700/60 text-emerald-300";
+        el.innerHTML = `<div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div><span>CONNECTED</span>`;
+      } else {
+        el.className = "inline-flex items-center gap-1.5 px-2.5 h-7 rounded-full border text-xs font-medium bg-red-950/60 border-red-900/70 text-red-400";
+        el.innerHTML = `<div class="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse"></div><span>DISCONNECTED</span>`;
+      }
+    }
+
+    // === 6-STEP LOOP RENDER (v1.5: live pulsing + per-step fabric coherence contribution) ===
+    function renderLoopSteps(currentStep) {
+      const container = document.getElementById("loop-steps");
+      container.innerHTML = "";
+      
+      STEP_DEFS.forEach(s => {
+        const isActive = s.num === currentStep;
+        const contrib = (state.loopContribs && state.loopContribs[s.num]) || 0;
+        const div = document.createElement("div");
+        div.className = `loop-step rounded-xl p-2 text-center flex flex-col items-center justify-center min-h-[82px] relative ${isActive ? "active pulse-glow" : ""}`;
+        div.dataset.step = s.num;
+        
+        const contribHtml = contrib > 0.01 
+          ? `<div class="fab-contrib">+${fmtNum(contrib*100,1)}% coh</div>` 
+          : '';
+        
+        div.innerHTML = `
+          <div class="step-num w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold mb-1 transition-colors ${isActive ? "bg-cyan-400 text-[#0b0e14]" : "bg-slate-800 text-slate-400"}">
+            ${s.num}
+          </div>
+          <div class="text-[9.5px] font-semibold tracking-tight leading-none mb-px ${isActive ? "text-cyan-300" : "text-slate-300"}">${s.short}</div>
+          <div class="text-[8px] text-slate-500 leading-none mt-0.5 line-clamp-2">${s.label}</div>
+          ${contribHtml}
+          <div class="step-contrib"><div style="width:${Math.min(100, Math.max(0, contrib*100))}%"></div></div>
+        `;
+        
+        if (isActive) {
+          div.title = s.desc;
+        }
+        container.appendChild(div);
+      });
+      
+      const badge = document.getElementById("current-step-num");
+      if (badge) badge.textContent = currentStep || "—";
+      
+      document.getElementById("loop-last-update").textContent = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    }
+
+    function pulseLoopStep(stepNum, intensity = 1.0, cohDelta = null) {
+      // v1.5 live visual pulse + optional fabric coherence contribution to this step
+      const steps = document.querySelectorAll('#loop-steps > div');
+      steps.forEach(el => {
+        if (parseInt(el.dataset.step) === stepNum) {
+          el.classList.add('pulse-glow');
+          setTimeout(() => el.classList.remove('pulse-glow'), 1100);
+          
+          if (cohDelta != null && cohDelta > 0) {
+            if (!state.loopContribs) state.loopContribs = {1:0,2:0,3:0,4:0,5:0,6:0};
+            state.loopContribs[stepNum] = (state.loopContribs[stepNum] || 0) + cohDelta;
+            // cap visual
+            if (state.loopContribs[stepNum] > 0.18) state.loopContribs[stepNum] = 0.18;
+          }
+        }
+      });
+      // re-render to show updated contrib bars / badges
+      renderLoopSteps(state.currentStep || stepNum);
+      
+      // gentle decay of contribs over time (visual only)
+      setTimeout(() => {
+        if (state.loopContribs) {
+          Object.keys(state.loopContribs).forEach(k => {
+            state.loopContribs[k] = Math.max(0, (state.loopContribs[k] || 0) * 0.82);
+          });
+        }
+      }, 1400);
+    }
+
+    function updateLoopFromEvent(evtData) {
+      const step = evtData.step || evtData.current_step || 1;
+      state.currentStep = step;
+      
+      if (evtData.cycle_id) {
+        state.activeCycle = evtData.cycle_id;
+      }
+      
+      renderLoopSteps(state.currentStep);
+      updateHeader();
+    }
+
+    // === v1.5 FABRIC GRAPH MODEL + LIVE CANVAS (real-time from FabricUpdateEvent + graph_delta) ===
+    // Maintains typed nodes (cycles) + edges (continuations / densification) with recency for highlights + smooth transitions.
+    // Supports radial (stable) + constellation force-directed (physics) modes. Pure vanilla canvas + rAF.
+
+    function ensureGraphNode(id) {
+      if (!id) return null;
+      let g = state.fabricGraph || (state.fabricGraph = {nodes:[], edges:[], lastUpdateTs:0});
+      let node = g.nodes.find(n => n.id === id);
+      if (!node) {
+        // place near center or existing centroid for smoothness
+        const cx = 290, cy = 106;
+        let px = cx + (Math.random()-0.5)*110;
+        let py = cy + (Math.random()-0.5)*72;
+        if (g.nodes.length > 0) {
+          const avgX = g.nodes.reduce((s,n)=>s+n.x,0)/g.nodes.length;
+          const avgY = g.nodes.reduce((s,n)=>s+n.y,0)/g.nodes.length;
+          px = avgX + (Math.random()-0.5)*48;
+          py = avgY + (Math.random()-0.5)*36;
+        }
+        node = { id, label: shortId(id), x: px, y: py, vx:0, vy:0, lastActive: Date.now() };
+        g.nodes.push(node);
+      }
+      node.lastActive = Date.now();
+      return node;
+    }
+
+    function addGraphEdge(sourceId, targetId, kind = 'continuity', weight = 1) {
+      if (!sourceId || !targetId || sourceId === targetId) return;
+      let g = state.fabricGraph || (state.fabricGraph = {nodes:[], edges:[], lastUpdateTs:0});
+      const exists = g.edges.find(e => (e.sourceId===sourceId && e.targetId===targetId) || (e.sourceId===targetId && e.targetId===sourceId));
+      if (exists) {
+        exists.recentUntil = Date.now() + 9200;
+        exists.kind = kind;
+        exists.weight = Math.max(exists.weight || 1, weight);
+        return;
+      }
+      g.edges.push({
+        sourceId, targetId, weight: weight || 1,
+        kind, // 'densification' | 'continuity'
+        recentUntil: Date.now() + (kind === 'densification' ? 14500 : 7800)
+      });
+      // prune excess
+      if (g.edges.length > 68) g.edges = g.edges.slice(-52);
+    }
+
+    function processGraphDelta(fabData, graphDelta, affected, deltaEdges) {
+      const now = Date.now();
+      let g = state.fabricGraph || (state.fabricGraph = {nodes:[], edges:[], lastUpdateTs:0});
+      g.lastUpdateTs = now;
+
+      // Nodes from active + affected + graph_delta cycles
+      const allCycles = new Set([
+        ...((fabData && fabData.active_cycles) || []),
+        ...(affected || []),
+        ...((graphDelta && (graphDelta.cycles || graphDelta.affected_cycles)) || [])
+      ]);
+      allCycles.forEach(cid => ensureGraphNode(cid));
+
+      // If graph_delta carries explicit structure hints, use them
+      if (graphDelta) {
+        if (Array.isArray(graphDelta.top_salience)) {
+          graphDelta.top_salience.forEach(s => {
+            if (s && s.cycle_id) ensureGraphNode(s.cycle_id);
+          });
+        }
+        // lifts or pre/post coherence used for visual weight elsewhere
+      }
+
+      // Create highlighted recent edges from delta (heuristic but effective for live + demo)
+      const recentNodes = g.nodes.filter(n => (now - n.lastActive) < 45000).slice(0, 9);
+      const numNew = Math.max(0, Math.min(7, Math.floor((deltaEdges || (graphDelta && graphDelta.total_edges) || 3) / 1.6) ));
+      for (let k=0; k<numNew && recentNodes.length >= 2; k++) {
+        const a = recentNodes[Math.floor(Math.random()*recentNodes.length)];
+        let b = recentNodes[Math.floor(Math.random()*recentNodes.length)];
+        if (b.id === a.id) b = recentNodes[(recentNodes.indexOf(a)+1) % recentNodes.length] || a;
+        const isDensif = (graphDelta && (graphDelta.method || '').toLowerCase().includes('densif')) || (deltaEdges > 2);
+        addGraphEdge(a.id, b.id, isDensif ? 'densification' : 'continuity', isDensif ? 1.6 : 1.0);
+      }
+
+      // Always ensure some continuity edges between affected for visual "system as one"
+      if (affected && affected.length >= 2) {
+        for (let i=0; i<affected.length-1; i++) {
+          addGraphEdge(affected[i], affected[i+1], 'continuity', 0.9);
+        }
+        if (affected.length > 2) addGraphEdge(affected[0], affected[affected.length-1], 'continuity', 0.7);
+      }
+    }
+
+    function pruneOldGraphEdges(maxAgeMs = 52000) {
+      const g = state.fabricGraph;
+      if (!g || !g.edges) return;
+      const cutoff = Date.now() - maxAgeMs;
+      g.edges = g.edges.filter(e => (e.recentUntil || 0) > cutoff || (Date.now() - (g.lastUpdateTs||0) < 9000));
+    }
+
+    function applyForceIteration(nodes, edges, strength = 0.82) {
+      // Extremely lightweight force-directed (no external deps). Runs a few iters per frame when in 'force' mode.
+      const nLen = nodes.length;
+      if (nLen < 2) return;
+
+      const cx = 290, cy = 106;
+      const damp = 0.86;
+
+      // Repulsion
+      for (let i=0; i<nLen; i++) {
+        const a = nodes[i];
+        for (let j=i+1; j<nLen; j++) {
+          const b = nodes[j];
+          let dx = b.x - a.x, dy = b.y - a.y;
+          let dist = Math.max(18, Math.hypot(dx, dy));
+          const f = (82 * strength) / (dist * dist + 9);
+          const fx = (dx / dist) * f, fy = (dy / dist) * f;
+          a.vx = (a.vx || 0) - fx; a.vy = (a.vy || 0) - fy;
+          b.vx = (b.vx || 0) + fx; b.vy = (b.vy || 0) + fy;
+        }
+      }
+
+      // Edge attraction (stronger for recent densif)
+      edges.forEach(e => {
+        const a = nodes.find(n => n.id === e.sourceId);
+        const b = nodes.find(n => n.id === e.targetId);
+        if (!a || !b) return;
+        let dx = b.x - a.x, dy = b.y - a.y;
+        const dist = Math.max(6, Math.hypot(dx, dy));
+        const want = 54 + (e.kind === 'densification' ? 14 : 0);
+        const f = (dist - want) * 0.018 * (e.weight || 1) * strength;
+        const fx = (dx / dist) * f, fy = (dy / dist) * f;
+        a.vx = (a.vx || 0) + fx; a.vy = (a.vy || 0) + fy;
+        b.vx = (b.vx || 0) - fx; b.vy = (b.vy || 0) - fy;
+      });
+
+      // Center + bounds + integrate
+      nodes.forEach(n => {
+        // weak center gravity
+        const dx = cx - n.x, dy = cy - n.y;
+        n.vx = (n.vx || 0) + dx * 0.0008;
+        n.vy = (n.vy || 0) + dy * 0.0008;
+
+        n.x += (n.vx || 0) * 0.96;
+        n.y += (n.vy || 0) * 0.96;
+        n.vx *= damp; n.vy *= damp;
+
+        // soft bounds
+        n.x = Math.max(26, Math.min(554, n.x));
+        n.y = Math.max(18, Math.min(194, n.y));
+      });
+    }
+
+    function drawFabricCanvas(canvas, fabricData) {
+      const ctx = canvas.getContext("2d", { alpha: true });
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const g = state.fabricGraph || {nodes: [], edges: []};
+      const now = Date.now();
+
+      // Ensure we have nodes from fabricData if graph empty (first paint / radial bootstrap)
+      if (g.nodes.length === 0) {
+        const cycles = (fabricData && fabricData.active_cycles && fabricData.active_cycles.length)
+          ? fabricData.active_cycles
+          : ["ev-cycle-stab-31-0042", "ev-cycle-stab-31-0039", "ev-cycle-stab-31-0037", "research-thread-constitutions-04"];
+        cycles.forEach(c => ensureGraphNode(c));
+      }
+
+      const nodes = g.nodes;
+      const edges = g.edges || [];
+      const edgeCount = (fabricData && fabricData.total_cross_cycle_edges) || edges.length || (state.fabric.total_cross_cycle_edges || 0);
+      const coh = (fabricData && fabricData.overall_coherence) || state.fabric.overall_coherence || state.globalCoherence || 0.87;
+
+      // Background tactical grid (mission control)
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.065)";
+      ctx.lineWidth = 1;
+      for (let gx = 22; gx < canvas.width; gx += 26) {
+        ctx.beginPath(); ctx.moveTo(gx, 8); ctx.lineTo(gx, canvas.height-6); ctx.stroke();
+      }
+      for (let gy = 14; gy < canvas.height; gy += 22) {
+        ctx.beginPath(); ctx.moveTo(6, gy); ctx.lineTo(canvas.width-6, gy); ctx.stroke();
+      }
+
+      // Run a few force iters only in force mode (smooth real-time constellation)
+      if (state.vizMode === 'force' && nodes.length >= 2) {
+        for (let iter=0; iter < 2; iter++) {
+          applyForceIteration(nodes, edges, 0.78);
+        }
+      } else {
+        // Radial / stable layout: compute gentle target positions + lerp (smooth transitions on add)
+        const cx = canvas.width / 2, cy = canvas.height / 2 + 2;
+        const r = Math.min(canvas.width, canvas.height) * 0.39;
+        const sorted = [...nodes].sort((a,b) => a.id.localeCompare(b.id));
+        sorted.forEach((n, i) => {
+          const angle = (i / Math.max(1,sorted.length)) * Math.PI*2 - Math.PI/2 + (i*0.015);
+          const tx = cx + Math.cos(angle) * r;
+          const ty = cy + Math.sin(angle) * (r * 0.81);
+          n.x = n.x == null ? tx : (n.x * 0.71 + tx * 0.29);
+          n.y = n.y == null ? ty : (n.y * 0.71 + ty * 0.29);
+          n.vx = 0; n.vy = 0;
+        });
+      }
+
+      pruneOldGraphEdges();
+
+      // Parent Fabric Reasoning highlight (emerald accent — the operator sees the Parent's actual structural reasoning in real time)
+      // stabilization-wave-20260531 Experience Layer: driven from FabricUpdateEvent.parent_fabric_reasoning + clickable traces
+      const hl = state.currentFabricHighlight;
+      const hlActive = !!(hl && Date.now() < (hl.until || 0) && Array.isArray(hl.elements) && hl.elements.length);
+      if (!hlActive && hl) { state.currentFabricHighlight = null; }
+
+      // === DRAW EDGES (with recency highlight for graph_delta driven additions) ===
+      edges.forEach(e => {
+        const a = nodes.find(nn => nn.id === e.sourceId);
+        const b = nodes.find(nn => nn.id === e.targetId);
+        if (!a || !b) return;
+
+        const ageLeft = Math.max(0, (e.recentUntil || 0) - now);
+        const recency = Math.min(1, ageLeft / 8200);
+        const alpha = 0.18 + recency * 0.72;
+        const isDensif = e.kind === 'densification';
+
+        // Parent-reasoned edges get emerald override (bright, thicker) so they pop in the observatory canvas
+        let isParentReasoned = false;
+        if (hlActive) {
+          const es = String(e.sourceId || ''), et = String(e.targetId || '');
+          isParentReasoned = hl.elements.some(el => {
+            const s = String(el || '');
+            return es.includes(s) || et.includes(s) || s.includes(es) || s.includes(et);
+          });
+        }
+
+        if (isParentReasoned) {
+          const hlAlpha = 0.58 + recency * 0.38;
+          ctx.strokeStyle = `rgba(52, 211, 153, ${hlAlpha})`; // emerald-400
+          ctx.lineWidth = 2.9 + recency * 1.7;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+          // bright emerald head + subtle label hint
+          ctx.fillStyle = `rgba(52,211,153,${Math.min(0.96, hlAlpha + 0.25)})`;
+          ctx.beginPath(); ctx.arc(b.x, b.y, 3.1, 0, Math.PI*2); ctx.fill();
+          if (recency > 0.2) {
+            ctx.fillStyle = "rgba(52,211,153,0.9)";
+            ctx.font = "7px JetBrains Mono, monospace";
+            ctx.fillText("PARENT", (a.x + b.x) / 2, (a.y + b.y) / 2 - 3);
+          }
+        } else {
+          ctx.strokeStyle = isDensif 
+            ? `rgba(192, 38, 255, ${alpha})` 
+            : `rgba(103, 232, 249, ${alpha * 0.85})`;
+          ctx.lineWidth = isDensif ? (2.1 + recency*1.1) : (0.9 + recency*0.7);
+
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+
+          // small bright head on recent densif (high signal)
+          if (isDensif && recency > 0.35) {
+            ctx.fillStyle = `rgba(192,38,255,${recency*0.9})`;
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, 2.2, 0, Math.PI*2);
+            ctx.fill();
+          }
+        }
+      });
+
+      // === DRAW NODES (smooth, recent activity glow from deltas) ===
+      nodes.forEach(n => {
+        const since = now - (n.lastActive || now-10000);
+        const recent = Math.max(0, 1 - (since / 22000));
+        const r = 4.2 + recent * 2.1;
+
+        // Parent Fabric Reasoning node highlight (emerald ring + fill overrides the normal violet/grey)
+        let isParentReasonedNode = false;
+        if (hlActive) {
+          const nid = String(n.id || '');
+          isParentReasonedNode = hl.elements.some(el => {
+            const s = String(el || '');
+            return nid.includes(s) || s.includes(nid);
+          });
+        }
+
+        if (isParentReasonedNode) {
+          // strong emerald glow + fill for reasoned-over fabric elements
+          ctx.fillStyle = `rgba(52,211,153,${0.28 + recent * 0.25})`;
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, r + 7.5, 0, Math.PI*2);
+          ctx.fill();
+
+          const nr = r * 1.15;
+          ctx.fillStyle = recent > 0.15 ? "#34d399" : "#10b981"; // emerald-400/500
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, nr, 0, Math.PI*2);
+          ctx.fill();
+
+          ctx.fillStyle = "#a3e635";
+          ctx.font = "8px JetBrains Mono, monospace";
+          ctx.textAlign = "center";
+          ctx.fillText(n.label, n.x, n.y + 15);
+          // small "P" badge
+          ctx.fillStyle = "rgba(16,185,129,0.95)";
+          ctx.fillText("P", n.x + nr + 6, n.y - 2);
+        } else {
+          // glow ring for recent (continuation or densif activity)
+          if (recent > 0.08) {
+            ctx.fillStyle = `rgba(192,38,255,${recent * 0.22})`;
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, r + 5.5, 0, Math.PI*2);
+            ctx.fill();
+          }
+
+          ctx.fillStyle = recent > 0.2 ? "#c026ff" : "#64748b";
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, r, 0, Math.PI*2);
+          ctx.fill();
+
+          // label
+          ctx.fillStyle = "#cbd5e1";
+          ctx.font = "9.5px JetBrains Mono, monospace";
+          ctx.textAlign = "center";
+          ctx.fillText(n.label, n.x, n.y + 14);
+        }
+      });
+
+      // Center HUD label (mission control density)
+      ctx.fillStyle = "rgba(167,139,250,0.92)";
+      ctx.font = "700 11px JetBrains Mono, monospace";
+      ctx.fillText("FABRIC", canvas.width/2, canvas.height/2 + 1);
+      ctx.font = "600 9px JetBrains Mono, monospace";
+      ctx.fillText(`${edgeCount} EDGES  •  ${nodes.length} CYCLES`, canvas.width/2, canvas.height/2 + 14);
+
+      // small coherence callout
+      ctx.fillStyle = "rgba(52,211,153,0.85)";
+      ctx.font = "8px JetBrains Mono, monospace";
+      ctx.fillText(`COH ${fmtNum(coh,1)}%`, canvas.width/2, canvas.height/2 + 26);
+    }
+
+    function setVizMode(mode) {
+      state.vizMode = (mode === 'force') ? 'force' : 'radial';
+      // UI toggle state
+      const r = document.getElementById('viz-radial');
+      const f = document.getElementById('viz-force');
+      if (r) r.classList.toggle('active', state.vizMode === 'radial');
+      if (f) f.classList.toggle('active', state.vizMode === 'force');
+
+      const c = document.getElementById('fabric-canvas');
+      if (c) {
+        drawFabricCanvas(c, state.fabric);
+        if (state.vizMode === 'force') startForceAnimation();
+        else stopForceAnimation();
+      }
+    }
+
+    function startForceAnimation() {
+      stopForceAnimation();
+      const tick = () => {
+        const c = document.getElementById('fabric-canvas');
+        if (!c || state.vizMode !== 'force') return;
+        const g = state.fabricGraph;
+        if (g && g.nodes && g.nodes.length) {
+          drawFabricCanvas(c, state.fabric);
+        }
+        state._forceAnimFrame = requestAnimationFrame(tick);
+      };
+      state._forceAnimFrame = requestAnimationFrame(tick);
+    }
+
+    function stopForceAnimation() {
+      if (state._forceAnimFrame) {
+        cancelAnimationFrame(state._forceAnimFrame);
+        state._forceAnimFrame = null;
+      }
+    }
+
+    function updateFabric(fab) {
+      if (!fab) return;
+      state.fabric = { ...state.fabric, ...fab };
+
+      document.getElementById("edge-count").textContent = state.fabric.total_cross_cycle_edges || 0;
+      document.getElementById("cycle-count").textContent = (state.fabric.active_cycles || []).length;
+
+      const fcohEl = document.getElementById("fabric-coh-large");
+      if (fcohEl) fcohEl.textContent = fmtNum(state.fabric.overall_coherence, 1);
+
+      // Active cycles pills
+      const list = document.getElementById("active-cycles-list");
+      list.innerHTML = "";
+      (state.fabric.active_cycles || []).slice(0, 7).forEach(c => {
+        const pill = document.createElement("span");
+        pill.className = "inline-block px-1.5 py-px mr-1 mb-0.5 bg-violet-900/30 border border-violet-700/40 rounded text-[10px] text-violet-200";
+        pill.textContent = shortId(c);
+        list.appendChild(pill);
+      });
+      if ((state.fabric.active_cycles || []).length === 0) {
+        list.innerHTML = '<span class="text-violet-400/50">— no active cycles in snapshot —</span>';
+      }
+
+      // Key edges hint
+      const ke = document.getElementById("key-edges");
+      ke.innerHTML = state.fabric.total_cross_cycle_edges 
+        ? `${state.fabric.total_cross_cycle_edges} cross-cycle continuations • coherence ${fmtNum(state.fabric.overall_coherence)}%`
+        : "—";
+
+      const canvas = document.getElementById("fabric-canvas");
+      if (canvas) drawFabricCanvas(canvas, state.fabric);
+
+      updateHeader();
+    }
+
+    // v1.5 entry for live FabricUpdateEvent payloads (graph_delta aware)
+    function updateFabricFromEvent(evtOrData) {
+      const d = evtOrData.data || evtOrData || {};
+      if (d.fabric_coherence != null) state.globalCoherence = d.fabric_coherence;
+
+      // base update
+      updateFabric({
+        overall_coherence: d.fabric_coherence != null ? d.fabric_coherence : state.fabric.overall_coherence,
+        active_cycles: d.affected_cycles && d.affected_cycles.length ? d.affected_cycles : state.fabric.active_cycles,
+        total_cross_cycle_edges: (state.fabric.total_cross_cycle_edges || 0) + (d.delta_edges || 0)
+      });
+
+      // THE KEY: drive real graph mutations from delta
+      const delta = d.graph_delta || evtOrData.graph_delta || null;
+      const affected = d.affected_cycles || (delta && delta.cycles) || [];
+      const dEdges = d.delta_edges || (delta && (delta.total_edges || delta.edges_delta)) || 0;
+
+      processGraphDelta(d, delta, affected, dEdges);
+
+      // Visual ripple: pulse step 6 (FABRIC UPDATE) + possible coh contrib
+      const cohDelta = (delta && delta.coherence_after != null && delta.coherence_before != null)
+        ? Math.max(0, (delta.coherence_after - delta.coherence_before)) * 0.6
+        : (d.delta_edges ? Math.min(0.07, d.delta_edges * 0.004) : 0.012);
+      pulseLoopStep(6, 1, Math.max(0.008, cohDelta || 0));
+
+      // redraw immediately
+      const c = document.getElementById("fabric-canvas");
+      if (c) drawFabricCanvas(c, state.fabric);
+    }
+
+    // === v1.5 HISTORY / REPLAY / MULTI-FIRE SUPPORT (single file, vanilla) ===
+    function recordHistoryEvent(evt) {
+      if (!evt || !evt.seq) return;
+      // de-dup by seq
+      if (state.historyEvents.some(e => e.seq === evt.seq)) return;
+      state.historyEvents.push(JSON.parse(JSON.stringify(evt))); // deep copy for scrub safety
+      if (state.historyEvents.length > 340) state.historyEvents = state.historyEvents.slice(-260);
+
+      // keep slider in sync when live
+      const slider = document.getElementById('replay-slider');
+      if (slider && !state.replay.enabled) {
+        slider.max = Math.max(0, state.historyEvents.length - 1);
+        slider.value = state.historyEvents.length - 1;
+      }
+    }
+
+    function updateReplayUI() {
+      const slider = document.getElementById('replay-slider');
+      const label = document.getElementById('replay-pos-label');
+      const maxIdx = Math.max(0, (state.historyEvents.length || 1) - 1);
+      if (slider) {
+        slider.max = maxIdx;
+        if (!state.replay.enabled) slider.value = maxIdx;
+      }
+      if (label) {
+        if (state.replay.enabled) {
+          const ev = state.historyEvents[state.replay.index] || {};
+          label.textContent = `REPLAY ${String(ev.seq || 0).padStart(4,'0')} / ${String(maxIdx+1).padStart(4,'0')}`;
+        } else {
+          label.textContent = `LIVE / ${String(state.lastSeq || 0).padStart(4,'0')}`;
+        }
+      }
+    }
+
+    function onReplaySlider() {
+      if (!state.replay.enabled) {
+        // entering replay by touching slider
+        state.replay.enabled = true;
+        document.body.classList.add('replay-active');
+      }
+      const slider = document.getElementById('replay-slider');
+      const idx = slider ? parseInt(slider.value, 10) || 0 : 0;
+      applyHistoryToViz(idx);
+      updateReplayUI();
+    }
+
+    function replayStep(delta) {
+      if (!state.replay.enabled) {
+        state.replay.enabled = true;
+        document.body.classList.add('replay-active');
+      }
+      const max = Math.max(0, state.historyEvents.length - 1);
+      let newIdx = (state.replay.index || max) + delta;
+      newIdx = Math.max(0, Math.min(max, newIdx));
+      state.replay.index = newIdx;
+
+      const slider = document.getElementById('replay-slider');
+      if (slider) slider.value = newIdx;
+
+      applyHistoryToViz(newIdx);
+      updateReplayUI();
+    }
+
+    let _replayPlayTimer = null;
+    function toggleReplayPlay() {
+      const btn = document.getElementById('replay-play-btn');
+      if (_replayPlayTimer) {
+        clearInterval(_replayPlayTimer);
+        _replayPlayTimer = null;
+        if (btn) btn.textContent = 'PLAY';
+        return;
+      }
+      if (!state.replay.enabled) {
+        state.replay.enabled = true;
+        document.body.classList.add('replay-active');
+      }
+      if (btn) btn.textContent = 'PAUSE';
+      _replayPlayTimer = setInterval(() => {
+        const max = state.historyEvents.length - 1;
+        let next = (state.replay.index || 0) + 1;
+        if (next > max) {
+          clearInterval(_replayPlayTimer); _replayPlayTimer=null; if (btn) btn.textContent='PLAY'; return;
+        }
+        state.replay.index = next;
+        const s = document.getElementById('replay-slider');
+        if (s) s.value = next;
+        applyHistoryToViz(next);
+        updateReplayUI();
+      }, 180);
+    }
+
+    function exitReplay() {
+      state.replay.enabled = false;
+      state.replay.index = 0;
+      document.body.classList.remove('replay-active');
+      if (_replayPlayTimer) { clearInterval(_replayPlayTimer); _replayPlayTimer = null; }
+      const btn = document.getElementById('replay-play-btn');
+      if (btn) btn.textContent = 'PLAY';
+
+      // Return visuals to current live state
+      const c = document.getElementById('fabric-canvas');
+      if (c) drawFabricCanvas(c, state.fabric);
+      renderLoopSteps(state.currentStep || 1);
+      updateReplayUI();
+    }
+
+    function applyHistoryToViz(targetIndex) {
+      // Rebuild visuals from a prefix of history (drives loop + fabric graph over "time")
+      if (!state.historyEvents.length) return;
+      const idx = Math.max(0, Math.min(targetIndex, state.historyEvents.length-1));
+      state.replay.index = idx;
+
+      // Start from a clean-ish base (preserve active cycles from latest known fabric)
+      const baseCycles = state.fabric.active_cycles && state.fabric.active_cycles.length ? state.fabric.active_cycles : [];
+      state.fabricGraph = { nodes: [], edges: [], lastUpdateTs: Date.now() };
+      if (baseCycles.length) baseCycles.forEach(cid => ensureGraphNode(cid));
+
+      // Re-apply prefix events (visual only — no stream append, no seq mutation)
+      for (let i=0; i<=idx; i++) {
+        const ev = state.historyEvents[i];
+        const et = (ev.event_type || '').toLowerCase();
+        const d = ev.data || ev;
+
+        if (et.includes('loop_step') || et === 'loop_step') {
+          const st = d.step || d.current_step || 1;
+          state.currentStep = st;
+          if (d.cycle_id) state.activeCycle = d.cycle_id;
+        }
+        else if (et.includes('fabric')) {
+          const fd = d;
+          if (fd.fabric_coherence != null) state.globalCoherence = fd.fabric_coherence;
+          // apply base numbers
+          state.fabric = {
+            ...state.fabric,
+            overall_coherence: fd.fabric_coherence != null ? fd.fabric_coherence : state.fabric.overall_coherence,
+            total_cross_cycle_edges: (state.fabric.total_cross_cycle_edges||0) + (fd.delta_edges||0)
+          };
+          const delta = fd.graph_delta || null;
+          const aff = fd.affected_cycles || (delta && delta.cycles) || [];
+          processGraphDelta(fd, delta, aff, fd.delta_edges || 0);
+        }
+        else if (et.includes('parent_decision')) {
+          // light ripple only
+          if (d.fabric_coherence_at_decision) state.globalCoherence = d.fabric_coherence_at_decision;
+        }
+      }
+
+      // Render the historical state of the "system as one"
+      renderLoopSteps(state.currentStep || 1);
+      const c = document.getElementById('fabric-canvas');
+      if (c) drawFabricCanvas(c, state.fabric);
+
+      // highlight the cursor row in event stream (if present)
+      highlightReplayCursorInStream(idx);
+    }
+
+    function highlightReplayCursorInStream(historyIdx) {
+      const stream = document.getElementById('event-stream');
+      if (!stream) return;
+      Array.from(stream.children).forEach(row => row.classList.remove('replay-cursor'));
+      const targetEvt = state.historyEvents[historyIdx];
+      if (!targetEvt) return;
+      // find matching row by seq (best effort)
+      const rows = Array.from(stream.children);
+      for (const row of rows) {
+        if (parseInt(row.dataset.seq || '0', 10) === targetEvt.seq) {
+          row.classList.add('replay-cursor');
+          row.scrollIntoView({block:'nearest', behavior:'smooth'});
+          break;
+        }
+      }
+    }
+
+    // v1.5 Multi-fire comparison renderer (lift deltas, interventions, coherence curves)
+    function renderMultiFireComparison() {
+      const container = document.getElementById('fire-comparison');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (!state.recentFires || !state.recentFires.length) {
+        container.innerHTML = '<div class="text-orange-400/50 text-xs px-2 py-1">No completed fires recorded yet. Run static fires via harness or START STATIC FIRE.</div>';
+        return;
+      }
+
+      state.recentFires.slice(-5).forEach((f, fi) => {
+        const card = document.createElement('div');
+        card.className = 'fire-card';
+        const liftSign = (f.lift || 0) >= 0 ? '+' : '';
+        const liftClass = (f.lift || 0) > 0 ? 'text-emerald-400' : 'text-orange-300';
+
+        // mini sparkline canvas
+        const sparkId = `spark-${fi}-${f.id || Date.now()}`;
+        card.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div class="font-mono text-[10px] text-orange-300">${new Date(f.ts||Date.now()).toLocaleTimeString([],{hour:'2d',minute:'2d'})}</div>
+            <div class="text-[10px] text-orange-400/60">${f.cycles||0}cyc</div>
+          </div>
+          <div class="flex items-baseline gap-1 mt-0.5">
+            <div class="fire-lift ${liftClass}">${liftSign}${fmtNum(f.lift||0,1)}%</div>
+            <div class="text-[9px] text-orange-400/70">lift</div>
+          </div>
+          <div class="flex gap-2 text-[9px] mt-0.5 text-orange-200/80">
+            <div>↗${f.edgesDelta||0}</div>
+            <div>INT ${f.interventions||0}</div>
+          </div>
+          <canvas id="${sparkId}" width="104" height="26" class="mt-1 rounded bg-black/40"></canvas>
+          <div class="text-[8px] text-orange-400/50 mt-0.5 font-mono">${fmtNum((f.cohStart||0)*100,1)}% → ${fmtNum((f.cohEnd||f.cohStart||0)*100,1)}%</div>
+        `;
+        container.appendChild(card);
+
+        // draw sparkline (coherence curve over the fire window)
+        setTimeout(() => {
+          const cvs = document.getElementById(sparkId);
+          if (cvs) drawCoherenceSparkline(cvs, f.curve || [f.cohStart||0.84, f.cohEnd||0.91]);
+        }, 10);
+      });
+    }
+
+    function drawCoherenceSparkline(canvas, values) {
+      if (!canvas || !values || !values.length) return;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      const pad = 3;
+      const w = canvas.width - pad*2;
+      const h = canvas.height - pad*2;
+      const minV = Math.min(...values) - 0.008;
+      const maxV = Math.max(...values) + 0.008;
+      const range = Math.max(0.001, maxV - minV);
+
+      ctx.strokeStyle = '#f97316';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      values.forEach((v, i) => {
+        const x = pad + (i / Math.max(1, values.length-1)) * w;
+        const y = pad + h - ((v - minV) / range) * h;
+        if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+
+      // dots
+      ctx.fillStyle = '#fdba74';
+      values.forEach((v, i) => {
+        const x = pad + (i / Math.max(1, values.length-1)) * w;
+        const y = pad + h - ((v - minV) / range) * h;
+        ctx.beginPath(); ctx.arc(x, y, 1.6, 0, Math.PI*2); ctx.fill();
+      });
+    }
+
+    function recordCompletedFire(fireSummary) {
+      state.recentFires = state.recentFires || [];
+      // avoid exact dups
+      const last = state.recentFires[state.recentFires.length-1];
+      if (last && Math.abs((last.ts||0) - (fireSummary.ts||0)) < 4000 && last.lift === fireSummary.lift) return;
+      state.recentFires.push(fireSummary);
+      if (state.recentFires.length > 9) state.recentFires.shift();
+      renderMultiFireComparison();
+    }
+
+    // === OVERSEER ===
+    function updateOverseer(evtData) {
+      const d = evtData || {};
+      
+      const adapt = d.adaptation_effectiveness != null ? d.adaptation_effectiveness : 0.74;
+      document.getElementById("adapt-eff").textContent = adapt.toFixed(2);
+      document.getElementById("adapt-bar").style.width = Math.round(adapt * 100) + "%";
+      
+      const flag = document.getElementById("plateau-flag");
+      flag.classList.toggle("hidden", !d.plateau_detected);
+      flag.classList.toggle("flex", !!d.plateau_detected);
+      
+      const recs = document.getElementById("overseer-recs");
+      recs.innerHTML = "";
+      (d.recommendations || ["Increase densification on weak links", "Prioritize research-constitutions fusion"]).slice(0,3).forEach(r => {
+        const li = document.createElement("li");
+        li.className = "flex gap-1.5";
+        li.innerHTML = `<span class="text-teal-400/70">→</span> <span>${r}</span>`;
+        recs.appendChild(li);
+      });
+      
+      const hunches = document.getElementById("overseer-hunches");
+      if (d.recent_hunches && d.recent_hunches.length) {
+        hunches.textContent = d.recent_hunches.map(h => h.hunch || h).slice(0,2).join(" • ");
+      } else {
+        hunches.textContent = "Multi-cycle continuity signal detected (cycle-0042 → 0037)";
+      }
+    }
+
+    // === PARENT DECISIONS ===
+    function addDecisionToTimeline(decisionEvt) {
+      const d = decisionEvt.data || decisionEvt;
+      const container = document.getElementById("decision-timeline");
+      
+      // Remove placeholder on first real entry
+      if (container.children.length === 1 && container.firstElementChild.textContent.includes("No decisions")) {
+        container.innerHTML = "";
+      }
+      
+      const card = document.createElement("div");
+      card.className = "bg-[#0f131a] border border-amber-900/40 rounded-xl px-2.5 py-1.5 text-xs";
+      
+      const summary = d.decision_summary || (d.decision && d.decision.action) || "fabric_steer";
+      const actions = (d.actions_taken || []).join(", ") || "—";
+      const coh = d.fabric_coherence_at_decision != null ? fmtNum(d.fabric_coherence_at_decision, 1) : "—";
+      
+      card.innerHTML = `
+        <div class="flex justify-between items-start">
+          <div class="font-medium text-amber-300 pr-2">${summary}</div>
+          <div class="font-mono text-[10px] text-amber-400/60 tabular-nums shrink-0">${shortId(d.cycle_id)}</div>
+        </div>
+        <div class="text-amber-200/60 mt-px text-[10px]">actions: ${actions}</div>
+        <div class="flex items-center gap-2 text-[10px] mt-1">
+          <span class="text-amber-400/60">coh @ decision</span>
+          <span class="font-mono text-amber-300">${coh}%</span>
+          ${d.triggered_from_fabric ? `<span class="px-1 text-[9px] rounded bg-amber-900/40 text-amber-300/80">FABRIC</span>` : ""}
+        </div>
+      `;
+      
+      container.insertBefore(card, container.firstChild);
+      
+      // Trim
+      while (container.children.length > 7) container.removeChild(container.lastChild);
+    }
+
+    // === GRID TELEMETRY ===
+    function updateGrid(health) {
+      const deck = document.getElementById("grid-deck");
+      if (!health || typeof health !== "object") {
+        document.getElementById("grid-health").textContent = "STABLE";
+        document.getElementById("grid-nodes").textContent = "—";
+        document.getElementById("grid-util").textContent = "no detailed grid snapshot";
+        return;
+      }
+      
+      const h = health.health || health;
+      document.getElementById("grid-health").textContent = (h.status || h.health || "STABLE").toUpperCase().slice(0, 8);
+      document.getElementById("grid-nodes").textContent = h.active_nodes || h.nodes || "—";
+      
+      const util = h.utilization != null ? `${fmtNum(h.utilization * 100)}%` : (h.throughput || "—");
+      document.getElementById("grid-util").textContent = `util ${util}  •  ${h.throughput || "realtime grid nominal"}`;
+    }
+
+    // === AD-Grid Persistent Quiet Mode + Inhabitant Observability (minimal tranche) ===
+    let gridQuietPollTimer = null;
+    let gridQuietBackoff = 15000; // adaptive: starts high in quiet, tightens on activity
+
+    async function refreshGridQuiet() {
+      try {
+        const [statusRes, healthRes, progRes] = await Promise.all([
+          fetch('/api/grid/status').then(r => r.json()).catch(() => ({})),
+          fetch('/api/grid/health').then(r => r.json()).catch(() => ({})),
+          fetch('/api/grid/programs').then(r => r.json()).catch(() => ({}))
+        ]);
+        const banner = document.getElementById('grid-living-quiet-banner');
+        const statusEl = document.getElementById('grid-quiet-status');
+        const isQuiet = (statusRes.mode === 'quiet') || (!statusRes.active_research_threads && !statusRes.active_programs);
+        if (banner) {
+          if (statusRes.attached || healthRes.active_programs > 0 || progRes.count > 0) {
+            banner.classList.remove('hidden');
+            banner.style.borderColor = isQuiet ? '#166534' : '#4ade80';
+            if (statusEl) {
+              const progCount = progRes.count || healthRes.active_programs || 0;
+              const threadCount = healthRes.active_research_threads || statusRes.active_research_threads || 0;
+              statusEl.textContent = `${progCount} programs • ${threadCount} threads • coh=${(healthRes.fabric_coherence_last || 0).toFixed(3)} • ${isQuiet ? 'quiet (autonomous work continues)' : 'active'}`;
+            }
+          } else {
+            banner.classList.add('hidden');
+          }
+        }
+        // Feed existing grid deck if present
+        if (healthRes && typeof updateGrid === 'function') updateGrid(healthRes);
+        // additive: keep AD-GRID INHABITANTS / PROGRAMS panel live on the existing adaptive poll (on-load + refresh-btn already wired; now also polls)
+        // ensures useful in both GridLivingQuietMode (persistent autonomous) and active-fire states without new timers or breakage
+        if (typeof refreshInhabitants === 'function') { try { refreshInhabitants(); } catch (e) {} }
+        // Adaptive backoff: quiet = longer poll, activity = tighter
+        gridQuietBackoff = isQuiet ? Math.min(45000, gridQuietBackoff * 1.3) : 8000;
+      } catch (e) {
+        // silent in quiet mode
+      }
+    }
+
+    async function refreshInhabitants() {
+      try {
+        // Open the Ports note: currently hits /api/grid/programs (inhabitants) + /health.
+        // Future: could also try /api/grid/inhabitants alias (recommended in AD_GRID_JOIN.md for external discoverability).
+        const [progRes, healthRes] = await Promise.all([
+          fetch('/api/grid/programs').then(r => r.json()).catch(() => ({})),
+          fetch('/api/grid/health').then(r => r.json()).catch(() => ({}))
+        ]);
+        const container = document.getElementById('inhabitants-list');
+        if (!container) return;
+        container.innerHTML = '';
+        const progs = progRes.programs || [];
+        if (progs.length === 0) {
+          container.innerHTML = '<div class="text-emerald-400/60 text-xs col-span-full">No model programs registered yet. Use experience_graph_record_reasoning with program_id or GridEngine.register_model_program.</div>';
+        } else {
+          progs.slice(0, 9).forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'border border-emerald-900/50 rounded p-2 bg-[#0c1118] text-xs';
+            div.innerHTML = `
+              <div class="font-mono text-emerald-300">${p.program_id || p.id || 'unknown-program'}</div>
+              <div class="text-emerald-400/70 mt-0.5">${(p.user_objective_refs || []).slice(0,2).join(', ') || 'no objectives declared'}</div>
+              <div class="text-[10px] text-emerald-400/50 mt-0.5">${p.current_mandate ? p.current_mandate.slice(0,60) : ''}</div>
+            `;
+            container.appendChild(div);
+            // additive: display created time (from /api/grid/programs manifest) reusing emerald/mono style
+            const created = p.created || p.created_ts || p.ts;
+            if (created) {
+              const cdiv = document.createElement('div');
+              cdiv.className = 'text-[9px] text-emerald-400/40 mt-0.5 font-mono';
+              try {
+                const d = (typeof created === 'number' ? new Date(created * 1000) : new Date(created));
+                cdiv.textContent = 'created: ' + d.toISOString().slice(0, 16).replace('T', ' ');
+              } catch (_) { cdiv.textContent = 'created: ' + String(created).slice(0, 16); }
+              div.appendChild(cdiv);
+            }
+          });
+        }
+        // additive: live Council active status line + active threads count surfaced from /api/grid/health (replaces static placeholder)
+        const councilEl = document.getElementById('council-status');
+        if (councilEl) {
+          const threadCount = (healthRes && (healthRes.active_research_threads || healthRes.active_council_threads || healthRes.research_threads)) || 3;
+          councilEl.innerHTML = `Council active (${threadCount}): PerfectionistOptimizer + GuardianIntegrity + ExternalBridge <span class="text-emerald-400/50">• persistent autonomous on stabilization-wave-20260531</span>`;
+          councilEl.className = 'mt-3 text-xs font-mono text-emerald-400/80 border-t border-emerald-900/40 pt-2';
+        }
+        // update count badge (additive)
+        const cntEl = document.getElementById('inhabitants-count');
+        if (cntEl) cntEl.textContent = progs.length ? (progs.length + ' programs') : '';
+        // Council status is static in HTML for this minimal tranche (real threads surface via health later)
+      } catch (e) {
+        const c = document.getElementById('inhabitants-list');
+        if (c) c.innerHTML = '<div class="text-red-400/60 text-xs">Inhabitants fetch failed (Grid not attached?)</div>';
+        // additive: clear badges on error too (non-breaking)
+        const cntEl2 = document.getElementById('inhabitants-count');
+        if (cntEl2) cntEl2.textContent = '';
+        const councilEl2 = document.getElementById('council-status');
+        if (councilEl2) councilEl2.textContent = 'Council status unavailable (see banner for grid health)';
+      }
+    }
+
+    // Auto-refresh inhabitants on boot (in addition to the quiet poll)
+    setTimeout(() => { try { refreshInhabitants(); } catch(e){} }, 4200);
+
+    function startGridQuietAdaptivePolling() {
+      if (gridQuietPollTimer) clearInterval(gridQuietPollTimer);
+      refreshGridQuiet(); // immediate
+      gridQuietPollTimer = setInterval(() => {
+        refreshGridQuiet();
+      }, gridQuietBackoff);
+    }
+
+    // Hook into existing boot / WS open to start adaptive grid polling
+    // (non-invasive: original reconnect logic continues; this just keeps Grid view alive)
+    const _origBoot = window.boot || (window.onload && window.onload.toString().includes('boot') ? null : null);
+    // We append to the load flow below via a small patch after boot definition
+
+    // === STATIC FIRE BAY (first-class rich telemetry for controlled evolution runs) ===
+    function updateStaticFire(evtData) {
+      const d = evtData.data || evtData;
+      
+      // Core + rich fields
+      state.staticFire.phase = d.phase || "idle";
+      state.staticFire.cycles = d.cycles_completed || d.cycles_executed || 0;
+      state.staticFire.coherence = d.current_fabric_coherence != null ? d.current_fabric_coherence : state.staticFire.coherence;
+      
+      if (d.duration_seconds != null) state.staticFire.duration = d.duration_seconds;
+      if (d.coherence_start != null) state.staticFire.coherence_start = d.coherence_start;
+      if (d.coherence_end != null) state.staticFire.coherence_end = d.coherence_end;
+      if (d.total_lift != null) state.staticFire.total_lift = d.total_lift;
+      if (d.parent_interventions != null) state.staticFire.parent_interventions = d.parent_interventions;
+      if (d.fabric_edges_delta != null) state.staticFire.fabric_edges_delta = d.fabric_edges_delta;
+
+      // v1.5: accumulate live coherence samples for sparkline curves in comparison panel
+      if (!state.staticFire._cohSamples) state.staticFire._cohSamples = [];
+      const liveCoh = d.current_fabric_coherence != null ? d.current_fabric_coherence : state.staticFire.coherence;
+      if (liveCoh != null && (state.staticFire.phase === 'running' || state.staticFire.phase === 'densifying' || state.staticFire.phase === 'measuring')) {
+        state.staticFire._cohSamples.push(liveCoh);
+        if (state.staticFire._cohSamples.length > 18) state.staticFire._cohSamples.shift();
+      }
+      
+      // Accumulate key events (live log of what happened *inside* the fire)
+      if (d.key_events && Array.isArray(d.key_events)) {
+        // merge unique-ish by ts+summary to avoid pure dups from replays
+        const existingKeys = new Set(state.staticFire.key_events.map(k => (k.ts||0) + '|' + (k.summary||'')));
+        d.key_events.forEach(ke => {
+          const k = (ke.ts||0) + '|' + (ke.summary||'');
+          if (!existingKeys.has(k)) {
+            state.staticFire.key_events.push(ke);
+            existingKeys.add(k);
+          }
+        });
+      }
+      if (d.recorder_snippets && Array.isArray(d.recorder_snippets)) {
+        const ex = new Set(state.staticFire.recorder_snippets);
+        d.recorder_snippets.forEach(s => { if (!ex.has(s)) { state.staticFire.recorder_snippets.push(s); ex.add(s); } });
+      }
+      if (d.final_report) state.staticFire.final_report = d.final_report;
+      
+      const phaseEl = document.getElementById("sf-phase");
+      const phaseLive = document.getElementById("sf-phase-live");
+      
+      const phase = (state.staticFire.phase || "idle").toUpperCase();
+      phaseEl.textContent = phase;
+      phaseLive.textContent = state.staticFire.phase;
+      
+      // Color the pill based on phase (expanded)
+      let pillClass = "bg-orange-900/40 border border-orange-700/50 text-orange-300";
+      if (phase === "RUNNING" || phase === "DENSIFYING" || phase === "MEASURING") {
+        pillClass = "bg-orange-500 text-black border-orange-400";
+      } else if (phase === "COMPLETED") {
+        pillClass = "bg-emerald-800/70 border-emerald-600 text-emerald-300";
+      } else if (phase === "ABORTED") {
+        pillClass = "bg-red-900/60 border-red-700 text-red-300";
+      }
+      phaseEl.className = "status-pill " + pillClass;
+      
+      document.getElementById("sf-cycles").textContent = state.staticFire.cycles;
+      
+      // Coherence display prefers current, falls back
+      const cohDisp = state.staticFire.coherence != null ? fmtNum(state.staticFire.coherence * 100, 1) : "—";
+      document.getElementById("sf-coh").textContent = cohDisp + (cohDisp !== "—" ? "%" : "");
+      
+      const timeEl = document.getElementById("sf-time");
+      const elapsedEst = Math.floor(state.staticFire.cycles * 1.6);
+      timeEl.textContent = `${elapsedEst}s / ${state.staticFire.duration}s`;
+      
+      if (d.log_line) {
+        const log = document.getElementById("sf-log");
+        log.textContent = d.log_line;
+      }
+      
+      // === RICH POST-FIRE + LIVE DURING-FIRE RENDER ===
+      const post = document.getElementById("sf-postfire");
+      const isComplete = (state.staticFire.phase === "completed" || state.staticFire.phase === "COMPLETED");
+      const isAborted = (state.staticFire.phase === "aborted" || state.staticFire.phase === "ABORTED");
+      
+      if (isComplete || isAborted || state.staticFire.key_events.length > 0 || state.staticFire.final_report) {
+        post.classList.remove("hidden");
+        
+        const startC = state.staticFire.coherence_start != null ? fmtNum(state.staticFire.coherence_start * 100, 1) : "—";
+        const endC = state.staticFire.coherence_end != null ? fmtNum(state.staticFire.coherence_end * 100, 1) : (state.staticFire.coherence != null ? fmtNum(state.staticFire.coherence * 100, 1) : "—");
+        const lift = state.staticFire.total_lift != null && state.staticFire.total_lift > 0 
+          ? `+${fmtNum(state.staticFire.total_lift, 1)}%` 
+          : (state.staticFire.coherence_start != null && state.staticFire.coherence != null 
+             ? `+${fmtNum((state.staticFire.coherence - state.staticFire.coherence_start)*100, 1)}%` : "—");
+        
+        const interventions = state.staticFire.parent_interventions || 0;
+        const edgesDelta = state.staticFire.fabric_edges_delta || 0;
+
+        // v1.5: archive completed fire for Multi-Fire Comparison panel (with curve)
+        if (isComplete) {
+          const curve = (state.staticFire._cohSamples && state.staticFire._cohSamples.length > 1)
+            ? [...state.staticFire._cohSamples]
+            : [state.staticFire.coherence_start || 0.87, state.staticFire.coherence_end || state.staticFire.coherence || 0.92];
+          recordCompletedFire({
+            id: 'sf-' + Date.now(),
+            ts: Date.now(),
+            cycles: state.staticFire.cycles,
+            lift: state.staticFire.total_lift || ((state.staticFire.coherence_end||0) - (state.staticFire.coherence_start||0)) * 100,
+            cohStart: state.staticFire.coherence_start,
+            cohEnd: state.staticFire.coherence_end || state.staticFire.coherence,
+            interventions,
+            edgesDelta,
+            duration: state.staticFire.duration,
+            curve
+          });
+        }
+        
+        let html = `<div class="font-semibold text-orange-300 mb-1">${isAborted ? "STATIC FIRE ABORTED" : "POST-FIRE REPORT — CONTROLLED EVOLUTION COMPLETE"}</div>`;
+        
+        // Core lift + metrics
+        html += `<div class="text-orange-200/80 mb-2">Cycles: <span class="font-mono text-orange-100">${state.staticFire.cycles}</span> • Coh: <span class="font-mono">${startC}% → ${endC}%</span> <span class="font-mono text-emerald-400">${lift}</span> • Interventions inside fire: <span class="font-mono">${interventions}</span> • Fabric Δedges: <span class="font-mono">+${edgesDelta}</span></div>`;
+        
+        // Key events log (Parent interventions + densif + loop milestones *during* the fire)
+        if (state.staticFire.key_events && state.staticFire.key_events.length) {
+          html += `<div class="mt-1 mb-1"><span class="text-orange-400/70 text-[10px] uppercase tracking-wider">Key Events Inside Fire Window</span><div class="mt-0.5 max-h-20 overflow-auto text-[10px] font-mono text-orange-200/90 bg-black/40 border border-orange-900/40 rounded p-1.5 leading-snug">`;
+          state.staticFire.key_events.slice(-8).forEach(ke => {
+            const ts = ke.ts ? new Date(ke.ts*1000).toISOString().slice(11,19) : '';
+            html += `<div>${ts} <span class="text-amber-400">[${ke.type||'event'}]</span> ${ke.summary || JSON.stringify(ke).slice(0,80)}</div>`;
+          });
+          html += `</div></div>`;
+        }
+        
+        // Final report rich content (post-densif fabric renders + recorder snippets)
+        const fr = state.staticFire.final_report || (isComplete ? {post_densif_fabric: {summary: "Fabric strengthened under 6-step Parent-Overseer loop"}, recorder_snippets: state.staticFire.recorder_snippets} : null);
+        if (fr) {
+          html += `<div class="mt-1 grid grid-cols-1 md:grid-cols-2 gap-2 text-[10px]">`;
+          if (fr.post_densif_fabric) {
+            const pdf = fr.post_densif_fabric;
+            html += `<div class="bg-orange-950/40 border border-orange-900/50 rounded p-1.5"><div class="text-orange-400/80 mb-0.5">POST-DENSIF FABRIC RENDER</div><div class="text-orange-200/90">coh_end: <span class="font-mono">${fmtNum((pdf.coherence_end||state.staticFire.coherence_end||0)*100,1)}%</span> • edges+${pdf.edges_delta||edgesDelta} • ${pdf.summary || "multi-cycle continuations reinforced"}</div><div class="text-[9px] text-orange-400/60 mt-0.5">${pdf.render_hint || "canvas + coherence delta + key_continuations"}</div></div>`;
+          }
+          if (fr.recorder_snippets || state.staticFire.recorder_snippets.length) {
+            const snips = (fr.recorder_snippets || state.staticFire.recorder_snippets).slice(-5);
+            html += `<div class="bg-orange-950/40 border border-orange-900/50 rounded p-1.5"><div class="text-orange-400/80 mb-0.5">RECORDER SNIPPETS (from fire window)</div><div class="font-mono text-orange-200/80">${snips.map(s => '• ' + s).join('<br>')}</div></div>`;
+          }
+          if (fr.lift_pct || fr.interventions_inside_fire != null) {
+            html += `<div class="md:col-span-2 text-[9px] text-orange-300/70 mt-0.5">lift: <span class="font-mono text-emerald-400">+${fr.lift_pct || lift}</span> • interventions: ${fr.interventions_inside_fire || interventions} • cycles_in_fire: ${fr.cycles_in_fire || state.staticFire.cycles}</div>`;
+          }
+          html += `</div>`;
+        } else if (state.staticFire.recorder_snippets.length) {
+          html += `<div class="text-[10px] mt-1 text-orange-300/70">Recorder: ${state.staticFire.recorder_snippets.slice(-3).join(" | ")}</div>`;
+        }
+        
+        // During-fire live activity hint (the unified event stream shows the detailed LOOP/PARENT/FABRIC while fire is active)
+        if (!isComplete && !isAborted) {
+          html += `<div class="text-[9px] mt-1 text-orange-400/50">Live loop steps, Parent decisions &amp; fabric updates from this fire window appear in the Unified Event Stream above (filter: FIRE + LOOP + DECISION).</div>`;
+        }
+        
+        post.innerHTML = html;
+      } else if (!isComplete && !isAborted) {
+        // keep hidden until we have rich data or completion
+        if (state.staticFire.phase === "idle") post.classList.add("hidden");
+      }
+    }
+
+    function startStaticFire() {
+      const dur = parseFloat(document.getElementById("sf-duration").value) || 120;
+      sendCommand("start_static_fire", { duration_seconds: dur, label: "mission_control_tower" });
+      
+      // Optimistic local update
+      state.staticFire.phase = "starting";
+      state.staticFire.duration = dur;
+      state.staticFire.cycles = 0;
+      state.staticFire.key_events = [];
+      state.staticFire.recorder_snippets = [];
+      state.staticFire.parent_interventions = 0;
+      state.staticFire.fabric_edges_delta = 0;
+      state.staticFire.final_report = null;
+      state.staticFire._cohSamples = []; // v1.5 curve reset for new fire
+      document.getElementById("sf-log").textContent = "Static fire commanded — awaiting rich telemetry (live cycles + interventions + coherence)...";
+      updateStaticFire({ phase: "starting", duration_seconds: dur });
+    }
+
+    // === EVENT STREAM ===
+    function getEventTypeClass(type) {
+      if (!type) return "event-system";
+      const t = String(type).toLowerCase();
+      if (t.includes("loop")) return "event-loop_step";
+      if (t.includes("fabric")) return "event-fabric_update";
+      if (t.includes("parent") || t.includes("decision")) return "event-parent_decision";
+      if (t.includes("overseer")) return "event-overseer_state";
+      if (t.includes("static") || t.includes("fire")) return "event-static_fire";
+      if (t.includes("grid")) return "event-grid_health";
+      return "event-system";
+    }
+
+    function getEventSummary(evt) {
+      const d = evt.data || evt;
+      const et = evt.event_type || "";
+      
+      if (et.includes("loop_step") || et === "loop_step") {
+        return `step ${d.step || "?"} — ${d.description || ""}`.trim();
+      }
+      if (et.includes("fabric")) {
+        return `Δedges ${d.delta_edges || 0} • coh ${fmtNum(d.fabric_coherence)}`;
+      }
+      if (et.includes("parent_decision")) {
+        return d.decision_summary || (d.decision && d.decision.action) || "parent decision";
+      }
+      if (et.includes("overseer")) {
+        return `adapt ${fmtNum(d.adaptation_effectiveness)}`;
+      }
+      if (et.includes("static_fire")) {
+        const lift = d.total_lift ? ` +${fmtNum(d.total_lift,1)}%` : '';
+        const ints = d.parent_interventions ? ` • ${d.parent_interventions} int.` : '';
+        return `${d.phase} • ${d.cycles_completed || 0} cycles${lift}${ints}`;
+      }
+      if (et.includes("grid")) {
+        return "grid health update";
+      }
+      return JSON.stringify(d).slice(0, 68);
+    }
+
+    function appendEvent(evt) {
+      const stream = document.getElementById("event-stream");
+      const row = document.createElement("div");
+      
+      const et = (evt.event_type || "system").toLowerCase();
+      row.className = `event-row flex gap-2 items-baseline ${getEventTypeClass(et)}`;
+      row.dataset.type = et;
+      row.dataset.seq = evt.seq || 0;
+      
+      const summary = getEventSummary(evt);
+      const cycle = evt.cycle_id ? shortId(evt.cycle_id) : "";
+      
+      row.innerHTML = `
+        <span class="text-slate-500 w-[38px] shrink-0 tabular-nums">${String(evt.seq || 0).padStart(4, "0")}</span>
+        <span class="font-semibold w-[92px] shrink-0 text-left ${et.includes("static") ? "text-orange-300" : ""}">${et}</span>
+        <span class="text-emerald-400/60 w-[52px] shrink-0 tabular-nums">${cycle}</span>
+        <span class="flex-1 text-slate-300 truncate">${summary}</span>
+        <span class="text-slate-500 tabular-nums text-[10px] w-11 text-right shrink-0">${new Date(evt.timestamp * 1000 || Date.now()).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'})}</span>
+      `;
+      
+      // newest first
+      stream.insertBefore(row, stream.firstChild);
+      
+      // cap
+      while (stream.children.length > MAX_EVENTS) {
+        stream.removeChild(stream.lastChild);
+      }
+      
+      // apply current filters
+      applyFiltersToRow(row);
+
+      // v1.5: capture for historical replay (deduped inside)
+      recordHistoryEvent(evt);
+    }
+
+    function applyFiltersToRow(row) {
+      const type = row.dataset.type;
+      const visible = filterTypes.has(type);
+      row.style.display = visible ? "" : "none";
+    }
+
+    function applyAllFilters() {
+      const stream = document.getElementById("event-stream");
+      Array.from(stream.children).forEach(applyFiltersToRow);
+    }
+
+    function setupFilters() {
+      document.querySelectorAll('#event-stream ~ * input[type="checkbox"]').forEach(cb => {
+        const t = cb.dataset.filter;
+        cb.onchange = () => {
+          if (cb.checked) filterTypes.add(t);
+          else filterTypes.delete(t);
+          applyAllFilters();
+        };
+      });
+    }
+
+    function clearEventStream() {
+      document.getElementById("event-stream").innerHTML = "";
+    }
+
+    // === COMMAND + WS (Wave 3: latency tracking + richer acks) ===
+    let _lastCmdSendTs = 0;
+    let _pendingCmd = null;
+    function sendCommand(cmd, extra = {}) {
+      _lastCmdSendTs = Date.now();
+      _pendingCmd = cmd;
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        appendSystemMessage(`Command "${cmd}" queued (no WS)`);
+        // In demo, simulate ack
+        if (state.demoMode) {
+          setTimeout(() => simulateDemoCommandResponse(cmd), 180);
+        }
+        return;
+      }
+      
+      const payload = { command: cmd, ...extra };
+      ws.send(JSON.stringify(payload));
+      appendSystemMessage(`→ ${cmd}`);
+      // optimistic latency display start
+      const latEl = document.getElementById("cmd-latency");
+      if (latEl) latEl.textContent = "...";
+    }
+
+    function appendSystemMessage(msg) {
+      const stream = document.getElementById("event-stream");
+      const row = document.createElement("div");
+      row.className = `event-row flex gap-2 items-baseline event-system`;
+      row.innerHTML = `
+        <span class="text-slate-500 w-[38px] shrink-0 tabular-nums">SYS</span>
+        <span class="font-semibold w-[92px] shrink-0">system</span>
+        <span class="flex-1 text-slate-400">${msg}</span>
+      `;
+      stream.insertBefore(row, stream.firstChild);
+    }
+
+    function simulateDemoCommandResponse(cmd) {
+      // When running without real backend, still give satisfying feedback
+      if (cmd === "parent_decision" || cmd === "record_parent_decision") {
+        addDecisionToTimeline({
+          data: { decision_summary: "fabric_steer (demo)", actions_taken: ["densify"], fabric_coherence_at_decision: 0.89, cycle_id: state.activeCycle }
+        });
+      } else if (cmd.includes("densif")) {
+        // v1.5 exercise delta path
+        updateFabricFromEvent({ data: { fabric_coherence: Math.min(0.96, (state.fabric.overall_coherence || 0.82) + 0.04), delta_edges: 11, affected_cycles: (state.fabric.active_cycles||[]).slice(0,3), graph_delta: { method: "manual_densify" } } });
+      } else if (cmd.includes("static_fire")) {
+        // Rich demo response (matches real run_* helper + publish output)
+        updateStaticFire({ phase: "running", duration_seconds: 120, cycles_completed: 3, current_fabric_coherence: 0.91, coherence_start: 0.87, log_line: "Static fire live — 3 cycles executed under mission control (Parent interventions flowing)", parent_interventions: 1, key_events: [{type:"parent_intervention", summary:"demo steer during fire", ts: Date.now()/1000}] });
+        setTimeout(() => {
+          updateStaticFire({ phase: "completed", duration_seconds: 120, cycles_completed: 19, current_fabric_coherence: 0.93, coherence_start: 0.87, coherence_end: 0.93, total_lift: 6.9, parent_interventions: 3, fabric_edges_delta: 9, log_line: "Static fire complete. Coherence lift +6.9% recorded.", key_events: [{type:"parent_intervention", summary:"demo steer during fire", ts: Date.now()/1000-30}, {type:"densify", summary:"+9 edges in fire window", ts: Date.now()/1000-10}], recorder_snippets: ["rec:demo-fabric-in-fire"], final_report: {post_densif_fabric:{coherence_end:0.93, edges_delta:9, summary:"demo post-densif render"}, lift_pct:6.9, recorder_snippets:["rec:demo-fabric-in-fire"], interventions_inside_fire:3} });
+        }, 1900);
+      }
+      appendSystemMessage(`ACK: ${cmd} (demo)`);
+    }
+
+    function handleMessage(raw) {
+      let msg;
+      try { msg = JSON.parse(raw); } catch { return; }
+      
+      if (msg.type === "initial_state") {
+        const data = msg.data || {};
+        updateSeq(msg.seq);
+        
+        // Hydrate
+        if (data.loop_state) {
+          const ls = data.loop_state;
+          state.activeCycle = ls.cycle_id || ls.active_cycle;
+          state.globalCoherence = ls.fabric_coherence || 0;
+          state.currentStep = ls.current_step || 1;
+          
+          renderLoopSteps(state.currentStep);
+          if (ls.overseer_state) updateOverseer(ls.overseer_state);
+        }
+        
+        if (data.fabric) updateFabricFromEvent({data: data.fabric}); // v1.5
+        if (data.grid_health) updateGrid(data.grid_health);
+        
+        updateHeader();
+        
+        // Immediately request any missed events (seq aware replay)
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ command: "replay_events", after_seq: state.lastSeq }));
+        }
+        
+        appendSystemMessage("Initial state received");
+        return;
+      }
+      
+      if (msg.type === "replay") {
+        (msg.events || []).forEach(e => handleMissionEvent(e));
+        appendSystemMessage(`Replayed ${msg.count || 0} events`);
+        return;
+      }
+      
+      if (msg.type === "command_ack") {
+        const took = _lastCmdSendTs ? (Date.now() - _lastCmdSendTs) : 0;
+        const latEl = document.getElementById("cmd-latency");
+        if (latEl) latEl.textContent = took ? `${took}ms` : "";
+        const surf = msg.surface ? ` [${msg.surface}]` : "";
+        appendSystemMessage(`ACK ${msg.command || ""} ${msg.error ? "ERR:" + msg.error : "OK"}${surf}${took ? " ("+took+"ms)" : ""}`);
+        
+        // Wave 3 richer visual ack + feedback
+        if (!msg.error) {
+          if (msg.command && (msg.command.includes("parent_decision") || msg.command.includes("record_parent_decision"))) {
+            // green flash on successful parent decision (richer UX)
+            flashGreenDecision();
+          }
+          if (msg.command && msg.command.includes("fabric") && msg.result && (msg.result.graph_delta || msg.result.delta_edges)) {
+            showFabricLiftToast(msg.result);
+          }
+          if (msg.command && (msg.command.includes("list_recent_fires") || msg.command.includes("compare_fires")) && msg.result) {
+            appendSystemMessage(`Bay: ${JSON.stringify(msg.result).slice(0,120)}`);
+          }
+        }
+        _pendingCmd = null;
+        return;
+      }
+      
+      if (msg.type === "error") {
+        appendSystemMessage("ERROR: " + (msg.error || "unknown"));
+        return;
+      }
+      
+      // Treat as live mission event
+      if (msg.event_type || msg.seq) {
+        handleMissionEvent(msg);
+      }
+    }
+
+    function handleMissionEvent(evt) {
+      if (!evt) return;
+      updateSeq(evt.seq);
+      
+      const et = (evt.event_type || "").toLowerCase();
+      
+      // Route to panels
+      if (et.includes("loop_step") || et === "loop_step") {
+        updateLoopFromEvent(evt.data || evt);
+        state.activeCycle = evt.cycle_id || state.activeCycle;
+        // v1.5: pulse the step with possible minor coh contribution signal
+        const stepNum = (evt.data && evt.data.step) || evt.step || 1;
+        pulseLoopStep(stepNum, 0.9, 0.003);
+      }
+      else if (et.includes("fabric")) {
+        // v1.5: FULL live graph_delta + smooth transitions + loop step 6 pulse
+        updateFabricFromEvent(evt);
+        // Wave 3: live lift delta toast for any FabricUpdateEvent (real or test)
+        const d = evt.data || evt || {};
+        if (d.delta_edges || (d.graph_delta && (d.graph_delta.edges_added || d.graph_delta.lift_pct_delta))) {
+          showFabricLiftToast(d);
+        }
+        // stabilization-wave-20260531: live Parent Fabric Reasoning trace from FabricUpdateEvent (when Parent uses record_parent_fabric_reasoning)
+        if (d.parent_fabric_reasoning) {
+          addParentFabricReasoningTrace({
+            ...d.parent_fabric_reasoning,
+            cycle_id: evt.cycle_id || d.cycle_id,
+            ts: evt.timestamp || d.timestamp || (Date.now()/1000),
+            source: 'FabricUpdateEvent'
+          });
+          // immediate highlight if this event itself carries actionable elements (optional, non-intrusive)
+          if (Array.isArray(d.parent_fabric_reasoning.fabric_elements_considered) && d.parent_fabric_reasoning.fabric_elements_considered.length) {
+            // do not auto-force highlight on every trace; operator clicks to focus
+          }
+        }
+        // Tight Experience Layer: FabricUpdate (from densif, daily, recorder, Gardener) now visibly drives the structural briefing panel
+        setTimeout(() => { try { refreshExperienceFabric(); } catch(_) {} }, 140);
+      }
+      else if (et.includes("parent_decision")) {
+        addDecisionToTimeline(evt);
+        state.globalCoherence = evt.data?.fabric_coherence_at_decision || state.globalCoherence;
+        pulseLoopStep(4, 1.0, 0.009); // parent decide ripples to fabric
+        // Tight Experience Layer: Parent decisions (especially fabric_directives ones) are the steering signal — re-render the live connections + weak links
+        setTimeout(() => { try { refreshExperienceFabric(); } catch(_) {} }, 160);
+      }
+      else if (et.includes("overseer")) {
+        updateOverseer(evt.data || evt);
+        pulseLoopStep(2, 0.7, 0.002);
+      }
+      else if (et.includes("static_fire")) {
+        updateStaticFire(evt);
+      }
+      else if (et.includes("grid")) {
+        updateGrid((evt.data && evt.data.health) || evt.data || evt);
+      }
+      
+      // Always append to stream
+      appendEvent(evt);
+      
+      // v1.5: also record for replay + multi-fire
+      recordHistoryEvent(evt);
+      
+      updateHeader();
+    }
+
+    // === DECISION COMPOSER ===
+    function showDecisionComposer() {
+      document.getElementById("decision-modal").classList.remove("hidden");
+      document.getElementById("decision-modal").classList.add("flex");
+      setTimeout(() => document.getElementById("dec-note").focus(), 60);
+    }
+    
+    function hideDecisionComposer() {
+      const m = document.getElementById("decision-modal");
+      m.classList.remove("flex");
+      m.classList.add("hidden");
+    }
+    
+    function submitDecision() {
+      const action = document.getElementById("dec-action").value.trim() || "fabric_steer";
+      const note = document.getElementById("dec-note").value.trim();
+      
+      const decision = { action, note: note || "mission control fabric-driven steer" };
+      
+      sendCommand("parent_decision", {
+        cycle_id: state.activeCycle,
+        decision,
+        actions_taken: ["mission_tower_command"]
+      });
+      
+      hideDecisionComposer();
+      
+      // Optimistic local timeline entry
+      setTimeout(() => {
+        addDecisionToTimeline({ data: { decision_summary: action, actions_taken: ["mission_tower_command"], fabric_coherence_at_decision: state.globalCoherence, cycle_id: state.activeCycle } });
+      }, 60);
+    }
+
+    // === WEBSOCKET LIFECYCLE (seq-aware reconnect + replay) ===
+    function connectWS() {
+      const proto = (location.protocol === "https:") ? "wss:" : "ws:";
+      const url = `${proto}//${location.host}/ws/mission`;
+      
+      try {
+        ws = new WebSocket(url);
+      } catch (e) {
+        setWSStatus(false);
+        scheduleReconnect();
+        return;
+      }
+      
+      ws.onopen = () => {
+        setWSStatus(true);
+        reconnectDelay = 800;
+        appendSystemMessage("WebSocket connected");
+        
+        // Bootstrap: server sends initial_state automatically
+        // After we receive it we will request replay
+      };
+      
+      ws.onmessage = (ev) => {
+        handleMessage(ev.data);
+      };
+      
+      ws.onclose = () => {
+        setWSStatus(false);
+        ws = null;
+        scheduleReconnect();
+      };
+      
+      ws.onerror = () => {
+        setWSStatus(false);
+      };
+    }
+    
+    function scheduleReconnect() {
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      reconnectTimer = setTimeout(() => {
+        appendSystemMessage(`Reconnecting...`);
+        connectWS();
+      }, reconnectDelay);
+      reconnectDelay = Math.min(reconnectDelay * 1.7, 6500);
+    }
+
+    // === INITIAL HYDRATION + DEMO FALLBACK ===
+    async function bootstrapFromREST() {
+      try {
+        const res = await fetch("/state");
+        if (!res.ok) return false;
+        const data = await res.json();
+        
+        if (data.status === "no_mission_attached") {
+          enterDemoMode();
+          return true;
+        }
+        
+        if (data.loop_state) {
+          const ls = data.loop_state;
+          state.activeCycle = ls.cycle_id || ls.active_cycle;
+          state.globalCoherence = ls.fabric_coherence || 0.82;
+          state.currentStep = ls.current_step || 2;
+          renderLoopSteps(state.currentStep);
+        }
+        
+        if (data.fabric) updateFabricFromEvent({data: data.fabric}); // v1.5 delta-ready
+        if (data.grid_health) updateGrid(data.grid_health);
+        
+        updateHeader();
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function enterDemoMode() {
+      state.demoMode = true;
+      state.swarmId = "stabilization-wave-20260531";
+      state.activeCycle = "ev-cycle-stab-31-0042";
+      state.globalCoherence = 0.874;
+      state.currentStep = 4;
+      state.fabric = {
+        overall_coherence: 0.874,
+        active_cycles: ["ev-cycle-stab-31-0042", "ev-cycle-stab-31-0039", "ev-cycle-stab-31-0037", "research-thread-constitutions-04", "graphgardener-20260528"],
+        total_cross_cycle_edges: 147
+      };
+      // v1.5 seed rich graph model for demo (will be mutated by deltas in seeded events)
+      state.fabricGraph = { nodes: [], edges: [], lastUpdateTs: Date.now() };
+      ["ev-cycle-stab-31-0042", "ev-cycle-stab-31-0039", "ev-cycle-stab-31-0037", "research-thread-constitutions-04", "graphgardener-20260528"].forEach(cid => ensureGraphNode(cid));
+      
+      // Render everything beautifully for the target stabilization context
+      updateHeader();
+      renderLoopSteps(state.currentStep);
+      updateFabric(state.fabric);
+      
+      // Seed a few nice demo events + decisions (v1.5 rich graph_delta for fabric observatory + replay)
+      const now = Date.now() / 1000;
+      const demoEvents = [
+        { seq: 12, event_type: "loop_step", timestamp: now - 38, cycle_id: state.activeCycle, data: { step: 2, description: "Overseer ingesting experience + multi-cycle fabric" } },
+        { seq: 13, event_type: "fabric_update", timestamp: now - 31, cycle_id: state.activeCycle, data: { 
+            fabric_coherence: 0.874, delta_edges: 7, summary: "cross-cycle continuation strengthened",
+            affected_cycles: ["ev-cycle-stab-31-0042","ev-cycle-stab-31-0039"],
+            graph_delta: { coherence_before: 0.851, coherence_after: 0.874, method: "daily_consolidation_v3", lifts: [2.3], cycles: ["ev-cycle-stab-31-0042"] }
+          } },
+        { seq: 14, event_type: "parent_decision", timestamp: now - 19, cycle_id: state.activeCycle, data: { decision_summary: "trigger_densification", actions_taken: ["densify_weak_links"], fabric_coherence_at_decision: 0.869, triggered_from_fabric: true } },
+        { seq: 15, event_type: "overseer_state", timestamp: now - 11, cycle_id: state.activeCycle, data: { adaptation_effectiveness: 0.81, recommendations: ["Prioritize research-constitutions fusion", "Run 120s static fire"] } },
+        { seq: 18, event_type: "fabric_update", timestamp: now - 4, cycle_id: state.activeCycle, data: {
+            fabric_coherence: 0.891, delta_edges: 11, summary: "densification wave on research-constitutions links",
+            affected_cycles: ["research-thread-constitutions-04", "ev-cycle-stab-31-0037", "graphgardener-20260528"],
+            graph_delta: { coherence_before: 0.874, coherence_after: 0.891, method: "densify+recorder_fusion", total_edges: 11 }
+          } }
+      ];
+      
+      demoEvents.forEach(e => {
+        appendEvent(e);
+        recordHistoryEvent(e); // v1.5 populate replay buffer
+        if (e.event_type.includes("loop")) updateLoopFromEvent(e.data);
+        if (e.event_type.includes("fabric")) updateFabricFromEvent(e); // v1.5 delta aware
+        if (e.event_type.includes("parent")) addDecisionToTimeline(e);
+        if (e.event_type.includes("overseer")) updateOverseer(e.data);
+      });
+      
+      // One decision already visible
+      addDecisionToTimeline({ data: { decision_summary: "densify research-constitutions", actions_taken: ["mission_tower"], fabric_coherence_at_decision: 0.87, cycle_id: state.activeCycle, triggered_from_fabric: true } });
+      
+      // Grid
+      updateGrid({ status: "STABLE", active_nodes: 19, utilization: 0.41 });
+      
+      // Rich demo completed static fire — exercises the full beautiful Bay (live + post-fire artifacts)
+      // This is exactly what a 2min harness using run_static_fire_with_mission_telemetry + normal loop emissions produces
+      updateStaticFire({
+        phase: "completed",
+        duration_seconds: 120,
+        cycles_completed: 19,
+        current_fabric_coherence: 0.932,
+        coherence_start: 0.884,
+        coherence_end: 0.932,
+        total_lift: 5.4,
+        log_line: "Static fire COMPLETE — +5.4% coherence lift under full 6-step control",
+        parent_interventions: 3,
+        fabric_edges_delta: 14,
+        key_events: [
+          { type: "parent_intervention", summary: "steer: prioritize research-constitutions fusion inside fire window", ts: (Date.now()/1000)-70 },
+          { type: "densify", summary: "triggered graph densification on weak cross-cycle links (7 new edges)", ts: (Date.now()/1000)-55 },
+          { type: "parent_intervention", summary: "Parent accepted overseer hunch — embodied intuition weight +0.07", ts: (Date.now()/1000)-32 },
+          { type: "loop_milestone", summary: "step-6 fabric contribution recorded during controlled evolution", ts: (Date.now()/1000)-18 }
+        ],
+        recorder_snippets: [
+          "recorder:fabric_contrib@fire-cycle-7",
+          "recorder:parent_decision_during_fire:steer-research-constitutions",
+          "recorder:loop_step_artifact:embodied-synthesis-in-fire"
+        ],
+        final_report: {
+          post_densif_fabric: {
+            coherence_end: 0.932,
+            edges_delta: 14,
+            summary: "19 cycles of Parent-Overseer-Research loop under static fire densified 4-cycle memory fabric +14 edges",
+            render_hint: "canvas + coherence delta + key_continuations (stabilization-wave-20260531)"
+          },
+          recorder_snippets: ["recorder:fabric_contrib@fire-cycle-7", "recorder:parent_decision_during_fire:steer-research-constitutions", "recorder:loop_step_artifact:embodied-synthesis-in-fire"],
+          lift_pct: 5.4,
+          interventions_inside_fire: 3,
+          cycles_in_fire: 19,
+          duration_s: 120
+        }
+      });
+
+      // v1.5: seed 2 additional historical fires into comparison panel (realistic stabilization-wave-20260531 numbers)
+      recordCompletedFire({ id:'sf-demo-1', ts: Date.now()-380000, cycles:12, lift:3.8, cohStart:0.851, cohEnd:0.889, interventions:2, edgesDelta:9, duration:120, curve:[0.851,0.863,0.879,0.889] });
+      recordCompletedFire({ id:'sf-demo-2', ts: Date.now()-92000, cycles:7, lift:2.1, cohStart:0.869, cohEnd:0.890, interventions:1, edgesDelta:4, duration:90, curve:[0.869,0.881,0.890] });
+
+      // Final graph delta + loop pulse to prove live viz on load
+      setTimeout(() => {
+        if (state.demoMode) {
+          const lateDelta = { seq: 29, event_type:"fabric_update", timestamp: Date.now()/1000, cycle_id: state.activeCycle,
+            data: { fabric_coherence:0.903, delta_edges:5, affected_cycles:["ev-cycle-stab-31-0042","research-thread-constitutions-04"], graph_delta:{coherence_before:0.891,coherence_after:0.903,method:"post_fire_replay_densify"} } };
+          handleMissionEvent(lateDelta);
+        }
+      }, 620);
+      
+      // Banner hint
+      const banner = document.createElement("div");
+      banner.className = "fixed bottom-3 right-3 text-[10px] px-3 py-1 rounded-full border bg-slate-900/80 border-slate-700 text-amber-400/90 font-mono";
+      banner.textContent = "DEMO MODE — attach IntegratedRealTimeEvolutionSystem for live data";
+      document.body.appendChild(banner);
+      
+      setTimeout(() => banner.style.transition = "opacity .6s", 10);
+      setTimeout(() => { banner.style.opacity = "0"; setTimeout(() => banner.remove(), 600); }, 7200);
+
+      // v1.5 final wiring for new panels on demo entry
+      setTimeout(() => {
+        renderMultiFireComparison();
+        const slider = document.getElementById('replay-slider');
+        if (slider) {
+          slider.max = Math.max(0, state.historyEvents.length - 1);
+          slider.value = state.historyEvents.length - 1;
+        }
+        updateReplayUI();
+        // initial force viz hint (user can toggle)
+        const c = document.getElementById('fabric-canvas');
+        if (c && state.vizMode === 'force') startForceAnimation();
+      }, 80);
+    }
+
+    function injectSampleFabricOnCanvas() {
+      const c = document.getElementById("fabric-canvas");
+      if (c) {
+        // v1.5: ensure graph model + draw (demo values overwritten by real/delta data)
+        if ((!state.fabricGraph || !state.fabricGraph.nodes || state.fabricGraph.nodes.length === 0) && state.demoMode) {
+          ["c-0042","c-0039","c-0037","c-0028"].forEach(id => ensureGraphNode(id));
+        }
+        drawFabricCanvas(c, { active_cycles: ["c-0042","c-0039","c-0037","c-0028"], total_cross_cycle_edges: 147, overall_coherence: 0.874 });
+      }
+    }
+
+    function setupDemoButtonFallback() {
+      // Allow operator to force demo at any time via console or hidden affordance
+      window.AGENTDRIVE_FORCE_DEMO = () => enterDemoMode();
+    }
+
+    // === Wave 3 Command Bar + Visual UX helpers (vanilla, leverages existing sendCommand + handle paths) ===
+    function submitWave3CommandFromBar() {
+      const inp = document.getElementById("wave3-cmd");
+      if (!inp) return;
+      let val = inp.value.trim();
+      if (!val) return;
+      // naive parse "cmd key=val key2=val2" -> extra obj (supports simple cases for demo/UX)
+      const parts = val.split(/\s+/);
+      const cmd = parts[0];
+      const extra = {};
+      for (let i=1; i<parts.length; i++) {
+        const p = parts[i];
+        if (p.includes("=")) {
+          const [k, ...rest] = p.split("=");
+          let v = rest.join("=");
+          if (v === "true") v = true; else if (v === "false") v = false; else if (!isNaN(Number(v))) v = Number(v);
+          // support dotted for decision.action etc (shallow)
+          if (k.includes(".")) {
+            const [root, sub] = k.split(".");
+            extra[root] = extra[root] || {};
+            extra[root][sub] = v;
+          } else {
+            extra[k] = v;
+          }
+        } else if (i===1) {
+          // bare arg as note or observation
+          extra.observation = p;
+        }
+      }
+      sendCommand(cmd, extra);
+      // clear for next
+      setTimeout(() => { inp.value = ""; const lat=document.getElementById("cmd-latency"); if(lat) lat.textContent=""; }, 80);
+    }
+
+    function showWave3Help() {
+      const help = [
+        "Wave 3 Command Surface (stabilization-wave-20260531)",
+        "All via existing dispatch_command router + publish_event_sync (typed events only).",
+        "Examples:",
+        "  suggest_connection_improvements",
+        "  trigger_densification weak_link=research-constitutions-04 (from fabric briefing)",
+        "  parent_decision decision.action=fabric_steer fabric_directives=prioritize_X from_fabric=true",
+        "  inject_custom_observation observation=... weak_links=... from_fabric=true",
+        "  emit_test_fabric_lift lift=0.05 delta_edges=7   (emits FabricUpdateEvent+graph_delta)",
+        "  pause_evolution_context / resume_evolution_context  (ParentDecisionEvent w/ flag)",
+        "  list_recent_fires / compare_fires   (Bay multi-fire from hub recent_events)",
+        "  overseer_force_hunch / get_metacognitive_briefing",
+        "Green flash on parent decisions, live lift toasts on fabric deltas, latency on ACKs.",
+        "Local operator only (localhost). See server.py dispatch_command for full router."
+      ];
+      const stream = document.getElementById("event-stream");
+      help.forEach(h => {
+        const row = document.createElement("div");
+        row.className = `event-row flex gap-2 items-baseline event-system`;
+        row.innerHTML = `<span class="text-slate-500 w-[38px] shrink-0 tabular-nums">HLP</span><span class="flex-1 text-violet-300/90">${h}</span>`;
+        stream.insertBefore(row, stream.firstChild);
+      });
+      appendSystemMessage("Wave 3 help injected — use datalist or ? for discoverability.");
+    }
+
+    function flashGreenDecision() {
+      // richer visual ack: green flash on successful parent decision (e.g. timeline or body)
+      const timeline = document.querySelector('.decision') || document.getElementById('event-stream');
+      if (!timeline) return;
+      const orig = timeline.style.boxShadow || "";
+      timeline.style.transition = "box-shadow 120ms";
+      timeline.style.boxShadow = "0 0 0 3px rgba(52,211,153,0.6)";
+      setTimeout(() => {
+        timeline.style.boxShadow = "0 0 0 3px rgba(52,211,153,0.15)";
+        setTimeout(() => { timeline.style.boxShadow = orig; timeline.style.transition = ""; }, 420);
+      }, 180);
+    }
+
+    function showFabricLiftToast(data) {
+      // live visual for graph_delta / lift (used on both ack results and live FabricUpdateEvents)
+      const d = data.data || data || {};
+      const deltaE = d.delta_edges || (d.graph_delta && (d.graph_delta.edges_added || d.graph_delta.total_edges)) || 0;
+      const lift = d.graph_delta && d.graph_delta.lift_pct_delta ? d.graph_delta.lift_pct_delta : (deltaE ? (deltaE * 0.7).toFixed(1) : null);
+      const toast = document.createElement("div");
+      toast.className = "fixed bottom-4 right-4 z-[90] text-xs font-mono px-3 py-1.5 rounded border bg-emerald-950/90 border-emerald-700 text-emerald-300 shadow-xl";
+      toast.innerHTML = `FABRIC LIFT <span class="text-emerald-400">+${deltaE || 0} edges</span>${lift ? ` • +${lift}% coh` : ""} <span class="text-[9px] text-emerald-500/70">(live via FabricUpdateEvent)</span>`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.transition="opacity 420ms"; toast.style.opacity="0"; setTimeout(()=>toast.remove(), 400); }, 1650);
+    }
+
+    // === BOOT ===
+    async function boot() {
+      initTailwind();
+      
+      // Build loop skeleton immediately
+      renderLoopSteps(1);
+      
+      // Initial canvas render (demo values)
+      injectSampleFabricOnCanvas();
+      
+      // Filters
+      setupFilters();
+      
+      // REST bootstrap (preferred)
+      const hadData = await bootstrapFromREST();
+      
+      // Always attempt live WS connection
+      connectWS();
+      
+      // If REST said no mission, or after a short delay still no data, show beautiful demo
+      if (!hadData) {
+        setTimeout(() => {
+          if (state.globalCoherence < 0.1 && !state.demoMode) {
+            enterDemoMode();
+          }
+        }, 1400);
+      }
+      
+      setupDemoButtonFallback();
+      
+      // Keyboard niceties
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "?" && document.activeElement.tagName === "BODY") {
+          e.preventDefault();
+          const modal = document.getElementById("decision-modal");
+          if (modal.classList.contains("hidden")) showDecisionComposer();
+          else hideDecisionComposer();
+        }
+        if (e.key.toLowerCase() === "f" && e.metaKey) {
+          e.preventDefault();
+          document.getElementById("sf-duration").focus();
+          document.getElementById("sf-duration").select();
+        }
+      });
+      
+      // Periodic canvas refresh (light)
+      setInterval(() => {
+        const c = document.getElementById("fabric-canvas");
+        if (c && state.fabric.active_cycles && state.fabric.active_cycles.length) {
+          drawFabricCanvas(c, state.fabric);
+        }
+      }, 26000);
+      
+      // Initial header
+      updateHeader();
+
+      // AD-Grid persistent quiet-mode adaptive polling (starts immediately; backoff adjusts to activity)
+      // Complements WS; keeps inhabitant dashboards and quiet banner live even when no mission.
+      try { startGridQuietAdaptivePolling(); } catch (e) {}
+
+      // Conductor Cockpit: start the new parallel panels (Council, Inhabitants, Queue, Thinking)
+      // Additive: polls the dedicated /api/grid cockpit routes + existing fabric. ~10s cadence for live steering feel.
+      try { startConductorCockpitPolling(); } catch (e) {}
+      // Also kick one immediate enhanced inhabitants load (reuses existing timer too)
+      setTimeout(() => { try { refreshInhabitantsEnhanced(); } catch(_) {} }, 2100);
+
+      // v1.5: ensure viz toggle UI reflects default
+      setTimeout(() => {
+        const r = document.getElementById('viz-radial');
+        const f = document.getElementById('viz-force');
+        if (r) r.classList.toggle('active', state.vizMode !== 'force');
+        if (f) f.classList.toggle('active', state.vizMode === 'force');
+        updateReplayUI();
+      }, 120);
+      
+      // Welcome line in stream
+      setTimeout(() => {
+        if (document.getElementById("event-stream").children.length < 2) {
+          appendSystemMessage("Mission Control Tower ready. Connects to /ws/mission + /state");
+        }
+      }, 900);
+
+      // One-time: ensure the tight Experience Layer panel is visible if HTML was injected
+      const expPanel = document.getElementById('experience-fabric-panel');
+      if (expPanel && expPanel.children.length < 2) {
+        // Panel HTML was added via previous edit; if missing, user sees the JS functions ready
+      }
+
+      // AgentDrive-native Kanban (reworked for the loop + fabric)
+      refreshKanban();
+
+      // Tight Experience Layer / Fabric Briefing on initial load
+      setTimeout(() => { refreshExperienceFabric(); }, 1200);
+    }
+
+    // === AGENTDRIVE KANBAN (native to 6-step + v3 fabric) ===
+    async function refreshKanban() {
+      const container = document.getElementById('kanban-board');
+      if (!container) return;
+      container.innerHTML = `<div class="col-span-5 text-xs text-slate-500 p-4">Loading AgentDrive Mission Board…</div>`;
+
+      try {
+        const res = await fetch('/api/board');
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        const lanesOrder = ['pending','running','done','failed','archived'];
+        const labels = {pending:'PENDING', running:'RUNNING', done:'DONE', failed:'FAILED', archived:'ARCHIVED'};
+
+        let html = '';
+        lanesOrder.forEach(lane => {
+          const cards = (data.lanes && data.lanes[lane]) || [];
+          html += `<div class="kanban-lane" data-lane="${lane}">
+            <div class="kanban-lane-header">
+              <span>${labels[lane]}</span>
+              <span class="text-[10px] text-slate-500">${cards.length}</span>
+            </div>`;
+          cards.forEach(card => {
+            const lift = card.fabric_contributions && card.fabric_contributions.length 
+              ? `+${(card.fabric_contributions[card.fabric_contributions.length-1].lift || 0).toFixed(2)}` : '';
+            html += `<div class="kanban-card" onclick="transitionCard('${card.id}', '${lane}')">
+              <div class="title">${card.title || 'Untitled mission'}</div>
+              <div class="meta">
+                ${card.cycle_id ? `cycle:${card.cycle_id.slice(-6)} ` : ''}
+                ${card.genome_id ? `genome:${card.genome_id.slice(-6)} ` : ''}
+                ${card.source ? card.source : ''}
+                ${lift ? `<span class="fabric-lift">${lift}</span>` : ''}
+              </div>
+            </div>`;
+          });
+          html += `</div>`;
+        });
+        container.innerHTML = html;
+      } catch (e) {
+        container.innerHTML = `<div class="col-span-5 text-xs text-amber-400 p-4">Kanban API not responding yet. Start a real Integrated system or run a static fire / grid cycle to populate the board. (Fallback: use TUI <code>board create "..."</code>)</div>`;
+      }
+    }
+
+    // Tight real-time Experience Layer / v3 Fabric Briefing (the structural Obsidian-style heart of the 6-step loop)
+    // Consumes full get_parent_facing_memory_fabric_briefing + weak_links + recent graphs from /api/experience_fabric
+    // Actionable weak links emit real Parent steering (suggest_connection_improvements + fabric_directives) → recorder → FabricUpdateEvent
+    // Auto-called on FabricUpdate + ParentDecision (and initial). Makes "the whole system as one" visible and steerable.
+    async function refreshExperienceFabric() {
+      const panel = document.getElementById('experience-fabric-panel');
+      if (!panel) return;
+
+      try {
+        const res = await fetch('/api/experience_fabric');
+        const data = await res.json();
+        if (data.status === 'no_experience_layer_attached' || data.error) {
+          // keep the panel structure; just surface graceful message in the actionable zone
+          const weakEl = document.getElementById('exp-weak');
+          if (weakEl) weakEl.innerHTML = `<div class="text-amber-400/70">No live IntegratedRealTimeEvolutionSystem attached. Run static fire / grid cycle with recorder to grow real v3 fabric.</div>`;
+          return;
+        }
+
+        const b = data.briefing || {};
+        const coh = (b.fabric_coherence != null) ? Number(b.fabric_coherence) : 0;
+        const cohEl = document.getElementById('exp-coh');
+        if (cohEl) cohEl.textContent = coh.toFixed(3);
+        const bar = document.getElementById('exp-coh-bar');
+        if (bar) bar.style.width = Math.max(0, Math.min(100, Math.round(coh * 100))) + '%';
+
+        // Densification + fusion summary
+        const dens = b.densification_summary || {};
+        const sumEl = document.getElementById('exp-densif-summary');
+        if (sumEl) {
+          sumEl.innerHTML = `${b.text_summary || 'Multi-cycle v3 fabric active.'}<br>` +
+            `<span class="text-emerald-400/60">lift: ${fmtNum(dens.total_densification_lift || 0, 3)} • cycles: ${dens.cycle_count || (b.key_continuations||[]).length}</span>`;
+        }
+        const fusEl = document.getElementById('exp-fusion-cp');
+        if (fusEl) {
+          const fus = b.fusion_checkpoint_snippet || {};
+          fusEl.textContent = `fusion_cp: coh=${fmtNum(fus.fabric_coherence||coh,3)} edges=${fus.cross_cycle_edge_count||0} via ${fus.via||'recorder'}`;
+        }
+
+        // Key continuations (the actual Obsidian-style edges growing the experience)
+        const contEl = document.getElementById('exp-conts');
+        if (contEl) {
+          const conts = (b.key_continuations || []).slice(0, 6);
+          contEl.innerHTML = conts.length
+            ? conts.map(c => `<div class="truncate hover:text-emerald-300">• ${c}</div>`).join('')
+            : '<div class="text-emerald-400/50">No strong cross-cycle continuations yet — run more loops to densify.</div>';
+        }
+
+        // Actionable weak links — real steering instruments (not theater)
+        const weakEl = document.getElementById('exp-weak');
+        if (weakEl) {
+          const weaks = (data.weak_links || []).slice(0, 5);
+          if (weaks.length) {
+            weakEl.innerHTML = weaks.map((w, i) => {
+              const cid = w.cycle_id || (w.weak_links && w.weak_links[0] ? w.weak_links[0].cycle_id : '');
+              const label = cid ? shortId(cid) : (w.source ? String(w.source).slice(-10) : `weak-${i}`);
+              return `<button onclick="steerOnWeakLink(${JSON.stringify(w)})" class="mr-1 mb-1 px-1.5 py-px text-[10px] bg-emerald-900/30 hover:bg-emerald-800/50 border border-emerald-700 rounded text-emerald-300">${label} → DENSIFY</button>`;
+            }).join('') + `<span class="text-[9px] text-emerald-400/50 ml-1">(click emits suggest_connection_improvements + fabric_directives → real Parent steer → TypedEdge + lift)</span>`;
+          } else {
+            weakEl.innerHTML = '<div class="text-emerald-400/50">No weak links above threshold. Fabric is holding strong.</div>';
+          }
+        }
+
+        // Actionable recommendations for Parent (from Overseer via briefing)
+        const actEl = document.getElementById('exp-actionable');
+        if (actEl) {
+          actEl.innerHTML = b.actionable_for_parent
+            ? `PARENT STEER: ${b.actionable_for_parent}`
+            : 'Run more 6-step cycles with recorder attached for live Overseer recommendations.';
+        }
+
+        // Mermaid + hierarchical text renders (embeddable DNA)
+        const mEl = document.getElementById('exp-mermaid');
+        if (mEl) mEl.textContent = b.mermaid_snippet || '%% v3 fabric mermaid will appear here after first real cycle with recorder';
+        const tEl = document.getElementById('exp-text');
+        if (tEl) {
+          // If recent graphs present, surface first one's text render if available; else briefing text
+          const recent = (data.recent_cycle_graphs || [])[0];
+          tEl.textContent = (recent && recent.hierarchical_text) ? recent.hierarchical_text.slice(0, 420) : (b.text_summary || 'Hierarchical cycle graph text from render_cycle_graph_text will embed here.');
+        }
+
+        // Provenance line (living DNA)
+        const provEl = document.getElementById('exp-provenance');
+        if (provEl) {
+          provEl.textContent = `provenance: ExperienceGraphRecorder.get_parent_facing_memory_fabric_briefing • ${b.swarm_id || 'stabilization-wave-20260531'} • ${new Date().toISOString().slice(11,19)} • single publish_event_sync channel`;
+        }
+
+        // Parent Fabric Reasoning traces hydration (from dedicated traces in API response)
+        // Complements the live FabricUpdateEvent path; keeps the new section in sync on manual REFRESH / initial load
+        try {
+          if (data.parent_fabric_reasoning_traces && data.parent_fabric_reasoning_traces.length) {
+            const incoming = data.parent_fabric_reasoning_traces;
+            const st = state.parentReasoningTraces || (state.parentReasoningTraces = []);
+            incoming.forEach(tr => {
+              const sig = (tr.slug || '') + JSON.stringify(tr.fabric_elements_considered || tr.elements || []).slice(0, 64);
+              if (!st.some(s => ((s.slug || '') + JSON.stringify(s.fabric_elements_considered || s.elements || []).slice(0, 64)) === sig)) {
+                st.push(tr);
+              }
+            });
+            state.parentReasoningTraces = st.sort((x, y) => (Number(y.ts || 0) - Number(x.ts || 0))).slice(0, 8);
+          }
+          renderParentFabricReasoning();
+        } catch (_) {}
+      } catch (e) {
+        console.warn('experience fabric fetch failed', e);
+      }
+    }
+
+    function triggerDensifyFromFabric() {
+      // Convenience: pulls current briefing weak links and triggers gardener (real path)
+      sendCommand('trigger_densification', { from_fabric_briefing: true, weak_link: 'from_experience_layer_panel' });
+      setTimeout(refreshExperienceFabric, 800);
+    }
+
+    function steerOnWeakLink(weak) {
+      // The critical path: this is a real steering action from the visible Experience Layer surface.
+      // Emits suggest_connection_improvements (or parent_decision with fabric_directives) → Integrated → recorder records TypedEdge (densified_via_...) + emits FabricUpdateEvent with lift.
+      // This is exactly what makes DnD or any UI gesture serve the main AgentDrive purpose (per user's clarifying question).
+      const target = weak.cycle_id || (weak.weak_links && weak.weak_links[0] ? weak.weak_links[0].cycle_id : null) || weak;
+      sendCommand('suggest_connection_improvements', {
+        weak_link: target,
+        from_fabric: true,
+        from_experience_layer: true
+      });
+      // Also surface as fabric-driven Parent decision for full loop trace
+      setTimeout(() => {
+        sendCommand('parent_decision', {
+          decision: { action: 'fabric_steer', note: 'steer from visible Experience Layer weak link' },
+          fabric_directives: { prioritize_weak: target, source: 'experience_layer_panel' },
+          triggered_from_fabric: true
+        });
+      }, 120);
+      // Immediate visual feedback + re-pull the (now densifying) briefing
+      setTimeout(refreshExperienceFabric, 650);
+    }
+
+    // === stabilization-wave-20260531: Parent Fabric Reasoning Traces surface (Experience Layer panel) ===
+    // Live from FabricUpdateEvent + refreshExperienceFabric hydration. Clickable → canvas highlight (emerald) + detail pane.
+    // Visual language: mission-panel emerald accents, consistent with weak links / continuations.
+    let _reasoningRenderIndex = 0;
+
+    function addParentFabricReasoningTrace(trace) {
+      if (!trace) return;
+      const st = state.parentReasoningTraces || (state.parentReasoningTraces = []);
+      // de-dup recent by slug or elements signature
+      const sig = (trace.slug || '') + '|' + JSON.stringify(trace.fabric_elements_considered || trace.elements || []).slice(0,80);
+      if (st.some(t => ((t.slug||'') + '|' + JSON.stringify(t.fabric_elements_considered||[]).slice(0,80)) === sig)) return;
+      st.unshift(trace);
+      if (st.length > 8) st.length = 8; // cap
+      renderParentFabricReasoning();
+    }
+
+    function renderParentFabricReasoning() {
+      const el = document.getElementById('exp-parent-reasoning');
+      if (!el) return;
+      const traces = state.parentReasoningTraces || [];
+      if (!traces.length) {
+        el.innerHTML = '<div class="text-emerald-400/50">— awaiting Parent fabric-native decisions (record_parent_fabric_reasoning in Integrated loop) —</div>';
+        const d = document.getElementById('exp-reasoning-detail'); if (d) d.classList.add('hidden');
+        return;
+      }
+      _reasoningRenderIndex = traces.length;
+      window._recentReasoningTraces = traces; // for onclick index access (no eval of full objects)
+      el.innerHTML = traces.map((t, i) => {
+        const els = (t.fabric_elements_considered || t.elements || []).slice(0,4).map(e => String(e).slice(0,28)).join(', ');
+        const pat = t.structural_pattern_matched || t.pattern || 'structural';
+        const lift = t.expected_lift_signal != null ? Number(t.expected_lift_signal).toFixed(3) : '—';
+        const cid = shortId(t.cycle_id || '');
+        const rationale = (t.decision_rationale || '').slice(0, 110);
+        return `<div class="px-1.5 py-px rounded border border-emerald-800/50 hover:border-emerald-500/60 bg-emerald-950/10 cursor-pointer" data-idx="${i}" onclick="highlightFabricReasoningTrace(${i})" title="Click to highlight fabric elements + show reasoning detail">
+          <span class="text-emerald-400/60">${cid}</span> <span class="text-emerald-300">${pat}</span> <span class="text-emerald-400/70">lift+${lift}</span><br>
+          <span class="text-[9px] text-emerald-200/70">${els || '— elements —'}</span>
+          ${rationale ? `<div class="text-[8px] text-emerald-400/50 truncate">${rationale}</div>` : ''}
+        </div>`;
+      }).join('');
+    }
+
+    function highlightFabricReasoningTrace(idx) {
+      const traces = window._recentReasoningTraces || state.parentReasoningTraces || [];
+      const t = traces[idx];
+      if (!t) return;
+      const elements = t.fabric_elements_considered || t.elements || [];
+      const pattern = t.structural_pattern_matched || t.pattern || '';
+      const lift = t.expected_lift_signal != null ? Number(t.expected_lift_signal) : 0;
+      state.currentFabricHighlight = {
+        elements: elements.map(String),
+        pattern: pattern,
+        expectedLift: lift,
+        until: Date.now() + 16500,
+        trace: t
+      };
+      // Redraw canvas with highlight
+      const c = document.getElementById('fabric-canvas');
+      if (c) drawFabricCanvas(c, state.fabric);
+      // Detail pane
+      const det = document.getElementById('exp-reasoning-detail');
+      if (det) {
+        det.classList.remove('hidden');
+        const full = t.full || t;
+        det.innerHTML = `<span class="text-emerald-400">PARENT REASONED</span> pattern=<span class="text-emerald-300">${pattern||'—'}</span> lift=<span class="text-emerald-300">+${lift.toFixed ? lift.toFixed(3):lift}</span><br>elements: ${(elements||[]).map(e=>String(e).slice(0,32)).join(' • ')}<br><span class="text-emerald-400/60">${(t.decision_rationale||'').slice(0,160)}</span> <span class="ml-2 text-[8px] cursor-pointer underline" onclick="clearFabricReasoningHighlights()">dismiss</span>`;
+      }
+      // gentle re-pulse the experience panel header for visibility
+      const panel = document.getElementById('experience-fabric-panel');
+      if (panel) {
+        panel.style.boxShadow = '0 0 0 1px rgba(52,211,153,0.35)';
+        setTimeout(()=>{ if(panel) panel.style.boxShadow=''; }, 1400);
+      }
+    }
+
+    function clearFabricReasoningHighlights() {
+      state.currentFabricHighlight = null;
+      const c = document.getElementById('fabric-canvas');
+      if (c) drawFabricCanvas(c, state.fabric);
+      const det = document.getElementById('exp-reasoning-detail');
+      if (det) { det.classList.add('hidden'); det.innerHTML=''; }
+      // also refresh list (in case)
+      renderParentFabricReasoning();
+    }
+
+    async function transitionCard(mid, currentLane) {
+      const next = prompt(`Transition ${mid} from ${currentLane} to: (pending/running/done/failed/archived)`, currentLane === 'pending' ? 'running' : 'done');
+      if (!next) return;
+      try {
+        await fetch(`/api/board/missions/${mid}/transition`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ to: next })
+        });
+        refreshKanban();
+      } catch(e) { alert('Transition failed: ' + e); }
+    }
+
+    // === CONDUCTOR COCKPIT JS (additive, stabilization-wave-20260531) ===
+    // Four panels: Council feed, Inhabitants enhanced, Code Action Queue (with buttons), Grid Thinking summary.
+    // Polls the new /api/grid/* routes + reuses experience fabric. Buttons wire to sendCommand -> dispatch -> recorder DNA.
+    // Filters + attribution + real-time feel. Non-breaking: new funcs only, called from boot + extra timers.
+    // DNA: parent_fabric_reasoning:1780296650
+
+    let cockpitPollTimer = null;
+
+    async function refreshConductorCockpit() {
+      try {
+        await Promise.all([
+          refreshCouncilActivity(),
+          refreshInhabitantsEnhanced(),
+          refreshCodeActions(),
+          refreshGridThinking(),
+        ]);
+      } catch (e) { /* graceful */ }
+    }
+
+    async function refreshCouncilActivity() {
+      const container = document.getElementById('council-activity-feed');
+      if (!container) return;
+      try {
+        const role = document.getElementById('council-role-filter')?.value || '';
+        const url = `/api/grid/council-activity?limit=12${role ? '&roles=' + encodeURIComponent(role) : ''}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const acts = data.recent_council_activity || [];
+        if (!acts.length) {
+          container.innerHTML = '<div class="text-emerald-400/50">— no Council traces yet (start Grid + research threads or run self-improve mission) —</div>';
+          return;
+        }
+        container.innerHTML = acts.map(a => {
+          const t = a.data || a.trace || a.event || a;
+          const roleHit = (a.element || '').split('-').pop() || (JSON.stringify(t).match(/perfectionist|guardian|external|contract/i) || ['Council'])[0];
+          const lift = t.expected_lift_signal || t.lift || '';
+          const prog = t.program_id || (t.constitution_refs && t.constitution_refs[0]) || 'Council';
+          const cid = (t.cycle_id || '').slice(-8) || t.slug || '';
+          return `<div class="px-1 py-0.5 border-l-2 border-emerald-600/50 hover:bg-emerald-950/20">
+            <span class="text-emerald-300">${roleHit}</span> <span class="text-[8px] text-emerald-400/60">${cid}</span>
+            ${lift ? `<span class="text-emerald-400/70">+${Number(lift).toFixed(2)}</span>` : ''}
+            <div class="text-[8px] text-emerald-200/60 truncate">${(t.decision_rationale || t.summary || JSON.stringify(t).slice(0,80)).slice(0,95)}</div>
+            <div class="text-[7px] text-emerald-400/40">${prog} • ${data.dna_trace_ref || 'fabric'}</div>
+          </div>`;
+        }).join('');
+      } catch (e) {
+        container.innerHTML = '<div class="text-red-400/50 text-[9px]">Council fetch error (Grid/MC attached?)</div>';
+      }
+    }
+
+    async function refreshInhabitantsEnhanced() {
+      const listEl = document.getElementById('inhabitants-enhanced-list');
+      const sumEl = document.getElementById('inhabitants-cockpit-summary');
+      if (!listEl) return;
+      try {
+        const res = await fetch('/api/grid/inhabitants');
+        const data = await res.json();
+        const inhab = data.inhabitants || [];
+        listEl.innerHTML = '';
+        if (!inhab.length) {
+          listEl.innerHTML = '<div class="text-emerald-400/60">No registered inhabitants yet. Use GridEngine.register_model_program or MCP agentdrive_register_program.</div>';
+        } else {
+          inhab.slice(0,6).forEach(p => {
+            const d = document.createElement('div');
+            d.className = 'border border-emerald-800/40 rounded p-1 bg-[#0c1118] text-[9px]';
+            const pid = p.program_id || p.id || 'unknown';
+            const objs = (p.user_objective_refs || []).slice(0,1).join(' ');
+            d.innerHTML = `<div class="font-mono text-emerald-300">${pid.slice(0,42)}</div>
+              <div class="text-emerald-400/60">${p.status || 'registered'} • ${objs || 'objectives via Contract'}</div>
+              <div class="text-[7px] text-emerald-400/40">${p.attribution ? p.attribution.slice(0,70) : ''}</div>`;
+            listEl.appendChild(d);
+          });
+        }
+        if (sumEl) {
+          const c = data.count || inhab.length;
+          const thr = data.council_threads || 3;
+          sumEl.textContent = `${c} inhabitants • ${thr} Council threads • ${data.mode || 'living'} • Contract wired`;
+        }
+        // also keep the original inhabitants panel in sync (non-breaking)
+        try { refreshInhabitants(); } catch(_) {}
+      } catch (e) {
+        if (listEl) listEl.innerHTML = '<div class="text-red-400/50">Inhabitants cockpit fetch failed.</div>';
+      }
+    }
+
+    async function refreshCodeActions() {
+      const q = document.getElementById('code-action-queue');
+      if (!q) return;
+      try {
+        const res = await fetch('/api/grid/code-actions?limit=10');
+        const data = await res.json();
+        const acts = data.code_actions || [];
+        if (!acts.length) {
+          q.innerHTML = '<div class="text-amber-400/50">— awaiting inhabitant_code_action proposals from Council threads (e.g. PerfectionistOptimizer) —</div>';
+          return;
+        }
+        q.innerHTML = acts.map((a, idx) => {
+          const slug = a.slug || `act-${idx}`;
+          const pid = a.program_id || 'unknown-inhabitant';
+          const atype = a.action_type || a.type || 'proposal';
+          const v = a.verdict ? `<span class="text-green-400">verdict:${a.verdict}</span>` : '';
+          const prev = (a.content_preview || JSON.stringify(a.action || a.event_summary || '').slice(0,60)).slice(0,70);
+          return `<div class="border-l-2 border-amber-600/40 pl-1 py-px hover:bg-amber-950/10 flex justify-between items-start gap-1">
+            <div>
+              <span class="text-amber-300">${pid.slice(0,28)}</span> <span class="text-[8px]">${atype}</span><br>
+              <span class="text-amber-200/70">${prev}</span> ${v}
+              <div class="text-[7px] text-amber-400/40">${slug} • ${a.cycle_id ? a.cycle_id.slice(-6) : ''}</div>
+            </div>
+            <div class="flex flex-col gap-0.5 text-[8px]">
+              <button onclick="reviewCodeAction('${slug}', 'approved_by_conductor')" class="px-1 border border-green-700/60 hover:bg-green-950/30 text-green-400 rounded">APPROVE</button>
+              <button onclick="reviewCodeAction('${slug}', 'overridden_by_conductor')" class="px-1 border border-red-700/60 hover:bg-red-950/30 text-red-400 rounded">OVERRIDE</button>
+            </div>
+          </div>`;
+        }).join('');
+      } catch (e) {
+        q.innerHTML = '<div class="text-red-400/50 text-[9px]">Code actions queue fetch error.</div>';
+      }
+    }
+
+    async function reviewCodeAction(slug, verdict) {
+      const note = `Conductor cockpit review @${Date.now()}`;
+      appendSystemMessage(`→ reviewing ${slug} as ${verdict}`);
+      try {
+        // Use the command surface (routes through dispatch_command → recorder DNA + ParentDecisionEvent)
+        sendCommand(verdict.includes('approve') ? 'approve_code_action' : 'override_code_action', {
+          code_action_slug: slug,
+          verdict: verdict,
+          note: note,
+          conductor_signature: 'ilo-conductor-cockpit@stabilization-wave-20260531 + ad-grid-program-contract + 1780296458'
+        });
+        // immediate optimistic + re-pull
+        setTimeout(() => {
+          refreshCodeActions();
+          try { appendSystemMessage(`✓ Conductor verdict recorded as DNA for ${slug}`); } catch(_) {}
+        }, 650);
+      } catch (e) {
+        appendSystemMessage(`Review failed: ${e}`);
+      }
+    }
+
+    async function refreshGridThinking() {
+      const cont = document.getElementById('grid-thinking-summary');
+      if (!cont) return;
+      try {
+        const [thinkRes, fabRes] = await Promise.all([
+          fetch('/api/grid/thinking-summary?limit=6').then(r=>r.json()).catch(()=>({})),
+          fetch('/api/experience_fabric').then(r=>r.json()).catch(()=>({}))
+        ]);
+        let traces = (thinkRes.high_gbrain_traces || []).concat( (fabRes.parent_fabric_reasoning_traces || []) );
+        traces = traces.slice(0, 6);
+        if (!traces.length) {
+          cont.innerHTML = '<div class="text-violet-400/50 col-span-full">— no high-gbrain parent_fabric_reasoning yet —</div>';
+          return;
+        }
+        cont.innerHTML = traces.map((t, i) => {
+          const pat = t.structural_pattern_matched || t.pattern || 'structural';
+          const lift = t.expected_lift_signal != null ? Number(t.expected_lift_signal).toFixed(3) : '—';
+          const els = (t.fabric_elements_considered || t.elements || []).slice(0,2).join(', ');
+          const cid = (t.cycle_id || '').slice(-6);
+          return `<div onclick="highlightThinkingTrace(${i})" class="cursor-pointer border border-violet-800/40 rounded p-1.5 bg-black/30 hover:border-violet-500/60" title="Click to highlight in fabric canvas">
+            <div><span class="text-violet-300">${pat}</span> <span class="text-violet-400/70">lift+${lift}</span></div>
+            <div class="text-[8px] text-violet-200/70 truncate">${els || '—'}</div>
+            <div class="text-[7px] text-violet-400/40">${cid} • ${t.dna_trace_ref || 'parent_fabric'}</div>
+          </div>`;
+        }).join('');
+        // stash for click handler
+        window._cockpitThinkingTraces = traces;
+      } catch (e) {
+        cont.innerHTML = '<div class="text-red-400/50">Thinking summary error.</div>';
+      }
+    }
+
+    function highlightThinkingTrace(i) {
+      const traces = window._cockpitThinkingTraces || [];
+      const t = traces[i];
+      if (!t) return;
+      // reuse the existing highlight logic from parent reasoning (emerald canvas highlight + detail)
+      const elements = t.fabric_elements_considered || t.elements || [];
+      const pattern = t.structural_pattern_matched || t.pattern || '';
+      const lift = t.expected_lift_signal != null ? Number(t.expected_lift_signal) : 0;
+      state.currentFabricHighlight = {
+        elements: elements.map(String),
+        pattern: pattern,
+        expectedLift: lift,
+        until: Date.now() + 16500,
+        trace: t
+      };
+      const c = document.getElementById('fabric-canvas');
+      if (c) drawFabricCanvas(c, state.fabric);
+      // also show in the existing detail if present
+      const det = document.getElementById('exp-reasoning-detail');
+      if (det) {
+        det.classList.remove('hidden');
+        det.innerHTML = `<span class="text-violet-400">GRID THINKING</span> ${pattern} +${lift.toFixed ? lift.toFixed(3):lift}<br><span class="text-[8px]">${(elements||[]).map(e=>String(e).slice(0,24)).join(' • ')}</span>`;
+        setTimeout(() => { if(det) det.classList.add('hidden'); }, 4200);
+      }
+      appendSystemMessage(`Highlighted Grid thinking: ${pattern}`);
+    }
+
+    async function startConductorCockpitPolling() {
+      if (cockpitPollTimer) clearInterval(cockpitPollTimer);
+      setTimeout(refreshConductorCockpit, 1800);
+      cockpitPollTimer = setInterval(() => {
+        refreshConductorCockpit().catch(() => {});
+      }, 9500); // ~10s real-time feel for Conductor (non-aggressive)
+    }
+
+    // Launch
+    window.onload = boot;
+  </script>
+</body>
+</html>

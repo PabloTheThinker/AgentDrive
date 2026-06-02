@@ -14,7 +14,7 @@ framework:
   - onboarding
   - refactor
   - technical-debt
-  author: pablothethinker
+  author: AgentDrive Contributors
   license: CC-BY-4.0
   inputs:
   - name: repo_summary
@@ -45,7 +45,7 @@ framework:
   steps:
   - id: classify_archetype
     type: reasoning
-    agent: ilo-core
+    agent: agentdrive-core
     inputs:
     - repo_summary
     - language
@@ -53,7 +53,7 @@ framework:
     output: archetype
   - id: enumerate_components
     type: reasoning
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - classify_archetype
     inputs:
@@ -65,7 +65,7 @@ framework:
     output: components
   - id: build_dependency_graph
     type: reasoning
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - enumerate_components
     with:
@@ -73,7 +73,7 @@ framework:
     output: dependency_graph
   - id: identify_hotspots
     type: reasoning
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - enumerate_components
     inputs:
@@ -84,7 +84,7 @@ framework:
     output: hotspots
   - id: recommend_refactors
     type: reasoning
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - identify_hotspots
     - build_dependency_graph
@@ -95,7 +95,7 @@ framework:
     output: refactor_passes
   - id: assess_risks
     type: reasoning
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - enumerate_components
     - identify_hotspots
@@ -105,7 +105,7 @@ framework:
     output: risk_register
   - id: compose_artifact
     type: validate
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - classify_archetype
     - enumerate_components

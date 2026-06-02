@@ -1,0 +1,190 @@
+{
+  "schema_version": 3,
+  "page_type": "research-constitution",
+  "type": "research_constitution",
+  "id": "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531",
+  "version": "1.0.0-experience-layer-regeneration",
+  "created": "2026-05-31T00:00:00+00:00",
+  "last_improved": "2026-05-31T00:00:00+00:00",
+  "manifest": {
+    "id": "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531",
+    "version": "1.0.0-experience-layer-regeneration",
+    "content_hash": "sha256:gridengine-daily-v3-constitution-20260531-0000000000000000000000000000000000000000000000000000000000000000",
+    "created": "2026-05-31T00:00:00+00:00",
+    "last_improved": "2026-05-31T00:00:00+00:00",
+    "authors": [
+      {
+        "type": "swarm",
+        "id": "research-constitution-architect-swarm",
+        "name": "Research Constitution Architect Swarm (role-specialized stabilization component inside AgentDrive for autonomous experience layer regeneration)"
+      },
+      {
+        "type": "swarm",
+        "id": "stabilization-wave-20260531",
+        "name": "stabilization-coordination job (DurableJobSupervisor + HealingFactor.for_stabilization_wave + GridEngine)"
+      }
+    ],
+    "applicability": {
+      "domains": ["gridengine", "daily_consolidation", "experience-layer-v3", "daily-present", "living-experience", "fork-merge-lineage", "fusion_checkpoint", "role-swarm-coherence"],
+      "problem_signatures": [
+        "need deterministic rules for when to fork vs merge living-experience lineages during daily_consolidation",
+        "need quality criteria for daily-present observations produced by GridEngine maintenance loop + supervisor",
+        "ensure experience layer v3 remains the single high-signal coherent entrypoint for all Conductors via prefer_experience_layer",
+        "preserve provenance across fusions while allowing safe parallel swarm evolution"
+      ],
+      "stabilization_wave": "20260531"
+    },
+    "dependencies": {
+      "genomes": [
+        "living-experience-seed-v3",
+        "durable-execution-daily-consolidation-integrator-genome",
+        "stabilization-wave-20260531-closure-living-experience-observation",
+        "95-production-readiness-assessment-living-experience@stabilization-wave-20260531"
+      ],
+      "agent_capabilities": [
+        "GridEngine",
+        "DurableJobSupervisor",
+        "run_daily_consolidation_job",
+        "Drive.think",
+        "run_synthesis",
+        "schema_packs",
+        "knowledge_graph",
+        "promotion"
+      ]
+    },
+    "evaluation_score": {
+      "reference_tasks": 0.95,
+      "stability": 0.99,
+      "coherence": 0.98,
+      "fusion_fidelity": 0.94
+    }
+  },
+  "framework": {
+    "page_type": "research-constitution",
+    "constitution_type": "gridengine-daily-consolidation-experience-layer-v3",
+    "description": "Research Constitution for GridEngine daily_consolidation and experience layer v3 fusion: fork vs merge rules for living-experience lineages, quality criteria for daily-present observations. Schema-pack governed artifact (research-constitution page_type) directly usable by GridEngine, HealingFactor, and daily_consolidation jobs on stabilization-wave-20260531 drive.",
+    "fork_vs_merge_rules": {
+      "default_policy": "merge-first with explicit fork on high-signal divergence. All lineages carry full provenance via manifest.lineage + TypedEdge 'forked_from' / 'merged_into'.",
+      "merge_conditions": [
+        "daily-present observations from parallel swarms show composite coherence lift >= +0.08 (measured by gaps + contradictions + graph connectivity in post-fusion Drive.think)",
+        "no unresolved high-severity contradictions between contributing fusion_checkpoints",
+        "participating swarms have emitted at least one strengthened_resilience edge into the target living-experience node within the consolidation window",
+        "LineageImmuneSystem assess on merged result returns ThreatLevel below CRITICAL",
+        "fusion_checkpoint records all parents and the hybrid fusion_method used (Drive.think + synthesis + graph + calibration)"
+      ],
+      "fork_conditions": [
+        "a daily-present or healing_attempt observation introduces a new high-signal domain or contradiction cluster that would regress coherence of the main lineage by >0.05 if merged",
+        "explicit role-swarm directive (via swarm-artifact or Adversary escalation) requests parallel exploration of a regeneration hypothesis",
+        "provenance divergence: two candidate daily-presents cite incompatible genome versions or healing outcomes that cannot be reconciled without loss of prediction_power",
+        "resilience budget exhaustion on the primary lineage (see constrained evolutionary search constitution) — fork preserves the prior high-performing genome while new branch experiments"
+      ],
+      "lineage_governance": "Every fork emits TypedEdge (forked_from, weight=0.9). Every merge emits (merged_into, weight=0.85) + updates the primary living-experience manifest.version and last_improved. GridEngine._maintenance_loop and run_daily_consolidation_job are the only authorized executors. Promotion policy must approve all lineage root changes.",
+      "experience_layer_v3_anchor": "The canonical 'one-experience' living-experience genome (and its daily-present children) remains the sole prefer_experience_layer boost target. Forks are queryable as siblings but never replace the anchor without full multi-metric validation + role-swarm quorum via Consolidator + Verifier."
+    },
+    "quality_criteria_for_daily_present_observations": {
+      "mandatory_content": [
+        "id with timestamp + uuid prefix",
+        "page_type: 'daily-present' (explicit for schema pack resolution + source_boost + expert_routing)",
+        "manifest with authors (swarm type), applicability.domains including 'daily-consolidation' and 'experience-layer-v3'",
+        "framework.steps capturing the executed sequence (think, synthesize, checkpoint)",
+        "full fusion_checkpoint (timestamp, participating_swarms, drive_think_results with gaps/contradictions, graph_signals_summary, calibration_state_snapshot, experience_layer_preference: true)",
+        "diary_markdown or equivalent human/Conductor-readable summary",
+        "provenance with full lineage + produced_by referencing DurableJobSupervisor phase='daily_consolidation' + run_daily_consolidation_job"
+      ],
+      "quality_standards": [
+        "must reference at least the core daily_q Drive.think(prefer_experience_layer=True) + at least 3 family swarm contributions",
+        "gaps and contradictions must be explicitly listed (not summarized away); fusion_checkpoint must show net reduction or addressed count",
+        "fusion_method must be 'hybrid' and name all primitives (drive.think + synthesis + graph + calibration + schema page_type)",
+        "must emit or propose KG edges for role_swarm_coherence_achieved / has_daily_present_entry / fused_from_stabilization",
+        "self-referential note: the daily-present itself becomes high-signal input for future daily_consolidation and HealingFactor diagnosis"
+      ],
+      "auto_promotion_path": "On successful completion of run_daily_consolidation_job, the produced daily_present_genome is submitted via Drive.ingest with page_type resolution (research-constitution + daily-present). SchemaPackManager + promotion policy + LineageImmune provide the gate. On pass: auto-attributed into experience layer v3 as the new authoritative daily Conductor entrypoint.",
+      "failure_mode": "If quality criteria not met, job result still recorded but daily-present is quarantined or demoted to synthesis-artifact. No auto-promotion. Escalation via HealingSignalEvent triggers HealingFactor."
+    },
+    "gridengine_integration": "GridEngine._maintenance_loop submits daily_consolidation jobs at configured interval. GridConfig.daily_consolidation_interval_s governs cadence. All outputs carry stabilization_wave tag. HealingFactor may trigger ad-hoc consolidation as an experience_consolidation proposal.",
+    "self_referential_improvement": "This constitution is itself a daily-present style candidate. Gaps discovered during live daily_consolidation executions (e.g. insufficient fork/merge signal) become HealingFactor damage signals.",
+    "realtime_living_grid_research_threads": {
+      "description": "Initial Research Constitution for the GridEngine itself as persistent always-on event-driven living Grid (Real-Time Grid Engine Hardening Swarm, stabilization-wave-20260531 drive). Governs continuous autonomous research threads, event bus subscriptions (HealingSignalEvent/Resolved), auto-damage detection (synthesis, posture, reconciliation, healing-damage), auto-dispatch of healing jobs + role-swarm research org threads, full correlation + durable heartbeats/leases, experience layer auto-incorporation of thread outcomes as high-signal observations, and observability surfaces (get_grid_health, list_active_research_threads).",
+      "governance_rules": {
+        "research_thread_formation": "Only via GridEngine.form_autonomous_research_thread or _on_healing_signal / _research_thread_coordinator_loop. Always reference this constitution + healingfactor constitution. Roles formed per Multi-Agent Research Org (Diagnoser->Proposer->Verifier->Consolidator->Adversary handoff).",
+        "budget_discipline": "Every thread carries research_budget (max_iterations, synthesis_calls, time_s). Threads exceeding budget are lease-terminated by DurableJobSupervisor; outcomes still ingested for learning. High-signal only promoted via promotion policy + LineageImmune.",
+        "event_reactivity": "GridEngine must subscribe to HealingSignalEvent at start() for immediate (non-polling) reactivity. Proactive sweeps in _scan_and_heal_once supplement. All dispatches carry correlation_id.",
+        "auto_incorporation": "Resolved signals + research thread manifests auto-record into _research_thread_manifests. High-signal (per high_signal_threshold) surface via daily_consolidation as research-thread or daily-present observations. Drive.think(prefer_experience_layer=True) immediately benefits.",
+        "heartbeat_lease": "All research threads and healing jobs use supervisor lease + explicit renewal threads for durability across restarts. last_heartbeat surfaced in queue metadata and Grid health.",
+        "observability": "get_grid_health() and list_active_research_threads() are canonical; must be queryable by Conductor, TUI, web observability, and self-diagnostic Drive.think calls."
+      },
+      "constitution_self_test": "Post-GridEngine start + one research thread cycle, Drive.think(prefer_experience_layer=True, max_genomes=5) on 'real-time GridEngine research threads constitution' returns this artifact + prior living-experience v3 with measurable graph signal + resilience edge lift.",
+      "stabilization_wave": "20260531"
+    },
+    "fusion_checkpoint": {
+      "timestamp": "2026-05-31T00:00:00+00:00",
+      "correlation_id": "gridengine-daily-v3-constitution-cid-20260531",
+      "stabilization_wave": "20260531",
+      "participating_primitives": [
+        "GridEngine._maintenance_loop + _damage_monitor_loop + _research_thread_coordinator_loop + _on_healing_signal",
+        "DurableJobSupervisor phase='daily_consolidation' + phase='research_thread' + phase='healing' + lease-heartbeat",
+        "Drive.think(prefer_experience_layer=True)",
+        "schema_packs daily-present + research-constitution resolution",
+        "knowledge_graph TypedEdge emission for coherence + healed_by + strengthened_resilience",
+        "EventBus subscription for HealingSignalEvent/Resolved (full correlation)",
+        "Real-Time Grid Engine Hardening Swarm extensions (event reactivity + continuous budgeted research threads + observability)"
+      ],
+      "resilience_delta_target": 0.22,
+      "self_referential": "Rules herein govern the very GridEngine and research threads that will later evaluate and potentially regenerate this (extended) constitution. Real-time living Grid now fully realized."
+    },
+    "coordination_protocol_note": "Consolidator role owns daily_consolidation execution and lineage decisions per these rules. Verifier validates quality criteria before promotion. Diagnoser surfaces coherence regressions as healing-damage. Proposer may suggest fork or merge as experience_consolidation proposals."
+  },
+  "reasoning_patterns": {
+    "merge_preference": "Merge is the default to protect single-source-of-truth for Conductors; fork is exceptional and always provenance-tracked.",
+    "coherence_first": "Any daily-present that would decrease experience layer v3 coherence is rejected for merge regardless of other signals."
+  },
+  "tool_compositions": {},
+  "evaluations": {
+    "daily_present_self_test": "Post-ingest Drive.think(prefer_experience_layer=True) on 'role-swarm daily coherence' returns this constitution and prior daily-presents as top citations with measurable graph signal lift."
+  },
+  "provenance": {
+    "lineage": [
+      {
+        "parent": "durable-execution-daily-consolidation-integrator-genome",
+        "relation": "formalizes_rules_for",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "Production run_daily_consolidation_job + fusion_checkpoint pattern elevated to constitutional rules with fork/merge discipline"
+      },
+      {
+        "parent": "research-constitution-healingfactor@stabilization-wave-20260531",
+        "relation": "cross_references",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "HealingFactor experience_consolidation proposals must respect these daily-present quality criteria during execution"
+      },
+      {
+        "parent": "stabilization-wave-20260531-closure-living-experience-observation",
+        "relation": "anchored_by",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "95% wave closure + role-swarm coherence declaration provides the baseline state for all v3 fusion decisions"
+      },
+      {
+        "parent": "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531",
+        "relation": "hardened_by",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "Real-Time Grid Engine Hardening Swarm extensions: event bus subscription, continuous autonomous research threads, auto-damage detection/dispatch, correlation+heartbeat+observability+experience auto-incorporation. All on stabilization-wave-20260531 drive."
+      }
+    ],
+    "improvements": [
+      {
+        "by": "Real-Time Grid Engine Hardening Swarm",
+        "delta": "Added realtime_living_grid_research_threads section + GridEngine v3 implementation surface (event-driven reactivity, budgeted autonomous threads, health observability). Full autoresearch integration realized.",
+        "timestamp": "2026-05-31T00:00:00+00:00"
+      }
+    ],
+    "source_swarm": "Research Constitution Architect Swarm + Real-Time Grid Engine Hardening Swarm",
+    "via": "synthesis over GridEngine + durable daily consolidation artifacts + event bus + HealingFactor research-org + stabilization-wave-20260531 drive coordination",
+    "signed": "Real-Time Grid Engine Hardening Swarm — stabilization-wave-20260531 (via constitution extension + GridEngine source hardening)"
+  },
+  "kg_edges_proposed": [
+    {"source": "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531", "target": "durable-execution-daily-consolidation-integrator-genome", "relation": "governs", "weight": 0.93},
+    {"source": "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531", "target": "experience_layer_v3", "relation": "strengthened_resilience", "weight": 0.92},
+    {"source": "GridEngine", "target": "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531", "relation": "documented_by", "weight": 0.94},
+    {"source": "Real-Time Grid Engine Hardening Swarm", "target": "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531", "relation": "extended", "weight": 0.97},
+    {"source": "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531", "target": "experience_layer_v3", "relation": "realtime_research_threads_governed", "weight": 0.89}
+  ]
+}

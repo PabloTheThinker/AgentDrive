@@ -3,10 +3,10 @@ framework:
   version: 0.1.0
   display_name: Skill Creator
   description: 'Meta-framework that takes a free-form description of a domain skill
-    and emits a complete ILO framework draft: typed inputs, ordered steps, JSON Schema,
+    and emits a complete framework draft: typed inputs, ordered steps, JSON Schema,
     README, and a sample input. The output is a PR-ready directory the operator can
-    drop into the ilo-frameworks registry. This is the closing-the-loop framework
-    that lets ILO act as a framework creator.
+    drop into the framework registry. This is the closing-the-loop framework
+    that lets the system act as a framework creator.
 
     '
   category: codebase
@@ -15,7 +15,7 @@ framework:
   - creator
   - framework-from-description
   - architect
-  author: pablothethinker
+  author: AgentDrive Contributors
   license: CC-BY-4.0
   inputs:
   - name: skill_description
@@ -39,14 +39,14 @@ framework:
   steps:
   - id: extract_inputs
     type: reasoning
-    agent: ilo-core
+    agent: agentdrive-core
     inputs:
     - skill_description
     - example_intake
     output: input_specification
   - id: plan_steps
     type: reasoning
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - extract_inputs
     inputs:
@@ -56,7 +56,7 @@ framework:
     output: step_plan
   - id: design_output_schema
     type: reasoning
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - extract_inputs
     - plan_steps
@@ -68,7 +68,7 @@ framework:
     output: output_schema
   - id: draft_readme
     type: reasoning
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - extract_inputs
     - plan_steps
@@ -83,7 +83,7 @@ framework:
     output: readme_draft
   - id: compose_artifact
     type: validate
-    agent: ilo-core
+    agent: agentdrive-core
     depends_on:
     - extract_inputs
     - plan_steps

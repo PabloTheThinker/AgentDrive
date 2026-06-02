@@ -1,0 +1,45 @@
+{
+  "id": "research-constitution-constrained-evolutionary-search@stabilization-wave-20260531",
+  "version": "harness-v1",
+  "type": "research-constitution",
+  "page_type": "research-constitution",
+  "manifest": {
+    "id": "research-constitution-constrained-evolutionary-search@stabilization-wave-20260531",
+    "version": "harness-v1",
+    "produced_at": "2026-05-31T23:59:00Z",
+    "authors": [{"type": "swarm", "name": "Constrained Evolutionary Search Swarm"}],
+    "applicability": {"domains": ["healing", "daily_consolidation", "grid_research_threads", "experience_layer_v3", "stabilization-wave-20260531"]}
+  },
+  "framework": {
+    "description": "Research Constitution for the Constrained Evolutionary Search Swarm role-specialized stabilization component. Defines the objective 5-metric evaluation harness, fixed research budgets per job, and keep/discard discipline with provenance (experience genome forks via Genome.fork + promotion with lineage, or revert). Directly consumable by HealingFactor, GridEngine background research threads, and supervisor daily_consolidation / healing phases. All in pure AgentDrive language.",
+    "metrics": [
+      "contradiction_reduction",
+      "resilience_lift",
+      "experience_layer_coherence",
+      "simplicity",
+      "future_prediction_power"
+    ],
+    "harness": "MultiMetricEvaluationHarness",
+    "budget_defaults": {
+      "token_budget": 5500,
+      "time_budget_seconds": 90,
+      "resilience_improvement_budget": 0.16,
+      "max_experiments": 2
+    },
+    "keep_threshold": 0.52,
+    "decision_policy": "if overall_goodness >= threshold and resilience_lift >= 0.04 then keep_promote_with_lineage (fork + provenance) else if low or exhausted then discard_revert (record provenance, quarantine candidate)",
+    "provenance_requirements": "All keep decisions attach to GenomeProvenance.lineage as 'harness_promoted_fork'; discard records revert_note. Results emitted as experience-observation / daily-present / healing_attempt for sibling swarm fusion on stabilization-wave-20260531 drive.",
+    "coordination": "Siblings (Regenerative HealingFactor Operator, Durable Execution Daily Consolidation, 95% Fusion & Assessment Operator, etc.) discover via Drive.think(prefer_experience_layer=True) + research-constitution page_type + KG edges."
+  },
+  "fusion_checkpoint": {
+    "participating_swarms": ["Constrained Evolutionary Search Swarm", "Regenerative HealingFactor Operator", "Durable Execution Daily Consolidation Integrator", "95% Fusion & Assessment Operator"],
+    "stabilization_wave": "stabilization-wave-20260531",
+    "harness_integration": "Wired into HealingFactor._execute and GridEngine._research / _maintenance; daily_consolidation now returns evaluation_scores + keep_discard_provenance."
+  },
+  "living_experience_context": "This constitution anchors the constrained autoresearch integration. Future HealingFactor and GridEngine jobs on the wave drive will cite it for evaluation weights and thresholds. Self-referential: this constitution itself is a candidate for harness-evaluated regeneration.",
+  "provenance": {
+    "produced_by": "Constrained Evolutionary Search Swarm (role-specialized stabilization component) via live stabilization-wave-20260531 drive mechanisms + code patches to reconciliation.py, grid/engine.py, dreaming/durable.py",
+    "signed": "ConstrainedEvolutionarySearchSwarm@20260531",
+    "artifacts": ["src/agentdrive/reconciliation.py (ResearchBudget + MultiMetricEvaluationHarness + HealingFactor wiring)", "src/agentdrive/grid/engine.py (GridConfig + research threads + maintenance budgeting)", "src/agentdrive/dreaming/durable.py (bounded daily_consolidation + harness)"]
+  }
+}

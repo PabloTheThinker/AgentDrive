@@ -1,0 +1,130 @@
+{
+  "schema_version": 3,
+  "page_type": "research-constitution",
+  "type": "research_thread_constitution",
+  "id": "research-thread-constitution-synthesis-strategy-improver@stabilization-wave-20260531",
+  "version": "1.0.0-autoresearch-integration",
+  "created": "2026-05-31T00:00:00+00:00",
+  "last_improved": "2026-05-31T00:00:00+00:00",
+  "manifest": {
+    "id": "research-thread-constitution-synthesis-strategy-improver@stabilization-wave-20260531",
+    "version": "1.0.0-autoresearch-integration",
+    "content_hash": "sha256:research-synth-20260531-0000000000000000000000000000000000000000000000000000000000000000",
+    "created": "2026-05-31T00:00:00+00:00",
+    "last_improved": "2026-05-31T00:00:00+00:00",
+    "authors": [
+      {
+        "type": "swarm",
+        "id": "autonomous-research-thread-swarm",
+        "name": "Autonomous Research Thread Swarm (role-specialized stabilization component inside AgentDrive for full autoresearch integration)"
+      },
+      {
+        "type": "swarm",
+        "id": "stabilization-wave-20260531",
+        "name": "stabilization-coordination job (GridEngine + DurableJobSupervisor research_thread phase + HealingFactor.for_stabilization_wave)"
+      }
+    ],
+    "applicability": {
+      "domains": ["synthesis-strategy", "experience-layer-regeneration", "autoresearch", "research-threads", "fusion_checkpoint", "gap-contradiction-weighting", "candidate-selection", "role-swarm-coherence"],
+      "problem_signatures": [
+        "need autonomous long-running iteration on better synthesis strategies while Conductor offline",
+        "fixed research budgets per iteration with high-signal only surfacing to experience layer",
+        "advance forked living-experience genomes or specialized consolidation lineages",
+        "bidirectional integration with HealingFactor regeneration cycles on stabilization-wave-20260531 drive"
+      ],
+      "stabilization_wave": "20260531"
+    },
+    "dependencies": {
+      "genomes": [
+        "living-experience-seed-v3",
+        "95-production-readiness-assessment-living-experience@stabilization-wave-20260531",
+        "healing-factor-regeneration-proposal-v1@stabilization-wave-20260531",
+        "durable-execution-daily-consolidation-integrator-genome@stabilization-wave-20260531"
+      ],
+      "agent_capabilities": [
+        "GridEngine._research_thread_coordinator_loop",
+        "DurableJobSupervisor.submit_queued_dream(phase=research_thread)",
+        "HealingFactor.on_damage_signal + form_research_org_thread",
+        "Drive.think(prefer_experience_layer=True)",
+        "run_synthesis",
+        "propose_experience_evolution",
+        "MultiMetricEvaluationHarness",
+        "research-constitution page_type via schema pack"
+      ],
+      "swarm_coordination": "via live drive artifacts + typed KG research_branch + research_handoff edges + correlation_id propagation"
+    },
+    "research_constitution": {
+      "thread_id": "synthesis-strategy-improver",
+      "objective": "keep iterating on better synthesis strategies (candidate selection via hybrid fusion + graph signals, explicit Gap/contradiction weighting, higher quality fusion_checkpoint assembly, source_boost calibration feedback) while Conductor is offline or focused elsewhere",
+      "research_budget_per_iteration": {
+        "max_synthesis_calls": 5,
+        "max_time_s": 300,
+        "max_genomes_per_think": 8,
+        "max_iterations_per_thread": 200
+      },
+      "iteration_budget": "time_bound_or_high_signal_count",
+      "branch_advancement_policy": "fork_living_experience_genome",
+      "high_signal_threshold": {
+        "min_resilience_delta": 0.05,
+        "min_contradiction_reduction": 1,
+        "min_fusion_improvement": 0.08,
+        "min_graph_signal_gain": 0.1
+      },
+      "evaluation_harness": "MultiMetricEvaluationHarness (resilience, contradiction_load, gap_coverage, fusion_checkpoint_quality, role_swarm_coherence)",
+      "healing_integration": {
+        "trigger_on_high_signal_improvement": true,
+        "emit_research_diagnosis": true,
+        "can_trigger_regeneration_cycles": true,
+        "can_be_triggered_by_damage_signals": true
+      },
+      "logging_policy": "log_all_iterations_durable; surface_high_signal_only_as_experience_observation (research-thread subtype, daily-present eligible) + KG research_branch edges",
+      "discoverability": "via experience layer (Drive.think prefer_experience_layer + list_experience_layer_items for research-thread-observations); queryable as daily-present or research-thread observations",
+      "persistent_job_phase": "research_thread",
+      "lease_support": "DurableJobSupervisor v0.2+heartbeat for hours/days unattended"
+    }
+  },
+  "framework": {
+    "steps": [
+      {
+        "id": "constitution-declaration",
+        "output": "Governs autonomous research thread in GridEngine._research_thread_coordinator_loop + DurableJobSupervisor research_thread phase on stabilization-wave-20260531 drive"
+      },
+      {
+        "id": "budget-enforcement",
+        "output": "Fixed per-iteration budget enforced inside runner_callable; MultiMetricEvaluationHarness used for keep/discard decisions on branch advances"
+      },
+      {
+        "id": "branch-advance",
+        "output": "On high-signal: propose_experience_evolution produces forked living-experience genome (research branch); ingested via auto-attributed + promotion for experience layer v3"
+      },
+      {
+        "id": "healing-handoff",
+        "output": "High-signal improvements emit to HealingFactor (on_damage_signal or direct research_evolution_proposal); conversely HealingFactor form_research_org_thread can spawn specialist research threads per this charter"
+      },
+      {
+        "id": "surfacing",
+        "output": "Only high-signal observations (with fusion_checkpoint + research_thread_id) written as experience-observations (page_type experience-observation) for Conductor daily-present and sibling swarm coordination via drive"
+      }
+    ],
+    "coordination": "Autonomous Research Thread Swarm + Multi-Agent Research Org Swarm + Regenerative HealingFactor Operator + Constrained Evolutionary Search Swarm all coordinate via shared stabilization-wave-20260531 drive artifacts (constitutions + observations + KG edges)"
+  },
+  "fusion_checkpoint": {
+    "stabilization_wave": "20260531",
+    "produced_by": "Autonomous Research Thread Swarm (GridEngine extension + constitutions)",
+    "participating_swarms": [
+      "autonomous-research-thread-swarm",
+      "multi-agent-research-org-swarm",
+      "regenerative-healingfactor-operator",
+      "constrained-evolutionary-search-swarm",
+      "95-fusion-assessment-operator"
+    ],
+    "artifacts_referenced": [
+      "95-production-readiness-assessment-living-experience@stabilization-wave-20260531.json",
+      "stabilization-wave-20260531-closure-living-experience-observation.json",
+      "healing-factor-regeneration-proposal-v1@stabilization-wave-20260531",
+      "GridEngine research thread coordinator + form_autonomous_research_thread"
+    ],
+    "experience_layer_impact": "research-constitution page_type now live; persistent research threads produce high-signal branch advances auto-fused into living-experience family; discoverable while Conductor offline",
+    "role_swarm_coherence": "all work together via research constitutions + durable jobs + HealingFactor bidirectional wiring + experience layer surfacing"
+  }
+}

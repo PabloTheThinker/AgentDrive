@@ -40,6 +40,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "home": str(get_agentdrive_home()),
         "log_level": "INFO",
         "default_worker": "external",
+        "instance_name": None,  # User-chosen friendly name for this runtime (e.g. "My Research Drive")
     },
     "registry": {
         "auto_register_examples": True,
@@ -100,6 +101,9 @@ def _ensure_home() -> Path:
     (home / "cache").mkdir(exist_ok=True)
     (home / "pool").mkdir(exist_ok=True)
     (home / "swarms").mkdir(exist_ok=True)
+    (home / "drive").mkdir(
+        exist_ok=True
+    )  # default drive root for AgentDrive + experience seed etc.
     return home
 
 
@@ -146,17 +150,27 @@ def _normalize_config(cfg: dict[str, Any]) -> dict[str, Any]:
     """Apply any normalization / migration."""
     cfg = cfg.copy()
     cfg.setdefault("version", 1)
-    # Ensure required top level
-    for section in (
-        "agentdrive",
-        "registry",
-        "scanners",
-        "orchestrator",
-        "tui",
-        "integration",
-        "drive",
-    ):
-        cfg.setdefault(section, {})
+
+    # Ensure required top level sections with safe defaults
+    required_sections = {
+        "agentdrive": {"home": str(get_agentdrive_home()), "log_level": "INFO"},
+        "registry": {"auto_register_examples": True},
+        "scanners": {
+            "enabled": ["framework", "reasoning", "tool_composition"],
+            "default": "framework",
+        },
+        "orchestrator": {"default_worker_adapter": "external", "max_workers": 4},
+        "tui": {"skin": "default", "show_banner": True},
+        "integration": {"external": {"enabled": True, "auto_detect_home": True, "home": None}},
+        "drive": {},
+        "pool": {"global": {"isolation_level": "subagent"}},
+    }
+
+    for section, defaults in required_sections.items():
+        section_cfg = cfg.setdefault(section, {})
+        for k, v in defaults.items():
+            section_cfg.setdefault(k, v)
+
     return cfg
 
 
@@ -276,6 +290,43 @@ def set_config_value(key: str, value: Any) -> None:
         d = d.setdefault(p, {})
     d[parts[-1]] = value
     save_config(raw)
+
+
+def get_instance_name() -> str:
+    """Return the user's chosen friendly name for this AgentDrive instance."""
+    cfg = load_config()
+    name = cfg.get("agentdrive", {}).get("instance_name")
+    if name and isinstance(name, str) and name.strip():
+        return name.strip()
+    # Fallback to LIVE env (not stale import-time snapshot) so AGENTDRIVE_INSTANCE_NAME
+    # is respected even on first run before config.yaml exists, and after set_instance_name.
+    import os
+
+    return os.environ.get("AGENTDRIVE_INSTANCE_NAME", "AgentDrive")
+
+
+def set_instance_name(name: str) -> None:
+    """Persist the user's chosen friendly name for this instance."""
+    if not name or not isinstance(name, str):
+        return
+    name = name.strip()
+    if not name:
+        return
+    raw = read_raw_config()
+    raw.setdefault("agentdrive", {})
+    raw["agentdrive"]["instance_name"] = name
+    save_config(raw)
+    # Update live env + the constants module attr so that both
+    # `from agentdrive.constants import AGENTDRIVE_INSTANCE_NAME` (new lookups)
+    # and direct attribute access see the value immediately. Critical for
+    # first-run flows and `agentdrive doctor` / banners after naming step.
+    import os
+    import sys
+
+    os.environ["AGENTDRIVE_INSTANCE_NAME"] = name
+    mod = sys.modules.get("agentdrive.constants")
+    if mod is not None:
+        mod.AGENTDRIVE_INSTANCE_NAME = name
 
 
 # =============================================================================

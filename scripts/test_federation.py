@@ -7,10 +7,10 @@ to demonstrate, in practice (not just in unit tests), that the quarantine
 gate is unbypassable: every byte that crosses an instance boundary lands in
 quarantine, regardless of the peer's trust label.
 
-Scenario (Vektra federation):
-    vektra-edge-1         (home A) — seeds 3 security-domain genomes
-    vektra-edge-2         (home B) — seeds 2 code-domain genomes (one poisoned later)
-    vektra-edge-coordinator (home C) — empty; learns from both edges
+Scenario (federation demo):
+    edge-1         (home A) — seeds 3 security-domain genomes
+    edge-2         (home B) — seeds 2 code-domain genomes (one poisoned later)
+    edge-coordinator (home C) — empty; learns from both edges
 
 Run directly:
     python3 scripts/test_federation.py
@@ -76,9 +76,9 @@ CONSOLE = Console(force_terminal=True, color_system="truecolor", highlight=False
 PALETTE = Palette()
 
 LABELS = {
-    "A": "vektra-edge-1",
-    "B": "vektra-edge-2",
-    "C": "vektra-edge-coordinator",
+    "A": "edge-1",
+    "B": "edge-2",
+    "C": "edge-coordinator",
 }
 
 
@@ -180,7 +180,7 @@ def seed_genome(
         version="1.0.0",
         content_hash="sha256:pending",
         created=now,
-        authors=[GenomeAuthor(type="human", name="vektra-seeder")],
+        authors=[GenomeAuthor(type="human", name="demo-seeder")],
         applicability={
             "domains": [domain],
             "problem_signatures": [f"{domain}-pipeline"],
@@ -623,8 +623,8 @@ def phase_inheritance(homes: dict, registries: dict) -> None:
         # We feed it the dir form here so the demo exercises the happy
         # quarantine route. The rough edge is reported separately.
         manifest = InheritanceManifest(
-            subagent_id="vektra-research-1",
-            swarm_id="vektra-coord",
+            subagent_id="research-1",
+            swarm_id="coord",
             genomes_pulled=[],
             genomes_created=["regex-architect/1.0.0"],
             outcomes_logged=[],
@@ -716,7 +716,7 @@ def main() -> int:
     CONSOLE.print()
     CONSOLE.print(
         Panel(
-            "[bold cyan]Vektra Federation Deep-Test[/]\n\n"
+            "[bold cyan]Federation Deep-Test[/]\n\n"
             "Three AGENTDRIVE_HOMEs · peer trust gate · quarantine inversion · "
             "inheritance routing\n"
             "Hard contract under test: [bold]nothing crosses an instance "

@@ -1,0 +1,92 @@
+{
+  "schema_version": 3,
+  "page_type": "research-constitution",
+  "type": "research_thread_constitution",
+  "id": "research-thread-constitution-damage-detector-evolver@stabilization-wave-20260531",
+  "version": "1.0.0-autoresearch-integration",
+  "created": "2026-05-31T00:00:00+00:00",
+  "last_improved": "2026-05-31T00:00:00+00:00",
+  "manifest": {
+    "id": "research-thread-constitution-damage-detector-evolver@stabilization-wave-20260531",
+    "version": "1.0.0-autoresearch-integration",
+    "content_hash": "sha256:research-detector-20260531-0000000000000000000000000000000000000000000000000000000000000000",
+    "created": "2026-05-31T00:00:00+00:00",
+    "last_improved": "2026-05-31T00:00:00+00:00",
+    "authors": [
+      {
+        "type": "swarm",
+        "id": "autonomous-research-thread-swarm",
+        "name": "Autonomous Research Thread Swarm (role-specialized stabilization component inside AgentDrive for full autoresearch integration)"
+      },
+      {
+        "type": "swarm",
+        "id": "stabilization-wave-20260531",
+        "name": "stabilization-coordination job (GridEngine + DurableJobSupervisor research_thread phase + HealingFactor.for_stabilization_wave)"
+      }
+    ],
+    "applicability": {
+      "domains": ["damage-detectors", "healingfactor", "experience-layer-regeneration", "autoresearch", "synthesis-damage-signals", "immune-posture", "stale-experience", "research-threads"],
+      "problem_signatures": [
+        "need continuous autonomous evolution of damage detectors for synthesis contradictions, security posture, reconciliation failures, explicit healing-damage observations",
+        "research threads with fixed budgets feed improved detectors directly into HealingFactor diagnosis and on_damage_signal paths",
+        "high-signal detector improvements advance specialized consolidation lineages and trigger regeneration cycles"
+      ],
+      "stabilization_wave": "20260531"
+    },
+    "dependencies": {
+      "genomes": [
+        "living-experience-seed-v3",
+        "95-production-readiness-assessment-living-experience@stabilization-wave-20260531",
+        "healing-factor-regeneration-proposal-v1@stabilization-wave-20260531"
+      ],
+      "agent_capabilities": [
+        "HealingFactor._diagnose + on_damage_signal (research constitution consulted)",
+        "GridEngine damage monitor + research thread coordinator",
+        "DurableJobSupervisor phase=research_thread + research-org",
+        "MultiMetricEvaluationHarness for detector quality",
+        "schema pack research-constitution + experience-observation routing"
+      ]
+    },
+    "research_constitution": {
+      "thread_id": "damage-detector-evolver",
+      "objective": "keep iterating on better damage detectors (synthesis contradiction clusters, immune posture degradation, stale experience layer items, security signals, reconciliation deltas) that feed HealingFactor and GridEngine reactivity while Conductor offline",
+      "research_budget_per_iteration": {
+        "max_synthesis_calls": 5,
+        "max_time_s": 300,
+        "max_genomes_per_think": 8,
+        "max_iterations_per_thread": 200
+      },
+      "branch_advancement_policy": "specialized_consolidation_lineage",
+      "high_signal_threshold": {
+        "min_damage_pattern_novelty": 0.15,
+        "min_detector_precision_gain": 0.1,
+        "min_healing_trigger_accuracy": 0.08
+      },
+      "healing_integration": {
+        "consulted_by_healing_diagnosis": true,
+        "spawn_from_damage": true,
+        "emit_research_diagnosis": true,
+        "improved_detectors_directly_wired_into_HealingFactor": true
+      },
+      "logging_policy": "high_signal detector evolutions surfaced as research-thread-observations (experience-observation) for experience layer query; full iteration logs under durable research jobs",
+      "discoverability": "research-thread observations + constitutions appear in Drive.think(prefer_experience_layer=True) results and daily-present consolidation; queryable as first-class drive citizens on stabilization-wave-20260531 drive"
+    }
+  },
+  "framework": {
+    "steps": [
+      {"id": "detector-research", "output": "Bounded synthesis + think over recent damage signals + historical healing_attempt_observations"},
+      {"id": "evaluation", "output": "Multi-metric harness scores novelty/precision; high-signal only advances specialized consolidation lineage (new detector genome fork)"},
+      {"id": "handoff-to-healing", "output": "Improved detector logic emitted as research_evolution_proposal or directly influences HealingFactor._diagnose evidence collection"},
+      {"id": "surfacing", "output": "High-signal detector improvements become experience-observations discoverable by sibling swarms and future Conductors via experience layer"}
+    ]
+  },
+  "fusion_checkpoint": {
+    "stabilization_wave": "20260531",
+    "produced_by": "Autonomous Research Thread Swarm via GridEngine extension",
+    "role_swarm_coherence": "damage detector evolution directly strengthens HealingFactor closed-loop + GridEngine reactivity; constitutions coordinate with Multi-Agent Research Org roles (Diagnoser/Adversary)",
+    "artifacts_referenced": [
+      "HealingFactor DiagnosisReport + research_org_consult",
+      "GridEngine form_autonomous_research_thread + _research_thread_coordinator_loop"
+    ]
+  }
+}

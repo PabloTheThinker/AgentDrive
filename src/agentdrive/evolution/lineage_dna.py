@@ -9,11 +9,11 @@ evolutionary layer, staying fully native in the hot path
 Designed to be used by:
 - Custom or built-in DNA Scanners
 - The Evolutionary Engine
-- High-agency operators and advanced nodes (such as ILO) that want to actively
+- High-agency operators and advanced high-continuity Conductor nodes that want to actively
   drive genome quality over time.
 
 Current implementation status: native sources primary + soft fallbacks.
-External richer sources (ILO brain etc.) enter only through explicit bridge paths.
+External richer sources (external brain indexes etc.) enter only through explicit bridge paths.
 See GrokPatternLineageBridge and the example scripts for concrete behavior.
 """
 
@@ -54,7 +54,7 @@ class LineageDNAEvolver:
     Uses only AgentDrive-native sources (genome patterns, ReasoningEngine,
     Ancestry, ledger/evals) with graceful degradation on missing data.
     Optional brain_path allows bridge injection of external high-signal data
-    (e.g. from ILO). The use_lineage_engine flag is reserved for future.
+    (e.g. from an external lineage engine). The use_lineage_engine flag is reserved for future.
 
     Provides a structured skeleton for scanners, evolutionary loops, and
     high-agency operators. Full "Lineage-style" depth is aspirational; current
@@ -85,7 +85,7 @@ class LineageDNAEvolver:
         """
         Execute one complete Research → Evaluate → Evolve cycle on this Genome.
 
-        This is the method high-agency nodes (including ILO) should call when
+        This is the method high-agency nodes (including high-continuity Conductor nodes) should call when
         they want to actively improve a Genome using the full Lineage machinery.
         """
         self._cycle_start = time.time()
@@ -154,7 +154,7 @@ class LineageDNAEvolver:
         - Ledger entries and evaluations already attached to the genome
         - Ancestry and inheritance history (what worked for direct ancestors)
 
-        External/richer research (e.g. operator brain indexes injected via the GrokPatternLineageBridge)
+        External/richer research (e.g. high-continuity operator brain indexes injected via the GrokPatternLineageBridge)
         should be supplied explicitly through the brain_path constructor argument or pluggable
         researcher hooks, not hardcoded in the core path. This keeps AgentDrive usable by any runtime.
         """

@@ -4,6 +4,9 @@
   JSON formatter so an ops box can pipe stdout into journald/elk.
 - ``RequestLoggingMiddleware``: stamps every request with a UUID4
   ``request_id``, logs method/path/status/latency_ms/client_ip in one record.
+  The request_id is automatically installed as the active ``correlation_id``
+  (contextvars) so Drive, synthesis, and reconciliation code paths emit
+  correlated log lines for the full request lifetime.
 - ``LoginRateLimiter``: in-memory token-bucket per source IP. Five attempts
   per minute is enough for a human; brute-force needs more than that.
 - ``install_error_boundary``: turns unhandled exceptions into a 500 with a
@@ -25,6 +28,11 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response
 from starlette.middleware.base import BaseHTTPMiddleware
+
+from agentdrive.constants import (
+    reset_correlation_id,
+    set_correlation_id,
+)
 
 _logger = logging.getLogger("agentdrive.web")
 
@@ -124,6 +132,12 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
     The request_id is also stored on ``request.state.request_id`` so
     downstream handlers (and the error boundary) can correlate.
+
+    The same value is installed as the active correlation_id (via contextvars)
+    for the duration of the request. This provides automatic end-to-end
+    tracing from HTTP entry through Drive.ingest/query/think, run_synthesis,
+    and reconciliation scans performed during the request. The correlation
+    ID appears in all structured logs from those layers.
     """
 
     async def dispatch(
@@ -133,6 +147,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         request_id = uuid.uuid4().hex
         request.state.request_id = request_id
+        # Wire web request_id -> core correlation context for e2e tracing (non-breaking).
+        # Any Drive/synthesis/recon work during this request will inherit it.
+        corr_token = set_correlation_id(request_id)
         start = time.perf_counter()
         client_ip = (request.client.host if request.client else "?") or "?"
         from agentdrive.utils.log_safe import safe_for_log
@@ -147,17 +164,22 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 "request errored",
                 extra={
                     "request_id": request_id,
+                    "correlation_id": request_id,
                     "method": safe_method,
                     "path": safe_path,
                     "client_ip": safe_client,
                 },
             )
             raise
+        finally:
+            # Always restore prior correlation context (supports nested usage).
+            reset_correlation_id(corr_token)
         latency_ms = round((time.perf_counter() - start) * 1000, 2)
         _logger.info(
             "request",
             extra={
                 "request_id": request_id,
+                "correlation_id": request_id,
                 "method": safe_method,
                 "path": safe_path,
                 "status": response.status_code,

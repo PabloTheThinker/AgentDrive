@@ -9,7 +9,7 @@ The load-bearing guarantees:
    ``pull_inherited()`` returns Genomes published by every direct ancestor,
    with correct hop depth and full provenance.
 3. **No decay.** Inherited Genomes don't expire — once in the lineage,
-   always accessible (the Avatar mental model Pablo specified).
+   always accessible (the Avatar mental model from the core design).
 4. **Multi-parent DAG handled correctly.** When an agent has two parents
    that share a grandparent, the closure table records the SHORTER path
    to the shared ancestor.

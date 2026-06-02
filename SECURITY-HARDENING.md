@@ -58,9 +58,10 @@ The `curl | bash` path is the primary way new users install Agent Drive. It was 
 
 ---
 
-## 3. Delivery Layer (Vektra Site)
+## 3. Delivery Layer (GitHub Raw)
 
-The branded installer URL (`https://vektraindustries.com/agentdrive/install`) is served by a Next.js route that fetches from GitHub raw.
+The installer is served directly from the repository:
+`https://raw.githubusercontent.com/PabloTheThinker/AgentDrive/main/scripts/install.sh`
 
 Hardening applied:
 - `X-Content-Type-Options: nosniff`

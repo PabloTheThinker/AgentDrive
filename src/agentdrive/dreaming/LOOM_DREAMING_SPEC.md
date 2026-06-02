@@ -175,7 +175,7 @@ Guarantees:
 - two-phase promotion: stage first, commit later
 - provenance tagging on every artifact: `origin=dreaming`, `dream_run_id`, source refs
 - no direct mutation of active swarm state
-- no ISO/hypothetical agent promoted directly into active execution
+- no hypothetical agent promoted directly into active execution
 - quarantine hook for failed or suspicious artifacts
 - every promotion reversible by `dream_run_id`
 
@@ -206,7 +206,7 @@ These should be named explicitly:
 2. **Compressed simulation fidelity** — how faithfully the day’s reasoning ledger can stand in for live environmental pressure is uncertain.
 3. **Adversary seed construction** — initial adversary may need a hand-tuned profile before enough ledger history exists.
 4. **Pattern extraction richness** — conceptual richness depends on tag quality already present upstream.
-5. **ISO precipitation threshold** — when a hypothetical agent becomes a real candidate inhabitant should begin conservatively.
+5. **Hypothetical agent emergence threshold** — when a hypothetical agent becomes a real candidate, promotion should begin conservatively.
 
 The design should therefore launch with strict staging, narrow commit thresholds, and strong replay/rollback discipline.
 
@@ -880,7 +880,7 @@ class DreamAdversary:
 narrative — write Dream Diary entries as a byproduct of substantive dream work.
 
 Design goals:
-- Keep diary generation secondary to actual consolidation and ISO emergence.
+- Keep diary generation secondary to actual consolidation and hypothetical agent emergence.
 - Preserve phase context and provenance for auditability.
 - No new magic — just disciplined composition + Agent Drive / Genome idioms.
 """
@@ -928,7 +928,7 @@ class DreamNarrator:
         prompt_lines = [
             f"Run: {run_id}",
             f"Phase: {phase}",
-            "Summarize the substrate's reflection in Tron-like but operationally precise terms.",
+            "Summarize the substrate's reflection in operationally precise terms.",
         ]
         # Include key metrics, top candidates, and any adversarial wins/losses.
         # Keep the prompt deterministic so diary output can be compared across runs.

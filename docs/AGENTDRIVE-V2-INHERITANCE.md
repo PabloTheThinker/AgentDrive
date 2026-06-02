@@ -1,6 +1,6 @@
 # AgentDrive v2 — Three-Tier Topology, DNA Inheritance, and Snapshot Backup
 
-> **Status:** approved (2026-05-24). All open questions resolved by Pablo. Milestone 2 work cleared to start.
+> **Status:** approved (2026-05-24). All open questions resolved by the project maintainer. Milestone 2 work cleared to start.
 >
 > **Decided independently by two sources:** Codex consult (implementation cost) and an academic + production literature survey (multi-agent systems, MARL, biology). Both converged on the same answer. The supporting evidence is in [`AGENTDRIVE-V2-INHERITANCE-RESEARCH.md`](AGENTDRIVE-V2-INHERITANCE-RESEARCH.md).
 >
@@ -36,7 +36,7 @@ AgentDrive moves to a **three-tier Drive topology**:
 
 **The DNA Drive flows forward only by default. Sideways flow across cousin agents from different swarms is allowed only through an explicit, signed, scoped, TTL-bounded `lineage_share` grant.**
 
-Both Codex and the literature survey reached this conclusion independently. The implementation cost ratio is roughly **forward-only ≈ 200 LOC over 1 day; full unrestricted sideways graph ≈ 800–1500 LOC over 2–3 weeks**. The hybrid (forward-only + opt-in grants) sits near forward-only's cost while keeping the door open for the powerful cross-pollination Pablo originally asked about.
+Both Codex and the literature survey reached this conclusion independently. The implementation cost ratio is roughly **forward-only ≈ 200 LOC over 1 day; full unrestricted sideways graph ≈ 800–1500 LOC over 2–3 weeks**. The hybrid (forward-only + opt-in grants) sits near forward-only's cost while keeping the door open for the powerful cross-pollination originally requested.
 
 ---
 
@@ -71,7 +71,7 @@ The peer federation tier from the v2 doc still exists — it's a cross-instance 
 
 **Owner:** the swarm itself.
 
-**Contents:** everything the swarm's sub-agents are currently learning together. Sibling sub-agents read freely from each other's namespaced writes — this is the "we work together" experience pool Pablo described.
+**Contents:** everything the swarm's sub-agents are currently learning together. Sibling sub-agents read freely from each other's namespaced writes — this is the "we work together" experience pool described in the design.
 
 **Access:**
 - Sub-agents in the swarm: read all, write to own `<sub_id>/` namespace.
@@ -145,7 +145,7 @@ Both Codex's engineering analysis and the literature survey reached forward-only
 
 ### From MARL
 
-- **AlphaStar's league** is the closest production analog to Pablo's question. Verdict: **forward-only weight inheritance, sideways-everyone adversarial exposure.** Cousins influence each other's gradient, never each other's parameters.
+- **AlphaStar's league** is the closest production analog to the core inheritance question. Verdict: **forward-only weight inheritance, sideways-everyone adversarial exposure.** Cousins influence each other's gradient, never each other's parameters.
 - **PBT (Population-Based Training)** copies weights laterally within a generation, but training-time, not deployment-time, and only via competitive selection.
 
 ### From biology
@@ -273,14 +273,14 @@ The earlier v2 doc had Milestones 2 (shared Drive), 3 (caps), 4 (CRDTs), 5 (trus
 
 ---
 
-## Decisions locked (2026-05-24, by Pablo)
+## Decisions locked (2026-05-24, by the project maintainer)
 
 | Question | Decision | Reasoning |
 |---|---|---|
-| Genome shape (gene-sized vs memory-sized) | **My call when M2 code starts.** Keep current shape (framework + reasoning + tools + evals) for v2; revisit if mix-and-match becomes the bottleneck. | Deferred to implementation. The current shape works for now and the recombinability question can be answered with real usage data. |
-| Default eval threshold for inherited DNA | **My call when M2 code starts.** Likely ≥0.7 for cross-source pulls, ≥0.0 (no gate) for direct-line ancestral. | Direct ancestors are trusted by default — they're you, earlier. Cross-source needs the gate. |
+| Genome shape (gene-sized vs memory-sized) | **Project maintainer decision when M2 code starts.** Keep current shape (framework + reasoning + tools + evals) for v2; revisit if mix-and-match becomes the bottleneck. | Deferred to implementation. The current shape works for now and the recombinability question can be answered with real usage data. |
+| Default eval threshold for inherited DNA | **Project maintainer decision when M2 code starts.** Likely ≥0.7 for cross-source pulls, ≥0.0 (no gate) for direct-line ancestral. | Direct ancestors are trusted by default — they're the ancestor lineage. Cross-source needs the gate. |
 | Should Personal Drive be readable by sub-agents? | **No.** Personal Drive stays private to its owning agent. | Sub-agents see what's in the Swarm Drive and what their parent explicitly publishes — not the parent's raw working memory. Separation of concerns. |
-| Decay function for borrowed cousin DNA | **No decay.** Inherited DNA is permanent. Becomes a chapter in the lineage, always accessible. | Avatar mental model. Once received, it's yours. Grant *issuance* has a TTL (issuer can stop granting NEW access) but data already received stays. |
+| Decay function for borrowed cousin DNA | **No decay.** Inherited DNA is permanent. Becomes a chapter in the lineage, always accessible. | Avatar mental model. Once received, it stays with the recipient. Grant *issuance* has a TTL (issuer can stop granting NEW access) but data already received stays. |
 | Backup mode (continuous mirror vs point-in-time snapshots) | **Point-in-time snapshots, 6h cadence by default, localhost UI for operator control.** | Continuous mirror replicates corruption instantly; snapshots let you actually recover. 6h is the empirical sweet spot. |
 
 All design questions resolved. Milestone 2 PR series cleared to start.

@@ -1,0 +1,175 @@
+{
+  "schema_version": 3,
+  "page_type": "research-constitution",
+  "type": "research_constitution",
+  "id": "research-constitution-role-specialized-swarm-research-org@stabilization-wave-20260531",
+  "version": "1.0.0-experience-layer-regeneration",
+  "created": "2026-05-31T00:00:00+00:00",
+  "last_improved": "2026-05-31T00:00:00+00:00",
+  "manifest": {
+    "id": "research-constitution-role-specialized-swarm-research-org@stabilization-wave-20260531",
+    "version": "1.0.0-experience-layer-regeneration",
+    "content_hash": "sha256:swarm-research-org-constitution-20260531-0000000000000000000000000000000000000000000000000000000000000000",
+    "created": "2026-05-31T00:00:00+00:00",
+    "last_improved": "2026-05-31T00:00:00+00:00",
+    "authors": [
+      {
+        "type": "swarm",
+        "id": "research-constitution-architect-swarm",
+        "name": "Research Constitution Architect Swarm (role-specialized stabilization component inside AgentDrive for autonomous experience layer regeneration)"
+      },
+      {
+        "type": "swarm",
+        "id": "stabilization-wave-20260531",
+        "name": "stabilization-coordination job (DurableJobSupervisor + HealingFactor.for_stabilization_wave + GridEngine)"
+      }
+    ],
+    "applicability": {
+      "domains": ["role-swarm-research-org", "swarm-coordination", "autonomous-research-threads", "diagnoser", "proposer", "verifier", "consolidator", "adversary", "coordination-protocols", "experience-layer-regeneration"],
+      "problem_signatures": [
+        "need explicit definition of specialist roles for autonomous research threads inside the Grid",
+        "need coordination protocols between parallel stabilization swarms and ongoing HealingFactor/GridEngine activity",
+        "enable 'all work together' role-swarm coherence while preserving specialist depth",
+        "support self-referential improvement of the research org itself via the same experience layer mechanisms"
+      ],
+      "stabilization_wave": "20260531"
+    },
+    "dependencies": {
+      "genomes": [
+        "living-experience-seed-v3",
+        "stabilization-wave-20260531-closure-living-experience-observation",
+        "research-constitution-healingfactor@stabilization-wave-20260531",
+        "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531"
+      ],
+      "agent_capabilities": [
+        "swarm-artifact",
+        "DurableJobSupervisor",
+        "HealingFactor",
+        "GridEngine",
+        "Drive.think",
+        "schema_packs",
+        "knowledge_graph",
+        "role-swarm coordination primitives"
+      ]
+    },
+    "evaluation_score": {
+      "reference_tasks": 0.94,
+      "coherence": 0.97,
+      "collaboration_fidelity": 0.93,
+      "thread_autonomy": 0.91
+    }
+  },
+  "framework": {
+    "page_type": "research-constitution",
+    "constitution_type": "role-specialized-swarm-research-org",
+    "description": "Research Constitution for role-specialized swarm research org: how different swarms collaborate on autonomous research threads, specialist roles (Diagnoser, Proposer, Verifier, Consolidator, Adversary), coordination protocols. Schema-pack governed artifact directly usable by GridEngine, HealingFactor, daily_consolidation on stabilization-wave-20260531 drive. Pure AgentDrive language throughout.",
+    "specialist_roles": {
+      "Diagnoser": {
+        "responsibility": "Produce high-quality DiagnosisReport for any damage signal or research thread trigger. Executes Drive.think(prefer_experience_layer=True) + run_synthesis + LineageImmune + KG neighborhood + security posture. Must satisfy all criteria in the HealingFactor constitution.",
+        "outputs": ["DiagnosisReport with correlation_id, root_cause, evidence dict, recommended_proposal_types"],
+        "activation": "HealingFactor.on_damage_signal or explicit research thread dispatch via DurableJobSupervisor 'research' or 'healing' phase",
+        "constraints": "Never generates proposals. Diagnosis must be quantitative and traceable. Self-referential note required in evidence."
+      },
+      "Proposer": {
+        "responsibility": "Emit only allowed proposal types per HealingFactor constitution (experience_consolidation, healing_attempt_observation, immune_rule_update, correction_observation, safe_evolution_proposal). All proposals carry verification_gates + self_referential note + fusion_checkpoint + stabilization_wave tag.",
+        "outputs": ["regeneration-proposal or research-constitution page_type artifacts ready for durable execution or ingest"],
+        "activation": "After Diagnoser report; or proactive from daily_consolidation gap discovery; or Adversary escalation",
+        "constraints": "Strictly first-class artifacts only. No raw patches. Must reference governing Research Constitutions."
+      },
+      "Verifier": {
+        "responsibility": "Execute the objective multi-metric evaluation harness (contradiction reduction + resilience lift + experience layer coherence + simplicity + future prediction power) post-proposal execution. Validate daily-present quality criteria. Challenge metric computations when Adversary injects test signals.",
+        "outputs": ["verification result with composite score, per-metric deltas, promotion recommendation or quarantine flag"],
+        "activation": "Inside DurableJobSupervisor healing / daily_consolidation runner after apply step; or on demand from GridEngine maintenance",
+        "constraints": "Must be independent of the Proposer that produced the candidate. Records full harness trace into healing_attempt or consolidation result."
+      },
+      "Consolidator": {
+        "responsibility": "Own daily_consolidation execution and living-experience lineage decisions (fork vs merge) per GridEngine constitution. Produce attributed daily-present observations. Drive ingest + schema promotion of successful healing_attempt observations and Research Constitutions into experience layer v3.",
+        "outputs": ["daily_present_genome with full fusion_checkpoint; promoted living-experience updates; role-swarm coherence KG edges"],
+        "activation": "GridEngine._maintenance_loop timer; HealingFactor experience_consolidation proposals; explicit coordination job",
+        "constraints": "Never bypass fork/merge rules or quality criteria. All promotions carry full provenance lineage."
+      },
+      "Adversary": {
+        "responsibility": "Inject synthetic or creative contradiction signals, stress-test the evaluation harness, propose divergent forks for high-risk/high-reward research threads, surface blind spots in existing constitutions or diagnoses. Dispatched on persistent HealingFactor escalation or explicit 'adversarial' phase job.",
+        "outputs": ["adversarial dream results, synthetic healing-damage observations, fork proposals, constitution gap reports"],
+        "activation": "HealingFactor._escalate path; DurableJobSupervisor phase='adversarial'; or scheduled stress job from GridEngine",
+        "constraints": "Outputs always route through Verifier + Proposer before any promotion. Purpose is robustness, not disruption. All signals carry explicit 'adversary_injected' marker for correlation."
+      }
+    },
+    "coordination_protocols": {
+      "thread_initiation": "Any swarm or GridEngine damage monitor may emit HealingSignalEvent or research thread trigger (with CID). Diagnoser is first activated. CID propagates through all subsequent roles via using_correlation_id.",
+      "handoff": "Diagnoser output (DiagnosisReport) is the sole input to Proposer. Proposer output is the sole input to Verifier (via durable job result). Verifier success + Consolidator approval triggers final ingest / KG edge emission. Adversary may inject at any stage but must be explicitly marked and re-verified.",
+      "role_swarm_coherence": "Every completed research thread or healing cycle emits TypedEdge relations (healed_by, synthesized_from_swarm, role_swarm_coherence_achieved, governed_by_constitution). daily_consolidation always scans all active role contributions. fusion_checkpoint records every participating role swarm.",
+      "escalation": "Persistent failure after Verifier rejection or low composite score triggers Adversary dispatch + deeper HealingFactor escalation. Constitution gaps discovered by any role become self-referential damage signals against the governing research-constitution genome.",
+      "quorum_for_lineage_change": "Major living-experience merges or forks that affect the v3 anchor require at least Diagnoser + Verifier + Consolidator signals (via KG edges or swarm-artifact) within the same consolidation window. Adversary vote is advisory only.",
+      "self_improvement_loop": "Research Constitutions are themselves research thread subjects. Any role may surface a gap in a constitution as a healing-damage observation. Proposer may emit an updated constitution version as experience_consolidation proposal. Verifier scores the update using the same harness."
+    },
+    "swarm_families": "Stabilization swarms (HealingFactor, GridEngine, daily consolidation, correlation, security posture, first-run seed, source surface) operate as instances of the five specialist roles. Parallel execution is the norm; coherence is achieved exclusively via the protocols + fusion_checkpoint + daily-present + KG edges. No central controller outside the constitutions + primitives.",
+    "self_referential_improvement": "This constitution is the primary governance document for its own evolution. Gaps in role definitions or protocol robustness are diagnosed by Diagnoser/Adversary and closed via the HealingFactor + Consolidator path.",
+    "fusion_checkpoint": {
+      "timestamp": "2026-05-31T00:00:00+00:00",
+      "correlation_id": "swarm-research-org-constitution-cid-20260531",
+      "stabilization_wave": "20260531",
+      "participating_primitives": [
+        "all five specialist roles exercised across HealingFactor, GridEngine, durable jobs, synthesis, and prior stabilization swarms",
+        "DurableJobSupervisor (healing + daily_consolidation + adversarial phases)",
+        "schema_packs research-constitution + swarm-artifact resolution",
+        "knowledge_graph role-swarm coherence edges"
+      ],
+      "resilience_delta_target": 0.20,
+      "self_referential": "The role-specialized org defined here is the mechanism by which this constitution and its siblings will be diagnosed, proposed, verified, consolidated, and adversarially tested in future waves."
+    },
+    "coordination_protocol_note": "All sibling swarms on stabilization-wave-20260531 drive coordinate exclusively through these protocols and the four constitutions. Artifacts (genomes, observations, reports) are the coordination medium. Drive.think(prefer_experience_layer=True) + daily_consolidation surface the fused state."
+  },
+  "reasoning_patterns": {
+    "specialization_with_coherence": "Deep specialist roles increase thread quality; strict handoff protocols + shared fusion_checkpoint + daily-present prevent fragmentation.",
+    "adversary_as_immune": "Adversary role is the creative extension of LineageImmuneSystem at the research thread level — stress without destabilization."
+  },
+  "tool_compositions": {},
+  "evaluations": {
+    "org_self_test": "Post-ingest daily_consolidation on stabilization-wave-20260531 drive produces higher role_swarm_coherence_achieved signal density when all five roles are explicitly exercised and recorded."
+  },
+  "provenance": {
+    "lineage": [
+      {
+        "parent": "HEALING_FACTOR_REGENERATIVE_ARCHITECTURE.md",
+        "relation": "extends_with_role_definitions",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "HealingFactor loop + durable healing jobs decomposed into the five specialist roles with explicit handoff and escalation protocols"
+      },
+      {
+        "parent": "durable_consolidation_stabilization_report.md",
+        "relation": "incorporates",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "Role-swarm 'all work together' charter and daily consolidation patterns elevated to constitutional coordination protocols"
+      },
+      {
+        "parent": "research-constitution-healingfactor@stabilization-wave-20260531",
+        "relation": "specializes",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "HealingFactor constitution supplies the concrete criteria executed by Diagnoser/Proposer/Verifier roles"
+      },
+      {
+        "parent": "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531",
+        "relation": "specializes",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "GridEngine constitution supplies the lineage rules executed by Consolidator role"
+      },
+      {
+        "parent": "stabilization-wave-20260531-closure-living-experience-observation",
+        "relation": "anchored_by",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "95% role-swarm coherence declaration is the baseline state this org constitution preserves and evolves"
+      }
+    ],
+    "improvements": [],
+    "source_swarm": "Research Constitution Architect Swarm",
+    "via": "synthesis over all prior role-swarm stabilization artifacts + HealingFactor/GridEngine source on stabilization-wave-20260531 drive",
+    "signed": "Research Constitution Architect Swarm — stabilization-wave-20260531"
+  },
+  "kg_edges_proposed": [
+    {"source": "research-constitution-role-specialized-swarm-research-org@stabilization-wave-20260531", "target": "research-constitution-healingfactor@stabilization-wave-20260531", "relation": "governs", "weight": 0.96},
+    {"source": "research-constitution-role-specialized-swarm-research-org@stabilization-wave-20260531", "target": "research-constitution-gridengine-daily-consolidation-experience-layer-v3@stabilization-wave-20260531", "relation": "governs", "weight": 0.94},
+    {"source": "all_participating_swarms", "target": "research-constitution-role-specialized-swarm-research-org@stabilization-wave-20260531", "relation": "coordinated_by", "weight": 0.9},
+    {"source": "role_swarm_coherence_achieved", "target": "research-constitution-role-specialized-swarm-research-org@stabilization-wave-20260531", "relation": "documented_by", "weight": 0.93}
+  ]
+}

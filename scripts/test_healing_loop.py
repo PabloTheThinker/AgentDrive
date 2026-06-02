@@ -385,7 +385,7 @@ def _call_local(spec: local_models.LocalModelSpec, prompt: str) -> str:
 
 
 def _call_codex(prompt: str, timeout: float) -> str:
-    """Invoke Codex via the ilo runtime CLI per spec — subprocess shell-out."""
+    """Invoke Codex via the external high-continuity runtime CLI per spec — subprocess shell-out."""
     cmd = [
         "python3",
         str(CODEX_TOOL),

@@ -9,6 +9,17 @@ Core philosophy (professional subagent handling):
 - Safe defaults, powerful overrides, full provenance.
 """
 
+# Self-healing first-run bootstrap (Stabilization Swarm component)
+# ensure_experience_layer_seed + supporting healers for new AgentDrive instances
+# (role-swarm self-host users): new instances start coherent, experience layer
+# present from first think, defensive healing for production reliability.
+from .bootstrap import (
+    ensure_basic_reconciliation_state,
+    ensure_directory_structure,
+    ensure_experience_layer_seed,
+    ensure_minimal_kg_index_bootstrap,
+    ensure_trust_self_identity_placeholder,
+)
 from .content_store import (
     ContentStore,
     PutResult,
@@ -50,4 +61,10 @@ __all__ = [
     "genome_hash",
     "hash_bytes",
     "hash_payload",
+    # First-run self-healing bootstrap exports (experience layer v3 seed etc.)
+    "ensure_experience_layer_seed",
+    "ensure_directory_structure",
+    "ensure_minimal_kg_index_bootstrap",
+    "ensure_basic_reconciliation_state",
+    "ensure_trust_self_identity_placeholder",
 ]

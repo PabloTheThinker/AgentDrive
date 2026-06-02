@@ -12,7 +12,7 @@ AutoApproveFrom = Literal["none", "self", "trusted-peer"]
 class PromotionPolicy:
     """Per-Drive policy controlling how proposals get reviewed.
 
-    Defaults follow the Codex recommendation that Pablo accepted: every
+    Defaults follow the core design recommendation: every
     upward write requires a promotion record, but self-originated promotions
     auto-approve so the existing single-agent flow stays one logical step.
     Trusted-peer auto-approval is opt-in.

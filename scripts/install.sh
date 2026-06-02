@@ -2,12 +2,10 @@
 #
 # AgentDrive Installer — production-grade installer
 #
-# Usage (recommended):
-#   curl -fsSL https://vektraindustries.com/agentdrive/install | bash
-#   curl -fsSL https://vektraindustries.com/agentdrive/install.sh | bash
+# Usage (recommended — use the root version for the shortest URL):
+#   curl -fsSL https://raw.githubusercontent.com/PabloTheThinker/AgentDrive/main/install.sh | bash
 #
-# Canonical source:
-#   https://raw.githubusercontent.com/PabloTheThinker/AgentDrive/main/scripts/install.sh
+# This root script is the canonical one-liner. The scripts/ version is kept for compatibility.
 #
 # This script installs the AgentDrive (local-first agent-memory drive — content-addressed Genomes, CRDT siblings, P-384 trust circle).
 # It is safe to re-run at any time.

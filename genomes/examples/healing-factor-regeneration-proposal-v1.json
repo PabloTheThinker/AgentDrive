@@ -1,0 +1,107 @@
+{
+  "schema_version": 3,
+  "page_type": "experience-observation",
+  "type": "healing_attempt",
+  "manifest": {
+    "id": "healing-factor-regeneration-proposal-v1@stabilization-wave-20260531",
+    "version": "1.0.0-experience-layer-regeneration",
+    "content_hash": "sha256:healing-factor-regen-20260531-0000000000000000000000000000000000000000000000000000000000000000",
+    "created": "2026-05-31T00:00:00+00:00",
+    "last_improved": "2026-05-31T00:00:00+00:00",
+    "authors": [
+      {
+        "type": "swarm",
+        "id": "healing-regeneration-swarm",
+        "name": "Regenerative HealingFactor Operator (role-specialized stabilization swarm component for experience layer regeneration)"
+      }
+    ],
+    "applicability": {
+      "domains": ["experience-layer-regeneration", "durable-healing-jobs", "role-swarm-immune-response", "schema-pack-governed-evolution", "lineage-immune-adaptive-memory", "graph-signal-resilience-scoring", "meta-stabilization"],
+      "problem_signatures": [
+        "worker/adapter execution failures after retries",
+        "DurableJobSupervisor job exhaustion after leases and backoff",
+        "reconciliation state corruption or repeated background failures",
+        "synthesis high contradiction clusters or persistent gaps blocking experience layer coherence",
+        "security posture degrading (needs_attention on perms/grants/trust/immune)",
+        "promotion/ingest rejections or LineageImmune CRITICAL threats",
+        "first-run / sparse drive cold start reasoning failures"
+      ],
+      "stabilization_wave": "20260531"
+    },
+    "dependencies": {
+      "genomes": ["living-experience-seed-v3", "durable-execution-daily-consolidation-integrator-genome"],
+      "agent_capabilities": ["drive.think", "run_synthesis", "DurableJobSupervisor", "LineageImmuneSystem", "schema_packs", "knowledge_graph"]
+    },
+    "evaluation_score": {
+      "reference_tasks": 0.92,
+      "stability": 0.98,
+      "coherence": 0.95,
+      "resilience_boost": 0.85
+    }
+  },
+  "framework": {
+    "page_type": "experience-observation",
+    "observation_type": "healing_attempt_regeneration_proposal",
+    "description": "First-class safe regeneration proposal artifact (correction_observation style) produced by Regenerative HealingFactor Operator. Captures diagnosis from Drive.think(prefer_experience_layer=True) + run_synthesis (explicit Gaps + Contradictions + composite scores) + LineageImmune assessment + KG neighborhood graph signals. Includes verification gates and self-reference for loop closure. Never a raw source patch. Suitable for immediate ingest into live stabilization or main drive as high-signal content for future prevention and experience layer v3 fusion. On successful execution under durable healing job: produces healing_attempt observation + typed KG edges (healed_by, regenerated_from, damage_cause, strengthened_resilience).",
+    "signals": [
+      "experience_layer_regeneration",
+      "role_swarm_immune_response",
+      "durable_healing_job",
+      "schema_pack_governed",
+      "lineage_immune_memory",
+      "graph_signal_resilience",
+      "self_referential_improvement"
+    ],
+    "diagnosis_summary": "Autonomous damage signal requires experience layer regeneration. Root cause diagnosed via rich context (correlation_id mandatory) + synthesis gaps/contradictions + immune adaptive memory.",
+    "proposed_actions": [
+      "Ingest as experience-observation for immediate Conductor visibility and fusion.",
+      "Dispatch via DurableJobSupervisor phase='healing' with two-phase lease + verification (re-immune, re-quarantine, scanner, promotion).",
+      "On close: emit KG edges + healing_attempt observation for strengthened_resilience learning."
+    ],
+    "verification_gates": [
+      "lineage_immune_reassess (ThreatLevel.CRITICAL triggers re-quarantine)",
+      "quarantine gate + LineageImmuneRule for any touched foreign material",
+      "scanner runs (e.g. rich_run_scanner on related artifacts)",
+      "promotion policy check (schema-pack signals for extractable/expert_routing)"
+    ],
+    "fusion_checkpoint": {
+      "correlation_id": "healing-regen-20260531-cid-placeholder",
+      "participating_primitives": ["Drive.think(prefer_experience_layer=True)", "run_synthesis(Gaps+Contradictions)", "LineageImmuneSystem", "DurableJobSupervisor.healing_phase", "knowledge_graph graph signals", "schema_packs page_type resolution"],
+      "resilience_delta_target": 0.25,
+      "self_referential": "This artifact is itself subject to future experience layer regeneration loops for continuous improvement of the HealingFactor."
+    },
+    "stabilization_note": "Produced by Regenerative HealingFactor Operator component. Ingest via Drive, reconcile, or registry on stabilization or main drive. Directly advances substrate-level regenerative self-healing beyond prior first-run and reconciliation hardening. All language pure AgentDrive."
+  },
+  "reasoning_patterns": {
+    "contradiction_closure": "High contradiction clusters trigger correction_observation + experience_consolidation_genome proposals.",
+    "immune_adaptation": "CRITICAL threats from LineageImmuneSystem produce immune_rule_update genome proposals."
+  },
+  "tool_compositions": {},
+  "evaluations": {
+    "healing_loop_closure": "Ingest + durable execution + KG edges (healed_by etc.) = prevention signal for future Drive.think and daily-present consolidation."
+  },
+  "provenance": {
+    "lineage": [
+      {
+        "parent": "HEALING_FACTOR_REGENERATIVE_ARCHITECTURE.md",
+        "relation": "documents",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "Architecture design converted to ingestible proposal genome for experience layer v3"
+      },
+      {
+        "parent": "living-experience-seed-v3",
+        "relation": "builds_on",
+        "timestamp": "2026-05-31T00:00:00+00:00",
+        "notes": "Extends first-run self-healing seed into runtime regenerative substrate"
+      }
+    ],
+    "improvements": [],
+    "source_swarm": "Regenerative HealingFactor Operator (stabilization swarm component)",
+    "via": "DurableJobSupervisor healing phase + schema-pack governed evolution"
+  },
+  "kg_edges_proposed": [
+    {"source": "healing-factor-regeneration-proposal-v1", "target": "living-experience-seed-v3", "relation": "builds_on", "weight": 0.9},
+    {"source": "healing-factor-regeneration-proposal-v1", "target": "durable-execution-daily-consolidation-integrator-genome", "relation": "extends", "weight": 0.85},
+    {"source": "future_healing_attempt", "target": "healing-factor-regeneration-proposal-v1", "relation": "healed_by", "weight": 1.0}
+  ]
+}

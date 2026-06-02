@@ -11,7 +11,7 @@
       "refactor",
       "technical-debt"
     ],
-    "author": "pablothethinker",
+    "author": "AgentDrive Contributors",
     "license": "CC-BY-4.0",
     "inputs": [
       {
@@ -52,7 +52,7 @@
       {
         "id": "classify_archetype",
         "type": "reasoning",
-        "agent": "ilo-core",
+        "agent": "agentdrive-core",
         "inputs": [
           "repo_summary",
           "language",
@@ -63,7 +63,7 @@
       {
         "id": "enumerate_components",
         "type": "reasoning",
-        "agent": "ilo-core",
+        "agent": "agentdrive-core",
         "depends_on": [
           "classify_archetype"
         ],
@@ -80,7 +80,7 @@
       {
         "id": "build_dependency_graph",
         "type": "reasoning",
-        "agent": "ilo-core",
+        "agent": "agentdrive-core",
         "depends_on": [
           "enumerate_components"
         ],
@@ -92,7 +92,7 @@
       {
         "id": "identify_hotspots",
         "type": "reasoning",
-        "agent": "ilo-core",
+        "agent": "agentdrive-core",
         "depends_on": [
           "enumerate_components"
         ],
@@ -108,7 +108,7 @@
       {
         "id": "recommend_refactors",
         "type": "reasoning",
-        "agent": "ilo-core",
+        "agent": "agentdrive-core",
         "depends_on": [
           "identify_hotspots",
           "build_dependency_graph"
@@ -123,7 +123,7 @@
       {
         "id": "assess_risks",
         "type": "reasoning",
-        "agent": "ilo-core",
+        "agent": "agentdrive-core",
         "depends_on": [
           "enumerate_components",
           "identify_hotspots"
@@ -137,7 +137,7 @@
       {
         "id": "compose_artifact",
         "type": "validate",
-        "agent": "ilo-core",
+        "agent": "agentdrive-core",
         "depends_on": [
           "classify_archetype",
           "enumerate_components",

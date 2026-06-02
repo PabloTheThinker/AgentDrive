@@ -1,0 +1,97 @@
+{
+  "schema_version": 3,
+  "page_type": "research-constitution",
+  "type": "multi_agent_research_thread_manifest",
+  "id": "multi-agent-research-thread-manifest-example@stabilization-wave-20260531",
+  "version": "1.0.0-research-org",
+  "created": "2026-05-31T00:00:00+00:00",
+  "last_improved": "2026-05-31T00:00:00+00:00",
+  "manifest": {
+    "id": "multi-agent-research-thread-manifest-example@stabilization-wave-20260531",
+    "version": "1.0.0-research-org",
+    "content_hash": "sha256:research-thread-manifest-20260531-stabilization",
+    "created": "2026-05-31T00:00:00+00:00",
+    "authors": [
+      {
+        "type": "swarm",
+        "id": "multi-agent-research-org-swarm",
+        "name": "Multi-Agent Research Org Swarm (role-specialized stabilization component inside AgentDrive)"
+      },
+      {
+        "type": "swarm",
+        "id": "stabilization-wave-20260531",
+        "name": "GridEngine form_autonomous_research_thread + HealingFactor.form_research_org_thread"
+      }
+    ],
+    "applicability": {
+      "domains": ["autonomous_research_threads", "multi_agent_research_org", "role_handoff_coordination", "experience_layer_fusion"],
+      "stabilization_wave": "20260531"
+    },
+    "dependencies": {
+      "genomes": [
+        "research-constitution-diagnoser-charter@stabilization-wave-20260531",
+        "95-production-readiness-assessment-living-experience@stabilization-wave-20260531",
+        "stabilization-wave-20260531-closure-living-experience-observation",
+        "healing-attempt-observation-example"
+      ],
+      "swarms": ["example-synthesis", "example-dream", "example-calibration", "stabilization-wave-20260531"]
+    },
+    "evaluation_score": {
+      "reference_tasks": 0.94,
+      "stability": 0.96,
+      "coherence": 0.98,
+      "role_swarm_fusion": 0.99
+    }
+  },
+  "framework": {
+    "page_type": "research-constitution",
+    "manifest_type": "example_autonomous_research_thread",
+    "description": "Example multi-agent research thread manifest produced by Multi-Agent Research Org Swarm. Formed dynamically via GridEngine on stabilization-wave-20260531 drive. Demonstrates full role team (Diagnoser -> Proposer -> Adversary -> Verifier -> Consolidator), handoff protocols, temp specialist spawn, cross-swarm coordination, budget discipline, and fusion into living-experience. Directly ingestible; auto-feeds experience layer v3 and future HealingFactor prevention.",
+    "research_thread": {
+      "thread_id": "cid-research-org-20260531-example",
+      "drive": "stabilization-wave-20260531",
+      "formed_by": "GridEngine.form_autonomous_research_thread + HealingFactor.form_research_org_thread",
+      "roles_formed": ["Diagnoser", "Proposer", "Adversary", "Verifier", "Consolidator"],
+      "budget_units_allocated": 1500,
+      "budget_units_consumed": 1080,
+      "handoffs": [
+        {"from": "Diagnoser", "to": "Proposer", "via": "diagnosis_report + research_thread CID + KG diagnosed_for", "charter": "research-constitution-diagnoser-charter@stabilization-wave-20260531"},
+        {"from": "Proposer", "to": "Adversary", "via": "constrained_evolution_proposal + research-constitution page_type", "charter": "research-constitution-proposer-charter"},
+        {"from": "Adversary", "to": "Verifier", "via": "weakness_attestation + no_critical_findings", "charter": "research-constitution-adversary-charter"},
+        {"from": "Verifier", "to": "Consolidator", "via": "verified_pass + remaining_budget + harness_results", "charter": "research-constitution-verifier-charter"}
+      ],
+      "outcome": "experience_consolidation_genome produced and ingested; 4 KG edges emitted (healed_by, regenerated_from, research_fused, strengthened_resilience); living-experience v3 updated; resilience_delta +0.23",
+      "cross_swarm": "Consulted example-synthesis (contradiction clusters), example-dream (adversarial patterns), example-calibration (state adjustments) via shared drive/KG + Drive.think on research-constitution + stabilization-wave-20260531 artifacts",
+      "supervisor_jobs": ["research-org-cid-research-org-20260531-example", "healing-phase-followup"]
+    },
+    "coordination_protocol_executed": "All handoffs via mandatory correlation_id + research_thread_id + schema_pack research-constitution routing. Temporary specialists under DurableJobSupervisor two-phase leases/heartbeats. Cross-swarm threads use SWARM_FAMILY queries + fusion_checkpoint embedding participating_roles. Budget enforced by Verifier; provenance via genome forks + promotion.",
+    "signals": [
+      "research_org_formed",
+      "all_role_handoffs_complete",
+      "budget_discipline_maintained",
+      "cross_swarm_research_threads_active",
+      "living_experience_fused",
+      "self_referential_regeneration_candidate"
+    ],
+    "fusion_checkpoint": {
+      "participating_swarms": ["multi-agent-research-org-swarm", "stabilization-wave-20260531", "example-synthesis", "example-dream", "95-fusion-assessment-swarm"],
+      "artifacts_referenced": ["95-production-readiness-assessment-living-experience@stabilization-wave-20260531", "stabilization-wave-20260531-closure-living-experience-observation"],
+      "resilience_delta": 0.23,
+      "experience_layer_impact": "daily-present updated; future Drive.think(prefer_experience_layer=True) will cite this thread for similar damage patterns"
+    },
+    "charter_refs": [
+      "research-constitution-diagnoser-charter@stabilization-wave-20260531",
+      "research-constitution-proposer-charter@stabilization-wave-20260531",
+      "research-constitution-verifier-charter@stabilization-wave-20260531",
+      "research-constitution-consolidator-charter@stabilization-wave-20260531",
+      "research-constitution-adversary-charter@stabilization-wave-20260531"
+    ],
+    "stabilization_note": "Produced by Multi-Agent Research Org Swarm as example drive artifact for stabilization-wave-20260531. Ingest via Drive.ingest or reconcile. Coordinates with all sibling stabilization swarms. Self-referential: this manifest is a candidate for future Diagnoser analysis under HealingFactor.",
+    "produced_by": "Multi-Agent Research Org Swarm evolution of Research Constitutions + HealingFactor + GridEngine on stabilization-wave-20260531 drive"
+  },
+  "kg_edges_proposed": [
+    {"source": "this", "target": "95-production-readiness-assessment-living-experience@stabilization-wave-20260531", "relation": "synthesizes_from", "weight": 0.97},
+    {"source": "this", "target": "research-constitution-diagnoser-charter@stabilization-wave-20260531", "relation": "implements_charter", "weight": 0.99},
+    {"source": "research_thread_example", "target": "experience_layer_v3", "relation": "fused_into", "weight": 0.95, "metadata": {"via": "Consolidator"}}
+  ]
+}
