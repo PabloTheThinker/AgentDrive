@@ -571,6 +571,23 @@ class RealTimeEvolutionOverseer:
                     else "Fabric and recent loops show healthy connection density."
                 )
 
+                # Keep the Parent engaged even when the fabric is healthy: above the
+                # weak-link threshold the loop would otherwise hand back zero
+                # recommendations and effectively go silent. Surface a maintenance /
+                # consolidation steer so the real-time loop keeps compounding instead
+                # of plateauing.
+                if not briefing.get("metacognitive_recommendations_for_parent"):
+                    if densif_cands:
+                        briefing["metacognitive_recommendations_for_parent"].append(
+                            "Fabric healthy — opportunistically densify the strongest remaining weak "
+                            f"cluster ({densif_cands[0].get('cycle_id', 'recent')}) to push coherence higher"
+                        )
+                    else:
+                        briefing["metacognitive_recommendations_for_parent"].append(
+                            "Fabric coherence healthy — consolidate strong cross-cycle continuations "
+                            "(daily fusion) to lock in gains and guard against regression"
+                        )
+
                 # Record the fabric ingestion itself into the active cycle graph (deep loop closure)
                 cid = getattr(self, "_current_evolution_cycle_id", None) or (
                     densif_cands[0].get("cycle_id") if densif_cands else None

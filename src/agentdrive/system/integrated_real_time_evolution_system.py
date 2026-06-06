@@ -192,6 +192,15 @@ class IntegratedRealTimeEvolutionSystem:
             elif hasattr(self.grid, "shutdown"):
                 self.grid.shutdown()
 
+        # Stop routing events to this system's attached hub (the global hub stays).
+        if getattr(self, "_mission_hub", None) is not None:
+            try:
+                from agentdrive.mission_control.server import unregister_publish_hub
+
+                unregister_publish_hub(self._mission_hub)
+            except Exception:
+                pass
+
         self._running = False
         logger.info(
             "integrated_real_time_evolution_system_stopped", extra={"swarm_id": self.swarm_id}
@@ -212,6 +221,14 @@ class IntegratedRealTimeEvolutionSystem:
         if hub is not None:
             try:
                 hub.attach_mission(self)
+            except Exception:
+                pass
+            # Route published events to this hub too (not just the global singleton),
+            # so a caller-supplied hub actually receives the live 6-step pulse.
+            try:
+                from agentdrive.mission_control.server import register_publish_hub
+
+                register_publish_hub(hub)
             except Exception:
                 pass
         # Recorder is the mandated clean point
@@ -583,6 +600,16 @@ class IntegratedRealTimeEvolutionSystem:
         )
         # Attach the active cycle id to the briefing so Parent has the handle
         briefing["active_evolution_cycle_id"] = self._current_evolution_cycle_id
+
+        # Surface the Overseer's metacognitive guidance to the TOP level of the
+        # actionable briefing so the Parent receives it directly instead of having to
+        # reach into briefing["briefing"]. The Overseer now always provides at least a
+        # maintenance recommendation, so this stays non-empty even at high coherence.
+        _ov = briefing.get("briefing", {}) or {}
+        briefing["metacognitive_recommendations_for_parent"] = _ov.get(
+            "metacognitive_recommendations_for_parent", []
+        )
+        briefing["meta_gaps_identified"] = _ov.get("meta_gaps_identified", [])
 
         # Deep v3 fabric integration: always include the latest multi-cycle memory fabric briefing + the new dense graph-native context pack
         # This is the primary injection point for "Parent treats structural fabric as reasoning substrate"

@@ -831,6 +831,25 @@ class MissionControlHub:
 # Global hub instance
 hub = MissionControlHub()
 
+# Extra hubs (beyond the module-global ``hub``) that should also receive published
+# events. ``attach_mission_control`` registers a caller-supplied hub here so it gets
+# the live 6-step pulse instead of events only ever reaching the singleton. The
+# global ``hub`` is resolved dynamically at publish time (tests swap it), so it is
+# never stored here.
+_extra_publish_targets: list[MissionControlHub] = []
+
+
+def register_publish_hub(h: MissionControlHub | None) -> None:
+    """Register an additional hub to receive published events (idempotent, identity-based)."""
+    if h is not None and all(h is not t for t in _extra_publish_targets):
+        _extra_publish_targets.append(h)
+
+
+def unregister_publish_hub(h: MissionControlHub | None) -> None:
+    """Stop delivering events to a previously-registered extra hub."""
+    global _extra_publish_targets
+    _extra_publish_targets = [t for t in _extra_publish_targets if t is not h]
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -1281,8 +1300,20 @@ def publish_event_sync(event: MissionEvent):
 
     Safe from any thread; falls back to recent_events capture when no asyncio loop.
     This is the recommended call site from the canonical loop emission points.
+
+    Fans out to the current global ``hub`` (resolved dynamically so test swaps work)
+    plus any extra hubs registered via attach_mission_control, so a caller-supplied
+    hub sees the live pulse too.
     """
-    hub._schedule_publish(event)
+    targets = [hub]
+    for t in _extra_publish_targets:
+        if all(t is not x for x in targets):
+            targets.append(t)
+    for target in targets:
+        try:
+            target._schedule_publish(event)
+        except Exception:
+            pass
 
 
 # ------------------------------------------------------------------

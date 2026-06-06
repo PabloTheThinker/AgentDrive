@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Real-time Grid hardening — Tower fan-out, Parent guidance surfacing, MCP system caching (2026-06-06)
+Follow-ups found while exercising the live Overseer→Parent→runtime→experience loop with subagent inhabitants. Verified live: 6-step loop runs with coherence compounding across runs (0.775→0.782), `overseer_recs=4` per cycle, a non-global attached hub receives the full pulse, MCP system cached per swarm. Full suite **374 passed**, ruff clean.
+
+- **Mission Control event fan-out.** `publish_event_sync` only ever delivered to the module-global hub, so a hub passed to `attach_mission_control(...)` saw nothing. It now fans out to the current global hub (resolved dynamically, so test hub-swaps still work) plus any hubs registered via `register_publish_hub`/`unregister_publish_hub`. `IntegratedRealTimeEvolutionSystem.attach_mission_control` registers its hub (and `stop()` unregisters it). A fresh attached hub now receives the live 6-step events (verified: 64 events, was 0).
+- **Overseer guidance reaches the Parent.** `get_parent_actionable_briefing()` buried the Overseer's `metacognitive_recommendations_for_parent`/`meta_gaps_identified` under `briefing["briefing"]`, so a Parent reading the top level saw nothing. They are now surfaced to the top level of the actionable briefing. The Overseer also always emits at least a maintenance/consolidation recommendation when the fabric is healthy (≥0.65 coherence), so the loop never goes silent at high coherence instead of plateauing.
+- **MCP server caches the evolution system per swarm.** Each MCP tool call rebuilt a fresh `IntegratedRealTimeEvolutionSystem` (recorder + drive seed). The long-lived server now caches one per swarm via `_get_integrated_system(swarm_id)` (same swarm → same instance), eliminating the per-call re-instantiation.
+
 ### Post-Wave Stabilization & Repair Pass — CLI resurrection, green test suite, ruff-clean (2026-06-06)
 A focused stabilization pass after the `stabilization-wave-20260531` feature commit, which had landed with a corrupted CLI, a red test suite, and several latent runtime defects. Everything below was verified on disk (not narrative): full suite **374 passed**, `ruff check src tests` **all checks passed**, all mission surfaces import and smoke clean.
 

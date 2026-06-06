@@ -74,6 +74,25 @@ def _get_pool(swarm_id: str | None = None, subagent_id: str | None = None):
     return create_scoped_pool(swarm_id, subagent_id)
 
 
+# Cache one IntegratedRealTimeEvolutionSystem per swarm. The MCP server is a
+# long-lived process, so rebuilding the system (recorder + drive seed) on every
+# tool call was wasteful re-instantiation; one per swarm is correct and cheap.
+_INTEGRATED_SYSTEMS: dict[str, Any] = {}
+
+
+def _get_integrated_system(swarm_id: str):
+    """Return a cached IntegratedRealTimeEvolutionSystem for ``swarm_id`` (lazy, per-swarm)."""
+    system = _INTEGRATED_SYSTEMS.get(swarm_id)
+    if system is None:
+        from agentdrive.system.integrated_real_time_evolution_system import (
+            IntegratedRealTimeEvolutionSystem,
+        )
+
+        system = IntegratedRealTimeEvolutionSystem(swarm_id=swarm_id)
+        _INTEGRATED_SYSTEMS[swarm_id] = system
+    return system
+
+
 # ---------------------------------------------------------------------------
 # Tool implementations (what the remote AI actually calls)
 # ---------------------------------------------------------------------------
@@ -332,16 +351,13 @@ def create_mcp_server() -> FastMCP:
         gbrain_signal_score so MCP clients can prioritize high-value patterns exactly
         as GBrain does for knowledge.
         """
-        from agentdrive.system.integrated_real_time_evolution_system import (
-            IntegratedRealTimeEvolutionSystem,
-        )
 
         # Default to the canonical stabilization-wave-20260531 drive context
         effective_swarm = swarm_id or "stabilization-wave-20260531"
 
         try:
             # Use the same recorder the internal Parent uses
-            system = IntegratedRealTimeEvolutionSystem(swarm_id=effective_swarm)
+            system = _get_integrated_system(effective_swarm)
             recorder = system.recorder
 
             pack = recorder.get_fabric_context_pack(
@@ -376,14 +392,11 @@ def create_mcp_server() -> FastMCP:
         This is the 'structural analogy' query surface — the graph-native version
         of semantic search over the experience layer.
         """
-        from agentdrive.system.integrated_real_time_evolution_system import (
-            IntegratedRealTimeEvolutionSystem,
-        )
 
         effective_swarm = swarm_id or "stabilization-wave-20260531"
 
         try:
-            system = IntegratedRealTimeEvolutionSystem(swarm_id=effective_swarm)
+            system = _get_integrated_system(effective_swarm)
             recorder = system.recorder
 
             matches = recorder.find_structural_similarities(
@@ -417,14 +430,11 @@ def create_mcp_server() -> FastMCP:
         Future loops, Drive.think, and MCP clients can query it. Your reasoning boosts the graph
         exactly like GBrain-scored knowledge.
         """
-        from agentdrive.system.integrated_real_time_evolution_system import (
-            IntegratedRealTimeEvolutionSystem,
-        )
 
         effective_swarm = swarm_id or "stabilization-wave-20260531"
 
         try:
-            system = IntegratedRealTimeEvolutionSystem(swarm_id=effective_swarm)
+            system = _get_integrated_system(effective_swarm)
             recorder = system.recorder
 
             trace_slug = recorder.record_parent_fabric_reasoning(
@@ -457,14 +467,11 @@ def create_mcp_server() -> FastMCP:
         Answers: "What has the Parent (or other LLMs) previously reasoned about this
         exact part of the graph?" Returns traces with gbrain scores.
         """
-        from agentdrive.system.integrated_real_time_evolution_system import (
-            IntegratedRealTimeEvolutionSystem,
-        )
 
         effective_swarm = swarm_id or "stabilization-wave-20260531"
 
         try:
-            system = IntegratedRealTimeEvolutionSystem(swarm_id=effective_swarm)
+            system = _get_integrated_system(effective_swarm)
             recorder = system.recorder
 
             traces = recorder.get_fabric_reasoning_traces_for_element(
@@ -488,14 +495,11 @@ def create_mcp_server() -> FastMCP:
         Reveals the overall 'reasoning trajectory' the Parent or external LLMs have taken
         over the experience layer.
         """
-        from agentdrive.system.integrated_real_time_evolution_system import (
-            IntegratedRealTimeEvolutionSystem,
-        )
 
         effective_swarm = swarm_id or "stabilization-wave-20260531"
 
         try:
-            system = IntegratedRealTimeEvolutionSystem(swarm_id=effective_swarm)
+            system = _get_integrated_system(effective_swarm)
             recorder = system.recorder
 
             history = recorder.get_parent_reasoning_history(lookback=lookback)
@@ -517,14 +521,11 @@ def create_mcp_server() -> FastMCP:
         Parent briefings. Use it to author high-quality traces that will be GBrain-scored
         and queryable in the Experience Graph.
         """
-        from agentdrive.system.integrated_real_time_evolution_system import (
-            IntegratedRealTimeEvolutionSystem,
-        )
 
         effective_swarm = swarm_id or "stabilization-wave-20260531"
 
         try:
-            system = IntegratedRealTimeEvolutionSystem(swarm_id=effective_swarm)
+            system = _get_integrated_system(effective_swarm)
             recorder = system.recorder
 
             suggestion = recorder.suggest_fabric_reasoning_structure()
@@ -649,9 +650,6 @@ def create_mcp_server() -> FastMCP:
         """
         import time as _time
 
-        from agentdrive.system.integrated_real_time_evolution_system import (
-            IntegratedRealTimeEvolutionSystem,
-        )
 
         effective_swarm = swarm_id or "stabilization-wave-20260531"
         if not program_id:
@@ -664,7 +662,7 @@ def create_mcp_server() -> FastMCP:
             return json.dumps({"error": "At least one of constitution_refs or user_objective_refs required (UserSovereigntyClause + Program Contract)"})
 
         try:
-            system = IntegratedRealTimeEvolutionSystem(swarm_id=effective_swarm)
+            system = _get_integrated_system(effective_swarm)
             recorder = system.recorder
 
             action = {
@@ -723,9 +721,6 @@ def create_mcp_server() -> FastMCP:
         """
         import time as _time
 
-        from agentdrive.system.integrated_real_time_evolution_system import (
-            IntegratedRealTimeEvolutionSystem,
-        )
 
         effective_swarm = swarm_id or "stabilization-wave-20260531"
         if not program_id or not target_file or not patch_diff:
@@ -736,7 +731,7 @@ def create_mcp_server() -> FastMCP:
             return json.dumps({"error": "At least one of constitution_refs or user_objective_refs required (sovereignty)"})
 
         try:
-            system = IntegratedRealTimeEvolutionSystem(swarm_id=effective_swarm)
+            system = _get_integrated_system(effective_swarm)
             recorder = system.recorder
             now = int(_time.time())
 
@@ -832,16 +827,13 @@ def create_mcp_server() -> FastMCP:
         inside the persistent world under Council governance.
         """
         from agentdrive.grid.engine import GridConfig, GridEngine
-        from agentdrive.system.integrated_real_time_evolution_system import (
-            IntegratedRealTimeEvolutionSystem,
-        )
 
         effective_swarm = swarm_id or "stabilization-wave-20260531"
         try:
             engine = GridEngine(config=GridConfig(swarm_id=effective_swarm))
             result = engine.register_model_program(manifest)
             # Also record explicit registration reasoning for fabric visibility
-            system = IntegratedRealTimeEvolutionSystem(swarm_id=effective_swarm)
+            system = _get_integrated_system(effective_swarm)
             system.recorder.record_parent_fabric_reasoning(
                 cycle_id=None,
                 reasoning={
@@ -874,10 +866,7 @@ def create_mcp_server() -> FastMCP:
         effective_swarm = swarm_id or "stabilization-wave-20260531"
         try:
             from agentdrive.grid.engine import GridConfig, GridEngine
-            from agentdrive.system.integrated_real_time_evolution_system import (
-                IntegratedRealTimeEvolutionSystem,
-            )
-            system = IntegratedRealTimeEvolutionSystem(swarm_id=effective_swarm)
+            system = _get_integrated_system(effective_swarm)
             # Pull recent fabric reasoning (list return) that mentions Council roles or the contract
             history = system.recorder.get_parent_reasoning_history(lookback=limit * 2) or []
             if isinstance(history, dict):
