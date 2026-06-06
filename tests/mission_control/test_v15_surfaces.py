@@ -22,16 +22,16 @@ import time
 
 import pytest
 
+from agentdrive.mission_control.events import (
+    FabricUpdateEvent,
+    LoopStepEvent,
+)
 from agentdrive.mission_control.server import (
     MissionControlHub,
     publish_event_sync,
     publish_static_fire_telemetry,
     run_static_fire_with_mission_telemetry,
     smoke_mission_control_with_integrated_system,
-)
-from agentdrive.mission_control.events import (
-    FabricUpdateEvent,
-    LoopStepEvent,
 )
 
 
@@ -228,7 +228,9 @@ def test_daily_dream_emission_path_via_durable_helper():
 
 def test_attach_points_on_integrated_do_not_crash():
     """Light attachment surface (used by real harnesses) must be callable and non-fatal even headless."""
-    from agentdrive.system.integrated_real_time_evolution_system import IntegratedRealTimeEvolutionSystem
+    from agentdrive.system.integrated_real_time_evolution_system import (
+        IntegratedRealTimeEvolutionSystem,
+    )
 
     system = IntegratedRealTimeEvolutionSystem(swarm_id="stabilization-wave-20260531", overseer_poll_interval_s=0.01)
     hub = MissionControlHub()

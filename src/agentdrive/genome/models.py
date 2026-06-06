@@ -120,9 +120,15 @@ class GenomeManifest(BaseModel):
     @field_validator("id")
     @classmethod
     def validate_id(cls, v: str) -> str:
-        if not re.match(r"^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$", v.lower()):
+        # A genome id is a lowercase-alphanum base (optionally with [._-]) plus an
+        # optional ``@scope`` suffix. The ``@`` suffix is the drive/swarm scope
+        # used across the system (e.g. ``research-constitution-x@stabilization-wave-20260531``)
+        # and is split back off by registry/inheritance/harness/confidence lookups.
+        _seg = r"[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?"
+        if not re.match(rf"^{_seg}(?:@{_seg})?$", v.lower()):
             raise ValueError(
-                f"Genome id '{v}' must be lowercase alphanum (optionally with [._-]), min length 1"
+                f"Genome id '{v}' must be lowercase alphanum (optionally with [._-]), "
+                f"with an optional '@scope' suffix, min length 1"
             )
         return v
 

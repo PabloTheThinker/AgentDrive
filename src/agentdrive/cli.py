@@ -40,6 +40,7 @@ from rich.markup import escape as rich_escape
 from rich.panel import Panel
 from rich.table import Table
 
+
 def get_tailscale_ipv4() -> str | None:
     """Return the machine's primary Tailscale IPv4 address if Tailscale is running."""
     try:
@@ -191,7 +192,6 @@ def cmd_board(args: argparse.Namespace) -> int:
     ts_ip = get_tailscale_ipv4()
     bind_host = ts_ip if ts_ip else host
 
-    url = f"http://{bind_host}:{port}/"
     kanban_url = f"http://{bind_host}:{port}/#kanban"
 
     console.print()
@@ -410,12 +410,18 @@ def _run_doctor() -> int:
 
     from agentdrive.config import get_instance_name
     from agentdrive.constants import get_agentdrive_home
+    from agentdrive.tui.chrome import (
+        Palette,
+        Section,
+        Tree,
+        TreeRow,
+        result_panel,
+        section_panel,
+    )
+    from agentdrive.tui.loading import StepProgress
+    from agentdrive.tui.skin_engine import skin
 
-    # Legacy TUI chrome removed — using basic console output.
-
-
-
-    p = None
+    p = Palette(skin)
     home = get_agentdrive_home()
 
     # Pre-flight panel
@@ -795,7 +801,7 @@ def _run_doctor() -> int:
                 "• defensive healing for production reliability\n\n"
                 "The seed artifacts are ingestible directly into a fresh stabilization swarm drive."
             )
-            console.print(_sec_panel("First-run recovery guidance", [guidance], palette=p))
+            console.print(section_panel("First-run recovery guidance", [guidance], palette=p))
     except Exception:
         pass
 
@@ -805,10 +811,11 @@ def cmd_config(args: argparse.Namespace) -> int:
     if args.subcommand in (None, "show"):
         from rich.console import Group
 
-
+        from agentdrive.tui.chrome import Palette, Section, section_panel
+        from agentdrive.tui.skin_engine import skin
 
         cfg = load_config()
-        p = None
+        p = Palette(skin)
 
         def _flatten(d: dict, prefix: str = "") -> list:
             rows: list = []
@@ -1106,9 +1113,19 @@ def cmd_quarantine(args: argparse.Namespace) -> int:
         QuarantineStatus,
         get_default_quarantine,
     )
-    # Legacy TUI chrome removed.
+    from agentdrive.tui.chrome import (
+        Palette,
+        Section,
+        Tree,
+        TreeRow,
+        info_line,
+        ok_line,
+        section_panel,
+        warn_line,
+    )
+    from agentdrive.tui.skin_engine import skin
 
-    p = None
+    p = Palette(skin)
     q = get_default_quarantine()
     sub = getattr(args, "quarantine_subcommand", None) or "list"
 
@@ -1175,13 +1192,7 @@ def cmd_quarantine(args: argparse.Namespace) -> int:
             palette=p,
         )
         console.print()
-        console.print(
-            section_panel(
-                section,
-                title="Quarantine entry",
-                palette=p,
-            )
-        )
+        console.print(section_panel(section, title="Quarantine entry", palette=p))
         return 0
 
     if sub == "validate":
@@ -1271,19 +1282,262 @@ def cmd_quarantine(args: argparse.Namespace) -> int:
 
 
 def cmd_peers(args: argparse.Namespace) -> int:
-    """Handler for the `agentdrive peers` subcommand group (temporarily stubbed due to parse damage during prior edits)."""
-    console.print("[yellow]Peers command temporarily unavailable due to CLI parse issues (being repaired).[/]")
-    console.print("Use direct Python API or wait for fix.")
-    return 1
+    """Handler for the `agentdrive peers` subcommand group.
+
+    Federated peer registry — add / remove / list / set trust / sync.
+    Every byte pulled from a peer routes through quarantine; `peers sync`
+    never ingests into the live pool directly.
+    """
+    setup_logging()
+    from agentdrive.peers import (
+        VALID_TRUST_LEVELS,
+        PeerRegistry,
+        sync_peer,
+    )
+    from agentdrive.tui.chrome import (
+        Palette,
+        Section,
+        Tree,
+        TreeRow,
+        info_line,
+        ok_line,
+        section_panel,
+    )
+    from agentdrive.tui.skin_engine import skin
+
+    p = Palette(skin)
+    reg = PeerRegistry()
+    sub = getattr(args, "peers_subcommand", None) or "list"
+
+    if sub == "list":
+        entries = reg.list()
+        if not entries:
+            console.print()
+            console.print(info_line("No peers registered.", palette=p))
+            return 0
+        rows: list[TreeRow] = []
+        for e in entries:
+            label = (
+                f"[bold]{e.peer_id}[/]  [agentdrive.genome]{e.address}[/]  [dim]{e.trust_level}[/]"
+            )
+            secondary_bits = []
+            if e.last_sync_iso:
+                secondary_bits.append(f"last sync {e.last_sync_iso}")
+            else:
+                secondary_bits.append("never synced")
+            if e.notes:
+                secondary_bits.append(e.notes)
+            rows.append(
+                TreeRow(
+                    label=label,
+                    secondary=" · ".join(secondary_bits),
+                )
+            )
+        console.print()
+        console.print(
+            section_panel(
+                Tree(rows, palette=p),
+                title=f"Peers  ({len(entries)})",
+                palette=p,
+            )
+        )
+        return 0
+
+    if sub == "add":
+        if args.trust not in VALID_TRUST_LEVELS:
+            console.print(
+                f"[red]Invalid trust level:[/] {args.trust} "
+                f"(valid: {', '.join(VALID_TRUST_LEVELS)})"
+            )
+            return 1
+        try:
+            entry = reg.add(
+                args.peer_id,
+                args.address,
+                trust_level=args.trust,
+                notes=args.notes or "",
+            )
+        except ValueError as exc:
+            console.print(f"[red]Add failed:[/] {exc}")
+            return 1
+        console.print()
+        console.print(
+            ok_line(
+                f"Added peer [agentdrive.genome]{entry.peer_id}[/] ({entry.trust_level})",
+                palette=p,
+                secondary=entry.address,
+            )
+        )
+        return 0
+
+    if sub == "remove":
+        if reg.remove(args.peer_id):
+            console.print()
+            console.print(
+                ok_line(
+                    f"Removed peer [agentdrive.genome]{args.peer_id}[/]",
+                    palette=p,
+                )
+            )
+            return 0
+        console.print(f"[red]Unknown peer:[/] {args.peer_id}")
+        return 1
+
+    if sub == "trust":
+        if args.level not in VALID_TRUST_LEVELS:
+            console.print(
+                f"[red]Invalid trust level:[/] {args.level} "
+                f"(valid: {', '.join(VALID_TRUST_LEVELS)})"
+            )
+            return 1
+        ok = reg.set_trust(args.peer_id, args.level)
+        if not ok:
+            console.print(f"[red]Unknown peer:[/] {args.peer_id}")
+            return 1
+        console.print()
+        console.print(
+            ok_line(
+                f"Trust level for [agentdrive.genome]{args.peer_id}[/] → {args.level}",
+                palette=p,
+            )
+        )
+        return 0
+
+    if sub == "sync":
+        pool = get_default_drive()
+        result = sync_peer(args.peer_id, target_pool=pool, registry=reg)
+
+        section = Section(
+            "Sync result",
+            [
+                ("peer", result.peer_id),
+                ("submitted", str(result.submitted)),
+                ("quarantine", ", ".join(qid[:12] for qid in result.quarantine_ids) or "—"),
+                ("errors", str(len(result.errors))),
+                ("duration_ms", str(result.duration_ms)),
+            ],
+            palette=p,
+        )
+        console.print()
+        console.print(
+            section_panel(
+                section,
+                title=f"Peer sync · {args.peer_id}",
+                palette=p,
+            )
+        )
+
+        if result.errors:
+            rows = [TreeRow(label=err) for err in result.errors]
+            console.print(
+                section_panel(
+                    Tree(rows, palette=p),
+                    title="Sync errors",
+                    palette=p,
+                )
+            )
+            return 1
+
+        if result.submitted > 0:
+            console.print(
+                info_line(
+                    f"{result.submitted} candidate(s) placed in quarantine — "
+                    f"review with 'agentdrive quarantine list'.",
+                    palette=p,
+                )
+            )
+        else:
+            console.print(
+                info_line(
+                    "No new genomes from this peer since last sync.",
+                    palette=p,
+                )
+            )
+        return 0
 
     console.print("[red]Unknown peers subcommand[/]")
     return 1
 
 
 def cmd_models(args: argparse.Namespace) -> int:
-    """Handler for the `agentdrive models` subcommand group (temporarily stubbed)."""
-    console.print("[yellow]Models command temporarily unavailable due to CLI parse issues (being repaired).[/]")
-    console.print("Use direct Python API or wait for fix.")
+    """Handler for the `agentdrive models` subcommand group.
+
+    AgentDrive local LLM backends — list (v1).  Reads
+    ``~/.agentdrive/local_models.yaml`` (creating a default scaffold on first
+    run), probes each spec in parallel for reachability, and renders the
+    result through the existing chrome (matching ``agentdrive peers list``).
+    """
+    setup_logging()
+    from concurrent.futures import ThreadPoolExecutor
+
+    from agentdrive.local_models import (
+        get_local_models_path,
+        is_available,
+        load_specs,
+    )
+    from agentdrive.tui.chrome import (
+        Palette,
+        Tree,
+        TreeRow,
+        info_line,
+        section_panel,
+    )
+    from agentdrive.tui.skin_engine import skin
+
+    p = Palette(skin)
+    sub = getattr(args, "models_subcommand", None) or "list"
+
+    if sub == "list":
+        path = get_local_models_path()
+        specs = load_specs(path)
+        if not specs:
+            console.print()
+            console.print(
+                info_line(
+                    "No local models configured.",
+                    palette=p,
+                    secondary=f"edit {path}",
+                )
+            )
+            return 0
+
+        # Probe in parallel — each adapter caps probe time at ~2s, so even
+        # an all-unreachable list returns within a couple of seconds.
+        with ThreadPoolExecutor(max_workers=min(8, len(specs))) as ex:
+            reachable = list(ex.map(is_available, specs))
+
+        rows: list[TreeRow] = []
+        for spec, ok in zip(specs, reachable):
+            status = "[green]reachable[/]" if ok else "[dim]unreachable[/]"
+            label = (
+                f"[bold]{spec.display_name()}[/]  [agentdrive.genome]{spec.backend}[/]  {status}"
+            )
+            secondary_bits = [f"model {spec.model}", f"endpoint {spec.endpoint}"]
+            if spec.api_key:
+                secondary_bits.append("api-key set")
+            rows.append(
+                TreeRow(
+                    label=label,
+                    secondary=" · ".join(secondary_bits),
+                )
+            )
+        console.print()
+        console.print(
+            section_panel(
+                Tree(rows, palette=p),
+                title=f"AgentDrive local models  ({len(specs)})",
+                palette=p,
+            )
+        )
+        console.print(
+            info_line(
+                f"config: {path}",
+                palette=p,
+            )
+        )
+        return 0
+
+    console.print("[red]Unknown models subcommand[/]")
     return 1
 
 
@@ -1321,6 +1575,7 @@ def cmd_grid(args: argparse.Namespace) -> int:
     if with_tower:
         # Start the Tower in the same process for a true long-lived "Grid window"
         import threading
+
         from agentdrive.mission_control.server import create_mission_control_app
 
         # Tailnet mode: bind directly to the Tailscale IP (like Clawdbot "bind: tailnet")
@@ -1383,10 +1638,19 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
     from agentdrive.reconciliation import (
         STATE_FILENAME,
         ReconciliationRunner,
+    )
     from agentdrive.registry import GenomeRegistry
+    from agentdrive.tui.chrome import (
+        Palette,
+        Section,
+        Tree,
+        TreeRow,
+        info_line,
+        section_panel,
+    )
+    from agentdrive.tui.skin_engine import skin
 
-
-    p = None
+    p = Palette(skin)
     sub = getattr(args, "reconcile_subcommand", None) or "run"
 
     if sub == "run":
@@ -1415,6 +1679,8 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                 Section("Reconciliation", rows, palette=p),
                 title="Pool reconciliation",
                 palette=p,
+            )
+        )
 
         if report.new_genomes or report.updated_genomes:
             delta_rows: list[TreeRow] = []
@@ -1422,17 +1688,23 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                 delta_rows.append(
                     TreeRow(
                         label=f"[bold green]new[/]  [agentdrive.genome]{gid}[/]",
+                    )
+                )
             for gid in report.updated_genomes:
                 delta_rows.append(
                     TreeRow(
                         label=f"[bold yellow]upd[/]  [agentdrive.genome]{gid}[/]",
+                    )
+                )
             console.print(
                 section_panel(
                     Tree(delta_rows, palette=p),
                     title=f"Delta  ({len(delta_rows)})",
                     palette=p,
+                )
+            )
         else:
-            console.print(console.print("No new or updated genomes.", palette=p))
+            console.print(info_line("No new or updated genomes.", palette=p))
         return 0
 
     if sub == "status":
@@ -1444,6 +1716,8 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                     f"No reconciliation state at [agentdrive.genome]{state_path}[/]. "
                     f"Run `agentdrive reconcile run` first.",
                     palette=p,
+                )
+            )
             return 0
         try:
             import json as _json
@@ -1471,6 +1745,8 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                 Section("Reconciliation state", rows, palette=p),
                 title="Reconciliation",
                 palette=p,
+            )
+        )
         return 0
 
     if sub == "seed-experience-v3":
@@ -1486,16 +1762,13 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
         try:
             from agentdrive.drive.bootstrap import ensure_experience_layer_seed
 
-
-
-
-            _p = _Pal(_)
             seed_path = ensure_experience_layer_seed(
                 pool.drive_path, getattr(pool, "swarm_id", None)
+            )
 
             console.print()
             console.print(
-                _sec(
+                section_panel(
                     Section(
                         "Seed experience layer v3",
                         [
@@ -1507,16 +1780,20 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                                 "living-experience page type + genome + KG + recon + trust identity",
                             ),
                         ],
-                        palette=_p,
+                        palette=p,
                     ),
                     title="First-run recovery complete",
-                    palette=_p,
+                    palette=p,
+                )
+            )
             console.print(
                 info_line(
                     "New AgentDrive instances for role-swarm self-host users now start coherent. "
                     "Experience layer present from first think. Defensive healing applied for production reliability. "
                     "Run `agentdrive doctor` to verify. Seed artifacts are ingestible.",
-                    palette=_p,
+                    palette=p,
+                )
+            )
             return 0
         except Exception as exc:
             console.print(f"[red]seed-experience-v3 failed:[/] {exc}")
@@ -1528,10 +1805,10 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
 
 def cmd_uninstall(args: argparse.Namespace) -> int:
     """Uninstall AgentDrive package and optionally remove user data."""
+    from agentdrive.tui.chrome import Palette, confirm_prompt, info_line, ok_line
+    from agentdrive.tui.skin_engine import skin
 
-
-
-    p = None
+    p = Palette(skin)
 
     if not args.yes:
         ok = confirm_prompt(
@@ -1544,20 +1821,21 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
             default_yes=False,
             danger=True,
             palette=p,
+        )
         if not ok:
             console.print()
-            console.print(console.print("Cancelled. Agent Drive is still installed.", palette=p))
+            console.print(info_line("Cancelled. Agent Drive is still installed.", palette=p))
             return 0
 
     venv_dir = get_agentdrive_home() / "venv"
     if venv_dir.exists():
         shutil.rmtree(venv_dir)
-        console.print(console.print(f"Removed venv at [agentdrive.genome]{venv_dir}[/]", palette=p))
+        console.print(ok_line(f"Removed venv at [agentdrive.genome]{venv_dir}[/]", palette=p))
 
     shim = Path.home() / ".local" / "bin" / "agentdrive"
     if shim.exists():
         shim.unlink()
-        console.print(console.print(f"Removed shim at [agentdrive.genome]{shim}[/]", palette=p))
+        console.print(ok_line(f"Removed shim at [agentdrive.genome]{shim}[/]", palette=p))
 
     if args.yes:
         remove_data = True
@@ -1573,28 +1851,29 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
             default_yes=False,
             danger=True,
             palette=p,
+        )
 
     if remove_data:
         home = get_agentdrive_home()
         if home.exists():
             shutil.rmtree(home)
-            console.print(console.print(f"Removed data at [agentdrive.genome]{home}[/]", palette=p))
+            console.print(ok_line(f"Removed data at [agentdrive.genome]{home}[/]", palette=p))
 
     console.print()
-    console.print(console.print("Agent Drive uninstalled.", palette=p))
+    console.print(ok_line("Agent Drive uninstalled.", palette=p))
     return 0
 
 
 def cmd_clean(args: argparse.Namespace) -> int:
     """Clean AgentDrive cache and data, keeping config intact."""
+    from agentdrive.tui.chrome import Palette, confirm_prompt, info_line, ok_line, warn_line
+    from agentdrive.tui.skin_engine import skin
 
-
-
-    p = None
+    p = Palette(skin)
 
     home = get_agentdrive_home()
     if not home.exists():
-        console.print(console.print("No Agent Drive data found.", palette=p))
+        console.print(warn_line("No Agent Drive data found.", palette=p))
         return 0
 
     if args.all and not getattr(args, "yes", False):
@@ -1609,9 +1888,10 @@ def cmd_clean(args: argparse.Namespace) -> int:
             default_yes=False,
             danger=True,
             palette=p,
+        )
         if not ok:
             console.print()
-            console.print(console.print("Cancelled. Nothing changed.", palette=p))
+            console.print(info_line("Cancelled. Nothing changed.", palette=p))
             return 0
 
     dirs_to_clean = ["cache", "drive", "logs", "reasoning"]
@@ -1619,16 +1899,16 @@ def cmd_clean(args: argparse.Namespace) -> int:
         target = home / name
         if target.exists():
             shutil.rmtree(target)
-            console.print(console.print(f"Cleaned [agentdrive.genome]{target}[/]", palette=p))
+            console.print(ok_line(f"Cleaned [agentdrive.genome]{target}[/]", palette=p))
 
     if args.all:
         genomes_dir = home / "genomes"
         if genomes_dir.exists():
             shutil.rmtree(genomes_dir)
-            console.print(console.print(f"Cleaned [agentdrive.genome]{genomes_dir}[/]", palette=p))
+            console.print(ok_line(f"Cleaned [agentdrive.genome]{genomes_dir}[/]", palette=p))
 
     console.print()
-    console.print(console.print("Agent Drive data cleaned.", palette=p))
+    console.print(ok_line("Agent Drive data cleaned.", palette=p))
     return 0
 
 
@@ -1647,6 +1927,7 @@ def _fetch_remote_head_sha(branch: str = "main") -> str | None:
             capture_output=True,
             text=True,
             timeout=15,
+        )
         if result.returncode != 0 or not result.stdout.strip():
             return None
         full_sha = result.stdout.strip().split()[0]
@@ -1672,6 +1953,7 @@ def _fetch_recent_commits(branch: str = "main", limit: int = 5) -> list[dict]:
                     "author": c.get("commit", {}).get("author", {}).get("name", ""),
                     "date": c.get("commit", {}).get("author", {}).get("date", ""),
                 }
+            )
         return out
     except Exception:
         return []
@@ -1685,6 +1967,7 @@ def _verify_installed_version(venv_pip: Path) -> str | None:
             capture_output=True,
             text=True,
             timeout=8,
+        )
         for line in out.stdout.splitlines():
             if line.lower().startswith("version:"):
                 return line.split(":", 1)[1].strip()
@@ -1831,6 +2114,7 @@ def _run_update_flow(args: argparse.Namespace, force: bool) -> int:
     from rich.console import Group
     from rich.text import Text
 
+    from agentdrive.tui.loading import StepProgress
 
     branch = getattr(args, "branch", "main") or "main"
     venv_dir = get_agentdrive_home() / "venv"
@@ -1847,11 +2131,13 @@ def _run_update_flow(args: argparse.Namespace, force: bool) -> int:
     # ─── Pre-flight panel ────────────────────────────────────────────
     current_version = (
         _verify_installed_version(venv_pip) if venv_pip.exists() else AGENTDRIVE_VERSION
+    )
     pre = Group(
         Text.from_markup("[bold cyan]◆ Agent Drive update[/]"),
         Text.from_markup(f"  [dim]source[/]  {_REPO_HTTPS}"),
         Text.from_markup(f"  [dim]branch[/]  {branch}"),
         Text.from_markup(f"  [dim]current[/] v{current_version or '?'}"),
+    )
     console.print()
     console.print(Panel(pre, border_style="cyan", padding=(1, 2)))
     console.print()
@@ -1867,6 +2153,7 @@ def _run_update_flow(args: argparse.Namespace, force: bool) -> int:
             "Verify installation",
         ],
         title="Updating Agent Drive",
+    )
     steps.start()
 
     # Step 1: inspect current install
@@ -1888,6 +2175,7 @@ def _run_update_flow(args: argparse.Namespace, force: bool) -> int:
         current_version is not None
         and remote_sha
         and _is_same_revision(current_version, remote_sha)
+    )
     if up_to_date and not force:
         steps.skip("already up to date")
         # Skip remaining
@@ -1903,6 +2191,7 @@ def _run_update_flow(args: argparse.Namespace, force: bool) -> int:
             Text.from_markup(
                 "  [dim]nothing to do — run with[/] [cyan]--force[/] [dim]to reinstall anyway[/]"
             ),
+        )
         console.print(Panel(already, border_style="green", padding=(1, 2)))
         return 0
 
@@ -1917,12 +2206,14 @@ def _run_update_flow(args: argparse.Namespace, force: bool) -> int:
             [str(venv_pip), "install", "--upgrade", "--force-reinstall", spec],
             capture_output=True,
             text=True,
+        )
     else:
         proc = subprocess.run(
             ["uv", "pip", "install", "--force-reinstall", spec],
             capture_output=True,
             text=True,
             env={**os.environ, "VIRTUAL_ENV": str(venv_dir)},
+        )
 
     if proc.returncode != 0:
         last_err = (proc.stderr.strip().splitlines() or [""])[-1][:80]
@@ -1961,11 +2252,15 @@ def _run_update_flow(args: argparse.Namespace, force: bool) -> int:
             rows.append(
                 Text.from_markup(
                     f"  [grey50]{stem}[/] [bold green]{c['sha']}[/] {rich_escape(msg)}"
+                )
+            )
 
     rows.append(Text(""))
     rows.append(
         Text.from_markup(
             "  [dim]restart any open[/] [cyan]agentdrive[/] [dim]TUI for changes to take effect[/]"
+        )
+    )
     console.print(Panel(Group(*rows), border_style="green", padding=(1, 2)))
     return 0
 
@@ -1986,11 +2281,12 @@ def cmd_provider(args: argparse.Namespace) -> int:
         list_all,
         save_config_provider,
         write_env_var,
+    )
 
     sub = getattr(args, "provider_subcommand", "list")
 
     if sub == "list":
-
+        from agentdrive.tui.loading import MicroSpinner
 
         with MicroSpinner(console, "scanning provider profiles…", style="braille"):
             providers = list(list_all())
@@ -2003,10 +2299,12 @@ def cmd_provider(args: argparse.Namespace) -> int:
             mark = "[green]✓[/]" if p.has_key() else "[grey50]·[/]"
             console.print(
                 f"  [grey50]{stem}[/] {mark} [bold cyan]{p.name:<12}[/] [dim]{p.description[:48]}[/]"
+            )
             if p.default_model:
                 pre = "│" if not is_last else " "
                 console.print(
                     f"  [grey50]{pre}[/]     [dim]default model:[/] [agentdrive.genome]{p.default_model}[/]"
+                )
         console.print("\n[dim]Configure with[/] [cyan]agentdrive provider set <name>[/]")
         return 0
 
@@ -2043,6 +2341,7 @@ def cmd_provider(args: argparse.Namespace) -> int:
             console.print(f"Get your API key at: [cyan]{profile.signup_url}[/]")
             console.print(
                 f"It will be stored in: [dim]{get_agentdrive_home() / '.env'}[/] (permissions 600)\n"
+            )
             key = Prompt.ask("API key", password=True).strip()
             if key and key not in ("", "*", "changeme"):
                 write_env_var(env_var, key)
@@ -2050,6 +2349,7 @@ def cmd_provider(args: argparse.Namespace) -> int:
             else:
                 console.print(
                     "[yellow]No key entered. Provider will not be usable until a key is set.[/]"
+                )
 
         save_config_provider(profile.name, args.model or "")
         if args.model:
@@ -2105,8 +2405,10 @@ def cmd_model(args: argparse.Namespace) -> int:
         if profile:
             console.print(
                 f"  Provider: [cyan]{profile.display_name}[/]  {'[green]✓[/]' if profile.has_key() else '[yellow]no key[/]'}"
+            )
             console.print(
                 f"  Model:    [agentdrive.genome]{current_model or profile.default_model or 'not set'}[/]"
+            )
 
             models = profile.fallback_models
             if models:
@@ -2116,6 +2418,7 @@ def cmd_model(args: argparse.Namespace) -> int:
                         "[agentdrive.accent]→ active[/]"
                         if m == (current_model or profile.default_model)
                         else ""
+                    )
                     console.print(f"  • [agentdrive.genome]{m}[/] {mark}")
         else:
             console.print("  [yellow]No provider configured.[/]")
@@ -2169,13 +2472,14 @@ def cmd_demo_swarm(args: argparse.Namespace) -> int:
         SubagentTokens,
         SubagentTool,
         default_bus,
-
-
-
+    )
+    from agentdrive.tui.chrome import Palette
+    from agentdrive.tui.skin_engine import skin
+    from agentdrive.tui.subagent_tree import SubagentTree
 
     setup_logging()
 
-    palette = None
+    palette = Palette(skin)
     tree = SubagentTree(root_id="orchestrator", root_label="agentdrive orchestrator")
 
     # Subscribe the tree to the default bus so any emission updates state.
@@ -2201,6 +2505,8 @@ def cmd_demo_swarm(args: argparse.Namespace) -> int:
                 subagent_id=sid,
                 parent_id="orchestrator",
                 label=label,
+            )
+        )
 
         spawned_at = _time.monotonic()
         # Emit a few tool transitions + token bursts across the lifetime.
@@ -2221,6 +2527,8 @@ def cmd_demo_swarm(args: argparse.Namespace) -> int:
                     subagent_id=sid,
                     tokens=burst,
                     cost_usd=cost,
+                )
+            )
 
         _time.sleep(step_dt)
         duration = _time.monotonic() - spawned_at
@@ -2229,6 +2537,8 @@ def cmd_demo_swarm(args: argparse.Namespace) -> int:
                 subagent_id=sid,
                 ok=ok,
                 duration_s=duration,
+            )
+        )
 
     threads = [threading.Thread(target=_drive, args=row, daemon=True) for row in script]
 
@@ -2249,12 +2559,15 @@ def cmd_demo_swarm(args: argparse.Namespace) -> int:
                 # Once every worker finishes, mark the root done and exit.
                 worker_done = all(
                     (n := tree.get(sid)) is not None and n.is_terminal for sid, *_ in script
+                )
                 if worker_done:
                     default_bus.emit(
                         SubagentDone(
                             subagent_id="orchestrator",
                             ok=True,
                             duration_s=_time.monotonic() - start,
+                        )
+                    )
                     live.update(tree.render(palette))
                     break
                 _time.sleep(1 / 8)
@@ -2274,6 +2587,7 @@ def cmd_demo_swarm(args: argparse.Namespace) -> int:
         console.print(
             "[dim]note: scorer-1 fails intentionally — the demo exercises "
             "both the success and failure render paths.[/]"
+        )
         return 0
     finally:
         default_bus.unsubscribe(token)
@@ -2309,6 +2623,7 @@ Self-manage:
 
   AGENTDRIVE_HOME=/tmp/test agentdrive doctor          (isolated test environment)
 """,
+    )
     parser.add_argument("--version", action="store_true", help="Show version and exit")
     subparsers = parser.add_subparsers(dest="command")
 
@@ -2368,6 +2683,7 @@ Self-manage:
     # explicit onboarding (lightweight first-run flow)
     p = subparsers.add_parser(
         "onboard", help="Run the guided first-time consent flow (lighter than full setup)"
+    )
     p.set_defaults(func=lambda args: _run_onboarding())
 
     # genomes
@@ -2384,6 +2700,7 @@ Self-manage:
     # doctor
     p = subparsers.add_parser(
         "doctor", help="Diagnose AgentDrive installation, config, workers, and registry"
+    )
     p.set_defaults(func=cmd_doctor)
 
     # MCP — first-class integration for Claude Code, Grok, Cursor, Codex, etc.
@@ -2418,9 +2735,11 @@ Self-manage:
     p = subparsers.add_parser(
         "deps",
         help="Dependency management, compatibility checks, and update support (see docs/DEPENDENCY_UPDATES.md)",
+    )
     deps_subs = p.add_subparsers(dest="deps_subcommand")
     dc = deps_subs.add_parser(
         "check", help="Report declared vs installed key dependencies + known compatibility notes"
+    )
     dc.set_defaults(func=cmd_deps_check)
 
     # config
@@ -2439,28 +2758,35 @@ Self-manage:
     p = subparsers.add_parser(
         "drive",
         help="AgentDrive: status, ingest genomes, query by task, detailed stats (persistent JSONL + registry)",
+    )
     pool_subs = p.add_subparsers(dest="pool_subcommand")
     # status (default)
     ps = pool_subs.add_parser(
         "status", help="Show Drive status, integration with registry, recent activity"
+    )
     ps.set_defaults(func=cmd_pool)
     # ingest
     pi = pool_subs.add_parser(
         "ingest", help="Ingest a genome directory (manifest + files) into this Drive"
+    )
     pi.add_argument(
         "genome_dir", help="Filesystem path to a genome directory (e.g. genomes/examples/xxx-v1)"
+    )
     pi.set_defaults(func=cmd_pool)
     # query
     pq = pool_subs.add_parser(
         "query", help="Semantic query of the Drive for genomes relevant to a task description"
+    )
     pq.add_argument(
         "task", help='Natural language task description (e.g. "security incident postmortem")'
+    )
     pq.add_argument("--limit", type=int, default=5, help="Maximum number of results (default 5)")
     pq.add_argument("--min-score", type=float, default=0.0, help="Minimum evaluation score filter")
     pq.set_defaults(func=cmd_pool)
     # stats
     pst = pool_subs.add_parser(
         "stats", help="Full pool statistics (ingest counts, sources, actors, registry metrics)"
+    )
     pst.set_defaults(func=cmd_pool)
 
     # provider
@@ -2474,6 +2800,7 @@ Self-manage:
     ps_set.set_defaults(func=cmd_provider)
     ps_key = provider_subs.add_parser(
         "key", help="Set API key for a provider without changing config"
+    )
     ps_key.add_argument("provider_name", help="Provider name")
     ps_key.set_defaults(func=cmd_provider)
 
@@ -2482,6 +2809,7 @@ Self-manage:
     model_subs = p.add_subparsers(dest="model_subcommand")
     pm_list = model_subs.add_parser(
         "list", help="Show active model configuration and available models"
+    )
     pm_list.set_defaults(func=cmd_model)
     pm_set = model_subs.add_parser("set", help="Switch to a different model")
     pm_set.add_argument("model_name", help="Model ID (e.g. gpt-4o, claude-sonnet-4.6)")
@@ -2508,6 +2836,7 @@ Self-manage:
     p = subparsers.add_parser(
         "quarantine",
         help="Trust-gated quarantine: list / show / validate / approve / reject / hold candidate genomes",
+    )
     q_subs = p.add_subparsers(dest="quarantine_subcommand")
 
     q_list = q_subs.add_parser("list", help="List quarantine entries")
@@ -2515,6 +2844,7 @@ Self-manage:
         "--status",
         choices=["pending", "approved", "rejected", "quarantined"],
         help="Filter by status",
+    )
     q_list.set_defaults(func=cmd_quarantine)
 
     q_show = q_subs.add_parser("show", help="Show one quarantine entry")
@@ -2547,6 +2877,7 @@ Self-manage:
     p = subparsers.add_parser(
         "peers",
         help="Federated peer registry: list / add / remove / trust / sync",
+    )
     pe_subs = p.add_subparsers(dest="peers_subcommand")
 
     pe_list = pe_subs.add_parser("list", help="List registered peers")
@@ -2560,6 +2891,7 @@ Self-manage:
         default="untrusted",
         choices=["untrusted", "review", "trusted"],
         help="Initial trust level (default: untrusted)",
+    )
     pe_add.add_argument("--notes", default="", help="Free-form operator notes")
     pe_add.set_defaults(func=cmd_peers)
 
@@ -2575,6 +2907,7 @@ Self-manage:
     pe_sy = pe_subs.add_parser(
         "sync",
         help="Pull new genomes from a peer into quarantine (never directly into the Drive)",
+    )
     pe_sy.add_argument("peer_id")
     pe_sy.set_defaults(func=cmd_peers)
 
@@ -2585,11 +2918,13 @@ Self-manage:
     p = subparsers.add_parser(
         "models",
         help="AgentDrive local LLM backends: list configured local models",
+    )
     md_subs = p.add_subparsers(dest="models_subcommand")
 
     md_list = md_subs.add_parser(
         "list",
         help="List configured local models with reachability status",
+    )
     md_list.set_defaults(func=cmd_models)
 
     # default behavior when no subcommand is given: list
@@ -2599,6 +2934,7 @@ Self-manage:
     p = subparsers.add_parser(
         "reconcile",
         help="Drive reconciliation: scan the local Drive for new/updated DNA and emit a report",
+    )
     rc_subs = p.add_subparsers(dest="reconcile_subcommand")
 
     rc_run = rc_subs.add_parser("run", help="Run a single synchronous reconciliation pass")
@@ -2613,6 +2949,7 @@ Self-manage:
     rc_seed = rc_subs.add_parser(
         "seed-experience-v3",
         help="First-run recovery: ensure experience layer v3 seed genome/observation (living-experience page type), KG index bootstrap, reconciliation state, trust self-identity, and directory structure. Defensive healing for empty/partial drives.",
+    )
     rc_seed.set_defaults(func=cmd_reconcile)
 
     # default behavior when no subcommand is given: run
@@ -2622,6 +2959,7 @@ Self-manage:
     p = subparsers.add_parser(
         "demo-swarm",
         help="Scripted 10s demo of the live sub-agent tree renderer",
+    )
     p.set_defaults(func=cmd_demo_swarm)
 
     return parser

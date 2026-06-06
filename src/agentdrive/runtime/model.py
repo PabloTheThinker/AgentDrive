@@ -8,10 +8,13 @@ from typing import Any
 from agentdrive.providers.agent_providers import resolve_agent_default
 from agentdrive.providers.base import get as get_provider
 from agentdrive.runtime.base import AgentRuntimeAdapter
-# Chat client logic was previously under the legacy web UI package.
-# For now we provide a minimal stub until the new UI/chat layer is rebuilt.
+
+# The streaming chat client still lives in agentdrive.web.chat (only the
+# legacy web *UI* — templates + app routes — was removed; the LLM client layer
+# survives). Import defensively so a future relocation of the chat layer keeps
+# this adapter importable.
 try:
-    from agentdrive.chat.chat import DEFAULT_MODEL, LLMStreamClient
+    from agentdrive.web.chat import DEFAULT_MODEL, LLMStreamClient
 except ImportError:
     DEFAULT_MODEL = "qwen3:14b"
     LLMStreamClient = None  # type: ignore[assignment]

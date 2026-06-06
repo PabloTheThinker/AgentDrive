@@ -549,8 +549,9 @@ class GridEngine:
         """
         try:
             # Lazy recorder access (uses same drive context as Grid)
-            from agentdrive.evolution.experience_graph import ExperienceGraphRecorder
-            from agentdrive.system.integrated_real_time_evolution_system import IntegratedRealTimeEvolutionSystem
+            from agentdrive.system.integrated_real_time_evolution_system import (
+                IntegratedRealTimeEvolutionSystem,
+            )
 
             effective_swarm = self.swarm_id or "stabilization-wave-20260531"
             system = IntegratedRealTimeEvolutionSystem(swarm_id=effective_swarm)
@@ -598,7 +599,7 @@ class GridEngine:
                         constitution_refs=constitution_refs,
                         user_objective_refs=user_objectives or ["system:self-registration-enforcement"],
                     )
-                except Exception as bind_exc:
+                except Exception:
                     # Never fail registration on audit recording
                     pass
 
@@ -653,8 +654,9 @@ class GridEngine:
         programs: list[dict[str, Any]] = []
         try:
             effective_swarm = self.swarm_id or "stabilization-wave-20260531"
-            from agentdrive.evolution.experience_graph import ExperienceGraphRecorder
-            from agentdrive.system.integrated_real_time_evolution_system import IntegratedRealTimeEvolutionSystem
+            from agentdrive.system.integrated_real_time_evolution_system import (
+                IntegratedRealTimeEvolutionSystem,
+            )
 
             system = IntegratedRealTimeEvolutionSystem(swarm_id=effective_swarm)
             recorder = system.recorder
@@ -1061,8 +1063,11 @@ class GridEngine:
                             observation["densification_history"] = [{"lift": round(improvement, 4), "coherence_post": 0.79, "edges_added": 5, "cycle": "sim-from-grid-gardener-thread", "ts": "2026-05-31"}]
                             # ResearchThreadLineage fabric carrying (exact reuse of create_ helper + to_lineage_entry)
                             try:
+                                from agentdrive.constants import (
+                                    get_correlation_id,
+                                    new_correlation_id,
+                                )
                                 from agentdrive.reconciliation import create_research_thread_fork
-                                from agentdrive.constants import get_correlation_id, new_correlation_id
                                 lineage = create_research_thread_fork(
                                     parent_genome_id="experience-graph-v3-fabric@stabilization-wave-20260531",
                                     constitution_ref=constitution_ref["id"],
@@ -1119,8 +1124,11 @@ class GridEngine:
                             # Gardener major lift -> HealingSignalEvent (reuse existing event paths exactly)
                             if is_gardener:
                                 try:
+                                    from agentdrive.constants import (
+                                        get_correlation_id,
+                                        new_correlation_id,
+                                    )
                                     from agentdrive.events import HealingSignalEvent, emit
-                                    from agentdrive.constants import get_correlation_id, new_correlation_id
                                     lift_thresh = constitution_ref.get("high_signal_threshold", {}).get("min_densification_lift", 0.05)
                                     if improvement >= lift_thresh:
                                         emit(HealingSignalEvent(
@@ -1579,9 +1587,10 @@ class GridEngine:
         if not getattr(self, "_mission_hub", None):
             return
         try:
-            from agentdrive.mission_control.server import publish_event_sync
-            from agentdrive.mission_control.events import GridHealthEvent
             import time as _t
+
+            from agentdrive.mission_control.events import GridHealthEvent
+            from agentdrive.mission_control.server import publish_event_sync
             health = self.get_grid_health()
             publish_event_sync(GridHealthEvent(
                 event_type="grid_health",

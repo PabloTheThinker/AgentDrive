@@ -37,7 +37,7 @@ import time
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -108,7 +108,7 @@ def _build_runner(tmp_path: Path) -> tuple[ReconciliationRunner, AgentDrive, Pat
     drive_path.mkdir(parents=True, exist_ok=True)
     (drive_path / "genomes").mkdir(exist_ok=True)
     registry = GenomeRegistry(root=drive_path / "genomes")
-    pool = AgentDrive(registry=registry, drive_path=drive_path)
+    pool = AgentDrive(registry=registry, drive_path=drive_path, auto_seed=False)
     state_path = tmp_path / STATE_FILENAME
     runner = ReconciliationRunner(
         registry=registry,
@@ -385,7 +385,7 @@ def _build_runner_with_default_state(
     drive_path.mkdir(parents=True, exist_ok=True)
     (drive_path / "genomes").mkdir(exist_ok=True)
     registry = GenomeRegistry(root=drive_path / "genomes")
-    pool = AgentDrive(registry=registry, drive_path=drive_path)
+    pool = AgentDrive(registry=registry, drive_path=drive_path, auto_seed=False)
     # deliberately omit state_path so default (home/STATE_FILENAME) is used
     runner = ReconciliationRunner(
         registry=registry,
@@ -500,29 +500,26 @@ def test_background_backoff_activates_on_repeated_scan_once_failures(
 
     wait_timeouts: list[float] = []
 
-    def wait_recorder(timeout: float) -> bool:
+    def wait_recorder(timeout: float | None = None) -> bool:
+        # threading.Thread.start() calls its internal _started.wait() with no
+        # timeout; only record the real backoff waits emitted by _run_loop.
+        if timeout is None:
+            return True
         wait_timeouts.append(timeout)
         # After enough iterations to see growth (interval, 2x, 4x, ...), exit loop
         return len(wait_timeouts) >= 5
 
-    with patch("threading.Event") as mock_event_cls:
-        fake_event = MagicMock()
-        fake_event.is_set.return_value = False
-        fake_event.wait.side_effect = wait_recorder
-        fake_event.set.return_value = None
-        mock_event_cls.return_value = fake_event
-        runner._stop_event = fake_event
+    fake_event = MagicMock()
+    fake_event.is_set.return_value = False
+    fake_event.wait.side_effect = wait_recorder
+    fake_event.set.return_value = None
+    runner._stop_event = fake_event
 
-        runner.start_background()
-
-        # The thread will execute _run_loop synchronously against the mocks → instant
-        deadline = time.monotonic() + 0.5
-        while (
-            runner._thread is not None and runner._thread.is_alive()
-        ) and time.monotonic() < deadline:
-            time.sleep(0.0005)
-
-        runner.stop_background(timeout=0.2)
+    # Drive the loop synchronously against the fake stop event. Calling
+    # _run_loop() directly (rather than start_background() under a global
+    # threading.Event patch) keeps real Thread internals intact while still
+    # exercising the exact backoff path.
+    runner._run_loop()
 
     assert fail_count >= 4, f"backoff loop did not drive enough failing scans (got {fail_count})"
     assert len(wait_timeouts) >= 4
@@ -711,7 +708,8 @@ def test_experience_layer_fallback_and_seed_self_healing(tmp_path: Path) -> None
     d = AgentDrive(name="exp-test", drive_path=drive_path)
     seed = drive_path / "experience_layer_seed.json"
     assert seed.is_file()
-    assert "empty-experience-layer" in seed.read_text()
+    # The v3 seed marker replaced the legacy "empty-experience-layer" string.
+    assert "seeded-on-first-run" in seed.read_text()
 
     # think path with fallback must not blow on missing real experience genomes
     # (uses prefer_experience_layer + experience_layer_fallback)
@@ -1159,8 +1157,10 @@ def test_recovery_from_corrupted_healing_state_under_wave_drive(
     drive_path.mkdir(parents=True, exist_ok=True)
     _seed_stabilization_wave_20260531_state(drive_path)
 
-    # Corrupt the supervisor queue deliberately (the healing state)
-    swarm = "healing-regeneration-swarm@stabilization-wave-20260531"
+    # Corrupt the supervisor queue deliberately (the healing state).
+    # Unique swarm id keeps the process-global SwarmDriveManager pool cache from
+    # leaking queued healing jobs submitted by sibling tests into this one.
+    swarm = "healing-recovery-corrupt-state-test@stabilization-wave-20260531"
     dream_dir = drive_path / "dreams" / swarm
     dream_dir.mkdir(parents=True, exist_ok=True)
     queue_path = dream_dir / "supervisor_queue.json"

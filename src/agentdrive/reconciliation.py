@@ -1216,7 +1216,9 @@ class HealingFactor:
             if not proposals:
                 return self._escalate(signal, diagnosis)
             job_id = self._execute_proposal_under_durable_healing(proposals[0], cid, used_budget)
-            return job_id
+            # Namespace the success-path token so it is identifiable as a healing
+            # job (matches the "escalated-"/"heal-" convention used elsewhere).
+            return f"heal-{job_id}"
 
     def _diagnose(self, signal: HealingSignalEvent) -> DiagnosisReport:
         """Use Drive.think(prefer_experience_layer=True) + run_synthesis (Gaps +
@@ -1229,7 +1231,9 @@ class HealingFactor:
         Handoff protocol: Diagnoser output feeds Proposer; cross-swarm research threads
         use shared correlation_id + typed KG research_thread edges.
         """
-        _cid = get_correlation_id() or signal.correlation_id or new_correlation_id()
+        # An explicit signal correlation id wins over ambient context so a caller
+        # can trace a specific healing flow end-to-end (mirrors on_damage_signal).
+        _cid = signal.correlation_id or get_correlation_id() or new_correlation_id()
         with using_correlation_id(_cid):
             drive = self.drive
             if drive is None:
@@ -1249,6 +1253,26 @@ class HealingFactor:
                 "immune_assessment": None,
                 "kg_neighborhood": [],
             }
+
+            # Multi-Agent Research Org Swarm consultation (stabilization-wave-20260531).
+            # This is static role-handoff metadata for the Diagnoser/Adversary/Verifier/
+            # Consolidator protocol — it does not depend on drive.think() succeeding, so
+            # it is recorded unconditionally (previously it was nested inside the think
+            # try-block and was silently dropped whenever think() raised).
+            evidence["research_org_consult"] = {
+                "diagnoser_role": "deep_gap_contradiction_analysis_via_dissector_swarm + drive.think",
+                "adversary_role": "weakness_scan_on_synthesis_clusters",
+                "consult_method": "Drive queries to research-constitution + SWARM_FAMILY + durable research-org phase",
+                "stabilization_wave": "stabilization-wave-20260531",
+                "handoff_protocol": "Diagnoser findings -> Proposer proposals -> Adversary critique -> Verifier budget eval -> Consolidator living-experience fusion",
+            }
+            evidence["cross_swarm_research_threads"] = [
+                {
+                    "thread_id": _cid[:8] + "-research",
+                    "roles": ["Diagnoser", "Adversary"],
+                    "drive": "stabilization-wave-20260531",
+                }
+            ]
 
             if drive:
                 try:
@@ -1278,29 +1302,6 @@ class HealingFactor:
                             evidence["synthesis_damage_clusters"] = synth.damage_signals[:2]
                     except Exception as se:
                         evidence["synthesis_error"] = str(se)[:120]
-                    # Multi-Agent Research Org Swarm consultation (stabilization-wave-20260531 drive)
-                    # Handoff: spawn or query Diagnoser + Adversary role swarms for deep analysis.
-                    # Temporary specialists formed via supervisor when gap/contradiction load high.
-                    try:
-                        evidence["research_org_consult"] = {
-                            "diagnoser_role": "deep_gap_contradiction_analysis_via_dissector_swarm + drive.think",
-                            "adversary_role": "weakness_scan_on_synthesis_clusters",
-                            "consult_method": "Drive queries to research-constitution + SWARM_FAMILY + durable research-org phase",
-                            "stabilization_wave": "stabilization-wave-20260531",
-                            "handoff_protocol": "Diagnoser findings -> Proposer proposals -> Adversary critique -> Verifier budget eval -> Consolidator living-experience fusion",
-                        }
-                        # Lightweight cross-swarm research thread signal
-                        evidence["cross_swarm_research_threads"] = [
-                            {
-                                "thread_id": _cid[:8] + "-research",
-                                "roles": ["Diagnoser", "Adversary"],
-                                "drive": "stabilization-wave-20260531",
-                            }
-                        ]
-                    except Exception:
-                        evidence["research_org_consult"] = {
-                            "note": "role swarms consulted via schema-pack research-constitution artifacts"
-                        }
                 except Exception as e:
                     evidence["think_error"] = str(e)[:200]
 
@@ -1391,6 +1392,10 @@ class HealingFactor:
             "self_referential": "This proposal participates in experience layer regeneration and may itself be improved by future HealingFactor loops. Consults research-constitution charters for role handoff discipline.",
             "stabilization_wave": "stabilization-wave-20260531",
             "research_org_roles_consulted": ["Diagnoser", "Proposer", "Adversary", "Verifier"],
+            # Every regeneration proposal carries a research-budget hint so the
+            # Verifier role can enforce constrained evolution; specific proposals
+            # may override with their own figure.
+            "research_budget_units": 800,
         }
         proposals = []
         proposals.append(

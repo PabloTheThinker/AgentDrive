@@ -61,15 +61,17 @@ from agentdrive.security import (
 # New Mission Control surface (real-time unified view of the system)
 try:
     from agentdrive.mission_control import (
-        create_mission_control_app,
-        publish_event_sync,
-        smoke_mission_control_with_integrated_system,
-        MissionControlHub,
-        hub as mission_control_hub,
         # Rich static fire surfaces (zero-friction harness integration for full Bay telemetry on 2min fires)
         FireSession,
-        run_static_fire_with_mission_telemetry,
+        MissionControlHub,
+        create_mission_control_app,
+        publish_event_sync,
         publish_static_fire_telemetry,
+        run_static_fire_with_mission_telemetry,
+        smoke_mission_control_with_integrated_system,
+    )
+    from agentdrive.mission_control import (
+        hub as mission_control_hub,
     )
 except Exception:
     create_mission_control_app = None  # type: ignore[assignment]
@@ -225,30 +227,31 @@ from agentdrive.events import (
 )
 from agentdrive.evolution import (
     CONNECTION_STRENGTHENED_BY,
-    DENSIFIED_VIA_GARDENER,
-    DNACycleResult,
-    ExperienceGraphRecorder,
-    GRAPH_COHERENCE_LIFT,
     # Experience Graph v3 Multi-Cycle Memory Fabric (Grid-native GraphGardener + daily fusion surfaces)
     CROSS_CYCLE_CONTINUATION,
-    FABRIC_COHERENCE_CONTRIBUTED,
-    DENSIFIED_FROM_SIBLING_CYCLE,
-    MULTI_CYCLE_FUSION_EDGE,
-    FABRIC_LINK,
     CYCLE_FABRIC_PARTICIPATION,
+    DENSIFIED_FROM_SIBLING_CYCLE,
+    DENSIFIED_VIA_GARDENER,
+    FABRIC_COHERENCE_CONTRIBUTED,
+    FABRIC_LINK,
+    GRAPH_COHERENCE_LIFT,
+    MULTI_CYCLE_FUSION_EDGE,
+    DNACycleResult,
+    ExperienceGraphRecorder,
     LineageDNAEvolver,
     LoopCycle,
     LoopEdge,
+    embed_graph_into_artifact,
     evolve_genome_with_lineage,
     get_recorder_for_drive,
     trigger_densification_for_weak_cycles,
-    embed_graph_into_artifact,
 )
 from agentdrive.evolution.lineage_dna import (
     DNACycleResult,
     LineageDNAEvolver,
     evolve_genome_with_lineage,
 )
+from agentdrive.evolution.real_time_evolution_overseer import RealTimeEvolutionOverseer
 from agentdrive.exceptions import (
     AgentDriveConfigError,
     AgentDriveDriveError,
@@ -263,12 +266,6 @@ from agentdrive.exceptions import (
 # Real-time active Grid engine — the persistent, always-on substrate
 # that keeps the Grid (self-organizing, regenerative experience layer) reactive.
 from agentdrive.grid.engine import GridConfig, GridEngine, get_active_grid
-
-# Integrated real-time evolution system (Parent + Overseer + Experience Graph v2 + Grid substrate)
-# The unified entrypoint that owns the ExperienceGraphRecorder and exposes trigger_graph_densification,
-# get_experience_graph_for_cycle, embed helpers, etc. Re-exported for the public surfaces smoke.
-from agentdrive.system.integrated_real_time_evolution_system import IntegratedRealTimeEvolutionSystem
-from agentdrive.evolution.real_time_evolution_overseer import RealTimeEvolutionOverseer
 
 # Knowledge Graph layer (see agentdrive/knowledge_graph/)
 # Graph signals + temporal freshness for calibration feedback loops.
@@ -335,6 +332,13 @@ from agentdrive.synthesis import (
     SynthesisResult,
     propose_experience_evolution,  # Experience layer mechanics (forks + auto-incorporation from Graph+Calib)
     run_synthesis,
+)
+
+# Integrated real-time evolution system (Parent + Overseer + Experience Graph v2 + Grid substrate)
+# The unified entrypoint that owns the ExperienceGraphRecorder and exposes trigger_graph_densification,
+# get_experience_graph_for_cycle, embed helpers, etc. Re-exported for the public surfaces smoke.
+from agentdrive.system.integrated_real_time_evolution_system import (
+    IntegratedRealTimeEvolutionSystem,
 )
 from agentdrive.workers import (
     ExternalAgentAdapter,

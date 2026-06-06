@@ -188,6 +188,7 @@ class AgentDrive:
         swarm_id: str | None = None,
         subagent_id: str | None = None,
         schema_pack: Any | None = None,  # DriveSchemaPack (lazy to avoid cycles at import time)
+        auto_seed: bool = True,
     ):
         # Production tracing: ensure we have a correlation ID for this Drive instance
         from agentdrive.constants import get_correlation_id, new_correlation_id
@@ -197,6 +198,7 @@ class AgentDrive:
         self.name = name
         self.swarm_id = swarm_id
         self.subagent_id = subagent_id
+        self._auto_seed = auto_seed
 
         # Load user settings for this scope (controls isolation behavior + sharing)
         try:
@@ -280,14 +282,21 @@ class AgentDrive:
         # Delegate to the dedicated bootstrap helper (new drive/bootstrap.py).
         # This performs the full expanded self-healing for experience layer v3 etc.
         # Old private method is now an alias that forwards here for compatibility.
-        try:
-            from .bootstrap import ensure_experience_layer_seed
+        #
+        # ``auto_seed=False`` lets library embedders (and tests that need a
+        # genuinely empty drive to exercise delta/reconciliation logic) construct
+        # a Drive without the first-run experience-layer seed being written to
+        # disk as a construction side effect. The CLI / onboarding / setup paths
+        # keep the default (True) so self-hosted users still start coherent.
+        if self._auto_seed:
+            try:
+                from .bootstrap import ensure_experience_layer_seed
 
-            ensure_experience_layer_seed(self.drive_path, self.swarm_id)
-        except Exception as exc:
-            logger.debug(
-                f"Non-fatal bootstrap ensure failed (first-run healing best-effort): {exc}"
-            )
+                ensure_experience_layer_seed(self.drive_path, self.swarm_id)
+            except Exception as exc:
+                logger.debug(
+                    f"Non-fatal bootstrap ensure failed (first-run healing best-effort): {exc}"
+                )
 
         # Registry: auto-scoped for children (own empty DNA store)
         if registry is None:

@@ -547,8 +547,8 @@ class IntegratedRealTimeEvolutionSystem:
 
         # Mission Control: entering Parent briefing path (steps 1->2)
         try:
-            from agentdrive.mission_control.server import publish_event_sync
             from agentdrive.mission_control.events import LoopStepEvent
+            from agentdrive.mission_control.server import publish_event_sync
 
             publish_event_sync(
                 LoopStepEvent(
@@ -613,8 +613,8 @@ class IntegratedRealTimeEvolutionSystem:
 
         # Mission Control emission via publish (step 2/3 of loop + fabric surface)
         try:
+            from agentdrive.mission_control.events import FabricUpdateEvent, LoopStepEvent
             from agentdrive.mission_control.server import publish_event_sync
-            from agentdrive.mission_control.events import LoopStepEvent, FabricUpdateEvent
 
             ts = time.time()
             cid = self._current_evolution_cycle_id
@@ -828,21 +828,18 @@ class IntegratedRealTimeEvolutionSystem:
 
         # Mission Control emission (Parent decision = canonical step 4 + 5 execution)
         try:
-            from agentdrive.mission_control.server import publish_event_sync
             from agentdrive.mission_control.events import (
-                ParentDecisionEvent,
-                LoopStepEvent,
                 FabricUpdateEvent,
+                LoopStepEvent,
+                ParentDecisionEvent,
             )
+            from agentdrive.mission_control.server import publish_event_sync
 
             ts = time.time()
+            # No Parent-facing briefing is in scope at decision-record time, so
+            # fabric coherence is left unset here; the Overseer emission path is
+            # what carries live coherence to Mission Control.
             coh = None
-            try:
-                coh = (
-                    float(briefing.get("fabric_coherence", 0.0)) if "briefing" in locals() else None
-                )
-            except Exception:
-                pass
             publish_event_sync(
                 ParentDecisionEvent(
                     event_type="parent_decision",
@@ -1029,8 +1026,12 @@ class IntegratedRealTimeEvolutionSystem:
                     "scanned_recent": len(cands) if "cands" in locals() else 0,
                 }
 
-        # Pre snapshot (public API)
+        # Pre snapshot (public API). A freshly-referenced cycle may not have a
+        # graph recorded yet — guard against None so the command surface returns
+        # a graceful status instead of raising AttributeError into the Tower.
         pre_g = self.recorder.get_cycle_graph(cid)
+        if not pre_g:
+            return {"status": "no_cycle_graph", "cycle_id": cid}
         pre_coh = float(pre_g.get("coherence_score", 0.5))
         pre_density = self.recorder.compute_cycle_density(cid)
 

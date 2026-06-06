@@ -60,7 +60,11 @@ class _CidTrace:
         return {c for _, c in self.seen}
 
     def assert_single_cid(self, expected: str | None) -> None:
-        cids = self.get_cids()
+        # Layers recorded outside any correlation context (e.g. caller_context_exit,
+        # after the `with using_correlation_id(...)` block restores the prior — empty —
+        # context) legitimately have no CID. Only assert consistency across layers
+        # that actually carried a correlation id.
+        cids = {c for c in self.get_cids() if c is not None}
         assert len(cids) == 1, f"Multiple CIDs observed: {cids}"
         assert expected in cids, f"Expected {expected} not in observed {cids}"
 
@@ -134,7 +138,7 @@ def test_correlation_id_propagates_through_durable_job_supervisor_submission_to_
 
         # Exercise key reconciliation steps (delta computation + emission path)
         # Use a lightweight runner (no real drive to keep test hermetic).
-        recon = ReconciliationRunner(registry=MagicMock(), drive=MagicMock())
+        recon = ReconciliationRunner(registry=MagicMock(), pool=MagicMock())
         # Force a scan (will provision/observe CID in its logs and _emit_delta path)
         try:
             _ = recon.scan_once()

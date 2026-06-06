@@ -238,9 +238,6 @@ class LoopCycle:
         # Auto-mirror for true bidirectionality (Obsidian style)
         # Special handling for densification relations: use canonical inverses (not "inverse_foo")
         inv_rel = DENSIFICATION_INVERSE_MAP.get(edge.relation, f"inverse_{edge.relation}")
-        inv_check = (
-            inv_rel if inv_rel in DENSIFICATION_INVERSE_MAP.values() else f"inverse_{edge.relation}"
-        )
         if not any(
             e.source == edge.target
             and e.target == edge.source
@@ -402,13 +399,14 @@ class ExperienceGraphRecorder:
         if not self._mission_hub:
             return
         try:
-            from agentdrive.mission_control.server import publish_event_sync
+            import time as _time
+
             from agentdrive.mission_control.events import (
                 FabricUpdateEvent,
                 LoopStepEvent,
                 ParentDecisionEvent,
             )
-            import time as _time
+            from agentdrive.mission_control.server import publish_event_sync
 
             ts = _time.time()
             cid = kwargs.get("cycle_id") or getattr(self, "_active_cycle_id", None)
@@ -639,6 +637,43 @@ class ExperienceGraphRecorder:
         if not cycle:
             return {"cycle_id": cycle_id, "error": "not found"}
 
+        # Connections may be LoopEdge or plain dict after JSON load
+        def _edge_dict(e):
+            if isinstance(e, dict):
+                return {
+                    "source": e.get("source"),
+                    "target": e.get("target"),
+                    "relation": e.get("relation"),
+                    "weight": e.get("weight", 1.0),
+                    "confidence": e.get("confidence", 0.9),
+                    "metadata": e.get("metadata", {}),
+                }
+            return {
+                "source": e.source,
+                "target": e.target,
+                "relation": e.relation,
+                "weight": e.weight,
+                "confidence": e.confidence,
+                "metadata": e.metadata,
+            }
+
+        return {
+            "cycle_id": cycle.cycle_id,
+            "root_correlation_id": cycle.root_correlation_id,
+            "status": cycle.status,
+            "coherence_score": cycle.coherence_score,
+            "outcome_effectiveness": cycle.outcome_effectiveness,
+            "parent_decision_summary": cycle.parent_decision_summary,
+            "nodes": [a["slug"] for a in cycle.participating_artifacts],
+            "artifacts": cycle.participating_artifacts,
+            "edges": [_edge_dict(e) for e in cycle.connections],
+            "texture_notes": cycle.texture_notes,
+            "ts_range": [cycle.start_ts, cycle.end_ts],
+            # v3 fabric minimal exposure for aggregate/briefing consumers (Integrated, Overseer, daily fusion)
+            "fabric_links": getattr(cycle, "fabric_links", []),
+            "fabric_metadata": getattr(cycle, "fabric_metadata", {}),
+        }
+
     # ------------------------------------------------------------------
     # Deep loop integration helpers (for exact canonical 6-step Parent-Overseer-Research order)
     # ------------------------------------------------------------------
@@ -686,43 +721,6 @@ class ExperienceGraphRecorder:
             contribution_type,
             metadata or {},
         )
-
-        # Connections may be LoopEdge or plain dict after JSON load
-        def _edge_dict(e):
-            if isinstance(e, dict):
-                return {
-                    "source": e.get("source"),
-                    "target": e.get("target"),
-                    "relation": e.get("relation"),
-                    "weight": e.get("weight", 1.0),
-                    "confidence": e.get("confidence", 0.9),
-                    "metadata": e.get("metadata", {}),
-                }
-            return {
-                "source": e.source,
-                "target": e.target,
-                "relation": e.relation,
-                "weight": e.weight,
-                "confidence": e.confidence,
-                "metadata": e.metadata,
-            }
-
-        return {
-            "cycle_id": cycle.cycle_id,
-            "root_correlation_id": cycle.root_correlation_id,
-            "status": cycle.status,
-            "coherence_score": cycle.coherence_score,
-            "outcome_effectiveness": cycle.outcome_effectiveness,
-            "parent_decision_summary": cycle.parent_decision_summary,
-            "nodes": [a["slug"] for a in cycle.participating_artifacts],
-            "artifacts": cycle.participating_artifacts,
-            "edges": [_edge_dict(e) for e in cycle.connections],
-            "texture_notes": cycle.texture_notes,
-            "ts_range": [cycle.start_ts, cycle.end_ts],
-            # v3 fabric minimal exposure for aggregate/briefing consumers (Integrated, Overseer, daily fusion)
-            "fabric_links": getattr(cycle, "fabric_links", []),
-            "fabric_metadata": getattr(cycle, "fabric_metadata", {}),
-        }
 
     def find_weak_connections(self, cycle_id: str, min_confidence: float = 0.6) -> list[dict]:
         cycle = self._get_or_load(cycle_id)
@@ -1684,11 +1682,18 @@ class ExperienceGraphRecorder:
 
         return slug
 
-    def get_recent_parent_fabric_reasoning_traces(self, limit: int = 5) -> list[dict[str, Any]]:
+    def get_recent_parent_fabric_reasoning_traces_for_panel(
+        self, limit: int = 5
+    ) -> list[dict[str, Any]]:
         """Recent Parent structural reasoning traces recorded via record_parent_fabric_reasoning.
 
         stabilization-wave-20260531 Experience Layer surface: powers the live-updating
         "PARENT FABRIC REASONING TRACES" section in the Tower (#experience-fabric-panel).
+
+        Note: this is the Tower-panel variant (rich payload, ``limit`` param). The
+        Overseer deep-consumption hook is the same-named-without-_for_panel method
+        below, which takes ``lookback``. They were previously defined under one name,
+        so the panel variant was silently shadowed — keep them distinct.
         Traces include fabric_elements_considered, structural_pattern_matched, expected_lift_signal,
         decision_rationale. Full payload available for detail + canvas highlight wiring.
 
@@ -1930,7 +1935,7 @@ class ExperienceGraphRecorder:
             )
             self.record_connection(
                 qcid,
-                f"query:find_structural_similarities",
+                "query:find_structural_similarities",
                 qslug,
                 STRUCTURAL_SIMILARITY_DETECTED,
                 metadata={
@@ -3266,7 +3271,6 @@ class ExperienceGraphRecorder:
 
         target = action.get("file_path") or action.get("target_path") or action.get("path")
         content = action.get("content") or action.get("patch") or action.get("new_content")
-        action_type = action.get("type", "code_proposal")
 
         demo_roots = allowed_demo_roots or [
             "/tmp/agentdrive_guardian_demo",
@@ -3774,7 +3778,7 @@ class ExperienceGraphRecorder:
             f"    %% Rendered {emitted} edges ({dens_count} densified via GraphGardener, {orig_count} original)"
         )
         lines.append(
-            f"    %% Coherence lift visible in edge labels + subgraph title. Embeddable in diary_markdown."
+            "    %% Coherence lift visible in edge labels + subgraph title. Embeddable in diary_markdown."
         )
 
         return "\n".join(lines)
@@ -3846,7 +3850,7 @@ class ExperienceGraphRecorder:
             else:
                 orig_edges.append(e)
 
-        lines.append(f"## Connections (Obsidian-style bidirectional typed)")
+        lines.append("## Connections (Obsidian-style bidirectional typed)")
         lines.append(f"Total edges: {len(edges)}  (forward shown; inverses auto-mirrored in model)")
         lines.append("")
 

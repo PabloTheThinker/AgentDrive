@@ -931,7 +931,7 @@ def create_mission_control_app() -> FastAPI:
             briefing = recorder.get_parent_facing_memory_fabric_briefing(lookback_days=7) if hasattr(recorder, "get_parent_facing_memory_fabric_briefing") else {}
             recent = recorder.get_recent_loop_graphs(limit=4) if hasattr(recorder, "get_recent_loop_graphs") else []
             weak = recorder.find_weak_across_recent_cycles(min_coherence=0.65, lookback=5) if hasattr(recorder, "find_weak_across_recent_cycles") else []
-            traces = recorder.get_recent_parent_fabric_reasoning_traces(limit=5) if hasattr(recorder, "get_recent_parent_fabric_reasoning_traces") else []
+            traces = recorder.get_recent_parent_fabric_reasoning_traces_for_panel(limit=5) if hasattr(recorder, "get_recent_parent_fabric_reasoning_traces") else []
             return {
                 "briefing": briefing,
                 "recent_cycle_graphs": recent,
@@ -1095,7 +1095,7 @@ def create_mission_control_app() -> FastAPI:
             rec = mission.recorder
             try:
                 if hasattr(rec, "get_recent_parent_fabric_reasoning_traces"):
-                    traces = rec.get_recent_parent_fabric_reasoning_traces(limit=limit * 2) or []
+                    traces = rec.get_recent_parent_fabric_reasoning_traces_for_panel(limit=limit * 2) or []
                     for t in traces:
                         txt = str(t).lower() + str(t.get("fabric_elements_considered", []))
                         if any(r in txt for r in effective_roles) or any(e in txt for e in council_elems):
@@ -1207,7 +1207,7 @@ def create_mission_control_app() -> FastAPI:
             rec = mission.recorder
             try:
                 if hasattr(rec, "get_recent_parent_fabric_reasoning_traces"):
-                    raw = rec.get_recent_parent_fabric_reasoning_traces(limit=limit * 2) or []
+                    raw = rec.get_recent_parent_fabric_reasoning_traces_for_panel(limit=limit * 2) or []
                     for t in raw:
                         lift = t.get("expected_lift_signal") or t.get("expected_lift") or 0.0
                         if lift >= 0.02 or len(traces) < 3:  # bias to high value
@@ -1652,6 +1652,11 @@ class FireSession:
                 coh = (
                     self._coherence_samples[-1] if self._coherence_samples else self.coherence_start
                 )
+            # Recognized StaticFireEvent top-level fields must be set on the event
+            # itself (not buried in metrics) so the Bay / tests see coherence_end,
+            # total_lift, and the post-fire final_report directly. Anything else
+            # the caller passes still flows through to metrics.
+            recognized = ("coherence_end", "total_lift", "final_report")
             evt = StaticFireEvent(
                 event_type="static_fire",
                 timestamp=time.time(),
@@ -1660,7 +1665,10 @@ class FireSession:
                 cycles_completed=self.cycles_completed,
                 current_fabric_coherence=float(coh or 0.0),
                 coherence_start=self.coherence_start,
+                coherence_end=fields.get("coherence_end"),
+                total_lift=float(fields.get("total_lift") or 0.0),
                 key_events=list(self.key_events),
+                final_report=fields.get("final_report"),
                 parent_interventions=self.parent_interventions,
                 fabric_edges_delta=self.fabric_edges_delta,
                 recorder_snippets=list(self.recorder_snippets),
@@ -1671,7 +1679,8 @@ class FireSession:
                     **{
                         k: v
                         for k, v in fields.items()
-                        if k not in ("log_line", "current_fabric_coherence")
+                        if k
+                        not in ("log_line", "current_fabric_coherence", *recognized)
                     },
                 },
             )

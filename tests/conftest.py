@@ -82,6 +82,23 @@ class _InlineASGITestClient:
         return None
 
 
+# The legacy localhost web UI (Jinja templates + auth/authz/snapshot/chat routes)
+# was intentionally removed — agentdrive.web.app is now a minimal stub and a new UI
+# will be built from scratch. These test modules exercise the removed routes (they
+# assert against endpoints that now 404 / no longer exist), so they are not collected
+# until the replacement UI lands. Delete this list when the new UI + its tests arrive.
+collect_ignore = [
+    "test_web_app.py",
+    "test_web_auth.py",
+    "test_web_authz.py",
+    "test_web_hardening.py",
+    "test_web_interactions.py",
+    "test_redirect_safety.py",
+    "test_onboarding_routes.py",
+    "test_agent_drive_spec.py",
+    "test_chat.py",
+]
+
 _CODEX_SANDBOX = (
     os.environ.get("CODEX_CI") == "1" or os.environ.get("CODEX_SANDBOX_NETWORK_DISABLED") == "1"
 )
@@ -117,6 +134,28 @@ def isolated_agentdrive_home(monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
             yield home
         finally:
             reset_agentdrive_home_override(token)
+
+
+@pytest.fixture(autouse=True)
+def _reset_global_state() -> Iterator[None]:
+    """Reset process-global singletons that otherwise leak across tests.
+
+    ``SwarmDriveManager`` is a module-level singleton with a ``_pools`` cache and
+    ``new_correlation_id()`` sets a process-wide contextvar with no restore. Left
+    unreset, a drive/queued-job from one test bleeds into the next (and pins the
+    previous test's now-deleted AGENTDRIVE_HOME), producing order-dependent
+    failures. Clearing both before and after each test keeps tests hermetic.
+    """
+    import agentdrive.drive.swarm_manager as _sm
+    from agentdrive.constants import _CORRELATION_ID_CTX, _UNSET
+
+    _sm._swarm_pool_manager = None
+    _CORRELATION_ID_CTX.set(_UNSET)
+    try:
+        yield
+    finally:
+        _sm._swarm_pool_manager = None
+        _CORRELATION_ID_CTX.set(_UNSET)
 
 
 @pytest.fixture

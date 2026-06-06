@@ -332,8 +332,9 @@ def create_mcp_server() -> FastMCP:
         gbrain_signal_score so MCP clients can prioritize high-value patterns exactly
         as GBrain does for knowledge.
         """
-        from agentdrive.evolution.experience_graph import ExperienceGraphRecorder
-        from agentdrive.system.integrated_real_time_evolution_system import IntegratedRealTimeEvolutionSystem
+        from agentdrive.system.integrated_real_time_evolution_system import (
+            IntegratedRealTimeEvolutionSystem,
+        )
 
         # Default to the canonical stabilization-wave-20260531 drive context
         effective_swarm = swarm_id or "stabilization-wave-20260531"
@@ -375,8 +376,9 @@ def create_mcp_server() -> FastMCP:
         This is the 'structural analogy' query surface — the graph-native version
         of semantic search over the experience layer.
         """
-        from agentdrive.evolution.experience_graph import ExperienceGraphRecorder
-        from agentdrive.system.integrated_real_time_evolution_system import IntegratedRealTimeEvolutionSystem
+        from agentdrive.system.integrated_real_time_evolution_system import (
+            IntegratedRealTimeEvolutionSystem,
+        )
 
         effective_swarm = swarm_id or "stabilization-wave-20260531"
 
@@ -415,8 +417,9 @@ def create_mcp_server() -> FastMCP:
         Future loops, Drive.think, and MCP clients can query it. Your reasoning boosts the graph
         exactly like GBrain-scored knowledge.
         """
-        from agentdrive.evolution.experience_graph import ExperienceGraphRecorder
-        from agentdrive.system.integrated_real_time_evolution_system import IntegratedRealTimeEvolutionSystem
+        from agentdrive.system.integrated_real_time_evolution_system import (
+            IntegratedRealTimeEvolutionSystem,
+        )
 
         effective_swarm = swarm_id or "stabilization-wave-20260531"
 
@@ -454,8 +457,9 @@ def create_mcp_server() -> FastMCP:
         Answers: "What has the Parent (or other LLMs) previously reasoned about this
         exact part of the graph?" Returns traces with gbrain scores.
         """
-        from agentdrive.evolution.experience_graph import ExperienceGraphRecorder
-        from agentdrive.system.integrated_real_time_evolution_system import IntegratedRealTimeEvolutionSystem
+        from agentdrive.system.integrated_real_time_evolution_system import (
+            IntegratedRealTimeEvolutionSystem,
+        )
 
         effective_swarm = swarm_id or "stabilization-wave-20260531"
 
@@ -484,8 +488,9 @@ def create_mcp_server() -> FastMCP:
         Reveals the overall 'reasoning trajectory' the Parent or external LLMs have taken
         over the experience layer.
         """
-        from agentdrive.evolution.experience_graph import ExperienceGraphRecorder
-        from agentdrive.system.integrated_real_time_evolution_system import IntegratedRealTimeEvolutionSystem
+        from agentdrive.system.integrated_real_time_evolution_system import (
+            IntegratedRealTimeEvolutionSystem,
+        )
 
         effective_swarm = swarm_id or "stabilization-wave-20260531"
 
@@ -512,8 +517,9 @@ def create_mcp_server() -> FastMCP:
         Parent briefings. Use it to author high-quality traces that will be GBrain-scored
         and queryable in the Experience Graph.
         """
-        from agentdrive.evolution.experience_graph import ExperienceGraphRecorder
-        from agentdrive.system.integrated_real_time_evolution_system import IntegratedRealTimeEvolutionSystem
+        from agentdrive.system.integrated_real_time_evolution_system import (
+            IntegratedRealTimeEvolutionSystem,
+        )
 
         effective_swarm = swarm_id or "stabilization-wave-20260531"
 
@@ -561,8 +567,9 @@ def create_mcp_server() -> FastMCP:
         Callers (inhabitants) should follow every read with experience_graph_record_reasoning
         citing the inspected file(s) as fabric_elements_considered.
         """
-        from agentdrive.utils.safe_paths import safe_join, PathTraversalError
         from pathlib import Path
+
+        from agentdrive.utils.safe_paths import PathTraversalError, safe_join
 
         effective_swarm = swarm_id or "stabilization-wave-20260531"
         try:
@@ -640,9 +647,11 @@ def create_mcp_server() -> FastMCP:
         patch_diff should be unified diff. Rationale explains the lift vs. fabric context.
         Does NOT mutate FS. After Guardian review, use apply_change (with token) or Conductor action.
         """
-        from agentdrive.evolution.experience_graph import ExperienceGraphRecorder
-        from agentdrive.system.integrated_real_time_evolution_system import IntegratedRealTimeEvolutionSystem
         import time as _time
+
+        from agentdrive.system.integrated_real_time_evolution_system import (
+            IntegratedRealTimeEvolutionSystem,
+        )
 
         effective_swarm = swarm_id or "stabilization-wave-20260531"
         if not program_id:
@@ -712,9 +721,11 @@ def create_mcp_server() -> FastMCP:
         The patch_diff is persisted in the Experience Graph only. No FS write here.
         Inhabitants/Parent query the fabric to see proposed/applied changes.
         """
-        from agentdrive.evolution.experience_graph import ExperienceGraphRecorder
-        from agentdrive.system.integrated_real_time_evolution_system import IntegratedRealTimeEvolutionSystem
         import time as _time
+
+        from agentdrive.system.integrated_real_time_evolution_system import (
+            IntegratedRealTimeEvolutionSystem,
+        )
 
         effective_swarm = swarm_id or "stabilization-wave-20260531"
         if not program_id or not target_file or not patch_diff:
@@ -820,8 +831,10 @@ def create_mcp_server() -> FastMCP:
         This is the ExternalBridge "on-ramp" so any LLM/CLI surface can participate 24/7
         inside the persistent world under Council governance.
         """
-        from agentdrive.grid.engine import GridEngine, GridConfig
-        from agentdrive.system.integrated_real_time_evolution_system import IntegratedRealTimeEvolutionSystem
+        from agentdrive.grid.engine import GridConfig, GridEngine
+        from agentdrive.system.integrated_real_time_evolution_system import (
+            IntegratedRealTimeEvolutionSystem,
+        )
 
         effective_swarm = swarm_id or "stabilization-wave-20260531"
         try:
@@ -860,8 +873,10 @@ def create_mcp_server() -> FastMCP:
         """
         effective_swarm = swarm_id or "stabilization-wave-20260531"
         try:
-            from agentdrive.system.integrated_real_time_evolution_system import IntegratedRealTimeEvolutionSystem
-            from agentdrive.grid.engine import GridEngine, GridConfig
+            from agentdrive.grid.engine import GridConfig, GridEngine
+            from agentdrive.system.integrated_real_time_evolution_system import (
+                IntegratedRealTimeEvolutionSystem,
+            )
             system = IntegratedRealTimeEvolutionSystem(swarm_id=effective_swarm)
             # Pull recent fabric reasoning (list return) that mentions Council roles or the contract
             history = system.recorder.get_parent_reasoning_history(lookback=limit * 2) or []

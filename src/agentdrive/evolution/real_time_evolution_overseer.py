@@ -348,8 +348,8 @@ class RealTimeEvolutionOverseer:
         # Mission Control: emit OverseerStateEvent on every _tick (step 2 metacog heartbeat)
         if getattr(self, "_mission_hub", None):
             try:
-                from agentdrive.mission_control.server import publish_event_sync
                 from agentdrive.mission_control.events import OverseerStateEvent
+                from agentdrive.mission_control.server import publish_event_sync
 
                 publish_event_sync(
                     OverseerStateEvent(
@@ -667,8 +667,8 @@ class RealTimeEvolutionOverseer:
         # Mission Control: after fabric ingestion (core of step 2), emit OverseerState
         if getattr(self, "_mission_hub", None) or self.recorder:
             try:
-                from agentdrive.mission_control.server import publish_event_sync
                 from agentdrive.mission_control.events import OverseerStateEvent
+                from agentdrive.mission_control.server import publish_event_sync
 
                 fab_coh = briefing.get("fabric_coherence", 0.0)
                 publish_event_sync(

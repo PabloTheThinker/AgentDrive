@@ -1502,10 +1502,10 @@ def _publish_mission_event(kind: str, **kwargs: Any) -> None:
     at Integrated level. Always injects stabilization-wave-20260531 + correlation.
     """
     try:
-        from agentdrive.mission_control.server import publish_event_sync
-        from agentdrive.mission_control.events import FabricUpdateEvent, LoopStepEvent
-
         import time as _t
+
+        from agentdrive.mission_control.events import FabricUpdateEvent, LoopStepEvent
+        from agentdrive.mission_control.server import publish_event_sync
 
         ts = _t.time()
         stab = "stabilization-wave-20260531"
@@ -1513,7 +1513,6 @@ def _publish_mission_event(kind: str, **kwargs: Any) -> None:
         meta = dict(kwargs.get("metadata") or {})
         meta.setdefault("stabilization_wave", stab)
         meta.setdefault("source", "dreaming.durable daily/dream integration")
-        cid = kwargs.get("cycle_id") or kwargs.get("correlation_id")
         corr = kwargs.get("correlation_id") or get_correlation_id()
 
         if kind == "loop_step":
