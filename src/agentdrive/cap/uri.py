@@ -49,9 +49,9 @@ class CapURIError(ValueError):
     """Raised when a capability URI is malformed."""
 
 
-_VALID_SCHEMES = {"drive", "dna", "backup"}
-_VALID_ACTIONS = {"read", "write", "exec", "pull"}
-_VALID_RESOURCE_KINDS = {"object", "swarm", "agent", "lineage", "peer", "default"}
+_VALID_SCHEMES = {"drive", "dna", "backup", "mission"}
+_VALID_ACTIONS = {"read", "write", "exec", "pull", "command"}
+_VALID_RESOURCE_KINDS = {"object", "swarm", "agent", "lineage", "peer", "default", "control"}
 
 
 @dataclass(frozen=True)
@@ -162,6 +162,10 @@ def _resource_covers(broader: Capability, narrower: Capability) -> bool:
         broader.resource_kind == narrower.resource_kind
         and broader.resource_id == narrower.resource_id
     ):
+        return True
+    # Wildcard resource_id (e.g. mission:command:control:*) covers any id
+    # within the same resource kind.
+    if broader.resource_id == "*" and broader.resource_kind == narrower.resource_kind:
         return True
     # A swarm cap covers any sub-attenuated cap into that swarm.
     if (

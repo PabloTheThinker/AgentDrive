@@ -126,6 +126,26 @@ def cmd_version(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_cap(args: argparse.Namespace) -> int:
+    """Mint or inspect Mission Control capabilities."""
+    sub = getattr(args, "cap_subcommand", None)
+    if sub == "mint-mission":
+        from agentdrive.mission_control.authz import mint_mission_control_cap
+
+        command = getattr(args, "command", "*")
+        cap_id = mint_mission_control_cap(command=command)
+        console.print(cap_id)
+        console.print(
+            "[dim]Use this cap for mutating Mission Control commands:[/]\n"
+            f"  [cyan]Authorization: Bearer {cap_id}[/]\n"
+            f"  or include [cyan]\"cap_id\": \"{cap_id}\"[/] in WS command JSON"
+        )
+        return 0
+
+    console.print("[red]Unknown cap subcommand.[/] Try: agentdrive cap mint-mission")
+    return 1
+
+
 # Legacy UI layer removed.
 # New Mission Control is the unified real-time interface going forward.
 
@@ -404,6 +424,57 @@ def cmd_patterns(args: argparse.Namespace) -> int:
             console.print(f"[red]Pattern not found:[/] {name}")
             return 1
         console.print(prompt)
+        return 0
+
+    if subcommand == "import-fabric":
+        from agentdrive.patterns.fabric_import import (
+            import_fabric_corpus,
+            import_fabric_pattern,
+            resolve_fabric_root,
+        )
+
+        source = getattr(args, "source", None)
+        try:
+            fabric_root = resolve_fabric_root(source)
+        except FileNotFoundError as exc:
+            console.print(f"[red]{exc}[/]")
+            return 1
+
+        pattern_name = getattr(args, "pattern", None)
+        overwrite = bool(getattr(args, "overwrite", False))
+        limit = int(getattr(args, "limit", 10) or 10)
+
+        try:
+            if pattern_name:
+                dest = import_fabric_pattern(
+                    fabric_root,
+                    pattern_name,
+                    get_agentdrive_home() / "patterns",
+                    overwrite=overwrite,
+                )
+                imported = [dest]
+            else:
+                imported = import_fabric_corpus(
+                    fabric_root,
+                    limit=limit,
+                    overwrite=overwrite,
+                )
+        except Exception as exc:
+            console.print(f"[red]Fabric import failed:[/] {exc}")
+            return 1
+
+        if not imported:
+            console.print("[yellow]No Fabric patterns imported.[/]")
+            console.print(
+                "[dim]Use --overwrite to replace existing entries or --pattern NAME for one pattern.[/]"
+            )
+            return 0
+
+        console.print(
+            f"[green]Imported {len(imported)} Fabric pattern(s) from[/] {fabric_root}"
+        )
+        for path in imported:
+            console.print(f"  [cyan]{path.name}[/] → {path}")
         return 0
 
     console.print("[red]Unknown patterns subcommand[/]")
@@ -2983,6 +3054,33 @@ Self-manage:
     )
     pat_apply.set_defaults(func=cmd_patterns)
 
+    pat_import = pat_subs.add_parser(
+        "import-fabric",
+        help="Import Fabric data/patterns into ~/.agentdrive/patterns overlay",
+    )
+    pat_import.add_argument(
+        "--source",
+        default=None,
+        help="Fabric repository root (default: FABRIC_PATTERNS_ROOT or walk-up discovery)",
+    )
+    pat_import.add_argument(
+        "--limit",
+        type=int,
+        default=10,
+        help="Maximum patterns to import when --pattern is omitted (default: 10)",
+    )
+    pat_import.add_argument(
+        "--pattern",
+        default=None,
+        help="Import a single Fabric pattern by source folder name",
+    )
+    pat_import.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Replace existing imported pattern genomes",
+    )
+    pat_import.set_defaults(func=cmd_patterns)
+
     # default behavior when no subcommand is given: list
     p.set_defaults(func=cmd_patterns, patterns_subcommand="list")
 
@@ -3040,6 +3138,20 @@ Self-manage:
         "check", help="Report declared vs installed key dependencies + known compatibility notes"
     )
     dc.set_defaults(func=cmd_deps_check)
+
+    # cap — Mission Control capability minting
+    p = subparsers.add_parser("cap", help="Capability management (Mission Control command caps)")
+    cap_subs = p.add_subparsers(dest="cap_subcommand")
+    p_cap_mint = cap_subs.add_parser(
+        "mint-mission",
+        help="Mint a capability for Mission Control mutating commands",
+    )
+    p_cap_mint.add_argument(
+        "--command",
+        default="*",
+        help="Specific command name (e.g. start_static_fire) or * for all mutating commands",
+    )
+    p_cap_mint.set_defaults(func=cmd_cap)
 
     # config
     p = subparsers.add_parser("config", help="View and modify AgentDrive configuration")

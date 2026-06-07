@@ -198,8 +198,31 @@ class Harness:
         extra_instructions: str = "",
         use_framework_steps: bool = True,
         learnings_limit: int = 3,
+        strategy: str | None = None,
+        context: str | None = None,
+        pattern: str | None = None,
+        session_id: str | None = None,
+        input_text: str | None = None,
     ) -> str:
-        """Augment a prompt with DNA plus top project learnings for the current task."""
+        """Augment a prompt with DNA plus top project learnings for the current task.
+
+        Optional Fabric-style layers (``strategy``, ``context``, ``pattern``,
+        ``session_id``, ``input_text``) are assembled before DNA injection and
+        learnings when any layer is provided. ``strategy`` resolves a genome id
+        from the pool; ``pattern`` applies a catalog pattern.
+        """
+        from agentdrive.harness.compose import ComposeLayers, assemble_layered_prompt
+
+        layers = ComposeLayers(
+            strategy=strategy,
+            context=context,
+            pattern=pattern,
+            session_id=session_id,
+            input_text=input_text,
+        )
+        if layers.active:
+            base_prompt = assemble_layered_prompt(base_prompt, layers, self.pool)
+
         if self.current_task and not self.pulled_dna:
             try:
                 self.pull_relevant_dna(self.current_task)

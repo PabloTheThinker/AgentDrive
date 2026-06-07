@@ -21,16 +21,19 @@ SECURITY / AUTHZ ALIGNMENT (per AGENTS.md hard rule for mutating web routes):
   overseer_force_hunch etc (Wave 3 extensions). ARE mutating (they steer the live
   Integrated system, recorder, may spawn Grid threads, write experience artifacts).
   These live ONLY on this separate MC daemon (default localhost:8421 via `agentdrive mission`).
-  They are documented as **local operator control surface only**:
+  They are documented as **local operator control surface by default**:
   the human owner running the Control Tower on their own machine has full
   steering authority (exactly as with the local TUI, CLI, or direct python
-  use of IntegratedRealTimeEvolutionSystem). No CapStore / require_cap is
-  applied here because (a) this is not the main web daemon, (b) the bind is
-  localhost by default, (c) adding the full auth stack would be non-minimal
-  and pull in user/session/cap DB for a pure local viz+control tool.
-- If this daemon is ever reconfigured for non-localhost exposure, cap-based
-  enforcement + admin role gating on the command router MUST be added first
-  (see src/agentdrive/web/authz.py require_cap and SECURITY-HARDENING.md).
+  use of IntegratedRealTimeEvolutionSystem) when bound to localhost.
+- **Capability enforcement** (``src/agentdrive/mission_control/authz.py``):
+  mutating commands verify through ``CapStore.verify_request()`` with scheme
+  ``mission``, action ``command``, resource_kind ``control``. Read-only
+  commands (get_state, replay_events, ping, etc.) never require a cap.
+  Enforcement activates when ``mission_control.require_cap`` is set,
+  ``AGENTDRIVE_MC_REQUIRE_CAP=1``, or the daemon binds a non-loopback host.
+  Present ``cap_id`` in WS JSON or ``Authorization: Bearer <cap_id>``; mint
+  via ``agentdrive cap mint-mission``. Smoke tests may pass ``operator_bypass``.
+  See also ``src/agentdrive/web/authz.py`` and SECURITY-HARDENING.md.
 - All side-effects from commands still flow *exclusively* through the
   canonical publish_event_sync observation channel for any UI visibility.
 - Audit of actual mutations happens inside the Drive / recorder / Grid
@@ -54,6 +57,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse
 from starlette.staticfiles import StaticFiles
 
+from agentdrive.mission_control.authz import MissionCapDenied, verify_mission_command
 from agentdrive.mission_control.events import (
     FabricUpdateEvent,
     MissionEvent,
@@ -231,7 +235,24 @@ class MissionControlHub:
         must treat this as non-fatal. Backpressure note: dispatch itself is
         synchronous and cheap; heavy work happens inside the mission methods
         (which are responsible for their own timeouts/budgets).
+
+        AUTHZ: When ``mission_cap_required()`` is true, mutating commands must
+        present ``cap_id`` (popped from kwargs). Read-only commands and
+        ``operator_bypass=True`` (smoke tests) skip verification.
         """
+        cap_id = kwargs.pop("cap_id", None) or kwargs.pop("_cap_id", None)
+        operator_bypass = bool(kwargs.pop("operator_bypass", False))
+        try:
+            verify_mission_command(cap_id, command, operator_bypass=operator_bypass)
+        except MissionCapDenied as exc:
+            return {
+                "command": command,
+                "error": "cap_denied",
+                "detail": str(exc),
+                "timestamp": time.time(),
+                "surface": "local_operator_only",
+            }
+
         mission = self._current_mission
         if mission is None:
             return {

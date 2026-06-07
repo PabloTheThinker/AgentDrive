@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Phase D — Fabric compose layers, Fabric import, MC CapStore (2026-06-07)
+- **Layered composition** (`harness/compose.py`): Fabric Strategy × Context × Pattern × Session layers on `Harness.compose_context(strategy=, context=, pattern=, session_id=, input_text=)`.
+- **Fabric corpus import** (`patterns/fabric_import.py`): `agentdrive patterns import-fabric [--source PATH] [--pattern NAME] [--limit N]` converts Fabric `data/patterns/*/system.md` → `~/.agentdrive/patterns/<name>-fabric-v1/`.
+- **Mission Control CapStore** (`mission_control/authz.py`): mutating `dispatch_command` / WS commands require `mission:command:control:*` cap when `mission_control.require_cap`, `AGENTDRIVE_MC_REQUIRE_CAP=1`, or non-loopback bind. CLI: `agentdrive cap mint-mission [--command NAME]`.
+- **Tests:** 22 new tests; full suite **425 passed**.
+
 ### Phase C — Sprint chain + STOP gates, doctor --verbose, test portability fix (2026-06-07)
 - **Sprint module** (`src/agentdrive/sprint/`): gstack `/ship`-style `SHIP_CHAIN` (reconcile → test → think_gaps → changelog_check) with `CheckpointStore` STOP gates at `~/.agentdrive/checkpoints/`. CLI: `agentdrive sprint ship|ack|status`. Harness: `checkpoint()` / `ack_checkpoint()`. Example genome: `genomes/examples/sprint-ship-v1.json`.
 - **`agentdrive doctor --verbose`**: extra panel with reconciliation last_scan, KG edge count, quarantine, learnings, sprint checkpoints, experience layer file counts.
