@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Phase E — Ops registry, dream cycle, Experience Graph tests (2026-06-07)
+Parallel swarm pass (gbrain operations discipline + dream cycle + EG coverage).
+
+- **Contract-first operations registry** (`operations/registry.py`): 25 `OperationSpec`s with thin handlers, `run_operation()`, `export_operations_json()`. CLI: `agentdrive ops list|describe|run|export`.
+- **Phased dream cycle** (`dreaming/cycle.py`): reconcile → extract_links → consolidate (STOP) → grade_confidence → purge_stale (STOP). Lock at `~/.agentdrive/dream.lock`, audit `logs/dream-cycle.jsonl`. CLI: `agentdrive dream run|status|phases`.
+- **Experience Graph test suite** (`tests/test_experience_graph.py`): 29 tests on `ExperienceGraphRecorder` (no full `IntegratedRealTimeEvolutionSystem` required).
+- **Test hygiene:** reset `default_pool` singleton in autouse fixture (fixes order-dependent `pool_status` flake). Full suite **469 passed**.
+
 ### Phase D — Fabric compose layers, Fabric import, MC CapStore (2026-06-07)
 - **Layered composition** (`harness/compose.py`): Fabric Strategy × Context × Pattern × Session layers on `Harness.compose_context(strategy=, context=, pattern=, session_id=, input_text=)`.
 - **Fabric corpus import** (`patterns/fabric_import.py`): `agentdrive patterns import-fabric [--source PATH] [--pattern NAME] [--limit N]` converts Fabric `data/patterns/*/system.md` → `~/.agentdrive/patterns/<name>-fabric-v1/`.

@@ -132,6 +132,8 @@ def create_mcp_server() -> FastMCP:
         "agentdrive",
         instructions=(
             "AgentDrive MCP Server — structural Experience Graph + DNA for AI agents.\n\n"
+            "Canonical operation contracts live in agentdrive.operations (``agentdrive ops list`` / "
+            "``agentdrive ops export``); MCP tool names map to that registry.\n\n"
             "This gives you (the model) a living, queryable Experience Graph (v3) — an Obsidian-style structural memory fabric with TypedEdges, cross-cycle continuations, coherence signals, and explicit reasoning traces. It is designed so your decisions can compound instead of reset.\n\n"
             "Core contract:\n"
             "- The canonical 6-step loop is sacred: Experience → Overseer (metacognition + graph context) → Parent (explicit structural reasoning + record_reasoning) → Steering → Execution → New experience written back.\n"

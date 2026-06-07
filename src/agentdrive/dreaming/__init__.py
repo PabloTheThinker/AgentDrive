@@ -33,6 +33,15 @@ from agentdrive.dreaming.durable import (
     run_tranche3_auto_calibration_job,
 )
 from agentdrive.dreaming.engine import DreamEngine, DreamEngineConfig
+from agentdrive.dreaming.cycle import (
+    DREAM_PHASES,
+    DreamCycleLockError,
+    DreamCyclePending,
+    DreamCycleResult,
+    DreamPhaseSpec,
+    get_dream_cycle_status,
+    run_dream_cycle,
+)
 from agentdrive.dreaming.phases import AdversarialResult, DeepResult, LightResult, RemResult
 
 __all__ = [
@@ -48,6 +57,11 @@ __all__ = [
     "DreamEngineConfig",
     "DreamJob",
     "DurableDreamRunner",
+    "DREAM_PHASES",
+    "DreamCycleLockError",
+    "DreamCyclePending",
+    "DreamCycleResult",
+    "DreamPhaseSpec",
     "DurableJobSupervisor",
     "JobStatus",
     "LightResult",
@@ -65,4 +79,6 @@ __all__ = [
     "run_tranche3_auto_calibration_job",
     "compute_auto_calibration_adjustments",
     "apply_calibration_adjustments",
+    "get_dream_cycle_status",
+    "run_dream_cycle",
 ]

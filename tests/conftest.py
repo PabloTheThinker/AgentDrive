@@ -146,15 +146,18 @@ def _reset_global_state() -> Iterator[None]:
     previous test's now-deleted AGENTDRIVE_HOME), producing order-dependent
     failures. Clearing both before and after each test keeps tests hermetic.
     """
+    import agentdrive.drive.drive as _drive_mod
     import agentdrive.drive.swarm_manager as _sm
     from agentdrive.constants import _CORRELATION_ID_CTX, _UNSET
 
     _sm._swarm_pool_manager = None
+    _drive_mod.default_pool = None
     _CORRELATION_ID_CTX.set(_UNSET)
     try:
         yield
     finally:
         _sm._swarm_pool_manager = None
+        _drive_mod.default_pool = None
         _CORRELATION_ID_CTX.set(_UNSET)
 
 

@@ -1964,6 +1964,130 @@ def cmd_grid(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_dream(args: argparse.Namespace) -> int:
+    """Phased gbrain-style dream maintenance cycle."""
+    setup_logging()
+    from agentdrive.dreaming.cycle import (
+        DREAM_PHASES,
+        DreamCycleLockError,
+        DreamCyclePending,
+        dream_audit_log_path,
+        dream_lock_path,
+        get_dream_cycle_status,
+        run_dream_cycle,
+    )
+    from agentdrive.tui.chrome import Palette, Section, info_line, section_panel
+    from agentdrive.tui.skin_engine import skin
+
+    p = Palette(skin)
+    sub = getattr(args, "dream_subcommand", None) or "status"
+
+    if sub == "phases":
+        console.print()
+        table = Table(title="Dream cycle phases", show_header=True)
+        table.add_column("ID", style="cyan")
+        table.add_column("Name")
+        table.add_column("STOP gate")
+        for spec in DREAM_PHASES:
+            gate = "[yellow]yes[/]" if spec.stop_gate else "[dim]no[/]"
+            table.add_row(spec.id, spec.name, gate)
+        console.print(table)
+        return 0
+
+    if sub == "status":
+        status = get_dream_cycle_status()
+        rows: list[tuple[str, str]] = [
+            ("lock", str(status.get("lock_path", ""))),
+            ("lock_held", "yes" if status.get("lock_held") else "no"),
+            ("audit_log", str(status.get("audit_log", ""))),
+            ("phases", str(len(status.get("phases") or []))),
+        ]
+        last = status.get("last_run")
+        if isinstance(last, dict):
+            rows.extend(
+                [
+                    ("last_phase", str(last.get("phase_id", ""))),
+                    ("last_success", str(last.get("success", ""))),
+                    ("last_run_id", str(last.get("run_id", ""))),
+                ]
+            )
+        console.print()
+        console.print(
+            section_panel(
+                Section("Dream cycle", rows, palette=p),
+                title="Dream status",
+                palette=p,
+            )
+        )
+        if not last:
+            console.print(
+                info_line(
+                    "No dream cycle runs recorded yet. Try [cyan]agentdrive dream run --dry-run[/].",
+                    palette=p,
+                )
+            )
+        return 0
+
+    if sub == "run":
+        dry_run = bool(getattr(args, "dry_run", False))
+        phase = getattr(args, "phase", None)
+        ack_phase = getattr(args, "ack_phase", None)
+        phases = [phase] if phase else None
+        ack_phases = [ack_phase] if ack_phase else None
+        try:
+            results = run_dream_cycle(
+                dry_run=dry_run,
+                phases=phases,
+                ack_phases=ack_phases,
+            )
+        except DreamCycleLockError as exc:
+            console.print()
+            console.print(
+                Panel(
+                    f"{rich_escape(str(exc))}\n\n"
+                    f"Lock: [agentdrive.genome]{dream_lock_path()}[/]",
+                    title="Dream cycle busy",
+                    border_style="red",
+                )
+            )
+            return 1
+        except DreamCyclePending as exc:
+            console.print()
+            console.print(
+                Panel(
+                    f"[bold yellow]STOP gate[/] at phase [cyan]{exc.phase_id}[/]\n\n"
+                    f"{rich_escape(exc.message)}\n\n"
+                    f"Resume: [dim]agentdrive dream run --ack-phase {exc.phase_id}[/]",
+                    title="Dream paused",
+                    border_style="yellow",
+                )
+            )
+            return 2
+
+        console.print()
+        table = Table(title="Dream cycle", show_header=True)
+        table.add_column("Phase", style="cyan")
+        table.add_column("Status")
+        table.add_column("Duration")
+        table.add_column("Message", overflow="fold")
+        for result in results:
+            status = "[green]ok[/]" if result.success else "[red]fail[/]"
+            table.add_row(
+                result.phase_id,
+                status,
+                f"{result.duration_ms} ms",
+                result.message,
+            )
+        console.print(table)
+        console.print(f"[dim]Audit: {dream_audit_log_path()}[/]")
+        if dry_run:
+            console.print("[dim]Dry-run: reconciliation scan and consolidation writes skipped.[/]")
+        return 0 if all(r.success for r in results) else 1
+
+    console.print("[red]Unknown dream subcommand[/]")
+    return 1
+
+
 def cmd_reconcile(args: argparse.Namespace) -> int:
     """Handler for the `agentdrive reconcile` subcommand group.
 
@@ -2789,6 +2913,90 @@ def _run_onboarding() -> None:
     run_onboarding()
 
 
+def cmd_ops(args: argparse.Namespace) -> int:
+    """Contract-first operations registry (list / describe / run)."""
+    from agentdrive.operations import (
+        describe_operation,
+        export_operations_json,
+        get_operation,
+        list_operations,
+        parse_operation_kwargs,
+        run_operation,
+    )
+
+    sub = getattr(args, "ops_subcommand", None) or "list"
+
+    if sub == "list":
+        ops = list_operations()
+        table = Table(title=f"Operations ({len(ops)})", show_header=True)
+        table.add_column("Name", style="bold cyan")
+        table.add_column("Category")
+        table.add_column("Read-only")
+        table.add_column("CLI", overflow="fold")
+        table.add_column("MCP", overflow="fold")
+        for op in ops:
+            table.add_row(
+                op.name,
+                op.category,
+                "yes" if op.read_only else "no",
+                op.cli_command or "—",
+                op.mcp_tool or "—",
+            )
+        console.print(table)
+        return 0
+
+    if sub == "describe":
+        name = getattr(args, "operation_name", None)
+        if not name:
+            console.print("[red]Usage: agentdrive ops describe <name>[/]")
+            return 1
+        try:
+            detail = describe_operation(name)
+        except KeyError:
+            console.print(f"[red]Unknown operation:[/] {name}")
+            return 1
+        console.print(json.dumps(detail, indent=2))
+        return 0
+
+    if sub == "export":
+        console.print(export_operations_json())
+        return 0
+
+    if sub == "run":
+        name = getattr(args, "operation_name", None)
+        if not name:
+            console.print("[red]Usage: agentdrive ops run <name> [--dry-run] [--json] [key=value ...][/]")
+            return 1
+        if get_operation(name) is None:
+            console.print(f"[red]Unknown operation:[/] {name}")
+            return 1
+
+        kwargs = parse_operation_kwargs(getattr(args, "ops_kwargs", []) or [])
+        if getattr(args, "dry_run", False):
+            kwargs["dry_run"] = True
+
+        result = run_operation(name, **kwargs)
+        if getattr(args, "json_output", False):
+            console.print(json.dumps(result, indent=2, default=str))
+        else:
+            success = result.get("success", False)
+            style = "green" if success else "red"
+            console.print(f"[{style}]{name}[/] → success={success}")
+            if result.get("dry_run"):
+                console.print("[dim]dry-run mode[/]")
+            if result.get("error"):
+                console.print(f"[red]error:[/] {result['error']}")
+            elif getattr(args, "json_output", False) is False:
+                preview = json.dumps(result, indent=2, default=str)
+                if len(preview) > 2400:
+                    preview = preview[:2400] + "\n…"
+                console.print(preview)
+        return 0 if result.get("success", False) else 1
+
+    console.print("[red]Unknown ops subcommand[/]")
+    return 1
+
+
 def cmd_demo_swarm(args: argparse.Namespace) -> int:
     """Scripted 10-second demo of the live SubagentTree renderer.
 
@@ -3420,12 +3628,92 @@ Self-manage:
 
     p.set_defaults(func=cmd_sprint, sprint_subcommand="status")
 
+    # dream — phased gbrain-style maintenance cycle
+    p = subparsers.add_parser(
+        "dream",
+        help="Phased dream cycle: reconcile, extract links, consolidate, grade confidence, purge stale",
+    )
+    dream_subs = p.add_subparsers(dest="dream_subcommand")
+
+    dream_run = dream_subs.add_parser("run", help="Run the dream cycle (all phases or one phase)")
+    dream_run.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Skip heavy writes; reconciliation uses status only",
+    )
+    from agentdrive.dreaming.cycle import DREAM_PHASES as _dream_phase_specs
+
+    dream_run.add_argument(
+        "--phase",
+        metavar="NAME",
+        choices=[spec.id for spec in _dream_phase_specs],
+        help="Run a single phase instead of the full cycle",
+    )
+    dream_run.add_argument(
+        "--ack-phase",
+        metavar="NAME",
+        help="Acknowledge a STOP gate and continue past the given phase",
+    )
+    dream_run.set_defaults(func=cmd_dream)
+
+    dream_status = dream_subs.add_parser("status", help="Show dream lock and last audit entry")
+    dream_status.set_defaults(func=cmd_dream)
+
+    dream_phases = dream_subs.add_parser("phases", help="List dream cycle phases")
+    dream_phases.set_defaults(func=cmd_dream)
+
+    p.set_defaults(func=cmd_dream, dream_subcommand="status")
+
     # demo-swarm — live SubagentTree proof-of-concept (UX Pattern 4)
     p = subparsers.add_parser(
         "demo-swarm",
         help="Scripted 10s demo of the live sub-agent tree renderer",
     )
     p.set_defaults(func=cmd_demo_swarm)
+
+    # ops — contract-first operations registry (gbrain operations.ts pattern)
+    p = subparsers.add_parser(
+        "ops",
+        help="Contract-first operations registry (list / describe / run / export)",
+    )
+    ops_subs = p.add_subparsers(dest="ops_subcommand")
+
+    ops_list = ops_subs.add_parser("list", help="Table of registered operations")
+    ops_list.set_defaults(func=cmd_ops)
+
+    ops_describe = ops_subs.add_parser("describe", help="JSON detail for one operation")
+    ops_describe.add_argument("operation_name", help="Operation name (e.g. doctor, pool_status)")
+    ops_describe.set_defaults(func=cmd_ops)
+
+    ops_export = ops_subs.add_parser(
+        "export", help="Export full operations manifest as JSON (tools-json)"
+    )
+    ops_export.set_defaults(func=cmd_ops)
+
+    ops_run = ops_subs.add_parser(
+        "run",
+        help="Execute an operation with key=value kwargs or minimal defaults",
+    )
+    ops_run.add_argument("operation_name", help="Operation name (e.g. doctor, pool_status)")
+    ops_run.add_argument(
+        "ops_kwargs",
+        nargs="*",
+        help="Optional handler kwargs as key=value pairs or bare text",
+    )
+    ops_run.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Plan execution without mutating state where supported",
+    )
+    ops_run.add_argument(
+        "--json",
+        dest="json_output",
+        action="store_true",
+        help="Emit full JSON result",
+    )
+    ops_run.set_defaults(func=cmd_ops)
+
+    p.set_defaults(func=cmd_ops, ops_subcommand="list")
 
     return parser
 
