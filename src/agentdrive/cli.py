@@ -458,6 +458,9 @@ def _run_doctor() -> int:
     steps.start()
 
     results: list[tuple[str, bool, str]] = []  # (check, ok, detail)
+    pool = None
+    ingests = 0
+    total_genomes = 0
 
     # 1. Home directory (first-run / empty-drive tolerant)
     try:
@@ -507,26 +510,19 @@ def _run_doctor() -> int:
         steps.fail(str(e)[:60])
         results.append(("Config", False, str(e)))
 
-    # 3. Registry
-    try:
-        reg = GenomeRegistry()
-        gcount = len(reg.list_genomes())
-        steps.advance(f"{gcount} genome{'s' if gcount != 1 else ''}")
-        results.append(
-            ("Registry", True, f"{gcount} genome{'s' if gcount != 1 else ''} registered")
-        )
-    except Exception as e:
-        steps.fail(str(e)[:60])
-        results.append(("Registry", False, str(e)))
-
-    # 4. Pool (empty-drive / first-run friendly)
+    # 3. Pool + registry (use the live drive registry — not a standalone GenomeRegistry)
     try:
         pool = get_default_drive()
         pstats = pool.get_pool_stats()
         ingests = pstats.get("ingest_events", 0)
         total_genomes = pstats.get("total_genomes", 0)
-        if ingests == 0 and total_genomes == 0:
-            detail = "empty (fresh install) — defensive self-healing active; experience layer v3 seed present from first think"
+        gcount = total_genomes or len(pool.registry.list_genomes())
+        steps.advance(f"{gcount} genome{'s' if gcount != 1 else ''}")
+        results.append(
+            ("Registry", True, f"{gcount} genome{'s' if gcount != 1 else ''} registered")
+        )
+        if ingests == 0 and gcount == 0:
+            detail = "empty (fresh install) — run `agentdrive reconcile seed-experience-v3` or `agentdrive setup`"
             steps.advance("empty (self-healing ready)")
         else:
             detail = f"{ingests} ingest event{'s' if ingests != 1 else ''}"
@@ -534,6 +530,7 @@ def _run_doctor() -> int:
         results.append(("Pool", True, detail))
     except Exception as e:
         steps.fail(str(e)[:60])
+        results.append(("Registry", False, str(e)))
         results.append(
             (
                 "Pool",
@@ -740,6 +737,26 @@ def _run_doctor() -> int:
                 )
             except Exception:
                 pass
+        if ingests == 0 and total_genomes == 0:
+            try:
+                from rich.text import Text as _T
+
+                guidance = _T.from_markup(
+                    "[bold]First-run recovery commands (Self-Healing First-Run & Experience Seed Operator):[/]\n\n"
+                    "  [bold cyan]agentdrive reconcile seed-experience-v3[/]\n"
+                    "    Creates minimal KG index bootstrap, experience layer v3 seed genome\n"
+                    "    + living-experience observation (page type), basic reconciliation state,\n"
+                    "    trust self-identity placeholder, and clean directory structure.\n\n"
+                    "  [bold cyan]agentdrive doctor[/]   — re-check after running the seed command\n\n"
+                    "Guarantees for self-hosted AgentDrive role-swarm users:\n"
+                    "• new instances start coherent\n"
+                    "• experience layer present from first think\n"
+                    "• defensive healing for production reliability\n\n"
+                    "The seed artifacts are ingestible directly into a fresh stabilization swarm drive."
+                )
+                console.print(section_panel("First-run recovery guidance", [guidance], palette=p))
+            except Exception:
+                pass
         return 0
     else:
         console.print(
@@ -777,33 +794,6 @@ def _run_doctor() -> int:
             except Exception:
                 pass
         return 1
-
-    # Always surface first-run recovery guidance when doctor detects empty/partial
-    # state (the primary stabilization signal). This is the actionable output for
-    # role-swarm self-host users running AgentDrive on fresh instances.
-    try:
-        if (ingests if "ingests" in dir() else 0) == 0 and (
-            total_genomes if "total_genomes" in dir() else 0
-        ) == 0:
-            from rich.text import Text as _T
-
-
-            guidance = _T.from_markup(
-                "[bold]First-run recovery commands (Self-Healing First-Run & Experience Seed Operator):[/]\n\n"
-                "  [bold cyan]agentdrive reconcile seed-experience-v3[/]\n"
-                "    Creates minimal KG index bootstrap, experience layer v3 seed genome\n"
-                "    + living-experience observation (page type), basic reconciliation state,\n"
-                "    trust self-identity placeholder, and clean directory structure.\n\n"
-                "  [bold cyan]agentdrive doctor[/]   — re-check after running the seed command\n\n"
-                "Guarantees for self-hosted AgentDrive role-swarm users:\n"
-                "• new instances start coherent\n"
-                "• experience layer present from first think\n"
-                "• defensive healing for production reliability\n\n"
-                "The seed artifacts are ingestible directly into a fresh stabilization swarm drive."
-            )
-            console.print(section_panel("First-run recovery guidance", [guidance], palette=p))
-    except Exception:
-        pass
 
 
 def cmd_config(args: argparse.Namespace) -> int:

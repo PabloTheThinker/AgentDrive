@@ -35,6 +35,56 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
+def _resolve_registry_root(drive_path: Path, swarm_id: str | None) -> Path:
+    """Return the GenomeRegistry root for a drive path.
+
+    Personal (default) drives store genomes under ``~/.agentdrive/genomes`` —
+    the same root ``AgentDrive()`` uses via bare ``GenomeRegistry()``. Swarm
+    drives keep genomes colocated under ``<drive>/genomes``.
+    """
+    from agentdrive.constants import get_default_drive_path, get_genomes_dir
+
+    drive_path = Path(drive_path).resolve()
+    if swarm_id is not None:
+        return drive_path / "genomes"
+    if drive_path == get_default_drive_path().resolve():
+        return get_genomes_dir()
+    return drive_path / "genomes"
+
+
+def _migrate_legacy_personal_genomes(drive_path: Path, target_root: Path) -> None:
+    """One-time heal: copy genomes from ``<drive>/genomes`` into home genomes.
+
+    Early bootstrap versions registered seeds under ``drive/genomes`` while the
+    personal pool reads ``~/.agentdrive/genomes``. Non-destructive: only runs
+    when the target registry is empty and legacy has manifests.
+    """
+    legacy = Path(drive_path).resolve() / "genomes"
+    target_root = Path(target_root).resolve()
+    if legacy == target_root or not legacy.is_dir():
+        return
+    if target_root.exists():
+        try:
+            if any(target_root.iterdir()):
+                return
+        except Exception:
+            return
+    try:
+        target_root.mkdir(parents=True, exist_ok=True)
+        for child in legacy.iterdir():
+            if not child.is_dir():
+                continue
+            dest = target_root / child.name
+            if dest.exists():
+                continue
+            import shutil
+
+            shutil.copytree(child, dest)
+            logger.debug(f"Migrated legacy genome {child.name} -> {dest}")
+    except Exception as exc:
+        logger.debug(f"Non-fatal: legacy genome migration skipped: {exc}")
+
+
 def ensure_directory_structure(drive_path: Path) -> None:
     """Ensure clear, complete directory structure for a fresh AgentDrive drive.
 
@@ -263,7 +313,8 @@ def ensure_experience_layer_seed(
         from agentdrive.genome.models import Genome
         from agentdrive.registry import GenomeRegistry
 
-        reg_root = drive_path / "genomes"
+        reg_root = _resolve_registry_root(drive_path, swarm_id)
+        _migrate_legacy_personal_genomes(drive_path, reg_root)
         reg_root.mkdir(parents=True, exist_ok=True)
         reg = GenomeRegistry(root=reg_root, swarm_id=swarm_id, subagent_id=None)
 
@@ -310,6 +361,9 @@ def ensure_experience_layer_seed(
             )
             reg.save(seed_genome)
             logger.debug(f"Registered experience layer v3 seed genome {target_id}")
+
+        if not reg.list_genomes():
+            reg.ensure_bootstrap_example()
     except Exception as exc:
         logger.debug(f"Non-fatal: v3 seed genome registration skipped: {exc}")
 

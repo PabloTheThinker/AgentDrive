@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentdrive"
-version = "0.2.0"
+version = "0.3.0-alpha"
 description = "AgentDrive — local-first Drive for AI agents. Each agent and sub-agent owns its own persistent Drive of memory, patterns, and proven DNA. Powered by the Agent Drive engine."
 readme = "README.md"
 requires-python = ">=3.11"

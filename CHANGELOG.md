@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Phase A — First-run bootstrap registry fix + `0.3.0-alpha` (2026-06-07)
+Laptop development pass (parallax drive data intentionally stays on parallax; code syncs via git).
+
+- **Bootstrap registry path alignment.** `ensure_experience_layer_seed` registered genomes under `drive/genomes/` while personal `AgentDrive()` reads `~/.agentdrive/genomes/` via bare `GenomeRegistry()`. Personal drives now use `get_genomes_dir()`; swarm drives keep `<drive>/genomes`. Legacy seeds under `drive/genomes/` migrate once when home genomes is empty.
+- **Doctor uses live drive registry.** `_run_doctor` reports genome count from `get_default_drive().registry` / pool stats instead of a standalone `GenomeRegistry()` that always showed 0. First-run recovery guidance panel now renders on healthy empty installs (was unreachable dead code).
+- **Version bump** to `0.3.0-alpha` in `pyproject.toml`, `__init__.py`, `constants.py`.
+- **Tests:** `tests/test_bootstrap_registry.py` (4 cases). Verified on laptop: `agentdrive reconcile seed-experience-v3` → doctor shows ≥1 genome.
+
 ### Real-time Grid hardening — Tower fan-out, Parent guidance surfacing, MCP system caching (2026-06-06)
 Follow-ups found while exercising the live Overseer→Parent→runtime→experience loop with subagent inhabitants. Verified live: 6-step loop runs with coherence compounding across runs (0.775→0.782), `overseer_recs=4` per cycle, a non-global attached hub receives the full pulse, MCP system cached per swarm. Full suite **374 passed**, ruff clean.
 
