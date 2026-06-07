@@ -410,6 +410,94 @@ def cmd_patterns(args: argparse.Namespace) -> int:
     return 1
 
 
+def cmd_sprint(args: argparse.Namespace) -> int:
+    """gstack-style sprint chains with STOP gates (ship / ack / status)."""
+    setup_logging()
+    from agentdrive.sprint import CheckpointPending, CheckpointStore, run_ship_chain
+
+    subcommand = getattr(args, "sprint_subcommand", None) or "status"
+
+    if subcommand == "ship":
+        dry_run = bool(getattr(args, "dry_run", False))
+        ack_ids: list[str] = []
+        ack = getattr(args, "ack", None)
+        if ack:
+            ack_ids = [ack]
+        pytest_path = getattr(args, "pytest_path", "tests") or "tests"
+        reset = bool(getattr(args, "reset", False))
+        try:
+            results = run_ship_chain(
+                dry_run=dry_run,
+                ack_ids=ack_ids,
+                pytest_path=pytest_path,
+                reset=reset,
+            )
+        except CheckpointPending as exc:
+            console.print()
+            console.print(
+                Panel(
+                    f"[bold yellow]STOP gate[/] at step [cyan]{exc.step_id}[/]\n\n"
+                    f"{rich_escape(exc.message)}\n\n"
+                    f"Checkpoint: [bold]{exc.checkpoint_id}[/]\n"
+                    f"Resume: [dim]agentdrive sprint ship --ack {exc.checkpoint_id}[/]",
+                    title="Sprint paused",
+                    border_style="yellow",
+                )
+            )
+            return 2
+
+        console.print()
+        table = Table(title="Ship sprint chain", show_header=True)
+        table.add_column("Step", style="cyan")
+        table.add_column("Status")
+        table.add_column("Message", overflow="fold")
+        for result in results:
+            status = "[green]ok[/]" if result.success else "[red]fail[/]"
+            table.add_row(result.step_id, status, result.message)
+        console.print(table)
+        if dry_run:
+            console.print("[dim]Dry-run: pytest and STOP gates bypassed.[/]")
+        else:
+            console.print("[green]Ship chain complete.[/]")
+        return 0 if all(r.success for r in results) else 1
+
+    if subcommand == "ack":
+        cp_id = getattr(args, "checkpoint_id", None)
+        if not cp_id:
+            console.print("[red]Usage: agentdrive sprint ack <checkpoint-id>[/]")
+            return 1
+        chain_id = getattr(args, "chain_id", "ship") or "ship"
+        store = CheckpointStore(chain_id)
+        if store.ack(cp_id):
+            console.print(f"[green]Acked[/] checkpoint {cp_id} on chain {chain_id}")
+            return 0
+        console.print(f"[red]Checkpoint not found:[/] {cp_id}")
+        return 1
+
+    if subcommand == "status":
+        chain_id = getattr(args, "chain_id", "ship") or "ship"
+        store = CheckpointStore(chain_id)
+        pending = store.list_pending()
+        state_path = store.path
+        console.print()
+        console.print(f"[bold]Sprint chain[/] [cyan]{chain_id}[/]")
+        console.print(f"[dim]State: {state_path}[/]")
+        if not pending:
+            console.print("[green]No pending checkpoints.[/]")
+            return 0
+        table = Table(title=f"Pending checkpoints ({len(pending)})", show_header=True)
+        table.add_column("ID", style="bold")
+        table.add_column("Step")
+        table.add_column("Message", overflow="fold")
+        for cp in pending:
+            table.add_row(cp["id"], cp.get("step_id", ""), cp.get("message", ""))
+        console.print(table)
+        return 0
+
+    console.print("[red]Unknown sprint subcommand[/]")
+    return 1
+
+
 def cmd_scan(args: argparse.Namespace) -> int:
     setup_logging()
 
@@ -438,7 +526,7 @@ def cmd_scan(args: argparse.Namespace) -> int:
 
 def cmd_doctor(args: argparse.Namespace) -> int:
     setup_logging()
-    return _run_doctor()
+    return _run_doctor(verbose=getattr(args, "verbose", False))
 
 
 def cmd_deps_check(args: argparse.Namespace) -> int:
@@ -496,7 +584,99 @@ def cmd_deps_check(args: argparse.Namespace) -> int:
     return 0
 
 
-def _run_doctor() -> int:
+def _print_doctor_verbose_diagnostics(palette: Any) -> None:
+    """Extra subsystem counters surfaced by ``agentdrive doctor --verbose``."""
+    from agentdrive.constants import get_default_drive_path
+    from agentdrive.tui.chrome import Section, section_panel
+
+    rows: list[tuple[str, str]] = []
+
+    # Reconciliation state
+    try:
+        from agentdrive.reconciliation import get_default_reconciliation_runner
+
+        rec = get_default_reconciliation_runner()
+        state = rec._load_state()
+        last_scan = state.get("last_scan_iso", "n/a")
+        known_count = len(state.get("known_genome_ids") or [])
+        rows.append(("Reconciliation", f"last_scan={last_scan}, known_genomes={known_count}"))
+    except Exception as exc:
+        rows.append(("Reconciliation", f"unavailable ({exc})"))
+
+    # Knowledge graph edge count
+    try:
+        edges_path = get_default_drive_path() / "knowledge" / "edges.jsonl"
+        if edges_path.is_file():
+            kg_lines = sum(1 for line in edges_path.read_text(encoding="utf-8").splitlines() if line.strip())
+        else:
+            kg_lines = 0
+        rows.append(("Knowledge graph", f"{kg_lines} edges.jsonl lines"))
+    except Exception as exc:
+        rows.append(("Knowledge graph", f"unavailable ({exc})"))
+
+    # Quarantine posture
+    try:
+        from agentdrive.security import get_security_posture
+
+        posture = get_security_posture()
+        rows.append(("Quarantine", f"{posture.quarantined_items} quarantined items"))
+    except Exception as exc:
+        rows.append(("Quarantine", f"unavailable ({exc})"))
+
+    # Learnings store
+    try:
+        from agentdrive.learnings import LearningsStore, resolve_learnings_slug
+
+        slug = resolve_learnings_slug()
+        learnings_count = LearningsStore(slug=slug).count()
+        rows.append(("Learnings", f"{learnings_count} entries (slug={slug})"))
+    except ImportError:
+        rows.append(("Learnings", "module not installed"))
+    except Exception as exc:
+        rows.append(("Learnings", f"unavailable ({exc})"))
+
+    # Sprint checkpoints (optional module)
+    try:
+        from agentdrive.sprint import CheckpointStore
+
+        pending = CheckpointStore("ship").list_pending()
+        rows.append(("Sprint checkpoints", f"{len(pending)} pending"))
+    except ImportError:
+        rows.append(("Sprint checkpoints", "module not installed"))
+    except Exception as exc:
+        rows.append(("Sprint checkpoints", f"unavailable ({exc})"))
+
+    # Experience layer file counts
+    try:
+        drive_path = get_default_drive_path()
+
+        def _count_files(rel: str) -> int:
+            root = drive_path / rel
+            if not root.is_dir():
+                return 0
+            return sum(1 for p in root.rglob("*") if p.is_file())
+
+        living_count = _count_files("living-experience")
+        experience_count = _count_files("experience")
+        rows.append(
+            (
+                "Experience layer",
+                f"{living_count} living-experience files, {experience_count} experience files",
+            )
+        )
+    except Exception as exc:
+        rows.append(("Experience layer", f"unavailable ({exc})"))
+
+    console.print(
+        section_panel(
+            Section("Subsystem counters", rows, palette=palette, key_width=18),
+            title="Verbose diagnostics",
+            palette=palette,
+        )
+    )
+
+
+def _run_doctor(verbose: bool = False) -> int:
     """Animated step-by-step health check with a final result panel."""
     from rich.text import Text
 
@@ -806,6 +986,8 @@ def _run_doctor() -> int:
                 ],
             )
         )
+        if verbose:
+            _print_doctor_verbose_diagnostics(p)
         # Expanded Security posture subsection (new for this stabilization wave)
         if posture is not None:
             try:
@@ -863,6 +1045,8 @@ def _run_doctor() -> int:
                 ],
             )
         )
+        if verbose:
+            _print_doctor_verbose_diagnostics(p)
         # Expanded Security posture subsection (new for this stabilization wave)
         if posture is not None:
             try:
@@ -2811,6 +2995,11 @@ Self-manage:
     p = subparsers.add_parser(
         "doctor", help="Diagnose AgentDrive installation, config, workers, and registry"
     )
+    p.add_argument(
+        "--verbose",
+        action="store_true",
+        help="After the main result panel, print extra subsystem diagnostics",
+    )
     p.set_defaults(func=cmd_doctor)
 
     # MCP — first-class integration for Claude Code, Grok, Cursor, Codex, etc.
@@ -3064,6 +3253,60 @@ Self-manage:
 
     # default behavior when no subcommand is given: run
     p.set_defaults(func=cmd_reconcile, reconcile_subcommand="run")
+
+    # sprint — gstack-style ship chain with STOP gates
+    p = subparsers.add_parser(
+        "sprint",
+        help="Sprint chains with human STOP gates (gstack /ship workflow)",
+    )
+    sprint_subs = p.add_subparsers(dest="sprint_subcommand")
+
+    sprint_ship = sprint_subs.add_parser(
+        "ship",
+        help="Run reconcile → test → think_gaps → changelog_check ship chain",
+    )
+    sprint_ship.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Skip pytest subprocess and STOP gate pauses",
+    )
+    sprint_ship.add_argument(
+        "--ack",
+        metavar="ID",
+        help="Acknowledge a checkpoint and resume the chain",
+    )
+    sprint_ship.add_argument(
+        "--pytest-path",
+        default="tests",
+        help="Pytest path for the test step (default: tests)",
+    )
+    sprint_ship.add_argument(
+        "--reset",
+        action="store_true",
+        help="Clear persisted chain progress before running",
+    )
+    sprint_ship.set_defaults(func=cmd_sprint)
+
+    sprint_ack = sprint_subs.add_parser("ack", help="Acknowledge a sprint checkpoint")
+    sprint_ack.add_argument("checkpoint_id", help="Checkpoint id (cp-...)")
+    sprint_ack.add_argument(
+        "--chain",
+        dest="chain_id",
+        default="ship",
+        help="Chain id (default: ship)",
+    )
+    sprint_ack.set_defaults(func=cmd_sprint)
+
+    sprint_status = sprint_subs.add_parser("status", help="List pending sprint checkpoints")
+    sprint_status.add_argument(
+        "--chain",
+        dest="chain_id",
+        default="ship",
+        help="Chain id (default: ship)",
+    )
+    sprint_status.set_defaults(func=cmd_sprint)
+
+    p.set_defaults(func=cmd_sprint, sprint_subcommand="status")
 
     # demo-swarm — live SubagentTree proof-of-concept (UX Pattern 4)
     p = subparsers.add_parser(

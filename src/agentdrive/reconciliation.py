@@ -364,6 +364,17 @@ class ReconciliationRunner:
 
     # ---- public: one-shot scan ---------------------------------------
 
+    def status(self) -> dict[str, Any]:
+        """Lightweight persisted-state snapshot without running a full scan."""
+        state = self._load_state()
+        failures = int(state.get("consecutive_failures") or 0)
+        return {
+            "last_scan_iso": state.get("last_scan_iso"),
+            "known_genome_ids": list(state.get("known_genome_ids") or []),
+            "consecutive_failures": failures,
+            "ok": failures == 0,
+        }
+
     def scan_once(self) -> ReconciliationReport:
         """
         Run a single reconciliation pass and emit ReconciliationCompleted +

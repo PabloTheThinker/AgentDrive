@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Phase C — Sprint chain + STOP gates, doctor --verbose, test portability fix (2026-06-07)
+- **Sprint module** (`src/agentdrive/sprint/`): gstack `/ship`-style `SHIP_CHAIN` (reconcile → test → think_gaps → changelog_check) with `CheckpointStore` STOP gates at `~/.agentdrive/checkpoints/`. CLI: `agentdrive sprint ship|ack|status`. Harness: `checkpoint()` / `ack_checkpoint()`. Example genome: `genomes/examples/sprint-ship-v1.json`.
+- **`agentdrive doctor --verbose`**: extra panel with reconciliation last_scan, KG edge count, quarantine, learnings, sprint checkpoints, experience layer file counts.
+- **Test fix:** reconciliation wave seed paths now portable (`genomes/examples/` relative to repo root, not parallax-only absolute paths). Full suite **403 passed**.
+
 ### Phase B — Gstack-inspired swarm: learnings JSONL, MCP think+gaps, patterns catalog (2026-06-07)
 Parallel implementation pass (three workstreams) adopting gstack/Fabric patterns from research roadmap.
 

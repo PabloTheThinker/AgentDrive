@@ -1,0 +1,63 @@
+{
+  "schema_version": 3,
+  "page_type": "research-constitution",
+  "type": "sprint_workflow",
+  "manifest": {
+    "id": "sprint-ship-v1",
+    "version": "1.0.0",
+    "content_hash": "sha256:sprint-ship-v1-placeholder",
+    "created": "2026-06-07T00:00:00+00:00",
+    "last_improved": "2026-06-07T00:00:00+00:00",
+    "authors": [
+      {
+        "type": "tooling",
+        "id": "agentdrive-sprint",
+        "name": "AgentDrive sprint module"
+      }
+    ],
+    "applicability": {
+      "domains": ["release-engineering", "sprint-chains", "stop-gates"],
+      "problem_signatures": [
+        "shipping without reconciliation or tests",
+        "gap-free synthesis before release",
+        "missing changelog section"
+      ]
+    },
+    "evaluation_score": {
+      "reference_tasks": 0.85
+    }
+  },
+  "framework": {
+    "description": "gstack-style /ship sprint chain mirrored in agentdrive sprint module. Human STOP gates pause between think_gaps and changelog_check.",
+    "chain_id": "ship",
+    "cli": "agentdrive sprint ship [--dry-run] [--ack ID]",
+    "steps": [
+      {
+        "id": "reconcile",
+        "name": "Reconcile",
+        "stop_gate": false,
+        "action": "ReconciliationRunner.status() or scan_once()"
+      },
+      {
+        "id": "test",
+        "name": "Test",
+        "stop_gate": false,
+        "action": "python -m pytest tests -q --tb=no"
+      },
+      {
+        "id": "think_gaps",
+        "name": "Think Gaps",
+        "stop_gate": true,
+        "action": "get_default_drive().think('What gaps remain before shipping AgentDrive?')"
+      },
+      {
+        "id": "changelog_check",
+        "name": "Changelog Check",
+        "stop_gate": true,
+        "action": "Verify CHANGELOG.md has ## Unreleased or dated section"
+      }
+    ],
+    "checkpoints_dir": "~/.agentdrive/checkpoints/",
+    "resume": "agentdrive sprint ack <checkpoint-id>"
+  }
+}

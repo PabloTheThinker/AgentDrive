@@ -785,10 +785,11 @@ def test_security_posture_under_fixed_grants_db_perms(isolated_agentdrive_home: 
 # ─────────────────────────────────────────────────────────────────────
 
 
-WAVE_SEED_DIR = Path("/home/pablothethinker/agentdrive/genomes/examples")
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+WAVE_SEED_DIR = _PROJECT_ROOT / "genomes" / "examples"
 WAVE_HEALING_PROPOSAL = WAVE_SEED_DIR / "healing-factor-regeneration-proposal-v1.json"
 WAVE_DURABLE_GENOME = WAVE_SEED_DIR / "durable-execution-daily-consolidation-integrator-genome.json"
-WAVE_LIVING_SEED = Path("/home/pablothethinker/agentdrive/genomes/living-experience-seed-v3.json")
+WAVE_LIVING_SEED = _PROJECT_ROOT / "genomes" / "living-experience-seed-v3.json"
 
 
 def _seed_stabilization_wave_20260531_state(drive_path: Path) -> None:

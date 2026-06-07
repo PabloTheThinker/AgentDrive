@@ -434,6 +434,27 @@ class Harness:
                 # Never let learning failure break the caller's outcome recording
                 outcome.setdefault("auto_delta_errors", []).append(f"{gid}:{str(exc)[:80]}")
 
+    def checkpoint(
+        self,
+        step_id: str,
+        message: str,
+        *,
+        chain_id: str = "ship",
+    ) -> None:
+        """Create a sprint STOP checkpoint; raise if not yet acked."""
+        from agentdrive.sprint.checkpoint import CheckpointPending, CheckpointStore
+
+        store = CheckpointStore(chain_id)
+        cp_id = store.create(step_id, message)
+        if not store.is_acked(cp_id):
+            raise CheckpointPending(step_id, cp_id, message)
+
+    def ack_checkpoint(self, checkpoint_id: str, *, chain_id: str = "ship") -> bool:
+        """Acknowledge a sprint checkpoint so the chain can resume."""
+        from agentdrive.sprint.checkpoint import CheckpointStore
+
+        return CheckpointStore(chain_id).ack(checkpoint_id)
+
     def get_pulled_genomes(self) -> list[str]:
         return [d["genome_id"] for d in self.pulled_dna]
 
