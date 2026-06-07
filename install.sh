@@ -152,6 +152,14 @@ fi
 echo ""
 success "AgentDrive installed successfully!"
 
+if command -v agentdrive >/dev/null 2>&1; then
+    if agentdrive mcp doctor >/dev/null 2>&1; then
+        success "MCP bridge ready for AI clients"
+    else
+        warn "MCP not fully wired — run: agentdrive mcp install"
+    fi
+fi
+
 echo ""
 echo "Next steps:"
 
@@ -163,8 +171,10 @@ else
 fi
 
 echo ""
-echo "To connect AI CLIs (Grok, Claude, Cursor, local models via Continue.dev):"
-echo "  agentdrive mcp config"
+echo "Connect any AI model (Grok, Claude, Cursor, Continue, local models):"
+echo "  agentdrive mcp install    # pip [mcp] + write client configs"
+echo "  agentdrive mcp doctor     # verify 25+ tools ready"
+echo "  agentdrive mcp config       # show resolved launcher + paste snippets"
 echo ""
 echo "One-liner to re-run this installer anytime:"
 echo "  curl -fsSL https://vektraindustries.com/agentdrive/install.sh | bash"

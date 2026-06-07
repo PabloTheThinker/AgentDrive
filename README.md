@@ -60,10 +60,12 @@ This is what local models have been missing: a memory they can actually think wi
 AgentDrive speaks the Model Context Protocol natively.
 
 ```bash
-agentdrive mcp config
+agentdrive mcp install   # one command: pip [mcp] + write client configs
+agentdrive mcp doctor    # verify 25+ tools + resolved launcher
+agentdrive mcp config    # show paste-ready snippets for your machine
 ```
 
-This prints ready-to-paste configuration for Grok, Claude Code/Desktop, Cursor, **Continue.dev** (especially good with local models like Ollama/LM Studio), and generic stdio setups.
+Works after `pip install agentdrive[mcp]`, the root `install.sh`, or `git clone` + `pip install -e ".[mcp]"`. The config resolver picks the right binary or Python module fallback automatically.
 
 Once connected, your model gets the full Experience Graph v3 surfaces (the same ones used internally by the Parent and Overseer) plus DNA tools — complete with gbrain scoring and provenance.
 

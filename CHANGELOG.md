@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### MCP connection hardening — any-model onboarding (2026-06-07)
+- **`adapters/mcp_config.py`**: resolves launcher (PATH binary → venv → `python -m` module fallback); client config paths; merge-write for Grok/Cursor/Claude/Continue.
+- **CLI**: `agentdrive mcp install`, `mcp doctor`, `mcp tools`; `mcp config --json|--write|--client|--uvx`.
+- **`agentdrive doctor`**: MCP bridge check (tool count + launcher).
+- **Install**: `install.sh` + `install_smoke.sh` run `mcp doctor`; docs/MCP.md rewritten for clone/install flows.
+- **Tests**: `tests/test_mcp_config.py`.
+
 ### Phase F — MCP ops bridge, RRF retrieval, eval replay, dream MC panel (2026-06-07) · `0.3.1-alpha`
 Roadmap completion pass: closes items 9–15 from the 90-day improvement plan.
 

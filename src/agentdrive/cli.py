@@ -794,6 +794,7 @@ def _run_doctor(verbose: bool = False) -> int:
         "Pool",
         "Worker adapter",
         "Core dependencies",
+        "MCP bridge",
         "AI provider",
     ]
 
@@ -917,7 +918,36 @@ def _run_doctor(verbose: bool = False) -> int:
         steps.fail(str(e)[:60])
         results.append(("Core dependencies", False, str(e)))
 
-    # 7. AI provider
+    # 7. MCP bridge (any-model connectivity)
+    try:
+        from agentdrive.adapters.mcp_config import resolve_mcp_launcher, run_mcp_doctor
+
+        launcher = resolve_mcp_launcher()
+        mcp_report = run_mcp_doctor()
+        tool_count = mcp_report.get("tool_count", 0)
+        if mcp_report.get("ok"):
+            steps.advance(f"{tool_count} tools · {launcher.method}")
+            results.append(
+                (
+                    "MCP bridge",
+                    True,
+                    f"{tool_count} tools · {launcher.method} → {launcher.command}",
+                )
+            )
+        else:
+            steps.fail("mcp not ready")
+            results.append(
+                (
+                    "MCP bridge",
+                    False,
+                    "run `agentdrive mcp install` (pip install agentdrive[mcp])",
+                )
+            )
+    except Exception as e:
+        steps.fail(str(e)[:60])
+        results.append(("MCP bridge", False, str(e)))
+
+    # 8. AI provider
     provider_suggestion = ""
     try:
         from agentdrive.providers import get, load_config_provider
@@ -2482,86 +2512,155 @@ def cmd_mcp_serve(args: argparse.Namespace) -> int:
 
 
 def cmd_mcp_config(args: argparse.Namespace) -> int:
-    """Print ready-to-paste MCP configuration for popular AI CLIs.
+    """Print ready-to-paste MCP configuration for popular AI CLIs."""
+    import json as _json
 
-    Works great with Grok, Claude, Cursor, Continue.dev, and local models.
-    """
+    from agentdrive.adapters.mcp_config import (
+        client_config_paths,
+        export_client_bundle,
+        get_grok_toml_snippet,
+        resolve_mcp_launcher,
+        write_client_config,
+    )
+
+    prefer_uvx = bool(getattr(args, "uvx", False))
+    as_json = bool(getattr(args, "json", False))
+    client = getattr(args, "client", None)
+    do_write = bool(getattr(args, "write", False))
+
+    bundle = export_client_bundle(prefer_uvx=prefer_uvx)
+    launcher = resolve_mcp_launcher(prefer_uvx=prefer_uvx)
+
+    if as_json:
+        console.print(_json.dumps(bundle, indent=2))
+        return 0
+
+    if do_write:
+        targets = [client] if client else ["grok", "cursor", "claude", "continue"]
+        for cid in targets:
+            result = write_client_config(cid, prefer_uvx=prefer_uvx, dry_run=False)  # type: ignore[arg-type]
+            if result.get("written"):
+                console.print(f"[green]✓[/] wrote {cid} → {result.get('path')}")
+            else:
+                console.print(f"[yellow]⚠[/] skipped {cid} (no target path)")
+        return 0
+
+    if client:
+        block = bundle["mcpServers"]
+        if client == "grok":
+            console.print(get_grok_toml_snippet(prefer_uvx=prefer_uvx), highlight=False)
+        else:
+            console.print(_json.dumps({"mcpServers": block}, indent=2), highlight=False)
+        paths = client_config_paths().get(client, [])  # type: ignore[arg-type]
+        if paths:
+            console.print(f"\n[dim]Config path:[/] {paths[0]}")
+        return 0
+
     console.print(Panel.fit(
-        "[bold cyan]AgentDrive MCP — Universal Experience Graph for any AI[/]\n\n"
-        "The v3 structural memory fabric + DNA tools become first-class tools in your model.",
-        title="agentdrive mcp",
-        border_style="cyan"
+        "[bold cyan]AgentDrive MCP — connect any AI model[/]\n\n"
+        f"Resolved launcher: [green]{launcher.method}[/] → {launcher.command}\n"
+        f"[dim]{launcher.notes}[/]",
+        title="agentdrive mcp config",
+        border_style="cyan",
     ))
 
-    console.print("\n[bold]Recommended install[/]\n")
-    console.print("  [green]pip install agentdrive[mcp][/]\n")
+    console.print("\n[bold]Quick connect[/]\n")
+    console.print("  [green]agentdrive mcp install[/]           # pip install [mcp] + write client configs")
+    console.print("  [green]agentdrive mcp doctor[/]           # verify tools + launcher")
+    console.print("  [green]agentdrive mcp config --write[/]   # merge into Grok/Cursor/Claude/Continue configs")
+    console.print("  [green]agentdrive mcp config --json[/]     # machine-readable bundle")
 
-    console.print("\n[bold]1. Grok (this harness)[/]\n")
-    console.print("One-liner (recommended):")
-    console.print("  [green]grok mcp add agentdrive --command agentdrive-mcp --args '--transport stdio'[/]")
-    console.print("Or manually in `~/.grok/config.toml`:")
+    console.print("\n[bold]1. Grok[/]\n")
+    console.print(f"  [green]{bundle['grok_cli']}[/]")
+    console.print("\n[dim]" + bundle["grok_toml"].strip() + "[/dim]", highlight=False)
+
+    console.print("\n[bold]2. Claude / Continue / Cursor[/]\n")
+    console.print(_json.dumps({"mcpServers": bundle["mcpServers"]}, indent=2), highlight=False)
+    console.print("\n[dim]Cursor path: ~/.cursor/mcp.json · Claude: ~/.config/claude/claude_desktop_config.json[/]")
+
+    console.print("\n[bold]3. Clone / editable install fallback[/]\n")
     console.print(
-        """[dim]
-[mcp_servers.agentdrive]
-command = "agentdrive-mcp"
-args = ["--transport", "stdio"]
-enabled = true
-[/dim]""",
-        highlight=False
+        f"  command: [green]{launcher.command}[/]\n"
+        f"  args: [green]{' '.join(launcher.args)}[/]"
     )
 
-    console.print("\n[bold]2. Claude Code / Claude Desktop[/]\n")
-    console.print("Add this block to your Claude MCP config:")
+    console.print("\n[dim]Onboarding for models: docs/FOR_AI_MODELS.md · Full guide: docs/MCP.md[/]\n")
+    return 0
+
+
+def cmd_mcp_doctor(args: argparse.Namespace) -> int:
+    """Verify MCP package, launcher resolution, and tool registration."""
+    from agentdrive.adapters.mcp_config import run_mcp_doctor
+
+    report = run_mcp_doctor(prefer_uvx=bool(getattr(args, "uvx", False)))
+    console.print(Panel.fit("[bold]AgentDrive MCP doctor[/]", border_style="cyan"))
+    for check in report.get("checks", []):
+        mark = "[green]✓[/]" if check.get("ok") else "[red]✗[/]"
+        console.print(f"  {mark} {check.get('name')}: {check.get('detail')}")
+    launcher = report.get("launcher", {})
     console.print(
-        """[dim]
-{
-  "mcpServers": {
-    "agentdrive": {
-      "command": "agentdrive-mcp",
-      "args": ["--transport", "stdio"]
-    }
-  }
-}
-[/dim]""",
-        highlight=False
+        f"\n[dim]Launcher[/] {launcher.get('method')} → {launcher.get('command')} "
+        f"{' '.join(launcher.get('args') or [])}"
+    )
+    if report.get("ok"):
+        console.print(f"\n[green]MCP ready[/] — {report.get('tool_count', 0)} tools for your AI client")
+        return 0
+    console.print("\n[red]MCP not ready[/] — run: [green]agentdrive mcp install[/]")
+    return 1
+
+
+def cmd_mcp_install(args: argparse.Namespace) -> int:
+    """Install MCP extra and optionally write client configuration files."""
+    from agentdrive.adapters.mcp_config import (
+        install_mcp_extra,
+        run_mcp_doctor,
+        try_grok_mcp_add,
+        write_client_config,
     )
 
-    console.print("\n[bold]3. Cursor[/]\n")
-    console.print("Settings → Features → MCP → Add Server:")
-    console.print('  Name: [green]agentdrive[/]')
-    console.print('  Command: [green]agentdrive-mcp[/]')
-    console.print('  Args: [green]--transport stdio[/]')
+    if not getattr(args, "skip_pip", False):
+        console.print("[cyan]Installing agentdrive[mcp]…[/]")
+        pip_result = install_mcp_extra()
+        if pip_result.get("ok"):
+            console.print("[green]✓[/] mcp extra installed")
+        else:
+            console.print("[yellow]⚠[/] pip install reported issues (may already be installed)")
+            if pip_result.get("stderr"):
+                console.print(f"[dim]{pip_result['stderr'][-300:]}[/]")
 
-    console.print("\n[bold]4. Continue.dev (best for local models)[/]\n")
-    console.print("Add to your `~/.continue/config.json` (or project config):")
-    console.print(
-        """[dim]
-{
-  "mcpServers": {
-    "agentdrive": {
-      "command": "agentdrive-mcp",
-      "args": ["--transport", "stdio"]
-    }
-  }
-}
-[/dim]""",
-        highlight=False
-    )
-    console.print("[dim]Works excellently with Ollama, LM Studio, llama.cpp, etc.[/]")
+    if getattr(args, "write", True):
+        for client in ("grok", "cursor", "claude", "continue"):
+            result = write_client_config(client, dry_run=False)  # type: ignore[arg-type]
+            if result.get("written"):
+                console.print(f"[green]✓[/] merged MCP config for {client} → {result.get('path')}")
 
-    console.print("\n[bold]5. Zero-install option (uvx)[/]\n")
-    console.print("Many clients support this without installing anything globally:")
-    console.print("  Command: [green]uvx[/]")
-    console.print("  Args: [green]--from agentdrive[mcp] agentdrive-mcp --transport stdio[/]")
+    grok = try_grok_mcp_add()
+    if grok.get("ok"):
+        console.print("[green]✓[/] registered via grok mcp add")
+    elif shutil.which("grok"):
+        console.print(f"[dim]grok mcp add: {grok.get('stderr') or grok.get('reason', '')}[/]")
 
-    console.print("\n[bold]6. Direct / custom local setups[/]\n")
-    console.print("  [green]agentdrive-mcp[/]                    # stdio (most common)")
-    console.print("  [green]agentdrive mcp serve[/]              # same thing")
+    report = run_mcp_doctor()
+    if report.get("ok"):
+        console.print(f"\n[green]MCP connection ready[/] — {report.get('tool_count')} tools")
+        console.print("[dim]Restart your AI client, then call experience_graph_get_context_pack[/]")
+        return 0
+    return cmd_mcp_doctor(args)
 
-    console.print("\n[dim]Best single document for any model: docs/FOR_AI_MODELS.md (philosophy, tool patterns, recommended behavior, autonomous usage).[/]")
-    console.print("[dim]Default context: stabilization-wave-20260531 (the living drive used to build AgentDrive itself).[/]")
-    console.print("[dim]Your model will get the full Experience Graph v3 surfaces + DNA tools.[/]\n")
 
+def cmd_mcp_tools(args: argparse.Namespace) -> int:
+    """List MCP tools exposed by the AgentDrive server."""
+    from agentdrive.adapters.mcp_config import list_mcp_tool_names
+
+    tools = list_mcp_tool_names()
+    if getattr(args, "json", False):
+        import json as _json
+
+        console.print(_json.dumps({"count": len(tools), "tools": tools}, indent=2))
+        return 0
+    console.print(f"[bold]{len(tools)} MCP tools[/]\n")
+    for name in tools:
+        console.print(f"  • {name}")
     return 0
 
 
@@ -3334,7 +3433,52 @@ Self-manage:
     p_config = mcp_subs.add_parser(
         "config", help="Print ready-to-paste MCP config snippets for Grok, Claude, Cursor..."
     )
+    p_config.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit machine-readable config bundle (paths, launcher, mcpServers block)",
+    )
+    p_config.add_argument(
+        "--client",
+        choices=["grok", "claude", "cursor", "continue", "vscode", "windsurf", "generic"],
+        help="Show config for one client only",
+    )
+    p_config.add_argument(
+        "--write",
+        action="store_true",
+        help="Merge AgentDrive MCP entry into client config files",
+    )
+    p_config.add_argument(
+        "--uvx",
+        action="store_true",
+        help="Use uvx launcher in generated configs (zero-install)",
+    )
     p_config.set_defaults(func=cmd_mcp_config)
+
+    p_doctor = mcp_subs.add_parser("doctor", help="Verify MCP package, launcher, and tool registration")
+    p_doctor.add_argument("--uvx", action="store_true", help="Test uvx launcher resolution")
+    p_doctor.set_defaults(func=cmd_mcp_doctor)
+
+    p_install = mcp_subs.add_parser(
+        "install",
+        help="pip install [mcp] and write client configs (Grok, Cursor, Claude, Continue)",
+    )
+    p_install.add_argument(
+        "--no-write",
+        dest="write",
+        action="store_false",
+        help="Skip writing client config files",
+    )
+    p_install.add_argument(
+        "--skip-pip",
+        action="store_true",
+        help="Skip pip install (config write + doctor only)",
+    )
+    p_install.set_defaults(func=cmd_mcp_install, write=True)
+
+    p_tools = mcp_subs.add_parser("tools", help="List MCP tools exposed by the server")
+    p_tools.add_argument("--json", action="store_true", help="JSON tool list")
+    p_tools.set_defaults(func=cmd_mcp_tools)
 
     # deps — part of the Dependency Updates Framework (see docs/DEPENDENCY_UPDATES.md)
     p = subparsers.add_parser(

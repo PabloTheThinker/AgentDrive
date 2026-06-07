@@ -1,154 +1,135 @@
-# Using AgentDrive MCP with Claude, Cursor, Local Models & More
+# Using AgentDrive MCP with Any AI Model
 
-AgentDrive turns any MCP-capable AI into a first-class participant in a living **Experience Graph v3** (structural, Obsidian-style memory fabric with gbrain scoring and explicit Parent reasoning traces).
-
-This works identically across:
-- Grok
-- Claude Code / Claude Desktop
-- Cursor
-- Continue.dev (excellent with local models)
-- Windsurf, Zed, custom local setups, etc.
+AgentDrive exposes a **Model Context Protocol (MCP)** server so Grok, Claude, Cursor, Continue.dev, Windsurf, and any stdio-capable client can use the Experience Graph and Drive operations as first-class tools.
 
 ---
 
-## One Command to Rule Them All
-
-After installation, run:
+## Fastest path (install or clone)
 
 ```bash
-agentdrive mcp config
+# After pip install agentdrive[mcp] OR ./install.sh OR git clone + pip install -e ".[mcp]"
+agentdrive mcp install
+agentdrive mcp doctor
 ```
 
-It will print the exact configuration you need for your client.
+`mcp install` will:
+
+1. Ensure `agentdrive[mcp]` is installed (editable install when run from a clone)
+2. Merge config into `~/.cursor/mcp.json`, Claude, Continue, and Grok TOML
+3. Run `grok mcp add` automatically when the Grok CLI is available
+
+Restart your AI client, then verify with `experience_graph_get_context_pack` or `agentdrive_think`.
 
 ---
 
-## Recommended Installation
+## Clone + editable dev install
 
 ```bash
-pip install agentdrive[mcp]
+git clone https://github.com/PabloTheThinker/AgentDrive.git
+cd AgentDrive
+python3 -m venv ~/.agentdrive/venv
+~/.agentdrive/venv/bin/pip install -e ".[mcp]"
+agentdrive mcp install
+agentdrive mcp doctor
 ```
 
-This installs the core package + the `mcp` dependency and registers the `agentdrive-mcp` binary.
+The config resolver automatically uses the correct launcher:
 
-Zero-install alternative (great for local models):
+| Priority | Method | When |
+|----------|--------|------|
+| 1 | `agentdrive-mcp` on PATH | pip / install.sh shims |
+| 2 | `~/.agentdrive/venv/bin/agentdrive-mcp` | installer venv |
+| 3 | `python -m agentdrive.adapters.mcp_server` | editable clone fallback |
 
-```bash
-uvx --from agentdrive[mcp] agentdrive-mcp
-```
+No manual path editing required.
 
 ---
 
-## Client-Specific Setup
+## CLI reference
 
-### Grok (this harness)
+| Command | Purpose |
+|---------|---------|
+| `agentdrive mcp install` | pip `[mcp]` + write client configs |
+| `agentdrive mcp doctor` | Verify package, launcher, 25+ tools |
+| `agentdrive mcp config` | Human-readable snippets (resolved paths) |
+| `agentdrive mcp config --json` | Machine-readable bundle for automation |
+| `agentdrive mcp config --write` | Merge into Grok/Cursor/Claude/Continue |
+| `agentdrive mcp config --client cursor` | One client only |
+| `agentdrive mcp tools` | List all registered MCP tools |
+| `agentdrive mcp serve` | Run stdio server manually |
 
-```bash
-grok mcp add agentdrive --command agentdrive-mcp --args '--transport stdio'
-```
+`agentdrive doctor` also includes an **MCP bridge** check.
 
-Then use `/mcp` in any session.
+---
 
-### Claude Code / Claude Desktop
+## Client config paths
 
-Add to your MCP config file:
+| Client | File |
+|--------|------|
+| Grok | `~/.grok/config.toml` |
+| Cursor | `~/.cursor/mcp.json` |
+| Claude Desktop | `~/.config/claude/claude_desktop_config.json` |
+| Continue.dev | `~/.continue/config.json` |
+
+Generated block (paths resolved per machine):
 
 ```json
 {
   "mcpServers": {
     "agentdrive": {
-      "command": "agentdrive-mcp",
+      "command": "<resolved-launcher>",
       "args": ["--transport", "stdio"]
     }
   }
 }
 ```
 
-### Cursor
-
-1. Go to Settings → Features → MCP
-2. Add Server:
-   - Name: `agentdrive`
-   - Command: `agentdrive-mcp`
-   - Args: `--transport stdio`
-
-### Continue.dev (Best for Local Models)
-
-Add to your `~/.continue/config.json` (or project-level):
-
-```json
-{
-  "mcpServers": {
-    "agentdrive": {
-      "command": "agentdrive-mcp",
-      "args": ["--transport", "stdio"]
-    }
-  }
-}
-```
-
-This works beautifully with Ollama, LM Studio, llama.cpp servers, etc.
-
-### Windsurf, Zed, and other modern editors
-
-Most now have native MCP support. Use the same stdio pattern:
-
-- **Command**: `agentdrive-mcp`
-- **Args**: `--transport stdio`
+Run `agentdrive mcp config --json` to print the exact command for your system.
 
 ---
 
-## What Your Model Actually Gets
+## Zero-install (uvx)
 
-When connected, the model receives these high-signal tools (among others):
+```bash
+agentdrive mcp config --uvx
+```
 
-**Experience Graph v3 (the important ones):**
-- `experience_graph_get_context_pack` — the same dense structural briefing the internal Parent receives
+Uses `uvx --from agentdrive[mcp] agentdrive-mcp --transport stdio` — no venv required.
+
+---
+
+## What your model gets
+
+**Experience Graph v3**
+
+- `experience_graph_get_context_pack`
+- `experience_graph_record_reasoning`
 - `experience_graph_find_structural_similarities`
-- `experience_graph_record_reasoning` — lets the model write its own reasoning traces back into the graph (this is how the graph compounds)
 - `experience_graph_suggest_reasoning_structure`
-- `experience_graph_get_reasoning_traces_for_element`
-- `experience_graph_get_parent_reasoning_history`
+- …
 
-**DNA / Pool tools:**
-- `agentdrive_get_dna_for_task`, `agentdrive_pool_query`, `agentdrive_record_outcome`, etc.
+**Drive + operations (auto-registered from registry)**
 
-The model can now do real structural reasoning over your past work and contribute new high-quality experience back.
+- `agentdrive_think`, `agentdrive_pool_query`, `agentdrive_doctor`
+- `agentdrive_dream_run`, `agentdrive_patterns_list`, …
 
----
-
-## Running Manually
-
-```bash
-# Preferred for AI CLIs
-agentdrive-mcp
-
-# Or via the main CLI
-agentdrive mcp serve
-```
+Run `agentdrive mcp tools` for the full list (40+ tools).
 
 ---
 
-## Best Onboarding Document for Models
+## Onboarding document for models
 
-When an AI first connects or is being onboarded to AgentDrive, give it this file:
-
-**`docs/FOR_AI_MODELS.md`**
-
-It is written specifically for LLMs and contains the full philosophy, the 6-step contract, precise guidance on every Experience Graph tool, recommended agent behavior, and how to do high-quality autonomous work inside the system.
-
-## Why This Is Different
-
-Most agent memory systems are just RAG. AgentDrive gives models a **queryable structural memory** they can reason *over* (not just retrieve from). When they use `experience_graph_record_reasoning`, their actual thinking becomes part of the permanent, gbrain-scored fabric that future runs (human or autonomous) can build upon.
-
-This is especially powerful for long-running local autonomous agents.
+Give connected models **`docs/FOR_AI_MODELS.md`** — written for LLMs covering the 6-step loop, tool usage, and autonomous behavior.
 
 ---
 
 ## Troubleshooting
 
-- Make sure `agentdrive-mcp` is on your PATH after installation.
-- For local models, Continue.dev + `agentdrive-mcp` is currently the smoothest path.
-- The server only ever touches your local `~/.agentdrive` data.
+| Symptom | Fix |
+|---------|-----|
+| `MCP server not available` | `agentdrive mcp install` |
+| Client can't find binary | `agentdrive mcp config --json` — use module fallback command |
+| Tools empty / stale | `agentdrive mcp doctor` |
+| Clone install | Always use `pip install -e ".[mcp]"` then `mcp install` |
 
-The MCP layer is intentionally thin. All the real power lives in the Experience Graph on disk. Your AI clients are now native citizens of it.
+The server only touches local `~/.agentdrive` data. You remain sovereign over all settings.
