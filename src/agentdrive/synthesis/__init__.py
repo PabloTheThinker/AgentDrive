@@ -14,6 +14,7 @@ from .engine import (
     Citation,
     Gap,
     SynthesisResult,
+    _ensure_mandatory_gaps,
     propose_experience_evolution,
     run_synthesis,
 )
@@ -24,4 +25,5 @@ __all__ = [
     "Gap",
     "Citation",
     "propose_experience_evolution",
+    "_ensure_mandatory_gaps",
 ]

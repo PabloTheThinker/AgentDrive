@@ -318,6 +318,98 @@ def cmd_genomes(args: argparse.Namespace) -> int:
     return 1
 
 
+def cmd_patterns(args: argparse.Namespace) -> int:
+    """Fabric-style pattern-as-genome catalog (list / show / apply)."""
+    setup_logging()
+    from agentdrive.patterns import (
+        PatternNotFoundError,
+        apply_pattern,
+        get_pattern,
+        list_patterns,
+    )
+
+    subcommand = getattr(args, "patterns_subcommand", None) or "list"
+
+    if subcommand == "list":
+        patterns = list_patterns()
+        if not patterns:
+            console.print("[yellow]No patterns found.[/]")
+            console.print(
+                "[dim]Bundled patterns live under genomes/patterns/; "
+                "user overlays go in ~/.agentdrive/patterns/[/]"
+            )
+            return 0
+
+        table = Table(title=f"Patterns ({len(patterns)})", show_header=True)
+        table.add_column("Name", style="bold cyan")
+        table.add_column("Source")
+        table.add_column("Version")
+        table.add_column("Path", overflow="fold")
+        for record in patterns:
+            version = record.manifest.version if record.manifest else "-"
+            table.add_row(record.name, record.source, version, str(record.path))
+        console.print(table)
+        return 0
+
+    if subcommand == "show":
+        name = getattr(args, "pattern_name", None)
+        if not name:
+            console.print("[red]Usage: agentdrive patterns show <name>[/]")
+            return 1
+        try:
+            record = get_pattern(name)
+        except PatternNotFoundError:
+            console.print(f"[red]Pattern not found:[/] {name}")
+            return 1
+
+        manifest = record.manifest
+        title = manifest.id if manifest else name
+        version = manifest.version if manifest else "-"
+        description = ""
+        if record.framework:
+            description = str(record.framework.get("description", "")).strip()
+        system_path = record.path / "system.md"
+        system_preview = ""
+        if system_path.is_file():
+            system_preview = system_path.read_text(encoding="utf-8").strip()
+            if len(system_preview) > 1200:
+                system_preview = system_preview[:1200] + "\n…"
+
+        body = (
+            f"[bold]{title}[/]  v{version}\n"
+            f"Source: {record.source}\n"
+            f"Path: {record.path}\n"
+        )
+        if description:
+            body += f"\n{description}\n"
+        if system_preview:
+            body += f"\n[dim]system.md preview:[/]\n{system_preview}"
+        console.print(Panel(body, title=f"Pattern: {name}", border_style="cyan"))
+        return 0
+
+    if subcommand == "apply":
+        name = getattr(args, "pattern_name", None)
+        if not name:
+            console.print("[red]Usage: agentdrive patterns apply <name> [--input TEXT][/]")
+            return 1
+        input_text = getattr(args, "input", None)
+        if input_text is None:
+            if not sys.stdin.isatty():
+                input_text = sys.stdin.read()
+            else:
+                input_text = ""
+        try:
+            prompt = apply_pattern(name, input_text)
+        except PatternNotFoundError:
+            console.print(f"[red]Pattern not found:[/] {name}")
+            return 1
+        console.print(prompt)
+        return 0
+
+    console.print("[red]Unknown patterns subcommand[/]")
+    return 1
+
+
 def cmd_scan(args: argparse.Namespace) -> int:
     setup_logging()
 
@@ -2681,6 +2773,34 @@ Self-manage:
     p.add_argument("subcommand", nargs="?", choices=["list", "info"], default="list")
     p.add_argument("id", nargs="?", help="Genome ID for 'info'")
     p.set_defaults(func=cmd_genomes)
+
+    # patterns — Fabric-style pattern-as-genome catalog
+    p = subparsers.add_parser(
+        "patterns",
+        help="Fabric-style pattern catalog (bundled genomes/patterns + ~/.agentdrive/patterns overlay)",
+    )
+    pat_subs = p.add_subparsers(dest="patterns_subcommand")
+
+    pat_list = pat_subs.add_parser("list", help="List available patterns")
+    pat_list.set_defaults(func=cmd_patterns)
+
+    pat_show = pat_subs.add_parser("show", help="Show pattern metadata and system.md preview")
+    pat_show.add_argument("pattern_name", help="Pattern directory name (e.g. morning-brief-v1)")
+    pat_show.set_defaults(func=cmd_patterns)
+
+    pat_apply = pat_subs.add_parser(
+        "apply", help="Compose system+user prompt with {{input}} replaced"
+    )
+    pat_apply.add_argument("pattern_name", help="Pattern directory name (e.g. morning-brief-v1)")
+    pat_apply.add_argument(
+        "--input",
+        default=None,
+        help="Input text for {{input}} (reads stdin when omitted and not a TTY)",
+    )
+    pat_apply.set_defaults(func=cmd_patterns)
+
+    # default behavior when no subcommand is given: list
+    p.set_defaults(func=cmd_patterns, patterns_subcommand="list")
 
     # scan
     p = subparsers.add_parser("scan", help="Scan runs / trajectories and extract candidate Genomes")

@@ -147,6 +147,57 @@ class SynthesisResult:
             f"graph_edges={self.graph_hits}, schema={self.schema_pack_used or 'n/a'})"
         )
 
+    def to_mcp_dict(self) -> dict[str, Any]:
+        """Serialize synthesis output for MCP ``agentdrive_think`` responses."""
+        cid = get_correlation_id() or new_correlation_id()
+        return {
+            "answer": self.answer,
+            "citations": [
+                {
+                    "source_type": c.source_type,
+                    "source_id": c.source_id,
+                    "snippet": c.snippet,
+                    "confidence": c.confidence,
+                }
+                for c in self.citations
+            ],
+            "gaps": [
+                {
+                    "description": g.description,
+                    "severity": g.severity,
+                    "suggested_action": g.suggested_action,
+                }
+                for g in self.gaps
+            ],
+            "contradictions": list(self.contradictions),
+            "genomes_used": list(self.genomes_used),
+            "correlation_id": cid,
+        }
+
+
+def _ensure_mandatory_gaps(result: dict[str, Any], question: str) -> dict[str, Any]:
+    """Guarantee at least one honest gap in MCP synthesis payloads.
+
+    MCP clients must never receive a gap-free synthesis — empty evidence surfaces
+    as an explicit high-severity gap rather than false confidence.
+    """
+    gaps = result.get("gaps")
+    if not isinstance(gaps, list):
+        gaps = []
+        result["gaps"] = gaps
+    if not gaps:
+        gaps.append(
+            {
+                "description": f"Insufficient evidence in drive for full answer on: {question}",
+                "severity": "high",
+                "suggested_action": (
+                    "Ingest more specialized genomes or record reasoning traces "
+                    "via experience_graph_record_reasoning."
+                ),
+            }
+        )
+    return result
+
 
 def run_synthesis(
     question: str,

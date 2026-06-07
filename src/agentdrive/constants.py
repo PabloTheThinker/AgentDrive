@@ -227,6 +227,11 @@ def get_cache_dir() -> Path:
     return get_agentdrive_home() / "cache"
 
 
+def get_learnings_dir() -> Path:
+    """Append-only project learnings (gstack-style JSONL per repo slug)."""
+    return get_agentdrive_home() / "learnings"
+
+
 def get_default_drive_path() -> Path:
     """Path to the AgentDrive data directory (persistent ingest logs, drive metadata, etc.)."""
     return get_agentdrive_home() / "drive"
@@ -306,6 +311,7 @@ __all__ = [
     "get_genomes_dir",
     "get_logs_dir",
     "get_cache_dir",
+    "get_learnings_dir",
     "get_default_drive_path",
     "get_swarms_dir",
     "get_swarm_drive_path",

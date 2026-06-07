@@ -190,6 +190,78 @@ class Harness:
         injection = f"\n\nRelevant DNA from AgentDrive:\n{dna_block}{framework_injection}\n{extra_instructions}"
         return base_prompt + injection
 
+    def compose_context(
+        self,
+        base_prompt: str,
+        slug: str | None = None,
+        *,
+        extra_instructions: str = "",
+        use_framework_steps: bool = True,
+        learnings_limit: int = 3,
+    ) -> str:
+        """Augment a prompt with DNA plus top project learnings for the current task."""
+        if self.current_task and not self.pulled_dna:
+            try:
+                self.pull_relevant_dna(self.current_task)
+            except Exception:
+                logger.debug("pull_relevant_dna skipped during compose_context", exc_info=True)
+
+        prompt = self.inject_into_context(
+            base_prompt,
+            extra_instructions=extra_instructions,
+            use_framework_steps=use_framework_steps,
+        )
+
+        from agentdrive.learnings import LearningsStore
+
+        store = LearningsStore(slug=slug)
+        task = self.current_task or ""
+        if task:
+            learnings = store.search(task, limit=learnings_limit)
+            if not learnings and store.count():
+                learnings = store.list_recent(limit=learnings_limit)
+        else:
+            learnings = store.list_recent(limit=learnings_limit)
+        if not learnings:
+            return prompt
+
+        lines = []
+        for entry in learnings:
+            key = entry.get("key", "unknown")
+            typ = entry.get("type", "unknown")
+            insight = entry.get("insight", "")
+            lines.append(f"- [{key}] ({typ}): {insight}")
+
+        return prompt + "\n\nProject learnings:\n" + "\n".join(lines)
+
+    def record_learning(
+        self,
+        insight: str,
+        key: str,
+        *,
+        skill: str = "harness",
+        learning_type: str = "operational",
+        confidence: int = 7,
+        source: str = "observed",
+        slug: str | None = None,
+        files: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Append a project learning to the slug-scoped JSONL store."""
+        from agentdrive.learnings import LearningsStore
+
+        store = LearningsStore(slug=slug)
+        entry: dict[str, Any] = {
+            "skill": skill,
+            "type": learning_type,
+            "key": key,
+            "insight": insight,
+            "confidence": confidence,
+            "source": source,
+        }
+        if files:
+            entry["files"] = files
+        return store.log(entry)
+
     @contextmanager
     def task_context(self, task_description: str):
         """Context manager for a single job. Automatically pulls DNA and records the run."""

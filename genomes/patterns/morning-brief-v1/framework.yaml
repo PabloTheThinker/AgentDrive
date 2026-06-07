@@ -1,0 +1,39 @@
+framework:
+  id: morning-brief
+  version: 1.0.0
+  display_name: Morning Brief
+  description: >
+    Fabric-style pattern genome that turns raw daily context (calendar snippets,
+    todos, notes) into a prioritized morning briefing.
+  category: productivity
+  tags:
+    - morning-brief
+    - planning
+    - fabric-pattern
+  inputs:
+    - name: input
+      type: string
+      required: true
+      description: Raw context for the day (calendar, todos, notes, priorities).
+  steps:
+    - id: ingest_context
+      type: reasoning
+      description: Parse the operator's raw input and extract dated commitments.
+    - id: rank_priorities
+      type: reasoning
+      depends_on:
+        - ingest_context
+      description: Rank top priorities by urgency, impact, and time sensitivity.
+    - id: surface_risks
+      type: reasoning
+      depends_on:
+        - rank_priorities
+      description: Flag conflicts, blockers, and missing prep for today's commitments.
+    - id: compose_brief
+      type: validate
+      depends_on:
+        - surface_risks
+      description: Produce the final morning brief in the OUTPUT format.
+  output:
+    formats:
+      - markdown

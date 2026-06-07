@@ -18,7 +18,7 @@ Or via the Agent Drive CLI (once wired):
     agentdrive mcp serve
 
 Once running, the client AI is given tools such as:
-    agentdrive_pool_query, agentdrive_get_dna_for_task, agentdrive_pool_status, agentdrive_list_swarms,
+    agentdrive_think, agentdrive_pool_query, agentdrive_get_dna_for_task, agentdrive_pool_status, agentdrive_list_swarms,
     agentdrive_get_settings, agentdrive_record_outcome, experience_graph_* (v3 fabric surfaces),
     agentdrive_inhabitant_read_source, agentdrive_inhabitant_propose_code_change,
     agentdrive_inhabitant_apply_change, etc.
@@ -151,6 +151,11 @@ def create_mcp_server() -> FastMCP:
             "- agentdrive_register_program(manifest: dict, swarm_id?): Validates basic UserSovereigntyClause (requires program_id/id + user_objective_refs) + auto-binds the Program Contract (research-constitution-ad-grid-program-contract@stabilization-wave-20260531) + wires the three Council constitutions. Delegates to GridEngine.register_model_program (recorder fallback in engine). Returns {registered, program_id, manifest_slug, user_objective_refs, drive, note}. The returned program_id (e.g. 'my-grok-inhabitant@stabilization-wave-20260531') MUST be supplied on all future calls for attribution. This is the canonical ExternalBridge on-ramp: external programs declare as inhabitants and emit living DNA.\n"
             "- agentdrive_get_council_activity(roles: list[str]|None=None, limit: int=20, swarm_id?): Queries recent activity from the three Council constitutions (PerfectionistOptimizer, GuardianIntegrity, ExternalBridge) + Program Contract via the Experience Graph fabric (parent_fabric_reasoning traces, reasoning-for-element, inhabitant code actions). Returns recent proposals/verdicts/DNA traces with gbrain_signal_score. Use to observe autonomous Council work, sync on proposals, and ground your own actions. Roles filter e.g. ['perfectionist', 'guardian'].\n"
             "- How external programs declare: Call agentdrive_register_program with manifest={'program_id': 'your-id', 'user_objective_refs': ['improve-via-mcp', ...], 'constitution_refs': ['research-constitution-external-bridge@stabilization-wave-20260531', ...], 'current_mandate': '...' }. Then use the program_id everywhere + experience_graph_record_reasoning for your structural rationale.\n\n"
+            "Primary synthesis surface (mandatory gaps):\n"
+            "- agentdrive_think(question, swarm_id?, subagent_id?, prefer_experience_layer=True): "
+            "the canonical Drive.think entrypoint for cited synthesis with honest gap analysis. "
+            "Always returns gaps (at least one) — never gap-free confidence. "
+            "Use for non-trivial questions requiring fused genomes + graph signals + explicit contradictions.\n\n"
             "Primary tools (Experience Graph v3):\n"
             "- experience_graph_get_context_pack (your main briefing)\n"
             "- experience_graph_find_structural_similarities\n"
@@ -216,6 +221,30 @@ def create_mcp_server() -> FastMCP:
         pool = adapter.get_scoped_pool()
         packets = pool.get_dna_for_task(task, top_k=top_k)
         return json.dumps({"task": task, "dna_packets": packets}, indent=2, default=str)
+
+    @mcp.tool()
+    def agentdrive_think(
+        question: str,
+        swarm_id: str | None = None,
+        subagent_id: str | None = None,
+        prefer_experience_layer: bool = True,
+    ) -> str:
+        """Primary synthesis surface: cited Drive.think answers with mandatory gap analysis.
+
+        Returns JSON with answer, citations, gaps (always at least one honest gap),
+        contradictions, genomes_used, and correlation_id for observability.
+        """
+        from agentdrive.synthesis.engine import _ensure_mandatory_gaps
+
+        pool = _get_pool(swarm_id, subagent_id)
+        try:
+            result = pool.think(question, prefer_experience_layer=prefer_experience_layer)
+            payload = result.to_mcp_dict()
+            payload = _ensure_mandatory_gaps(payload, question)
+            return json.dumps(payload, indent=2, default=str)
+        except Exception as exc:
+            logger.exception("agentdrive_think failed")
+            return json.dumps({"error": str(exc), "question": question})
 
     @mcp.tool()
     def agentdrive_list_swarms() -> str:

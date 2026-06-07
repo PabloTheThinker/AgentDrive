@@ -1,0 +1,26 @@
+{
+  "id": "morning-brief",
+  "version": "1.0.0",
+  "content_hash": "sha256:pending",
+  "created": "2026-06-07T08:00:00",
+  "last_improved": "2026-06-07T08:00:00",
+  "authors": [
+    {
+      "type": "human",
+      "name": "AgentDrive Contributors"
+    }
+  ],
+  "applicability": {
+    "domains": ["productivity", "planning", "daily-ops"],
+    "problem_signatures": [
+      "need a concise morning briefing from scattered notes",
+      "prioritize the day from calendar and task context"
+    ]
+  },
+  "dependencies": {
+    "genomes": [],
+    "agent_capabilities": ["summarization", "prioritization"]
+  },
+  "evaluation_score": {},
+  "schema_version": "1.0"
+}

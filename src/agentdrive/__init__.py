@@ -183,6 +183,12 @@ from agentdrive.constants import (
     AGENTDRIVE_VERSION,
     get_agentdrive_config_path,
     get_agentdrive_home,
+    get_learnings_dir,
+)
+from agentdrive.learnings import (
+    LearningsStore,
+    ingest_learnings_to_experience,
+    resolve_learnings_slug,
 )
 
 # First-class re-exports for the deep high-continuity Conductor integration points
@@ -362,6 +368,10 @@ __all__ = [
     # Config & Constants
     "get_agentdrive_home",
     "get_agentdrive_config_path",
+    "get_learnings_dir",
+    "LearningsStore",
+    "resolve_learnings_slug",
+    "ingest_learnings_to_experience",
     "ensure_agentdrive_home",
     "load_config",
     "save_config",

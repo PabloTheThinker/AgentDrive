@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Phase B — Gstack-inspired swarm: learnings JSONL, MCP think+gaps, patterns catalog (2026-06-07)
+Parallel implementation pass (three workstreams) adopting gstack/Fabric patterns from research roadmap.
+
+- **Learnings JSONL** (`src/agentdrive/learnings/`): append-only `~/.agentdrive/learnings/<slug>.jsonl` with `LearningsStore` (log/search/list_recent/count), `ingest_learnings_to_experience()` → living-experience observations, `get_learnings_dir()`. Harness: `compose_context()` preloads top learnings; `record_learning()` appends entries.
+- **MCP `agentdrive_think`**: primary synthesis surface calling `pool.think()`; returns `{answer, citations, gaps, contradictions, genomes_used, correlation_id}` via `SynthesisResult.to_mcp_dict()`. `_ensure_mandatory_gaps()` injects honest high-severity gap when synthesis returns none (Gbrain-style).
+- **Pattern-as-genome catalog** (`src/agentdrive/patterns/`): bundled `genomes/patterns/morning-brief-v1/` (manifest + framework.yaml + Fabric-compatible `system.md`); user overlay at `~/.agentdrive/patterns/`. CLI: `agentdrive patterns list|show|apply`.
+- **Tests:** 22 new tests (`test_learnings`, `test_mcp_think`, `test_patterns`, `test_bootstrap_registry`). Full suite **395 passed**, 1 pre-existing flaky reconciliation test.
+
 ### Phase A — First-run bootstrap registry fix + `0.3.0-alpha` (2026-06-07)
 Laptop development pass (parallax drive data intentionally stays on parallax; code syncs via git).
 
