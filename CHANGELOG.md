@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Phase F — MCP ops bridge, RRF retrieval, eval replay, dream MC panel (2026-06-07) · `0.3.1-alpha`
+Roadmap completion pass: closes items 9–15 from the 90-day improvement plan.
+
+- **MCP auto-registration** (`operations/mcp_bridge.py`): all 25 registry ops exposed as MCP tools via `run_operation()`; hand-written tools skipped when already registered.
+- **RRF fusion** (`drive/retrieval.py`): opt-in Reciprocal Rank Fusion across structural/reasoning/graph/recency/experience rankers (`AGENTDRIVE_RRF_FUSION=1` or `DriveSettings.use_rrf_fusion`).
+- **Eval replay MVP** (`eval/replay.py`): re-score shipped research-thread artifacts with `MultiMetricEvaluationHarness`; `tests/test_eval_replay.py`.
+- **Install smoke** (`scripts/install_smoke.sh`): fresh-venv doctor + dream dry-run + `01_hello_drive.py`; wired into release CI gate.
+- **Dream Mission Control panel**: `DreamPhaseEvent`, phase telemetry from `dreaming/cycle.py`, `GET /api/dream/status`, Tower DREAM CYCLE bay + `dream_run`/`dream_status` commands.
+- **Version** `0.3.1-alpha`.
+
 ### Phase E — Ops registry, dream cycle, Experience Graph tests (2026-06-07)
 Parallel swarm pass (gbrain operations discipline + dream cycle + EG coverage).
 

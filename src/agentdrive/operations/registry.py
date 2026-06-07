@@ -648,7 +648,7 @@ OPERATIONS: list[OperationSpec] = [
         category="drive",
         read_only=True,
         cli_command="agentdrive drive stats",
-        mcp_tool=None,
+        mcp_tool="agentdrive_pool_stats",
     ),
     OperationSpec(
         name="ingest_genome",
@@ -664,7 +664,7 @@ OPERATIONS: list[OperationSpec] = [
         category="reconcile",
         read_only=True,
         cli_command="agentdrive reconcile run",
-        mcp_tool=None,
+        mcp_tool="agentdrive_reconcile_scan",
     ),
     OperationSpec(
         name="reconcile_seed",
@@ -672,7 +672,7 @@ OPERATIONS: list[OperationSpec] = [
         category="reconcile",
         read_only=False,
         cli_command="agentdrive reconcile seed-experience-v3",
-        mcp_tool=None,
+        mcp_tool="agentdrive_reconcile_seed",
     ),
     OperationSpec(
         name="reconcile_status",
@@ -680,7 +680,7 @@ OPERATIONS: list[OperationSpec] = [
         category="reconcile",
         read_only=True,
         cli_command="agentdrive reconcile status",
-        mcp_tool=None,
+        mcp_tool="agentdrive_reconcile_status",
     ),
     OperationSpec(
         name="doctor",
@@ -688,7 +688,7 @@ OPERATIONS: list[OperationSpec] = [
         category="system",
         read_only=True,
         cli_command="agentdrive doctor",
-        mcp_tool=None,
+        mcp_tool="agentdrive_doctor",
     ),
     OperationSpec(
         name="doctor_verbose",
@@ -696,7 +696,7 @@ OPERATIONS: list[OperationSpec] = [
         category="system",
         read_only=True,
         cli_command="agentdrive doctor --verbose",
-        mcp_tool=None,
+        mcp_tool="agentdrive_doctor_verbose",
     ),
     OperationSpec(
         name="sprint_ship",
@@ -704,7 +704,7 @@ OPERATIONS: list[OperationSpec] = [
         category="sprint",
         read_only=False,
         cli_command="agentdrive sprint ship",
-        mcp_tool=None,
+        mcp_tool="agentdrive_sprint_ship",
     ),
     OperationSpec(
         name="sprint_status",
@@ -712,7 +712,7 @@ OPERATIONS: list[OperationSpec] = [
         category="sprint",
         read_only=True,
         cli_command="agentdrive sprint status",
-        mcp_tool=None,
+        mcp_tool="agentdrive_sprint_status",
     ),
     OperationSpec(
         name="patterns_list",
@@ -720,7 +720,7 @@ OPERATIONS: list[OperationSpec] = [
         category="patterns",
         read_only=True,
         cli_command="agentdrive patterns list",
-        mcp_tool=None,
+        mcp_tool="agentdrive_patterns_list",
     ),
     OperationSpec(
         name="patterns_show",
@@ -728,7 +728,7 @@ OPERATIONS: list[OperationSpec] = [
         category="patterns",
         read_only=True,
         cli_command="agentdrive patterns show",
-        mcp_tool=None,
+        mcp_tool="agentdrive_patterns_show",
     ),
     OperationSpec(
         name="patterns_apply",
@@ -736,7 +736,7 @@ OPERATIONS: list[OperationSpec] = [
         category="patterns",
         read_only=True,
         cli_command="agentdrive patterns apply",
-        mcp_tool=None,
+        mcp_tool="agentdrive_patterns_apply",
     ),
     OperationSpec(
         name="patterns_import_fabric",
@@ -744,7 +744,7 @@ OPERATIONS: list[OperationSpec] = [
         category="patterns",
         read_only=False,
         cli_command="agentdrive patterns import-fabric",
-        mcp_tool=None,
+        mcp_tool="agentdrive_patterns_import_fabric",
     ),
     OperationSpec(
         name="dream_run",
@@ -752,7 +752,7 @@ OPERATIONS: list[OperationSpec] = [
         category="dreaming",
         read_only=False,
         cli_command=None,
-        mcp_tool=None,
+        mcp_tool="agentdrive_dream_run",
     ),
     OperationSpec(
         name="dream_status",
@@ -760,7 +760,7 @@ OPERATIONS: list[OperationSpec] = [
         category="dreaming",
         read_only=True,
         cli_command=None,
-        mcp_tool=None,
+        mcp_tool="agentdrive_dream_status",
     ),
     OperationSpec(
         name="cap_mint_mission",
@@ -768,7 +768,7 @@ OPERATIONS: list[OperationSpec] = [
         category="mission_control",
         read_only=False,
         cli_command="agentdrive cap mint-mission",
-        mcp_tool=None,
+        mcp_tool="agentdrive_cap_mint_mission",
     ),
     OperationSpec(
         name="experience_graph_context_pack",
@@ -800,7 +800,7 @@ OPERATIONS: list[OperationSpec] = [
         category="learnings",
         read_only=False,
         cli_command=None,
-        mcp_tool=None,
+        mcp_tool="agentdrive_learnings_log",
     ),
     OperationSpec(
         name="learnings_list",
@@ -808,7 +808,7 @@ OPERATIONS: list[OperationSpec] = [
         category="learnings",
         read_only=True,
         cli_command=None,
-        mcp_tool=None,
+        mcp_tool="agentdrive_learnings_list",
     ),
     OperationSpec(
         name="harness_compose",
@@ -816,7 +816,7 @@ OPERATIONS: list[OperationSpec] = [
         category="harness",
         read_only=True,
         cli_command=None,
-        mcp_tool=None,
+        mcp_tool="agentdrive_harness_compose",
     ),
 ]
 

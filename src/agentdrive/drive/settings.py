@@ -39,6 +39,9 @@ class DriveSettings:
     # Whether the Drive is allowed to propose improvements back to parent swarms
     allow_upward_proposals: bool = True
 
+    # Use Reciprocal Rank Fusion in Drive.query (opt-in; env AGENTDRIVE_RRF_FUSION=1 also enables)
+    use_rrf_fusion: bool = False
+
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 

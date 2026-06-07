@@ -109,6 +109,20 @@ class GridHealthEvent(MissionEvent):
     health: dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass
+class DreamPhaseEvent(MissionEvent):
+    """Telemetry for one phased dream maintenance cycle step."""
+
+    phase_id: str = ""
+    phase_name: str = ""
+    success: bool = True
+    dry_run: bool = False
+    duration_ms: int = 0
+    stop_gate: bool = False
+    run_id: str = ""
+    detail: dict[str, Any] = field(default_factory=dict)
+
+
 # Convenience type for all events the frontend might receive
 MissionEventType = (
     LoopStepEvent
@@ -117,4 +131,5 @@ MissionEventType = (
     | OverseerStateEvent
     | StaticFireEvent
     | GridHealthEvent
+    | DreamPhaseEvent
 )

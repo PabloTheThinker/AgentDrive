@@ -29,6 +29,36 @@ DREAM_LOCK_NAME = "dream.lock"
 DREAM_AUDIT_REL = Path("logs") / "dream-cycle.jsonl"
 
 
+def _publish_dream_phase_event(
+    result: "DreamCycleResult",
+    *,
+    run_id: str,
+    stop_gate: bool,
+) -> None:
+    """Emit DreamPhaseEvent to Mission Control (silent when hub unavailable)."""
+    try:
+        from agentdrive.mission_control.events import DreamPhaseEvent
+        from agentdrive.mission_control.server import publish_event_sync
+
+        publish_event_sync(
+            DreamPhaseEvent(
+                event_type="dream_phase",
+                timestamp=time.time(),
+                phase_id=result.phase_id,
+                phase_name=result.phase_name,
+                success=result.success,
+                dry_run=result.dry_run,
+                duration_ms=result.duration_ms,
+                stop_gate=stop_gate,
+                run_id=run_id,
+                detail=result.detail,
+                metadata={"source": "dreaming.cycle", "stabilization_wave": "stabilization-wave-20260531"},
+            )
+        )
+    except Exception:
+        pass
+
+
 @dataclass(frozen=True)
 class DreamPhaseSpec:
     """One phase in the ordered dream cycle."""
@@ -506,6 +536,7 @@ def run_dream_cycle(
             result.duration_ms = result.duration_ms or int((time.monotonic() - t_phase) * 1000)
             results.append(result)
             _append_audit(run_id=run_id, result=result, home=agent_home, extra={"run_complete": False})
+            _publish_dream_phase_event(result, run_id=run_id, stop_gate=spec.stop_gate)
 
             if not result.success:
                 break

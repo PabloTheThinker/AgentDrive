@@ -182,6 +182,31 @@ def test_rich_static_fire_telemetry_publish_and_context(phase):
         mc_server.hub = orig
 
 
+def test_dream_phase_events_on_dry_run(isolated_agentdrive_home) -> None:
+    """Phased dream cycle emits DreamPhaseEvent telemetry to Mission Control."""
+    from agentdrive.dreaming.cycle import run_dream_cycle
+
+    hub = MissionControlHub()
+    import agentdrive.mission_control.server as mc_server
+
+    orig = mc_server.hub
+    try:
+        mc_server.hub = hub
+        results = run_dream_cycle(dry_run=True, acquire_lock=False, home=isolated_agentdrive_home)
+        assert len(results) == 5
+        dream_events = [e for e in hub.recent_events if e.get("event_type") == "dream_phase"]
+        assert len(dream_events) >= 5
+    finally:
+        mc_server.hub = orig
+
+
+def test_dream_run_command_without_mission(isolated_agentdrive_home) -> None:
+    hub = MissionControlHub()
+    result = hub.dispatch_command("dream_run", dry_run=True, operator_bypass=True)
+    assert result.get("error") != "no_mission_attached"
+    assert result.get("phases_completed") == 5
+
+
 def test_daily_dream_emission_path_via_durable_helper():
     """Covers the new daily/dream _publish_mission_event surface (used by run_daily_consolidation_job + dream phases)."""
     # Import the internal helper (the exact emission point for durable daily/dream)

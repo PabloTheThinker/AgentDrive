@@ -943,6 +943,17 @@ def create_mcp_server() -> FastMCP:
         except Exception as exc:
             return json.dumps({"error": str(exc), "swarm_id": effective_swarm})
 
+    from agentdrive.operations.mcp_bridge import (
+        existing_mcp_tool_names,
+        register_operations_as_mcp_tools,
+    )
+
+    register_operations_as_mcp_tools(
+        mcp,
+        skip_names=existing_mcp_tool_names(mcp),
+        expose_unmapped=True,
+    )
+
     return mcp
 
 

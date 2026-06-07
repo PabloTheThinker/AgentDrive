@@ -296,7 +296,7 @@ def get_swarm_drive_path(swarm_id: str, subagent_id: str | None = None) -> Path:
 
 
 # Version and identifiers
-AGENTDRIVE_VERSION = "0.3.0-alpha"  # Keep in sync with __init__.py and pyproject
+AGENTDRIVE_VERSION = "0.3.1-alpha"  # Keep in sync with __init__.py and pyproject
 
 # Default config keys (used by config.py)
 DEFAULT_AGENTDRIVE_HOME_NAME = ".agentdrive"

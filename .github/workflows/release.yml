@@ -64,6 +64,12 @@ jobs:
       - name: pytest
         run: pytest tests/ -v --tb=short
 
+      - name: Build wheel + install smoke
+        run: |
+          python -m build
+          chmod +x scripts/install_smoke.sh
+          ./scripts/install_smoke.sh
+
       - name: Verify tag matches pyproject version
         if: startsWith(github.ref, 'refs/tags/v')
         run: |

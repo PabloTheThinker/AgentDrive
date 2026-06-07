@@ -253,6 +253,60 @@ class MissionControlHub:
                 "surface": "local_operator_only",
             }
 
+        if command in ("dream_run", "run_dream_cycle"):
+            from dataclasses import asdict
+
+            from agentdrive.dreaming.cycle import (
+                DreamCycleLockError,
+                DreamCyclePending,
+                run_dream_cycle,
+            )
+
+            dry_run = bool(kwargs.get("dry_run", True))
+            ack_phases = kwargs.get("ack_phases") or kwargs.get("ack_phase")
+            if isinstance(ack_phases, str):
+                ack_phases = [ack_phases]
+            try:
+                results = run_dream_cycle(
+                    dry_run=dry_run,
+                    acquire_lock=not dry_run,
+                    ack_phases=list(ack_phases or []),
+                )
+                return {
+                    "command": command,
+                    "result": [asdict(r) for r in results],
+                    "phases_completed": len(results),
+                    "timestamp": time.time(),
+                    "surface": "local_operator_only",
+                }
+            except DreamCyclePending as exc:
+                return {
+                    "command": command,
+                    "status": "pending",
+                    "phase_id": exc.phase_id,
+                    "message": exc.message,
+                    "timestamp": time.time(),
+                    "surface": "local_operator_only",
+                }
+            except DreamCycleLockError as exc:
+                return {
+                    "command": command,
+                    "error": "dream_lock_held",
+                    "detail": str(exc),
+                    "timestamp": time.time(),
+                    "surface": "local_operator_only",
+                }
+
+        if command in ("dream_status", "get_dream_status"):
+            from agentdrive.dreaming.cycle import get_dream_cycle_status
+
+            return {
+                "command": command,
+                "result": get_dream_cycle_status(),
+                "timestamp": time.time(),
+                "surface": "local_operator_only",
+            }
+
         mission = self._current_mission
         if mission is None:
             return {
@@ -1017,6 +1071,31 @@ def create_mission_control_app() -> FastAPI:
     # These are defensive and always available when Grid is attached (via attach_grid or mission.grid).
     # They power the stable "Grid Living View" / inhabitant dashboards even in quiet/idle mode.
     # No mission required. Tower uses these + WS GridHealthEvent for adaptive quiet banners.
+
+    @app.get("/api/dream/status")
+    async def dream_status_api():
+        """Dream cycle lock + phase manifest + last audit entry."""
+        from agentdrive.dreaming.cycle import get_dream_cycle_status
+
+        status = get_dream_cycle_status()
+        recent = [
+            e
+            for e in hub.recent_events[-30:]
+            if getattr(e, "event_type", "") == "dream_phase"
+        ]
+        status["recent_phase_events"] = [
+            {
+                "phase_id": getattr(e, "phase_id", ""),
+                "phase_name": getattr(e, "phase_name", ""),
+                "success": getattr(e, "success", True),
+                "dry_run": getattr(e, "dry_run", False),
+                "duration_ms": getattr(e, "duration_ms", 0),
+                "run_id": getattr(e, "run_id", ""),
+                "timestamp": getattr(e, "timestamp", 0.0),
+            }
+            for e in recent
+        ]
+        return status
 
     @app.get("/api/grid/health")
     async def get_grid_health():

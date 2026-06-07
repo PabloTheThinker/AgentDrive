@@ -657,6 +657,31 @@
         </div>
       </div>
 
+      <!-- DREAM CYCLE BAY — gbrain-style maintenance phases -->
+      <div class="lg:col-span-12 mission-panel rounded-2xl p-4 border-indigo-900/50 bg-[#12101a] shadow-inner">
+        <div class="flex flex-col lg:flex-row lg:items-center gap-y-3 gap-x-5">
+          <div class="flex-1">
+            <div class="flex items-center gap-2">
+              <span class="section-title text-indigo-400 tracking-[1.5px]">DREAM CYCLE</span>
+              <div id="dream-lock-pill" class="status-pill bg-indigo-900/40 border border-indigo-700/50 text-indigo-300">IDLE</div>
+            </div>
+            <div class="text-[11px] text-indigo-400/60 mt-0.5">reconcile → extract_links → consolidate (STOP) → grade_confidence → purge_stale (STOP)</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="sendCommand('dream_run', {dry_run: true})"
+                    class="px-4 py-1.5 bg-gradient-to-b from-indigo-500 to-indigo-600 hover:from-indigo-400 text-white font-semibold rounded-lg text-sm">
+              DRY RUN
+            </button>
+            <button onclick="sendCommand('dream_status')"
+                    class="px-3 py-1.5 text-xs border border-indigo-700 hover:bg-indigo-950/40 rounded-lg text-indigo-300">
+              STATUS
+            </button>
+          </div>
+        </div>
+        <div id="dream-phases" class="mt-3 flex flex-wrap gap-2 text-xs"></div>
+        <div id="dream-audit-tail" class="mt-2 font-mono text-[10px] text-indigo-200/80 truncate">Awaiting dream cycle…</div>
+      </div>
+
       <!-- v1.5 MULTI-FIRE COMPARISON PANEL (side-by-side historical StaticFireTelemetry) -->
       <div class="lg:col-span-12 mission-panel rounded-2xl p-3 border-orange-900/40">
         <div class="flex items-baseline justify-between mb-1.5 px-0.5">
@@ -714,6 +739,7 @@
           <label class="inline-flex items-center gap-1 px-1.5 cursor-pointer"><input type="checkbox" data-filter="overseer_state" checked class="accent-teal-400"> <span class="text-teal-300">OVERSEER</span></label>
           <label class="inline-flex items-center gap-1 px-1.5 cursor-pointer"><input type="checkbox" data-filter="static_fire" checked class="accent-orange-400"> <span class="text-orange-300">FIRE</span></label>
           <label class="inline-flex items-center gap-1 px-1.5 cursor-pointer"><input type="checkbox" data-filter="grid_health" checked class="accent-emerald-400"> <span class="text-emerald-300">GRID</span></label>
+          <label class="inline-flex items-center gap-1 px-1.5 cursor-pointer"><input type="checkbox" data-filter="dream_phase" checked class="accent-indigo-400"> <span class="text-indigo-300">DREAM</span></label>
         </div>
       </div>
 
@@ -1051,7 +1077,7 @@
     let reconnectTimer = null;
     let reconnectDelay = 800;
     const MAX_EVENTS = 260;
-    let filterTypes = new Set(["loop_step", "fabric_update", "parent_decision", "overseer_state", "static_fire", "grid_health"]);
+    let filterTypes = new Set(["loop_step", "fabric_update", "parent_decision", "overseer_state", "static_fire", "grid_health", "dream_phase"]);
 
     const STEP_DEFS = [
       { num: 1, label: "EXPERIENCE", short: "1. SIG GEN", desc: "Experience Layer + Runtime generating signals" },
@@ -2072,6 +2098,54 @@
     const _origBoot = window.boot || (window.onload && window.onload.toString().includes('boot') ? null : null);
     // We append to the load flow below via a small patch after boot definition
 
+    // === DREAM CYCLE BAY ===
+    const DREAM_PHASE_ORDER = ["reconcile", "extract_links", "consolidate", "grade_confidence", "purge_stale"];
+    const DREAM_STOP_GATES = new Set(["consolidate", "purge_stale"]);
+
+    function renderDreamPhasePills(activePhase) {
+      const container = document.getElementById("dream-phases");
+      if (!container) return;
+      container.innerHTML = DREAM_PHASE_ORDER.map((pid) => {
+        const stop = DREAM_STOP_GATES.has(pid) ? " STOP" : "";
+        const active = pid === activePhase;
+        const cls = active
+          ? "bg-indigo-600/50 border-indigo-400 text-indigo-100"
+          : "bg-black/30 border-indigo-900/40 text-indigo-300/70";
+        return `<span class="px-2 py-1 rounded-lg border text-[10px] font-mono ${cls}">${pid}${stop}</span>`;
+      }).join("");
+    }
+
+    function updateDreamPhase(evt) {
+      const d = evt.data || evt;
+      const pid = d.phase_id || evt.phase_id || "";
+      const pill = document.getElementById("dream-lock-pill");
+      if (pill) {
+        pill.textContent = d.success === false ? "FAILED" : (d.dry_run ? "DRY-RUN" : "RUNNING");
+      }
+      renderDreamPhasePills(pid);
+      const tail = document.getElementById("dream-audit-tail");
+      if (tail) {
+        const ms = d.duration_ms != null ? d.duration_ms : evt.duration_ms;
+        tail.textContent = `${pid || "?"} • ${d.phase_name || evt.phase_name || ""} • ${ms || 0}ms • run=${d.run_id || evt.run_id || "?"}`;
+      }
+    }
+
+    async function refreshDreamBay() {
+      try {
+        const res = await fetch("/api/dream/status");
+        const data = await res.json();
+        const pill = document.getElementById("dream-lock-pill");
+        if (pill) pill.textContent = data.lock_held ? "LOCKED" : "IDLE";
+        renderDreamPhasePills((data.recent_phase_events || []).slice(-1)[0]?.phase_id || "");
+        const tail = document.getElementById("dream-audit-tail");
+        if (tail && data.last_run) {
+          tail.textContent = JSON.stringify(data.last_run).slice(0, 180);
+        }
+      } catch (_) {}
+    }
+
+    setTimeout(() => { try { refreshDreamBay(); } catch(_) {} }, 2500);
+
     // === STATIC FIRE BAY (first-class rich telemetry for controlled evolution runs) ===
     function updateStaticFire(evtData) {
       const d = evtData.data || evtData;
@@ -2529,6 +2603,9 @@
       }
       else if (et.includes("static_fire")) {
         updateStaticFire(evt);
+      }
+      else if (et.includes("dream_phase")) {
+        updateDreamPhase(evt);
       }
       else if (et.includes("grid")) {
         updateGrid((evt.data && evt.data.health) || evt.data || evt);

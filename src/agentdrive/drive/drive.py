@@ -29,6 +29,7 @@ from agentdrive.constants import (
     get_swarm_drive_path,
     new_correlation_id,
 )
+from agentdrive.drive.retrieval import fuse_scored_with_rrf
 from agentdrive.drive.settings import (
     DriveSettings,
     get_effective_drive_settings,
@@ -819,6 +820,96 @@ class AgentDrive:
             new_version=genome.manifest.version,
         )
 
+    def _rrf_fusion_enabled(self) -> bool:
+        flag = os.environ.get("AGENTDRIVE_RRF_FUSION", "").strip().lower()
+        if flag in {"1", "true", "yes", "on"}:
+            return True
+        return bool(getattr(self.settings, "use_rrf_fusion", False))
+
+    def _apply_additive_fusion(
+        self,
+        scored: list[tuple[float, Genome]],
+        signals: dict[str, dict[str, Any]],
+        page_type_map: dict[str, str],
+    ) -> None:
+        """Legacy additive graph + page_type fusion (default when RRF is off)."""
+        for i, (sc, g) in enumerate(scored):
+            gid = g.genome_id
+            sig = signals.get(gid, {})
+            gbrain_sig = sig.get("gbrain_signal_score") or sig.get("composite", 0.0)
+            rec_b = float(sig.get("recency_boost", 0.0) or sig.get("recency", 0.0))
+            trust_b = float(sig.get("swarm_trust", 0.0) or sig.get("swarm_trust_tier", 0.0))
+            src_b = float(sig.get("source_boost", 0.0) or 0.0)
+            boost = gbrain_sig or sig.get("adjacency_boost", 0.0)
+            pt_boost = 0.0
+            pt = page_type_map.get(gid, "")
+            if pt in ("living-experience", "experience-genome"):
+                pt_boost = 0.28
+            elif pt == "research-thread":
+                pt_boost = 0.25
+            elif pt in ("genome", "synthesis-artifact", "dream-observation"):
+                pt_boost = 0.14 if pt == "dream-observation" else 0.12
+            elif pt in ("experience-observation", "fusion-observation"):
+                pt_boost = 0.19
+            elif "schema" in pt:
+                pt_boost = 0.07
+            dream_b = (
+                0.09
+                if "dream" in pt or "observation" in str(getattr(g, "_page_type", ""))
+                else 0.0
+            )
+            experience_b = (
+                0.22
+                if pt
+                in (
+                    "living-experience",
+                    "experience-genome",
+                    "experience-observation",
+                    "research-thread",
+                )
+                else 0.0
+            )
+            fused = min(
+                1.0,
+                sc
+                + 0.35 * boost
+                + 0.22 * rec_b
+                + 0.18 * trust_b
+                + 0.12 * src_b
+                + pt_boost
+                + dream_b
+                + experience_b,
+            )
+            scored[i] = (fused, g)
+            try:
+                setattr(
+                    g,
+                    "_hybrid_fusion",
+                    {
+                        "mode": "additive",
+                        "base": round(sc, 3),
+                        "graph_boost": round(boost, 3),
+                        "gbrain_signal_score": round(gbrain_sig, 3),
+                        "recency_boost": round(rec_b, 3),
+                        "swarm_trust": round(trust_b, 3),
+                        "source_boost": round(src_b, 3),
+                        "pt_boost": pt_boost,
+                        "dream_boost": dream_b,
+                        "experience_boost": round(experience_b, 3),
+                        "page_type": pt,
+                        "fused_total": round(fused, 3),
+                        "experience_layer": pt
+                        in (
+                            "living-experience",
+                            "experience-genome",
+                            "experience-observation",
+                            "research-thread",
+                        ),
+                    },
+                )
+            except Exception:
+                pass
+
     def query(self, query: DriveQuery) -> list[Genome]:
         """Pull the most relevant Genomes for a given task or need.
 
@@ -857,8 +948,10 @@ class AgentDrive:
         scored: list[tuple[float, Genome]] = []
         task_desc = query.task_description or ""
         page_type_map: dict[str, str] = {}
+        relevance_map: dict[str, dict[str, Any]] = {}
         for g in cands:
             rel = self._compute_relevance(g, task_desc)
+            relevance_map[g.genome_id] = rel
             # Apply min_score to the new hybrid relevance if provided (overrides legacy min_score filter somewhat)
             if query.min_score and rel["hybrid"] < query.min_score:
                 continue
@@ -921,91 +1014,24 @@ class AgentDrive:
                 signals = compute_graph_signals(
                     kg, query_entities, swarm_context=swarm_ctx, edge_meta=edge_meta
                 )
-                # Richer hybrid fusion (Gap Closer phase): full Graph signals (gbrain_signal_score, recency, swarm_trust, source_boost from schema) + page_type + dream-obs
-                for i, (sc, g) in enumerate(scored):
-                    gid = g.genome_id
-                    sig = signals.get(gid, {})
-                    gbrain_sig = sig.get("gbrain_signal_score") or sig.get("composite", 0.0)
-                    rec_b = float(sig.get("recency_boost", 0.0) or sig.get("recency", 0.0))
-                    trust_b = float(sig.get("swarm_trust", 0.0) or sig.get("swarm_trust_tier", 0.0))
-                    src_b = float(sig.get("source_boost", 0.0) or 0.0)
-                    boost = gbrain_sig or sig.get("adjacency_boost", 0.0)
-                    # Schema page_type boost + dream-observation sources (durable dream ingestion)
-                    # Experience layer wiring: living-experience + experience-* get highest priority boost
-                    # so the fused One Experience is the daily starting point for drive.think.
-                    pt_boost = 0.0
-                    pt = page_type_map.get(gid, "")
-                    if pt in ("living-experience", "experience-genome"):
-                        pt_boost = (
-                            0.28  # strongest: makes experience the natural entry for drive.think
-                        )
-                    elif pt == "research-thread":
-                        pt_boost = 0.25  # forked research thread branch: high signal for autoresearch advancement; native experience layer v3 first-class citizen
-                    elif pt in ("genome", "synthesis-artifact", "dream-observation"):
-                        pt_boost = 0.14 if pt == "dream-observation" else 0.12
-                    elif pt in ("experience-observation", "fusion-observation"):
-                        pt_boost = 0.19
-                    elif "schema" in pt:
-                        pt_boost = 0.07
-                    # Dream-obs explicit source boost
-                    # Experience layer boost: experience-obs and living-experience get dedicated boost for Conductor daily use
-                    dream_b = (
-                        0.09
-                        if "dream" in pt or "observation" in str(getattr(g, "_page_type", ""))
-                        else 0.0
+                if self._rrf_fusion_enabled():
+                    scored = fuse_scored_with_rrf(
+                        scored,
+                        relevance_map,
+                        signals,
+                        page_type_map,
+                        edge_meta,
                     )
-                    experience_b = (
-                        0.22
-                        if pt
-                        in (
-                            "living-experience",
-                            "experience-genome",
-                            "experience-observation",
-                            "research-thread",
-                        )
-                        else 0.0
-                    )
-                    fused = min(
-                        1.0,
-                        sc
-                        + 0.35 * boost
-                        + 0.22 * rec_b
-                        + 0.18 * trust_b
-                        + 0.12 * src_b
-                        + pt_boost
-                        + dream_b
-                        + experience_b,
-                    )
-                    scored[i] = (fused, g)
-                    # Attach rich fusion metadata (Gap Closer: more result paths now carry full signals)
-                    try:
-                        setattr(
-                            g,
-                            "_hybrid_fusion",
-                            {
-                                "base": round(sc, 3),
-                                "graph_boost": round(boost, 3),
-                                "gbrain_signal_score": round(gbrain_sig, 3),
-                                "recency_boost": round(rec_b, 3),
-                                "swarm_trust": round(trust_b, 3),
-                                "source_boost": round(src_b, 3),
-                                "pt_boost": pt_boost,
-                                "dream_boost": dream_b,
-                                "experience_boost": round(experience_b, 3),
-                                "page_type": pt,
-                                "fused_total": round(fused, 3),
-                                "experience_layer": pt
-                                in (
-                                    "living-experience",
-                                    "experience-genome",
-                                    "experience-observation",
-                                    "research-thread",
-                                ),
-                            },
-                        )
-                    except Exception:
-                        pass
-                scored.sort(key=lambda x: x[0], reverse=True)
+                else:
+                    self._apply_additive_fusion(scored, signals, page_type_map)
+            elif self._rrf_fusion_enabled() and scored:
+                scored = fuse_scored_with_rrf(
+                    scored,
+                    relevance_map,
+                    {},
+                    page_type_map,
+                    {},
+                )
         except Exception as _fuse_err:
             # Graceful: retrieval still works with base hybrid
             logger.debug(

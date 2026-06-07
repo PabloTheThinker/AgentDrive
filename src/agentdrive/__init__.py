@@ -8,7 +8,7 @@ capabilities ("DNA" / Genomes) across an open, versioned, evolutionary system â€
 designed for real, structured, improvable agent intelligence.
 """
 
-__version__ = "0.3.0-alpha"
+__version__ = "0.3.1-alpha"
 
 # Core public API
 # Production security visibility (lightweight, self-hosted focused)
