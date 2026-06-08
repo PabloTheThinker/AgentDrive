@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Terminal UX polish — MessageStreamLane, session panel, skills init (2026-06-08)
+- **`tui/message_stream_lane.py`**: `MessageStreamLane` subscribes to `MessageDelta` for the active session; chat streaming `Live` reads the lane instead of `on_chunk`.
+- **`session_events`**: `summarize_event_types`, `filter_events_by_type`, `format_type_histogram` for replay filters.
+- **Session replay**: `/session panel|filter|types`, `--type` on CLI `session events|replay|panel`; rich panel with type histogram + timeline tree.
+- **Skills**: `agentdrive skills init <name>` and `/skills init <name>` scaffold `~/.agentdrive/skills/<name>/SKILL.md`.
+- **Tests**: `test_message_stream_lane.py`; extended session, skills, and TUI experience tests.
+
 ### Pattern 5 — skills registry + session slash + Grok spawn done (2026-06-07)
 - **`skills/`**: SKILL.md discovery (`~/.agentdrive/skills` + bundled `examples/skills`); `run_skill()` shared by CLI and chat.
 - **CLI**: `agentdrive skills list|show|run`; catalog entries for `session` and `skills`.

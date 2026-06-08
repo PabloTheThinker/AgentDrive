@@ -423,25 +423,30 @@ def cmd_commands(args: argparse.Namespace) -> int:
 def cmd_session(args: argparse.Namespace) -> int:
     """Inspect or replay per-session typed event streams (Pattern 1)."""
     from agentdrive.session_events import (
+        filter_events_by_type,
         format_event_summary,
+        format_type_histogram,
         replay_events,
+        resolve_session_id,
         session_events_path,
+        summarize_event_types,
     )
 
     sub = getattr(args, "session_subcommand", None)
     session_id = getattr(args, "session_id", None) or ""
     agent_id = getattr(args, "agent_id", None) or "agentdrive-agent"
     json_output = getattr(args, "json_output", False)
+    type_filter = getattr(args, "event_type", None) or None
 
     if not session_id.strip():
-        console.print("[red]Usage: agentdrive session events|replay <session_id>[/]")
+        console.print("[red]Usage: agentdrive session events|replay|panel <session_id>[/]")
         return 1
-
-    from agentdrive.session_events import resolve_session_id
 
     resolved = resolve_session_id(agent_id, session_id.strip()) or session_id.strip()
     path = session_events_path(agent_id, resolved)
     events = replay_events(path)
+    filtered = filter_events_by_type(events, type_filter)
+    counts = summarize_event_types(events)
 
     if sub == "events":
         if json_output:
@@ -452,16 +457,20 @@ def cmd_session(args: argparse.Namespace) -> int:
                     "session_id": resolved,
                     "path": str(path),
                     "count": len(events),
-                    "events": events,
+                    "filtered_count": len(filtered),
+                    "type_filter": type_filter,
+                    "events": filtered,
                 }
             )
             return 0
         if not path.exists():
             console.print(f"[yellow]No events file at[/] {path}")
             return 1
-        for ev in events:
+        filter_note = f" · filter {type_filter} ({len(filtered)}/{len(events)})" if type_filter else ""
+        console.print(f"[dim]{format_type_histogram(counts)}[/]{filter_note}\n")
+        for ev in filtered:
             console.print(format_event_summary(ev))
-        console.print(f"\n[dim]{len(events)} event(s) · {path}[/]")
+        console.print(f"\n[dim]{len(filtered)} event(s) · {path}[/]")
         return 0
 
     if sub == "replay":
@@ -473,20 +482,53 @@ def cmd_session(args: argparse.Namespace) -> int:
                     "session_id": resolved,
                     "path": str(path),
                     "count": len(events),
-                    "timeline": [format_event_summary(ev) for ev in events],
+                    "filtered_count": len(filtered),
+                    "type_filter": type_filter,
+                    "timeline": [format_event_summary(ev) for ev in filtered],
                 }
             )
             return 0
         if not path.exists():
             console.print(f"[yellow]No events file at[/] {path}")
             return 1
+        filter_note = f" · filter {type_filter} ({len(filtered)}/{len(events)})" if type_filter else ""
         console.print(
-            f"[bold]Session replay[/] · agent={agent_id} · session={resolved}"
+            f"[bold]Session replay[/] · agent={agent_id} · session={resolved}{filter_note}"
         )
-        console.print(f"[dim]{path}[/]\n")
-        for idx, ev in enumerate(events, 1):
+        console.print(f"[dim]{path}[/]")
+        console.print(f"[dim]{format_type_histogram(counts)}[/]\n")
+        for idx, ev in enumerate(filtered, 1):
             console.print(f"[dim]{idx:>4}[/]  {format_event_summary(ev)}")
-        console.print(f"\n[dim]{len(events)} event(s)[/]")
+        console.print(f"\n[dim]{len(filtered)} event(s)[/]")
+        return 0
+
+    if sub == "panel":
+        if not path.exists():
+            console.print(f"[yellow]No events file at[/] {path}")
+            return 1
+        from rich.text import Text
+
+        from agentdrive.tui.chrome import Group, Section, Tree, TreeRow, section_panel
+
+        type_rows = [(ev_type, str(n)) for ev_type, n in counts.items()]
+        timeline_rows = [TreeRow(label=format_event_summary(ev)) for ev in filtered[-80:]]
+        filter_note = (
+            f" · filter {type_filter} ({len(filtered)}/{len(events)})" if type_filter else ""
+        )
+        console.print(
+            section_panel(
+                Section(
+                    "Session",
+                    [(resolved, path.name), ("events", str(len(events)))],
+                ),
+                Section("Event types", type_rows or [("(none)", "0")], key_width=18),
+                Group(
+                    Text.from_markup(f"[bold]Timeline[/]{filter_note}"),
+                    Tree(timeline_rows, palette=None) if timeline_rows else Text(""),
+                ),
+                title="Session replay",
+            )
+        )
         return 0
 
     console.print("[red]Unknown session subcommand[/]")
@@ -577,6 +619,29 @@ def cmd_skills(args: argparse.Namespace) -> int:
             console.print(f"[red]{result.get('error', 'skill failed')}[/]")
             return 1
         console.print(format_skill_result(result))
+        return 0
+
+    if sub == "init":
+        from agentdrive.skills.registry import init_skill
+
+        name = getattr(args, "skill_name", None) or ""
+        force = bool(getattr(args, "force", False))
+        description = getattr(args, "skill_description", None) or ""
+        if not name.strip():
+            console.print("[red]Usage: agentdrive skills init <name>[/]")
+            return 1
+        try:
+            path = init_skill(name.strip(), description=description, force=force)
+        except FileExistsError as exc:
+            console.print(f"[yellow]{exc}[/]")
+            return 1
+        except ValueError as exc:
+            console.print(f"[red]{exc}[/]")
+            return 1
+        if json_output:
+            emit_json({"success": True, "path": str(path), "name": name.strip()})
+            return 0
+        console.print(f"[green]Created[/] {path}")
         return 0
 
     console.print("[red]Unknown skills subcommand[/]")

@@ -183,10 +183,60 @@ def format_event_summary(ev_dict: dict) -> str:
     return prefix
 
 
+def summarize_event_types(events: list[dict]) -> dict[str, int]:
+    """Count events by ``type`` field, highest count first."""
+    counts: dict[str, int] = {}
+    for ev in events:
+        ev_type = str(ev.get("type") or "Event")
+        counts[ev_type] = counts.get(ev_type, 0) + 1
+    return dict(sorted(counts.items(), key=lambda item: (-item[1], item[0])))
+
+
+def filter_events_by_type(
+    events: list[dict],
+    type_filter: str | list[str] | None,
+) -> list[dict]:
+    """Return events whose ``type`` matches ``type_filter`` (case-insensitive)."""
+    if not type_filter:
+        return list(events)
+
+    if isinstance(type_filter, str):
+        needles = {type_filter.strip()}
+    else:
+        needles = {t.strip() for t in type_filter if str(t).strip()}
+
+    if not needles:
+        return list(events)
+
+    lowered = {n.lower() for n in needles}
+    out: list[dict] = []
+    for ev in events:
+        ev_type = str(ev.get("type") or "")
+        if ev_type in needles or ev_type.lower() in lowered:
+            out.append(ev)
+    return out
+
+
+def format_type_histogram(counts: dict[str, int], *, max_types: int = 10) -> str:
+    """Compact histogram string for panel headers."""
+    if not counts:
+        return "(no events)"
+    parts: list[str] = []
+    for idx, (ev_type, n) in enumerate(counts.items()):
+        if idx >= max_types:
+            parts.append(f"+{len(counts) - max_types} more")
+            break
+        parts.append(f"{ev_type}×{n}")
+    return " · ".join(parts)
+
+
 __all__ = [
     "SessionEventRecorder",
+    "filter_events_by_type",
     "format_event_summary",
+    "format_type_histogram",
     "replay_events",
     "resolve_session_id",
     "session_events_path",
+    "summarize_event_types",
 ]

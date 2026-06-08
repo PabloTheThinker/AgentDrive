@@ -57,3 +57,35 @@ def test_session_slash_renders_events(isolated_agentdrive_home: Path):
     text = out.getvalue()
     assert "MessageDelta" in text or "hello" in text
     assert path.exists()
+
+
+def test_session_panel_slash(isolated_agentdrive_home: Path):
+    from io import StringIO
+
+    from rich.console import Console
+
+    from agentdrive.events import MessageDelta, PoolMatch, emit
+    from agentdrive.session_events import SessionEventRecorder, session_events_path
+    from agentdrive.tui.experience import handle_ops_slash
+
+    agent_id = "agentdrive-agent"
+    session_id = "panel-session-001"
+    rec = SessionEventRecorder(agent_id, session_id)
+    rec.attach()
+    emit(MessageDelta(text="panel test", session_id=session_id))
+    emit(PoolMatch(genomes=["g-panel"], scores=[0.9], session_id=session_id))
+    rec.close()
+
+    out = StringIO()
+    console = Console(file=out, force_terminal=True, width=120)
+    handle_ops_slash(
+        console,
+        "/session",
+        f"panel {session_id}",
+        agent_id=agent_id,
+        current_session_id=session_id,
+    )
+    text = out.getvalue()
+    assert "Session replay" in text
+    assert "PoolMatch" in text or "g-panel" in text
+    assert session_events_path(agent_id, session_id).exists()

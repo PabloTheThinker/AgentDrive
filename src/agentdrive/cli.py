@@ -3698,6 +3698,12 @@ def build_parser() -> argparse.ArgumentParser:
         default="agentdrive-agent",
         help="Agent id (default: agentdrive-agent)",
     )
+    se_events.add_argument(
+        "--type",
+        dest="event_type",
+        metavar="EVENT_TYPE",
+        help="Filter to one event type (e.g. PoolMatch, MessageDelta)",
+    )
     se_events.add_argument("--json", dest="json_output", action="store_true")
     se_events.set_defaults(func=cmd_session)
 
@@ -3712,8 +3718,33 @@ def build_parser() -> argparse.ArgumentParser:
         default="agentdrive-agent",
         help="Agent id (default: agentdrive-agent)",
     )
+    se_replay.add_argument(
+        "--type",
+        dest="event_type",
+        metavar="EVENT_TYPE",
+        help="Filter to one event type (e.g. PoolMatch, MessageDelta)",
+    )
     se_replay.add_argument("--json", dest="json_output", action="store_true")
     se_replay.set_defaults(func=cmd_session)
+
+    se_panel = session_subs.add_parser(
+        "panel",
+        help="Rich replay panel with type histogram and timeline",
+    )
+    se_panel.add_argument("session_id", help="Session id (full or suffix from /sessions)")
+    se_panel.add_argument(
+        "--agent-id",
+        dest="agent_id",
+        default="agentdrive-agent",
+        help="Agent id (default: agentdrive-agent)",
+    )
+    se_panel.add_argument(
+        "--type",
+        dest="event_type",
+        metavar="EVENT_TYPE",
+        help="Filter to one event type (e.g. PoolMatch, MessageDelta)",
+    )
+    se_panel.set_defaults(func=cmd_session)
 
     p.set_defaults(func=cmd_session, session_subcommand="events")
 
@@ -3743,6 +3774,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sk_run.add_argument("--json", dest="json_output", action="store_true")
     sk_run.set_defaults(func=cmd_skills)
+
+    sk_init = skills_subs.add_parser(
+        "init",
+        help="Scaffold ~/.agentdrive/skills/<name>/SKILL.md",
+    )
+    sk_init.add_argument("skill_name", help="Skill name (becomes directory slug)")
+    sk_init.add_argument(
+        "--description",
+        dest="skill_description",
+        default="",
+        help="Frontmatter description (default: generated)",
+    )
+    sk_init.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite an existing SKILL.md",
+    )
+    sk_init.add_argument("--json", dest="json_output", action="store_true")
+    sk_init.set_defaults(func=cmd_skills)
 
     p.set_defaults(func=cmd_skills, skills_subcommand="list")
 

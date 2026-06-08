@@ -13,7 +13,7 @@ from rich.text import Text
 
 from agentdrive.golden_path import GOLDEN_STEPS, run_walkthrough, verify_all
 from agentdrive.operations import run_operation
-from agentdrive.tui.chrome import Palette, Section, ok_line, section_panel, warn_line
+from agentdrive.tui.chrome import Group, Palette, Section, Tree, TreeRow, ok_line, section_panel, warn_line
 
 
 def _golden_path_config() -> dict[str, Any]:
@@ -277,19 +277,50 @@ def handle_ops_slash(
 
     if cmd == "/session":
         from agentdrive.session_events import (
+            filter_events_by_type,
             format_event_summary,
+            format_type_histogram,
             replay_events,
             resolve_session_id,
             session_events_path,
+            summarize_event_types,
         )
 
-        tokens = arg.split() if arg else []
+        raw_tokens = arg.split() if arg else []
+        type_filter: str | None = None
+        tokens: list[str] = []
+        idx = 0
+        while idx < len(raw_tokens):
+            if raw_tokens[idx] == "--type" and idx + 1 < len(raw_tokens):
+                type_filter = raw_tokens[idx + 1]
+                idx += 2
+            else:
+                tokens.append(raw_tokens[idx])
+                idx += 1
+
+        _SESSION_SUBS = {"events", "replay", "list", "panel", "filter", "types"}
         if not tokens:
             sub = "events"
             sid_token = current_session_id or ""
-        elif tokens[0].lower() in ("events", "replay", "list"):
+        elif tokens[0].lower() in _SESSION_SUBS:
             sub = tokens[0].lower()
-            sid_token = tokens[1] if len(tokens) > 1 else (current_session_id or "")
+            if sub == "filter":
+                if len(tokens) < 2:
+                    console.print(
+                        warn_line(
+                            "Usage: /session filter <Type> [session_id]",
+                            palette=p,
+                        )
+                    )
+                    return
+                type_filter = tokens[1]
+                sid_token = tokens[2] if len(tokens) > 2 else (current_session_id or "")
+            elif sub == "types":
+                sid_token = tokens[1] if len(tokens) > 1 else (current_session_id or "")
+            else:
+                sid_token = tokens[1] if len(tokens) > 1 else (current_session_id or "")
+                if len(tokens) > 2 and type_filter is None:
+                    type_filter = tokens[2]
         else:
             sub = "events"
             sid_token = tokens[0]
@@ -297,7 +328,7 @@ def handle_ops_slash(
         if not sid_token:
             console.print(
                 warn_line(
-                    "Usage: /session events|replay [session_id]  (omit id for current session)",
+                    "Usage: /session events|replay|panel|filter|types [session_id] [--type T]",
                     palette=p,
                 )
             )
@@ -311,23 +342,66 @@ def handle_ops_slash(
             console.print(warn_line(f"No events at {path}", palette=p))
             return
 
+        filtered = filter_events_by_type(events, type_filter)
+        counts = summarize_event_types(events)
+        filter_note = f"  [dim]· filter {type_filter} ({len(filtered)}/{len(events)})[/]" if type_filter else ""
+
+        if sub == "panel":
+            type_rows = [(ev_type, str(n)) for ev_type, n in counts.items()]
+            timeline_rows = [
+                TreeRow(label=format_event_summary(ev))
+                for ev in filtered[-60:]
+            ]
+            if len(filtered) > 60:
+                timeline_rows.insert(
+                    0,
+                    TreeRow(
+                        label=f"[{p.muted}]… {len(filtered) - 60} earlier events[/]",
+                    ),
+                )
+            console.print(
+                section_panel(
+                    Section("Session", [(resolved, path.name), ("events", str(len(events)))], palette=p),
+                    Section(
+                        "Event types",
+                        type_rows or [("(none)", "0")],
+                        palette=p,
+                        key_width=18,
+                    ),
+                    Group(
+                        Text.from_markup(f"[bold {p.accent}]Timeline[/]{filter_note}"),
+                        Tree(timeline_rows, palette=p) if timeline_rows else Text(""),
+                    ),
+                    title="Session replay",
+                    palette=p,
+                )
+            )
+            return
+
         console.print(
             f"  [dim]session[/] [{p.accent}]{resolved}[/]  "
-            f"[dim]· {len(events)} events · {path.name}[/]"
+            f"[dim]· {len(events)} events · {path.name}[/]{filter_note}"
         )
+        if sub == "types":
+            console.print(f"  [dim]{format_type_histogram(counts)}[/]")
+            return
+
         console.print()
 
-        if sub == "replay":
-            for idx, ev in enumerate(events, 1):
+        if sub == "replay" or (sub == "filter" and type_filter):
+            for idx, ev in enumerate(filtered, 1):
                 console.print(f"  [dim]{idx:>3}[/]  {format_event_summary(ev)}")
         elif sub in ("events", "list"):
-            for ev in events[-40:]:
+            for ev in filtered[-40:]:
                 console.print(f"  {format_event_summary(ev)}")
-            if len(events) > 40:
-                console.print(f"  [dim]… {len(events) - 40} earlier events (use replay)[/]")
+            if len(filtered) > 40:
+                console.print(f"  [dim]… {len(filtered) - 40} earlier events (use replay)[/]")
         else:
             console.print(
-                warn_line("Usage: /session events|replay <session_id>", palette=p)
+                warn_line(
+                    "Usage: /session events|replay|panel|filter|types [session_id]",
+                    palette=p,
+                )
             )
         return
 
@@ -336,7 +410,8 @@ def handle_ops_slash(
         from agentdrive.skills.runner import format_skill_result
 
         if cmd == "/skills":
-            sub = (arg.split()[0] if arg else "list").lower()
+            parts = arg.split() if arg else []
+            sub = (parts[0] if parts else "list").lower()
             if sub == "list":
                 entries = list_skills()
                 if not entries:
@@ -351,11 +426,28 @@ def handle_ops_slash(
                 console.print()
                 console.print(
                     Text.from_markup(
-                        f"[{p.muted}]Run:[/] [{p.accent}]/skill <name> [args][/]"
+                        f"[{p.muted}]Run:[/] [{p.accent}]/skill <name> [args][/]  "
+                        f"[{p.muted}]Scaffold:[/] [{p.accent}]/skills init <name>[/]"
                     )
                 )
+            elif sub == "init":
+                from agentdrive.skills.registry import init_skill
+
+                name = parts[1] if len(parts) > 1 else ""
+                if not name.strip():
+                    console.print(warn_line("Usage: /skills init <name>", palette=p))
+                    return
+                try:
+                    path = init_skill(name.strip())
+                except FileExistsError as exc:
+                    console.print(warn_line(str(exc), palette=p))
+                    return
+                except ValueError as exc:
+                    console.print(warn_line(str(exc), palette=p))
+                    return
+                console.print(ok_line(f"Created {path}", palette=p))
             else:
-                console.print(warn_line("Usage: /skills list", palette=p))
+                console.print(warn_line("Usage: /skills list|init <name>", palette=p))
             return
 
         # /skill <name> [args]

@@ -9,13 +9,13 @@
 
 | Pattern | Status | Where |
 |---------|--------|-------|
-| **1 — Typed event bus** | Shipped (v1) | `events.py` + `session_events.py`; `TranscriptLane` bus-driven ribbons; per-session `events.jsonl`; `agentdrive session events\|replay` |
+| **1 — Typed event bus** | Shipped (v1) | `events.py` + `session_events.py`; `TranscriptLane` + `MessageStreamLane`; per-session `events.jsonl`; `session events\|replay\|panel` + type filters |
 | **2 — Keep typing** | Shipped | `chat_loop.py` + `ChatView` custom `PromptSession`; queue, slash bypass, double-Enter |
 | **3 — Pool activity** | Shipped | `TranscriptLane` ribbons + `PoolActivityLane` thin row in streaming `Live` |
 | **4 — Sub-agent tree** | Shipped | `SwarmActivityLane` in chat; `ChatTurnTelemetry` per turn; Grok spawn emits |
-| **5 — CLI = slash** | Shipped | `genomes_api`, `skills` registry; `genomes search`, `/genome-search`, `/skill`, `agentdrive skills run`; golden-path ops + REPL |
+| **5 — CLI = slash** | Shipped | `genomes_api`, `skills` registry + `skills init`; `genomes search`, `/genome-search`, `/skill`, `agentdrive skills run`; golden-path ops + REPL |
 
-**Still open:** full MessageDelta-driven chat body (streaming row still agent callback); rich TUI event replay panel (CLI + `/session` slash shipped).
+**Still open:** none from the original v1 table — MessageDelta-driven streaming body and rich session replay panel shipped (2026-06-08).
 
 ---
 
@@ -134,7 +134,7 @@ Each node shows: status spinner, current tool, elapsed, tokens, cost, optional "
 5. ~~**Pattern 1 completion**~~ — `session_events.py`, `TranscriptLane`, `session events|replay` CLI
 6. ~~**Pattern 5 genomes**~~ — `genomes search`, `/genome-search`, `test_genomes_api.py`
 7. ~~**Skills registry**~~ — `skills/registry.py`, `agentdrive skills list|show|run`, `/skills` `/skill`
-8. **Streaming row on bus** — migrate `_stream_assistant_reply` to `MessageDelta` subscriber (optional polish)
+8. ~~**Streaming row on bus**~~ — shipped: `MessageStreamLane` + `_stream_assistant_reply` reads bus deltas
 9. ~~**Session replay in TUI**~~ — `/session events|replay` + `agentdrive session replay`
 10. ~~**Grok spawn SubagentDone**~~ — wrapper emits done when spawn returns
 

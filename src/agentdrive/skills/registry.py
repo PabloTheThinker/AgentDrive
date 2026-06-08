@@ -10,6 +10,7 @@ from typing import Any
 import yaml
 
 from agentdrive.constants import get_agentdrive_home
+from agentdrive.utils.safe_paths import safe_name
 
 
 @dataclass(frozen=True)
@@ -100,6 +101,52 @@ def get_skill(name: str) -> SkillEntry | None:
         if entry.name.lower() == needle:
             return entry
     return None
+
+
+_SKILL_TEMPLATE = """---
+name: {name}
+description: "{description}"
+# agentdrive_operation: optional_operation_name
+# argument: optional_arg_key
+---
+
+# {title}
+
+Describe what this skill does and when to use it.
+
+**Usage:** `/skill {name}` or `agentdrive skills run {name}`
+"""
+
+
+def _normalize_skill_name(name: str) -> str:
+    cleaned = name.strip().lower().replace(" ", "-")
+    cleaned = re.sub(r"[^a-z0-9_-]+", "", cleaned)
+    if not cleaned:
+        raise ValueError("Skill name must contain letters or numbers")
+    return cleaned
+
+
+def init_skill(name: str, *, description: str = "", force: bool = False) -> Path:
+    """Scaffold ``~/.agentdrive/skills/<name>/SKILL.md`` with frontmatter template."""
+    slug = _normalize_skill_name(name)
+    skill_dir = get_agentdrive_home() / "skills" / safe_name(slug)
+    skill_md = skill_dir / "SKILL.md"
+    if skill_md.exists() and not force:
+        raise FileExistsError(f"Skill already exists: {skill_md}")
+
+    desc = description.strip() or f"Custom skill — {slug}"
+    title = slug.replace("-", " ").title()
+    skill_dir.mkdir(parents=True, exist_ok=True)
+    # Quote description so colons in generated text stay valid YAML.
+    skill_md.write_text(
+        _SKILL_TEMPLATE.format(
+            name=slug,
+            description=desc.replace('"', '\\"'),
+            title=title,
+        ),
+        encoding="utf-8",
+    )
+    return skill_md
 
 
 def skill_operation_kwargs(entry: SkillEntry, arg: str) -> dict[str, Any]:

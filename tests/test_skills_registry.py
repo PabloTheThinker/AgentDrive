@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agentdrive.skills import get_skill, list_skills, run_skill
+from agentdrive.skills import get_skill, init_skill, list_skills, run_skill
 
 
 def test_list_skills_includes_bundled_examples():
@@ -29,6 +29,24 @@ def test_run_golden_path_verify_skill(isolated_agentdrive_home):
     inner = result.get("result")
     assert isinstance(inner, dict)
     assert "steps" in inner
+
+
+def test_init_skill_scaffold(isolated_agentdrive_home):
+    path = init_skill("my-custom-skill")
+    assert path.exists()
+    text = path.read_text(encoding="utf-8")
+    assert "name: my-custom-skill" in text
+    entry = get_skill("my-custom-skill")
+    assert entry is not None
+
+
+def test_init_skill_refuses_overwrite(isolated_agentdrive_home):
+    init_skill("dup-skill")
+    try:
+        init_skill("dup-skill")
+        assert False, "expected FileExistsError"
+    except FileExistsError:
+        pass
 
 
 def test_user_skill_overlay(isolated_agentdrive_home):

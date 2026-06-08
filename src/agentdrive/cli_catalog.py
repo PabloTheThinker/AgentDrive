@@ -82,6 +82,7 @@ CATALOG: tuple[CatalogEntry, ...] = (
     CatalogEntry("repl", "Operator REPL (dispatch any subcommand interactively)", "interfaces"),
     CatalogEntry("session events", "List typed events.jsonl for a chat session", "interfaces"),
     CatalogEntry("session replay", "Replay session events as numbered timeline", "interfaces"),
+    CatalogEntry("session panel", "Rich replay panel with type histogram", "interfaces"),
     CatalogEntry("grid", "AD-Grid persistent intelligence substrate", "interfaces"),
     # setup
     CatalogEntry("setup", "Interactive setup wizard", "setup"),
@@ -174,6 +175,7 @@ CATALOG: tuple[CatalogEntry, ...] = (
     CatalogEntry("skills list", "List SKILL.md capabilities", "discovery"),
     CatalogEntry("skills show", "Show one skill metadata and body", "discovery"),
     CatalogEntry("skills run", "Run a skill (same path as /skill in chat)", "discovery"),
+    CatalogEntry("skills init", "Scaffold a new SKILL.md under ~/.agentdrive/skills", "discovery"),
     # config
     CatalogEntry("config show", "Show configuration", "config"),
     CatalogEntry("config get", "Get one config key", "config"),

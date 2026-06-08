@@ -56,6 +56,7 @@ from agentdrive.tui.chrome import (
     warn_line,
 )
 from agentdrive.tui.loading import MicroSpinner
+from agentdrive.tui.message_stream_lane import MessageStreamLane
 from agentdrive.tui.pool_lane import PoolActivityLane
 from agentdrive.tui.swarm_lane import SwarmActivityLane
 from agentdrive.tui.transcript_lane import TranscriptLane
@@ -101,9 +102,12 @@ CHAT_HELP_SECTIONS = [
             ("/think <question>", "cited synthesis + gaps (no chat turn)"),
             ("/learnings list", "operational memory for this project"),
             ("/learnings log <key> <insight>", "record a learning"),
-            ("/session events [id]", "typed event stream for this or a session"),
-            ("/session replay [id]", "numbered timeline from events.jsonl"),
+            ("/session events [id] [--type T]", "typed event stream (optional type filter)"),
+            ("/session replay [id] [--type T]", "numbered timeline from events.jsonl"),
+            ("/session panel [id]", "rich replay panel with type histogram"),
+            ("/session filter <Type> [id]", "replay only events of one type"),
             ("/skills list", "discover SKILL.md capabilities"),
+            ("/skills init <name>", "scaffold ~/.agentdrive/skills/<name>/SKILL.md"),
             ("/skill <name> [args]", "run a skill (same path as agentdrive skills run)"),
         ],
     ),
@@ -170,6 +174,8 @@ class ChatView:
         self._swarm_lane = SwarmActivityLane(palette=self.palette)
         # Pattern 3 — thin pool status row below stream during turns.
         self._pool_lane = PoolActivityLane(palette=self.palette)
+        # Pattern 1 — bus-driven assistant body text during streaming turns.
+        self._message_lane = MessageStreamLane()
         # Pattern 1 — bus-driven transcript ribbons (pool/evolution/federation).
         self._transcript_lane = TranscriptLane(self.console, self.palette)
 
@@ -335,6 +341,7 @@ class ChatView:
         # interrupt (empty buffer) all stay in force.
         self._swarm_lane.attach()
         self._pool_lane.attach()
+        self._message_lane.attach()
         self._transcript_lane.attach()
         self._chat_loop = ChatLoop(
             self.console,
@@ -361,6 +368,7 @@ class ChatView:
             self.agent.detach_session_recorder()
             self._swarm_lane.detach()
             self._pool_lane.detach()
+            self._message_lane.detach()
             self._transcript_lane.detach()
             try:
                 unsubscribe(_pool_match_token)
@@ -680,18 +688,17 @@ class ChatView:
         self.console.print(header)
 
         indicator = Indicator(style=self.indicator_style)
-        accumulator: list[str] = []
-        accumulator_lock = threading.Lock()
         done_event = threading.Event()
         result_container: dict = {}
 
-        def on_chunk(chunk: str) -> None:
-            with accumulator_lock:
-                accumulator.append(chunk)
+        self._message_lane.reset()
+        self._message_lane.set_session_id(
+            getattr(self.agent.session, "session_id", None)
+        )
 
         def worker() -> None:
             try:
-                result_container["result"] = self.agent.send(message, on_chunk=on_chunk)
+                result_container["result"] = self.agent.send(message)
             except Exception as exc:
                 result_container["error"] = exc
             finally:
@@ -701,8 +708,7 @@ class ChatView:
         t.start()
 
         def render() -> Group:
-            with accumulator_lock:
-                text = "".join(accumulator)
+            text = self._message_lane.text()
             cursor_visible = (int(time.monotonic() * 2.4) % 2) == 0
 
             parts: list[Any] = []
@@ -748,13 +754,11 @@ class ChatView:
                     time.sleep(1 / 12.0)
                 if interrupted_by_signal:
                     # Freeze the partial reply in place and exit cleanly.
-                    with accumulator_lock:
-                        partial_text = "".join(accumulator)
+                    partial_text = self._message_lane.text()
                     if partial_text:
                         live.update(Padding(Markdown(partial_text), (0, 0, 0, 2)))
                 else:
-                    with accumulator_lock:
-                        final_text = "".join(accumulator)
+                    final_text = self._message_lane.text()
                     if final_text:
                         live.update(Padding(Markdown(final_text), (0, 0, 0, 2)))
                     else:

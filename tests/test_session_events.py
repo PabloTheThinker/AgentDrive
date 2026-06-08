@@ -14,9 +14,12 @@ import pytest
 from agentdrive.events import MessageDelta, PoolMatch, default_bus, emit
 from agentdrive.session_events import (
     SessionEventRecorder,
+    filter_events_by_type,
     format_event_summary,
+    format_type_histogram,
     replay_events,
     session_events_path,
+    summarize_event_types,
 )
 
 
@@ -88,6 +91,21 @@ def test_replay_events_skips_bad_lines(tmp_path: Path) -> None:
     assert events[1]["message"] == "ready"
 
 
+def test_summarize_and_filter_event_types() -> None:
+    events = [
+        {"type": "MessageDelta", "text": "a"},
+        {"type": "MessageDelta", "text": "b"},
+        {"type": "PoolMatch", "genomes": ["g1"], "scores": [0.5]},
+    ]
+    counts = summarize_event_types(events)
+    assert counts["MessageDelta"] == 2
+    assert counts["PoolMatch"] == 1
+    assert "MessageDelta×2" in format_type_histogram(counts)
+    filtered = filter_events_by_type(events, "poolmatch")
+    assert len(filtered) == 1
+    assert filtered[0]["type"] == "PoolMatch"
+
+
 def test_format_event_summary_covers_common_types() -> None:
     assert "user" in format_event_summary({"type": "MessageStart", "role": "user"})
     assert "hello" in format_event_summary({"type": "MessageDelta", "text": "hello"})
@@ -152,3 +170,28 @@ def test_cli_session_events_and_replay(isolated_agentdrive_home: Path) -> None:
     assert replay.returncode == 0
     assert "Session replay" in replay.stdout
     assert "PoolMatch" in replay.stdout
+
+    filtered = _run_cli(
+        "session",
+        "replay",
+        session_id,
+        "--type",
+        "PoolMatch",
+        home=isolated_agentdrive_home,
+    )
+    assert filtered.returncode == 0
+    assert "PoolMatch" in filtered.stdout
+    assert "cli event" not in filtered.stdout
+
+
+def test_cli_session_panel(isolated_agentdrive_home: Path) -> None:
+    session_id = "cli-sess-panel"
+    path = session_events_path("agentdrive-agent", session_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as fh:
+        fh.write(json.dumps({"type": "StatusUpdate", "message": "ready"}) + "\n")
+
+    panel = _run_cli("session", "panel", session_id, home=isolated_agentdrive_home)
+    assert panel.returncode == 0
+    assert "Session replay" in panel.stdout
+    assert "StatusUpdate" in panel.stdout
