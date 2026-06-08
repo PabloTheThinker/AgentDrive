@@ -1,6 +1,6 @@
 # Agent Drive Skills — design + first 12 skill brainstorm
 
-**Status:** draft for review. Nothing built yet.
+**Status:** partially shipped — see `docs/SKILLS-LIBRARY.md` for the live catalog (registry, CLI, compose, 40+ bundled skills).
 **Premise:** A agentdrive is someone with exceptional, narrow-domain prodigy. The product should embrace that literally — each skill is a *agentdrive*: a small, focused, world-class capability in one specific thing. The agent doesn't try to be good at everything; it consults the right agentdrive for the task.
 
 This is the the reference CLI Phase-3 move (Jan→Feb 2026 in their arc): the moment the product stops being "an agent" and becomes "a thing you extend."

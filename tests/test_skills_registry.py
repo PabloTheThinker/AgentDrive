@@ -12,6 +12,7 @@ def test_list_skills_includes_bundled_examples():
     names = {e.name for e in entries}
     assert "think" in names
     assert "golden-path-verify" in names
+    assert len(entries) >= 30
 
 
 def test_get_skill_missing():

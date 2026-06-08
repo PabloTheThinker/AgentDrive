@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Skills library — hive/pawn bench, Grok backup, Hermes patterns (2026-06-08)
+- **`docs/ASSESSMENT.md`**: product assessment — what we have, gaps, prioritized next steps.
+- **`docs/SKILLS-LIBRARY.md`**: catalog, Arisen/pawn/hive metaphor, layout, refresh instructions.
+- **Bundled skills**: `core/` ops, `hive/` pawn playbooks, `agentdrives/` (12 narrow prodigies), `backup/grok/` (14 Grok mirrors), `backup/hermes/` (3 adapted).
+- **`skills/compose.py`**: `match_skills_for_turn`, `compose_skills_block` — catalog + matched bodies in `build_system_prompt`.
+- **`skills/registry.py`**: nested `**/*.SKILL.md` discovery; `tags`, `role`, `category`, `source`, `when_to_call` frontmatter.
+- **`scripts/sync_grok_skills_backup.py`**: sync `~/.grok/skills` → bundled backup for swarm pawns.
+- **Tests**: `test_skills_compose.py`; extended registry count test.
+
 ### Terminal UX polish — MessageStreamLane, session panel, skills init (2026-06-08)
 - **`tui/message_stream_lane.py`**: `MessageStreamLane` subscribes to `MessageDelta` for the active session; chat streaming `Live` reads the lane instead of `on_chunk`.
 - **`session_events`**: `summarize_event_types`, `filter_events_by_type`, `format_type_histogram` for replay filters.

@@ -188,6 +188,24 @@ class AgentDriveAgent:
                 "Answer from first principles and suggest a Genome the user might want to seed."
             )
 
+        try:
+            from agentdrive.skills.compose import compose_skills_block
+
+            role = None
+            subagent_id = getattr(self.harness, "subagent_id", None)
+            if subagent_id:
+                role = "pawn"
+            skills_block = compose_skills_block(
+                user_message,
+                role=role,
+                include_catalog=True,
+                top_k=2,
+            )
+            if skills_block:
+                parts.append(skills_block)
+        except Exception:
+            logger.debug("Failed to compose skills block", exc_info=True)
+
         return "\n".join(parts)
 
     # ─────────────────────────────────────────────────────────────────

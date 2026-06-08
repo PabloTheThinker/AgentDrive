@@ -1,8 +1,12 @@
 ---
 name: think
-description: Cited Drive.think synthesis with mandatory gap analysis. Use when you need a grounded answer from the pool.
+description: "Cited Drive.think synthesis with mandatory gap analysis."
 agentdrive_operation: think
 argument: question
+category: core
+role: arisen
+tags: [think, synthesis, pool, hive]
+when_to_call: user needs a grounded cited answer from the AgentDrive pool
 ---
 
 # Think

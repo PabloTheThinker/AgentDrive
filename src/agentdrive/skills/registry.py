@@ -23,6 +23,11 @@ class SkillEntry:
     operation: str | None = None
     argument: str | None = None
     body: str = ""
+    tags: tuple[str, ...] = ()
+    role: str = ""  # arisen | pawn | orchestrator | shared | bench
+    category: str = ""
+    source: str = ""
+    when_to_call: str = ""
 
 
 _FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n(.*)", re.DOTALL)
@@ -36,7 +41,7 @@ def _skills_roots() -> list[Path]:
     ]
 
 
-def _parse_skill_file(path: Path) -> SkillEntry | None:
+def _parse_skill_file(path: Path, *, skills_root: Path | None = None) -> SkillEntry | None:
     try:
         text = path.read_text(encoding="utf-8")
     except OSError:
@@ -63,6 +68,26 @@ def _parse_skill_file(path: Path) -> SkillEntry | None:
     argument = meta.get("argument") or meta.get("arg")
     body = match.group(2).strip()
 
+    raw_tags = meta.get("tags") or []
+    if isinstance(raw_tags, str):
+        tags = tuple(t.strip() for t in raw_tags.split(",") if t.strip())
+    elif isinstance(raw_tags, list):
+        tags = tuple(str(t).strip() for t in raw_tags if str(t).strip())
+    else:
+        tags = ()
+
+    role = str(meta.get("role") or meta.get("pawn_role") or "").strip()
+    category = str(meta.get("category") or "").strip()
+    if not category and skills_root is not None:
+        try:
+            rel = path.parent.relative_to(skills_root)
+            if len(rel.parts) > 1:
+                category = rel.parts[0]
+        except ValueError:
+            category = ""
+    source = str(meta.get("source") or "").strip()
+    when_to_call = str(meta.get("when_to_call") or "").strip()
+
     return SkillEntry(
         name=name,
         description=description,
@@ -70,6 +95,11 @@ def _parse_skill_file(path: Path) -> SkillEntry | None:
         operation=str(operation).strip() if operation else None,
         argument=str(argument).strip() if argument else None,
         body=body,
+        tags=tags,
+        role=role,
+        category=category,
+        source=source,
+        when_to_call=when_to_call,
     )
 
 
@@ -81,8 +111,8 @@ def discover_skills() -> list[SkillEntry]:
     for root in _skills_roots():
         if not root.is_dir():
             continue
-        for skill_md in sorted(root.glob("*/SKILL.md")):
-            entry = _parse_skill_file(skill_md)
+        for skill_md in sorted(root.glob("**/SKILL.md")):
+            entry = _parse_skill_file(skill_md, skills_root=root)
             if entry is None or entry.name in seen:
                 continue
             seen.add(entry.name)

@@ -1,5 +1,9 @@
 ---
 name: golden-path-verify
+category: core
+role: shared
+tags: [golden-path, verify, onboarding]
+when_to_call: check install MCP learnings query loop before or after first run
 description: Check golden path install → mcp → learnings → query without mutating state.
 agentdrive_operation: golden_path_verify
 ---
