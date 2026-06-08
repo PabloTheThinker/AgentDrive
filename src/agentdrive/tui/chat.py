@@ -90,6 +90,16 @@ CHAT_HELP_SECTIONS = [
         ],
     ),
     (
+        "Golden path (memory loop)",
+        [
+            ("/golden-path verify", "check install → mcp → learnings → query"),
+            ("/golden-path run", "run the first-run walkthrough"),
+            ("/think <question>", "cited synthesis + gaps (no chat turn)"),
+            ("/learnings list", "operational memory for this project"),
+            ("/learnings log <key> <insight>", "record a learning"),
+        ],
+    ),
+    (
         "Display",
         [
             ("/indicator <s>", "spinner: unicode | ascii | emoji | kaomoji"),
@@ -237,12 +247,23 @@ class ChatView:
         from agentdrive.chat_loop import ChatLoop, InterruptSignal
 
         self._print_welcome()
+        from agentdrive.tui.experience import (
+            render_golden_path_gate,
+            should_show_golden_path_gate,
+        )
+
+        if should_show_golden_path_gate():
+            render_golden_path_gate(self.console, palette=self.palette)
         self._print_status_rule()
 
         completer = WordCompleter(
             [
                 # Chat-internal
                 "/help",
+                "/golden-path",
+                "/golden",
+                "/think",
+                "/learnings",
                 "/clear",
                 "/new",
                 "/sessions",
@@ -569,7 +590,28 @@ class ChatView:
             )
         sections.append(Section("Session", session_rows, palette=p))
 
-        inner = Group(
+        # — Golden path
+        try:
+            from agentdrive.tui.experience import (
+                golden_path_status_segment,
+                is_golden_path_marked_complete,
+            )
+
+            gp_seg = golden_path_status_segment(p)
+            gp_rows = [
+                ("status", gp_seg),
+                (
+                    "next",
+                    f"[{p.accent}]/golden-path run[/]"
+                    if not is_golden_path_marked_complete()
+                    else f"[{p.muted}]complete[/]",
+                ),
+            ]
+            sections.append(Section("Golden path", gp_rows, palette=p))
+        except Exception:
+            pass
+
+        inner_parts: list[Any] = [
             logo,
             tagline,
             Text(""),
@@ -578,12 +620,20 @@ class ChatView:
             sections[1],
             Text(""),
             sections[2],
-            Text(""),
-            Text.from_markup(
-                f"[{p.muted}]Type to talk · [{p.accent}]/help[/{p.accent}] for commands · "
-                f"[{p.accent}]/exit[/{p.accent}] to quit[/]"
-            ),
+        ]
+        if len(sections) > 3:
+            inner_parts.extend([Text(""), sections[3]])
+        inner_parts.extend(
+            [
+                Text(""),
+                Text.from_markup(
+                    f"[{p.muted}]Type to talk · [{p.accent}]/help[/{p.accent}] for commands · "
+                    f"[{p.accent}]/golden-path run[/{p.accent}] first-run · "
+                    f"[{p.accent}]/exit[/{p.accent}] to quit[/]"
+                ),
+            ]
         )
+        inner = Group(*inner_parts)
 
         self.console.print()
         self.console.print(
@@ -658,20 +708,24 @@ class ChatView:
             steer_preview = self.agent.steer[:32] + ("…" if len(self.agent.steer) > 32 else "")
             steer_seg = f"[agentdrive.framework]steer:[/] {rich_escape(steer_preview)}"
 
+        # Golden path segment
+        gp_seg = ""
+        try:
+            from agentdrive.tui.experience import golden_path_status_segment
+
+            gp_seg = golden_path_status_segment(p)
+        except Exception:
+            pass
+
         # Help hint
         help_seg = f"[{p.muted}]/help[/]"
 
-        self.console.print(
-            status_rule(
-                model_seg,
-                session_seg,
-                pool_seg,
-                ctx_seg,
-                steer_seg,
-                help_seg,
-                palette=p,
-            )
-        )
+        segments = [model_seg, session_seg, pool_seg, ctx_seg, steer_seg]
+        if gp_seg:
+            segments.append(gp_seg)
+        segments.append(help_seg)
+
+        self.console.print(status_rule(*segments, palette=p))
 
     # ────────────────────────────────────────────────────────────────
     # User → assistant turn rendering
@@ -963,6 +1017,13 @@ class ChatView:
             self._cmd_genomes(arg)
         elif cmd in ("/genome", "/view", "/v"):
             self._cmd_genome(arg)
+        elif cmd in ("/golden-path", "/golden", "/think", "/learnings"):
+            from agentdrive.tui.experience import handle_ops_slash
+
+            self.console.print()
+            handle_ops_slash(self.console, cmd, arg, palette=self.palette)
+            self.console.print()
+            self._print_status_rule()
         elif cmd == "/chat":
             # Already in chat — re-show the welcome panel as a gentle reminder.
             self._print_welcome()

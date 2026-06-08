@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Terminal experience — golden path in TUI (2026-06-07)
+- **`tui/experience.py`**: golden-path gate, status segment, ops-backed `/golden-path`, `/think`, `/learnings` slash commands.
+- **Chat welcome + status rule**: show gate when incomplete; golden path section in welcome panel.
+- **`golden-path run`**: marks `config.golden_path.completed` on success (CLI + TUI).
+- **Tests**: `tests/test_tui_experience.py`.
+
 ### Golden path swarm — refinements (2026-06-07)
 - **`scripts/install.sh`**: thin wrapper → canonical root `install.sh` (fixes MCP-less legacy path).
 - **Provider-aware `golden-path run`**: skips live `think` without provider (`--require-provider` to enforce).

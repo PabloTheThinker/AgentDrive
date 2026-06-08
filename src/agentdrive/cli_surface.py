@@ -509,6 +509,10 @@ def cmd_golden_path(args: argparse.Namespace) -> int:
             console.print(table)
             console.print(f"\n[dim]{result.get('passed', 0)}/{result.get('total', 0)} steps[/]")
             console.print("[dim]Full guide: docs/GOLDEN_PATH.md[/]")
+        if result.get("success") and not result.get("dry_run"):
+            from agentdrive.tui.experience import mark_golden_path_complete
+
+            mark_golden_path_complete(source="cli")
         return 0 if result.get("success") else 1
 
     console.print("[red]Unknown golden-path subcommand[/]")
