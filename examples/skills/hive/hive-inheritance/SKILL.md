@@ -1,10 +1,10 @@
 ---
 name: hive-inheritance
 description: >
-  Package pawn outcomes for parent ingest — summary, genomes used, new patterns, learnings key, and self-score for the shared pool.
+  Package pawn outcomes for parent ingest — summary, genomes used, new patterns, learnings key,
+  and self-score for the shared pool.
 category: hive
 role: shared
-source: agentdrive-hive
 tags: [hive, inheritance, pool, swarm, pawn, ingest]
 when_to_call: pawn completing a task and returning knowledge to the Arisen or pool
 ---

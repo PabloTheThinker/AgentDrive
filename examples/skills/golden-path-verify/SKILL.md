@@ -1,7 +1,8 @@
 ---
 name: golden-path-verify
 description: >
-  Verify the seven-step first-run loop (install, doctor, MCP, think, learnings, query) without mutating state. Reports which steps pass or fail.
+  Verify the seven-step first-run loop (install, doctor, MCP, think, learnings, query) without
+  mutating state. Reports which steps pass or fail.
 agentdrive_operation: golden_path_verify
 category: core
 role: shared

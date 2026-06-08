@@ -15,8 +15,7 @@ SECTION_TITLES = {
     "core": "Core — runnable AgentDrive operations",
     "hive": "Hive — Arisen, pawns, and inheritance",
     "agentdrives": "Agentdrives — narrow prodigy specialists",
-    "backup_hermes": "Hermes-adapted — swarm and debugging playbooks",
-    "backup_grok": "Grok backup — harness mirrors for the hive bench",
+    "universal": "Universal — model-agnostic basics (any LLM)",
 }
 
 
@@ -26,14 +25,15 @@ def _one_line(desc: str) -> str:
 
 def main() -> int:
     data = yaml.safe_load(CATALOG.read_text(encoding="utf-8"))
+    total = sum(len(v) for v in data.values() if isinstance(v, dict))
     lines = [
         "# AgentDrive Skills Catalog",
         "",
-        "**Generated from** `examples/skills/catalog.yaml` — run `python scripts/generate_skills_catalog_doc.py` after edits.",
+        "**Model-agnostic bench** — no vendor-specific (Grok/Hermes) bundles. Any connected LLM can load these.",
         "",
-        "**Total:** 40 bundled skills · invoke via `/skill <name>` or `agentdrive skills run <name>`",
+        f"**Total:** {total} bundled skills · `/skill <name>` · `agentdrive skills list`",
         "",
-        "See also: [SKILLS-LIBRARY.md](SKILLS-LIBRARY.md) (layout + metaphor), [ASSESSMENT.md](ASSESSMENT.md) (product status).",
+        "Source: `examples/skills/catalog.yaml`",
         "",
     ]
 
@@ -51,7 +51,6 @@ def main() -> int:
             desc = _one_line(str(meta.get("description", "")))
             lines.append(f"| `{name}` | {role} | `{op}` | {desc} |")
         lines.append("")
-
         lines.append("### When to call")
         lines.append("")
         for name, meta in entries.items():
@@ -60,8 +59,17 @@ def main() -> int:
                 lines.append(f"- **`{name}`** — {when}")
         lines.append("")
 
+    lines.append("## Personal skill overlays")
+    lines.append("")
+    lines.append(
+        "Vendor-specific skills (Grok harness, Cursor, etc.) belong in "
+        "`~/.agentdrive/skills/` on your machine — not in the bundled repo. "
+        "They override bundled names on collision."
+    )
+    lines.append("")
+
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"Wrote {OUT}")
+    print(f"Wrote {OUT} ({total} skills)")
     return 0
 
 

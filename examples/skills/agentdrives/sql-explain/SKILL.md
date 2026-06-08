@@ -1,7 +1,8 @@
 ---
 name: sql-explain
 description: >
-  Explain a SQL query in plain English — intent, tables, indexes, join strategy, cost class, and risks (full scan, implicit cast, N+1).
+  Explain a SQL query in plain English — intent, tables, indexes, join strategy, cost class, and
+  risks (full scan, implicit cast, N+1).
 category: agentdrives
 role: pawn
 tags: [sql, database, explain, query]

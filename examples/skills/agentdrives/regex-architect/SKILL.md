@@ -1,7 +1,8 @@
 ---
 name: regex-architect
 description: >
-  Build and audit regular expressions sample-first — positives, negatives, commented form, and rejection-set proof. Never ship regex without examples.
+  Build and audit regular expressions sample-first — positives, negatives, commented form, and
+  rejection-set proof. Never ship regex without examples.
 category: agentdrives
 role: pawn
 tags: [regex, parsing, validation, text, specialist]

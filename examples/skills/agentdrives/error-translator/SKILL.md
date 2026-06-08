@@ -1,7 +1,8 @@
 ---
 name: error-translator
 description: >
-  Translate a stack trace to one-sentence root cause plus minimal fix. States missing evidence instead of guessing when uncertain.
+  Translate a stack trace to one-sentence root cause plus minimal fix. States missing evidence
+  instead of guessing when uncertain.
 category: agentdrives
 role: pawn
 tags: [debugging, errors, stacktrace, root-cause]

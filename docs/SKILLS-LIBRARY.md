@@ -1,79 +1,59 @@
 # AgentDrive Skills Library
 
 **Status:** shipped (2026-06-08)  
-**Pattern:** Hermes-style `SKILL.md` + YAML frontmatter; AgentDrive `agentdrive_operation` for runnable ops.
+**Principle:** **Model-agnostic** — bundled skills work with any LLM (Ollama, Grok, Claude, Cursor, etc.). No vendor-specific mirrors in the repo.
+
+---
+
+## Why not Grok/Hermes backups?
+
+Earlier versions copied `~/.grok/skills` into the bundle. That was wrong for a product bench:
+
+- Grok skills assume Grok tools (`task`, `image_gen`, Universal Brush)
+- Names like `grok-changelog` confuse operators on other models
+- The repo should ship **universal playbooks**, not harness backups
+
+**Vendor-specific skills** belong in `~/.agentdrive/skills/` on your machine (personal overlay). The bundled library is for everyone.
 
 ---
 
 ## Metaphor — Arisen, pawns, and the hive
 
-Inspired by **Dragon's Dogma** and Hermes multi-agent patterns:
-
 | Role | Who | AgentDrive mapping |
 |------|-----|-------------------|
-| **Arisen** | Player — commands, does not grind | Main `AgentDriveAgent` / orchestrator chat |
-| **Pawn** | Hired specialist — one quest, returns | Subagents (`subagent_id` on harness); `role: pawn` skills |
-| **Hive** | Shared memory all pawns pull from | DNA pool + learnings + `events.jsonl` session stream |
-| **Inheritance** | Pawn knowledge returning to the Arisen | `hive-inheritance`, pool ingest, learnings-log |
-
-Spawn a pawn → assign `pawn-worker` + a specialist (`regex-architect`, etc.) → pawn pulls DNA → returns handoff → Arisen logs to hive.
+| **Arisen** | Commands, does not grind | Main agent / `arisen-orchestrator` |
+| **Pawn** | One quest, returns knowledge | Subagents; `pawn-worker`, `pawn-scout`, … |
+| **Hive** | Shared memory | DNA pool + learnings + session events |
+| **Inheritance** | Pawn → pool | `hive-inheritance`, `learnings-log` |
 
 ---
 
 ## On-disk layout
 
 ```
-examples/skills/                    # Bundled bench (shipped with repo)
-  think/                            # core — cited synthesis
+examples/skills/
+  think/                 # core
   golden-path-verify/
-  core/                             # runnable ops skills
-  hive/                             # arisen + pawn + inheritance
-  agentdrives/                      # 12 narrow prodigies (SKILLS-SPEC seed)
-  backup/
-    grok/                           # mirror of ~/.grok/skills (14 skills)
-    hermes/                         # Hermes-adapted swarm/debug playbooks
+  core/                  # runnable ops (doctor, pool-query, …)
+  hive/                  # arisen + pawn playbooks
+  agentdrives/           # 12 narrow prodigies
+  universal/             # model-agnostic basics (changelog, verify-work, …)
 
-~/.agentdrive/skills/               # User overrides (wins on name collision)
+~/.agentdrive/skills/    # YOUR overlays — any vendor, wins on name collision
 ```
 
-Discovery: `discover_skills()` walks `**/*.SKILL.md` under user + bundled roots.
+**36 bundled skills** — full descriptions: [SKILLS-CATALOG.md](SKILLS-CATALOG.md)
 
 ---
 
-## Frontmatter fields
+## Tiers
 
-| Field | Purpose |
-|-------|---------|
-| `name` | Unique skill id (`/skill <name>`) |
-| `description` | One line for catalog + matching |
-| `agentdrive_operation` | Maps to `run_operation()` when set |
-| `argument` | Kwarg name for CLI/slash args |
-| `role` | `arisen` \| `pawn` \| `shared` |
-| `category` | `core` \| `hive` \| `agentdrives` \| `backup` |
-| `tags` | Matching + filter |
-| `source` | `grok-backup`, `hermes-adapted`, etc. |
-| `when_to_call` | Auto-compose hint |
-
----
-
-## Catalog (bundled)
-
-**Full descriptions for all 40 skills:** [SKILLS-CATALOG.md](SKILLS-CATALOG.md)
-
-Canonical source: `examples/skills/catalog.yaml` — edit descriptions there, then:
-
-```bash
-python scripts/apply_skills_catalog.py      # patch SKILL.md frontmatter
-python scripts/generate_skills_catalog_doc.py # refresh docs/SKILLS-CATALOG.md
-```
-
-| Tier | Count | Examples |
-|------|-------|----------|
-| Core (runnable ops) | 6 | `think`, `pool-query`, `doctor` |
-| Hive (pawn playbooks) | 5 | `arisen-orchestrator`, `pawn-worker` |
-| Agentdrives (specialists) | 12 | `regex-architect`, `error-translator` |
-| Grok backup | 14 | `grok-check-work`, `grok-changelog` |
-| Hermes-adapted | 3 | `systematic-debugging`, `swarm-worker` |
+| Tier | Count | Purpose |
+|------|-------|---------|
+| **core** | 6 | Runnable AgentDrive ops (`think`, `doctor`, …) |
+| **hive** | 5 | Arisen/pawn coordination |
+| **agentdrives** | 12 | Narrow specialists (regex, SQL, diff, …) |
+| **universal** | 13 | Any-model basics (changelog, debugging, documents, UI) |
 
 ---
 
@@ -82,21 +62,8 @@ python scripts/generate_skills_catalog_doc.py # refresh docs/SKILLS-CATALOG.md
 | Surface | Command |
 |---------|---------|
 | CLI | `agentdrive skills list\|show\|run\|init` |
-| Chat | `/skills list`, `/skill <name>`, `/skills init <name>` |
-| System prompt | Auto catalog + top-2 matched skills per turn (`compose_skills_block`) |
-| Pawn spawn | Subagents get `role=pawn` matching boost |
-
----
-
-## Refresh Grok backup
-
-When Grok harness skills change:
-
-```bash
-python scripts/sync_grok_skills_backup.py
-```
-
-Commit updated `examples/skills/backup/grok/` so swarm pawns ship with the same playbooks.
+| Chat | `/skills list`, `/skill <name>` |
+| System prompt | Auto catalog + matched skills per turn |
 
 ---
 
@@ -106,8 +73,11 @@ Commit updated `examples/skills/backup/grok/` so swarm pawns ship with the same 
 agentdrive skills init my-skill --description "What it does"
 ```
 
-Or copy a template from `hive/pawn-worker` or `agentdrives/error-translator`.
+Edit `examples/skills/catalog.yaml`, then:
 
-**Promote to Genome** when a skill earns tracked outcomes — use existing genome scan/promotion (future: `skills promote`).
+```bash
+python scripts/apply_skills_catalog.py
+python scripts/generate_skills_catalog_doc.py
+```
 
-See also: `docs/SKILLS-SPEC.md` (design brainstorm), `docs/ASSESSMENT.md` (product assessment).
+See also: [ASSESSMENT.md](ASSESSMENT.md), [SKILLS-SPEC.md](SKILLS-SPEC.md).

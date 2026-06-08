@@ -1,7 +1,8 @@
 ---
 name: diff-narrator
 description: >
-  Write a one-paragraph why-this-changed from a git diff — user impact and motivation, not a line-by-line restatement. Ends with reviewer focus bullets.
+  Write a one-paragraph why-this-changed from a git diff — user impact and motivation, not a line-by-line
+  restatement. Ends with reviewer focus bullets.
 category: agentdrives
 role: pawn
 tags: [git, diff, pr, commit, narrative]

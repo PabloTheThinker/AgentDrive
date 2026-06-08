@@ -1,21 +1,14 @@
 # Bundled AgentDrive skills bench
 
-Shipped with the `agentdrive` package under `examples/skills/`. User skills in `~/.agentdrive/skills/` override on name collision.
+**36 model-agnostic skills** — any LLM can load these via `/skill <name>`.
 
-## Categories
+| Tier | Folder | Examples |
+|------|--------|----------|
+| Core ops | `core/`, `think/` | `think`, `doctor`, `pool-query` |
+| Hive | `hive/` | `pawn-worker`, `arisen-orchestrator` |
+| Specialists | `agentdrives/` | `regex-architect`, `error-translator` |
+| Universal | `universal/` | `changelog`, `verify-work`, `systematic-debugging` |
 
-- **core/** — runnable ops (`think`, `pool-query`, `doctor`, …)
-- **hive/** — Arisen + pawn + inheritance playbooks
-- **agentdrives/** — narrow prodigy skills (regex, SQL, diff, …)
-- **backup/grok/** — Grok harness mirrors for swarm pawns
-- **backup/hermes/** — Hermes kanban/debug patterns adapted for AgentDrive
+Catalog: `docs/SKILLS-CATALOG.md` · Source: `catalog.yaml`
 
-Full catalog with descriptions: `docs/SKILLS-CATALOG.md`  
-Layout and hive metaphor: `docs/SKILLS-LIBRARY.md`  
-Canonical metadata: `catalog.yaml` (run `scripts/apply_skills_catalog.py` after edits)
-
-## Sync Grok backups
-
-```bash
-python scripts/sync_grok_skills_backup.py
-```
+**Personal / vendor skills** (Grok, Cursor, etc.) → `~/.agentdrive/skills/` only, not this folder.

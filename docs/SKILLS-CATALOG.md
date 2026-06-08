@@ -1,10 +1,10 @@
 # AgentDrive Skills Catalog
 
-**Generated from** `examples/skills/catalog.yaml` — run `python scripts/generate_skills_catalog_doc.py` after edits.
+**Model-agnostic bench** — no vendor-specific (Grok/Hermes) bundles. Any connected LLM can load these.
 
-**Total:** 40 bundled skills · invoke via `/skill <name>` or `agentdrive skills run <name>`
+**Total:** 36 bundled skills · `/skill <name>` · `agentdrive skills list`
 
-See also: [SKILLS-LIBRARY.md](SKILLS-LIBRARY.md) (layout + metaphor), [ASSESSMENT.md](ASSESSMENT.md) (product status).
+Source: `examples/skills/catalog.yaml`
 
 ## Core — runnable AgentDrive operations
 
@@ -76,53 +76,41 @@ See also: [SKILLS-LIBRARY.md](SKILLS-LIBRARY.md) (layout + metaphor), [ASSESSMEN
 - **`prompt-distiller`** — prompt too long, cost review, or tightening system instructions
 - **`test-gap-finder`** — are tests sufficient, what's missing, or pre-refactor risk check
 
-## Hermes-adapted — swarm and debugging playbooks
+## Universal — model-agnostic basics (any LLM)
 
 | Skill | Role | Runnable | Description |
 |-------|------|----------|-------------|
-| `systematic-debugging` | shared | `—` | Four-phase root-cause debugging — investigate, pattern-match, hypothesize, fix. No fixes before understanding WHY. Stop after three failed fixes and question architecture. |
-| `swarm-orchestrator` | arisen | `—` | Hermes kanban-orchestrator adapted for AgentDrive — decompose quests, dispatch pawns, collect inheritance. Anti-rule: do not implement pawn work yourself. |
-| `swarm-worker` | pawn | `—` | Hermes kanban-worker adapted for pawns — structured handoffs, retry discipline, scope limits, and review-required blocking patterns. |
+| `changelog` | shared | `—` | Maintain CHANGELOG.md after code or config changes — dated sections, Added/Changed/Fixed/Removed, verification hints. Works with any model or editor. |
+| `verify-work` | shared | `—` | Before handoff — review your diff, run relevant tests, fix failures, confirm the task is actually done. Model-agnostic self-check, not vendor-specific tooling. |
+| `skill-authoring` | shared | `—` | Author a SKILL.md — frontmatter (name, description, when_to_call), concise body, one worked example. Use agentdrive skills init to scaffold on disk. |
+| `systematic-debugging` | shared | `—` | Four-phase debugging — investigate, compare patterns, hypothesize, fix root cause. No fixes before understanding WHY. Stop after three failed fixes. |
+| `swarm-orchestrator` | arisen | `—` | Decompose multi-step work into pawn-sized tasks, dispatch specialists, collect handoffs. Do not implement pawn work yourself. |
+| `swarm-worker` | pawn | `—` | Execute one assigned task with structured handoff — summary, files, tests, gaps. Retry discipline and scope limits for any subagent runtime. |
+| `frontend-design` | shared | `—` | Build distinctive, production-grade UI — typography, spacing, motion, accessibility. Avoid generic templates; commit to a clear aesthetic before coding. |
+| `design-system` | shared | `—` | Extract or define design tokens (color, type, spacing, components) as a living contract so all UI generations stay consistent. |
+| `web-artifact` | shared | `—` | Self-contained interactive web artifact — HTML/CSS/JS or component framework, responsive, accessible, previewable in a browser. |
+| `document-docx` | shared | `—` | Create or edit Word documents — reports, memos, letters, templates with headings and tables. Deliverable is a .docx file. |
+| `document-xlsx` | shared | `—` | Read, clean, or create spreadsheets — formulas, charts, tabular data. Deliverable is xlsx/csv/tsv. |
+| `document-pptx` | shared | `—` | Create or edit slide decks — structure, speaker notes, consistent layout. Deliverable is a .pptx file. |
+| `parallel-attempts` | arisen | `—` | Try multiple approaches to the same problem, compare outcomes objectively, keep the best. Works with any runtime that can spawn isolated attempts. |
 
 ### When to call
 
-- **`systematic-debugging`** — bug, test failure, unexpected behavior, or production incident
-- **`swarm-orchestrator`** — multi-step project needs decomposition and pawn dispatch
-- **`swarm-worker`** — dispatched worker pawn on a scoped implementation or research task
+- **`changelog`** — end of implementation, session wrap-up, or user asks what changed
+- **`verify-work`** — check work, verify changes, or before marking a task complete
+- **`skill-authoring`** — create a new skill, document a repeatable workflow
+- **`systematic-debugging`** — bug, test failure, unexpected behavior, production incident
+- **`swarm-orchestrator`** — project needs breakdown and delegated execution
+- **`swarm-worker`** — dispatched worker on a scoped implementation or research task
+- **`frontend-design`** — web pages, components, dashboards, or landing pages
+- **`design-system`** — brand consistency, DESIGN.md, or token extraction from code/CSS
+- **`web-artifact`** — prototype, demo, dashboard, or handoff-ready UI artifact
+- **`document-docx`** — Word document, report, memo, or letter as deliverable
+- **`document-xlsx`** — spreadsheet is primary input or output
+- **`document-pptx`** — presentation, deck, or slides as deliverable
+- **`parallel-attempts`** — uncertain best approach, compare implementations, or explore alternatives
 
-## Grok backup — harness mirrors for the hive bench
+## Personal skill overlays
 
-| Skill | Role | Runnable | Description |
-|-------|------|----------|-------------|
-| `grok-changelog` | shared | `—` | Maintain CHANGELOG.md after code or config changes — dated sections, Added/Changed/Fixed, verification hints. Hive copy of Grok changelog skill for pawns. |
-| `grok-check-work` | shared | `—` | Self-verification via verifier subagent — review diffs, run tests, fix until pass. Hive copy for pawns finishing implementation work. |
-| `grok-create-skill` | shared | `—` | Interactively scaffold a new SKILL.md with frontmatter, triggers, and body. Hive copy; use agentdrive skills init for AgentDrive-native skills. |
-| `grok-help` | shared | `—` | Grok harness documentation and setup help — MCP, auth, skills, slash commands. Hive copy for pawns answering operator setup questions. |
-| `grok-frontend-design` | shared | `—` | Production-grade frontend UI with distinctive aesthetics — typography, motion, spatial detail. Avoid generic AI slop. Hive copy for UI pawn work. |
-| `grok-design-system` | shared | `—` | Ingest or generate DESIGN.md tokens from code, CSS, or screenshots — living design contract for consistent UI generations. Hive copy. |
-| `grok-artifacts-builder` | shared | `—` | Build self-contained web artifacts (HTML/Tailwind or React) — prototypes, dashboards, interactive UIs with accessibility and dark mode. Hive copy. |
-| `grok-best-of-n` | arisen | `—` | Implement a task N ways in parallel, evaluate candidates, apply the winner. Hive copy for Arisen-level parallel implementation tournaments. |
-| `grok-docx` | shared | `—` | Create, read, and edit Word documents — reports, memos, templates, tracked changes. Hive copy for document pawn deliverables. |
-| `grok-xlsx` | shared | `—` | Open, edit, or create spreadsheets — formulas, charts, messy data cleanup. Deliverable must be xlsx/csv/tsv. Hive copy. |
-| `grok-pptx` | shared | `—` | Create or edit PowerPoint decks — slides, layouts, speaker notes, templates. Hive copy for presentation pawn work. |
-| `grok-imagine` | shared | `—` | Image generation workflow — when to code vs generate, prompt craft, reference handling, factual grounding, asset consistency. Hive copy. |
-| `grok-universal-brush` | shared | `—` | Universal Brush design studio — conversational visual work with live canvas preview for prototypes, decks, and marketing. Hive copy. |
-| `grok-ren` | arisen | `—` | Ren Interest Brand Operator — autonomous brand loops, persona contract, Polsia-style persistent operator. Project-specific; hive copy for brand operator pawns. |
-
-### When to call
-
-- **`grok-changelog`** — end of implementation, session log, or user asks what changed
-- **`grok-check-work`** — check work, verify changes, self-verify before handoff
-- **`grok-create-skill`** — user wants to create or scaffold a new skill
-- **`grok-help`** — setup, configuration, MCP, or harness feature questions
-- **`grok-frontend-design`** — build web components, pages, landing pages, or React/Tailwind UI
-- **`grok-design-system`** — brand tokens, design system, or consistent UI generation
-- **`grok-artifacts-builder`** — interactive prototype, dashboard, or live-preview web artifact
-- **`grok-best-of-n`** — best of n, try multiple approaches, parallel implementations
-- **`grok-docx`** — Word doc, docx file, report, memo, or letter deliverable
-- **`grok-xlsx`** — spreadsheet file as primary input or output
-- **`grok-pptx`** — deck, slides, presentation, or pptx file
-- **`grok-imagine`** — generate or edit images, visual assets, or image tool decisions
-- **`grok-universal-brush`** — visual prototypes, slides, or marketing designs with live preview
-- **`grok-ren`** — Ren persona, interest brand operator, or brand embodiment tasks
+Vendor-specific skills (Grok harness, Cursor, etc.) belong in `~/.agentdrive/skills/` on your machine — not in the bundled repo. They override bundled names on collision.
 

@@ -11,8 +11,9 @@ def test_discover_skills_includes_nested_categories():
     assert "think" in names
     assert "pawn-worker" in names
     assert "regex-architect" in names
-    assert "grok-changelog" in names
+    assert "changelog" in names
     assert "systematic-debugging" in names
+    assert "grok-changelog" not in names
 
 
 def test_skill_entry_has_category_and_role():

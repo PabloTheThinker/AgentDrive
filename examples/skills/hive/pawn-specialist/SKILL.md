@@ -1,10 +1,10 @@
 ---
 name: pawn-specialist
 description: >
-  Narrow-domain pawn — follow one agentdrive skill literally (regex, SQL, diff, etc.). Returns specialist artifact plus one hive learning line.
+  Narrow-domain pawn — follow one agentdrive skill literally (regex, SQL, diff, etc.). Returns
+  specialist artifact plus one hive learning line.
 category: hive
 role: pawn
-source: agentdrive-hive
 tags: [pawn, specialist, agentdrive, narrow, prodigy]
 when_to_call: task clearly matches a bundled agentdrive (regex, cron, errors, tests)
 ---

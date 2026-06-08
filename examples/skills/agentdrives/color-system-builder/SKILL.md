@@ -1,7 +1,8 @@
 ---
 name: color-system-builder
 description: >
-  Expand one brand primary into a full UI palette with WCAG contrast pairings for bg, surface, accent, ok, warn, and error roles.
+  Expand one brand primary into a full UI palette with WCAG contrast pairings for bg, surface,
+  accent, ok, warn, and error roles.
 category: agentdrives
 role: pawn
 tags: [design, color, accessibility, ui, wcag]

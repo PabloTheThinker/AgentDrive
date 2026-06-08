@@ -1,7 +1,8 @@
 ---
 name: release-notes
 description: >
-  Turn a commit range into release notes — Added, Changed, Fixed, Security — framed by user impact, not implementation detail.
+  Turn a commit range into release notes — Added, Changed, Fixed, Security — framed by user impact,
+  not implementation detail.
 category: agentdrives
 role: pawn
 tags: [changelog, release, git, notes]

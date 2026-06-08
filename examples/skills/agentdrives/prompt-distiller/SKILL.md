@@ -1,7 +1,8 @@
 ---
 name: prompt-distiller
 description: >
-  Distill a verbose prompt to minimum tokens while preserving constraints, output format, and success criteria. Shows before/after cuts.
+  Distill a verbose prompt to minimum tokens while preserving constraints, output format, and
+  success criteria. Shows before/after cuts.
 category: agentdrives
 role: pawn
 tags: [prompt, tokens, llm, cost, review]

@@ -1,10 +1,10 @@
 ---
 name: arisen-orchestrator
 description: >
-  The Arisen playbook — decompose user quests, spawn pawns, curate hive learnings, and synthesize outcomes. Command; do not grind.
+  The Arisen playbook — decompose user quests, spawn pawns, curate hive learnings, and synthesize
+  outcomes. Command; do not grind.
 category: hive
 role: arisen
-source: agentdrive-hive
 tags: [hive, pawn, orchestrator, swarm, arisen, command]
 when_to_call: multi-step work, swarm coordination, or deciding what the hive should learn
 ---

@@ -1,7 +1,8 @@
 ---
 name: doctor
 description: >
-  Run AgentDrive health checks — install, config, MCP bridge, pool, and environment sanity. First diagnostic when something feels broken.
+  Run AgentDrive health checks — install, config, MCP bridge, pool, and environment sanity. First
+  diagnostic when something feels broken.
 agentdrive_operation: doctor
 category: core
 role: shared

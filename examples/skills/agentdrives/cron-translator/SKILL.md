@@ -1,6 +1,8 @@
 ---
 name: cron-translator
-description: Translate between cron expressions, plain English, and next fire times. Flags day-of-month vs day-of-week conflicts.
+description: >
+  Translate between cron expressions, plain English, and next fire times. Flags day-of-month vs
+  day-of-week conflicts.
 category: agentdrives
 role: pawn
 tags: [cron, scheduling, ops, time]

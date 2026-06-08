@@ -1,6 +1,8 @@
 ---
 name: learnings-log
-description: Record one operational learning (key + insight) into the shared hive so future sessions and pawns inherit the note.
+description: >
+  Record one operational learning (key + insight) into the shared hive so future sessions and
+  pawns inherit the note.
 agentdrive_operation: learnings_log
 argument: input
 category: core

@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Skills — model-agnostic bench (drop Grok/Hermes vendor bundles) (2026-06-08)
+- **Removed** `examples/skills/backup/grok/` (14 Grok mirrors) and `backup/hermes/`.
+- **Added** `universal/` tier (13 skills): `changelog`, `verify-work`, `skill-authoring`, `systematic-debugging`, `swarm-orchestrator`, `swarm-worker`, `frontend-design`, `design-system`, `web-artifact`, `document-*`, `parallel-attempts`.
+- **Principle:** bundled skills work with any LLM; vendor harness skills belong in `~/.agentdrive/skills/` overlays only.
+- **Removed** `scripts/sync_grok_skills_backup.py`; updated SKILLS-LIBRARY.md and SKILLS-CATALOG.md (36 skills).
+
 ### Skills catalog — proper descriptions for all 40 skills (2026-06-08)
 - **`examples/skills/catalog.yaml`**: canonical name, role, description, when_to_call, tags for every skill.
 - **`docs/SKILLS-CATALOG.md`**: generated human-readable catalog with full descriptions per skill.

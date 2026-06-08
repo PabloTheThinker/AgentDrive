@@ -1,7 +1,8 @@
 ---
 name: think
 description: >
-  Cited synthesis from your AgentDrive pool with mandatory gap analysis. Use before delegating to pawns or when you need grounded answers from DNA + learnings.
+  Cited synthesis from your AgentDrive pool with mandatory gap analysis. Use before delegating
+  to pawns or when you need grounded answers from DNA + learnings.
 agentdrive_operation: think
 argument: question
 category: core
