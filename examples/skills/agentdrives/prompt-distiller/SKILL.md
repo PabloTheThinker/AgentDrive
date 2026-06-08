@@ -7,6 +7,7 @@ category: agentdrives
 role: pawn
 tags: [prompt, tokens, llm, cost, review]
 when_to_call: prompt too long, cost review, or tightening system instructions
+harness: agentdrive
 ---
 
 # Prompt distiller

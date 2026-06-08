@@ -7,6 +7,7 @@ category: agentdrives
 role: pawn
 tags: [migration, schema, database, ops, rollback]
 when_to_call: schema change, data migration, or production cutover planning
+harness: agentdrive
 ---
 
 # Migration planner

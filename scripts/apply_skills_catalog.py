@@ -38,6 +38,14 @@ BODY_STUBS = {
     "document-xlsx": "# Spreadsheet\n\nDeliver xlsx/csv with correct formulas and clean data.",
     "document-pptx": "# Presentation\n\nDeliver .pptx with consistent slides and notes.",
     "parallel-attempts": "# Parallel attempts\n\nTry N approaches, score objectively, keep the best.",
+    "mcp-agentdrive": "# AgentDrive MCP\n\nUse think, pool_query, learnings, golden_path_verify via MCP — prefer over vendor harness skills.",
+}
+
+HARNESS_BY_SECTION = {
+    "core": "agentdrive",
+    "hive": "agentdrive",
+    "agentdrives": "agentdrive",
+    "universal": "universal",
 }
 
 
@@ -87,6 +95,8 @@ def _patch_frontmatter(path: Path, meta: dict) -> None:
         "agentdrive_operation",
         "argument",
         "category",
+        "harness",
+        "requires",
     ):
         if key in meta and meta[key] is not None:
             existing[key] = meta[key]
@@ -103,6 +113,8 @@ def _patch_frontmatter(path: Path, meta: dict) -> None:
         "role",
         "tags",
         "when_to_call",
+        "harness",
+        "requires",
         "related_skills",
     ]
     lines = ["---"]
@@ -147,6 +159,7 @@ def main() -> int:
             patch = dict(meta)
             patch["name"] = name
             patch.setdefault("category", category)
+            patch.setdefault("harness", HARNESS_BY_SECTION.get(section, "universal"))
             _patch_frontmatter(path, patch)
             updated += 1
             print(f"  updated {name}")

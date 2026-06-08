@@ -7,6 +7,7 @@ category: universal
 role: shared
 tags: [verify, review, testing, quality, universal]
 when_to_call: check work, verify changes, or before marking a task complete
+harness: universal
 ---
 
 # Verify work

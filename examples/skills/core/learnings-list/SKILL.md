@@ -6,6 +6,7 @@ category: core
 role: shared
 tags: [learnings, memory, hive, list]
 when_to_call: user asks what we already learned, decided, or recorded
+harness: agentdrive
 ---
 
 # Learnings list

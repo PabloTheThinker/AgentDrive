@@ -7,6 +7,7 @@ category: universal
 role: shared
 tags: [ui, frontend, design, universal]
 when_to_call: web pages, components, dashboards, or landing pages
+harness: universal
 ---
 
 # Frontend design

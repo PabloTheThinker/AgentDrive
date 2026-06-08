@@ -9,6 +9,7 @@ category: core
 role: arisen
 tags: [think, synthesis, pool, hive, memory]
 when_to_call: user needs a cited answer from the pool, gap analysis, or pre-delegation research
+harness: agentdrive
 ---
 
 # Think

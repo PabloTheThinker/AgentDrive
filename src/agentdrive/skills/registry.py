@@ -26,6 +26,8 @@ class SkillEntry:
     tags: tuple[str, ...] = ()
     role: str = ""  # arisen | pawn | orchestrator | shared | bench
     category: str = ""
+    harness: str = ""  # universal | agentdrive | grok | claude | codex
+    requires: str = ""  # human-readable harness/tool requirements
     source: str = ""
     when_to_call: str = ""
 
@@ -78,13 +80,33 @@ def _parse_skill_file(path: Path, *, skills_root: Path | None = None) -> SkillEn
 
     role = str(meta.get("role") or meta.get("pawn_role") or "").strip()
     category = str(meta.get("category") or "").strip()
+    harness = str(meta.get("harness") or "").strip()
+    requires = str(meta.get("requires") or "").strip()
     if not category and skills_root is not None:
         try:
             rel = path.parent.relative_to(skills_root)
-            if len(rel.parts) > 1:
-                category = rel.parts[0]
+            parts = rel.parts
+            if parts[0] == "vendors" and len(parts) > 1:
+                category = "vendors"
+                harness = harness or parts[1]
+            elif len(parts) > 1:
+                category = parts[0]
+            elif len(parts) == 1:
+                category = parts[0]
         except ValueError:
             category = ""
+    if not harness:
+        if category in ("core", "hive", "agentdrives"):
+            harness = "agentdrive"
+        elif category == "universal":
+            harness = "universal"
+        elif category in ("think", "golden-path-verify") or path.parent.name in (
+            "think",
+            "golden-path-verify",
+        ):
+            harness = "agentdrive"
+        else:
+            harness = "universal" if category == "universal" else "agentdrive"
     source = str(meta.get("source") or "").strip()
     when_to_call = str(meta.get("when_to_call") or "").strip()
 
@@ -98,6 +120,8 @@ def _parse_skill_file(path: Path, *, skills_root: Path | None = None) -> SkillEn
         tags=tags,
         role=role,
         category=category,
+        harness=harness,
+        requires=requires,
         source=source,
         when_to_call=when_to_call,
     )
@@ -121,8 +145,34 @@ def discover_skills() -> list[SkillEntry]:
     return sorted(out, key=lambda e: e.name)
 
 
-def list_skills() -> list[SkillEntry]:
-    return discover_skills()
+def list_skills(*, harness: str | None = None) -> list[SkillEntry]:
+    entries = discover_skills()
+    if not harness:
+        return entries
+    needle = harness.strip().lower()
+    return [e for e in entries if e.harness.lower() == needle]
+
+
+def list_skills_by_tier() -> dict[str, list[SkillEntry]]:
+    """Group skills for catalog display: agentdrive, universal, vendors."""
+    tiers: dict[str, list[SkillEntry]] = {
+        "agentdrive": [],
+        "universal": [],
+        "grok": [],
+        "claude": [],
+        "codex": [],
+    }
+    for entry in discover_skills():
+        h = entry.harness.lower() if entry.harness else "agentdrive"
+        if h in tiers:
+            tiers[h].append(entry)
+        elif entry.category == "vendors":
+            tiers.setdefault(h, []).append(entry)
+        elif h == "agentdrive" or entry.category in ("core", "hive", "agentdrives"):
+            tiers["agentdrive"].append(entry)
+        else:
+            tiers["universal"].append(entry)
+    return {k: sorted(v, key=lambda e: e.name) for k, v in tiers.items() if v}
 
 
 def get_skill(name: str) -> SkillEntry | None:

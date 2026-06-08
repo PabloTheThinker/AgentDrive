@@ -7,6 +7,7 @@ category: universal
 role: arisen
 tags: [swarm, orchestrator, decompose, universal]
 when_to_call: project needs breakdown and delegated execution
+harness: universal
 ---
 
 # Swarm orchestrator

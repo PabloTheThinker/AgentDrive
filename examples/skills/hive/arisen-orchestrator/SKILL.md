@@ -7,6 +7,7 @@ category: hive
 role: arisen
 tags: [hive, pawn, orchestrator, swarm, arisen, command]
 when_to_call: multi-step work, swarm coordination, or deciding what the hive should learn
+harness: agentdrive
 ---
 
 # Arisen orchestrator (hive command)

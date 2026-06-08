@@ -5,6 +5,7 @@ category: universal
 role: shared
 tags: [xlsx, spreadsheet, csv, data, universal]
 when_to_call: spreadsheet is primary input or output
+harness: universal
 ---
 
 # Spreadsheet

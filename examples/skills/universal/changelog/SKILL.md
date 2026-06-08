@@ -7,6 +7,7 @@ category: universal
 role: shared
 tags: [changelog, documentation, session, universal]
 when_to_call: end of implementation, session wrap-up, or user asks what changed
+harness: universal
 ---
 
 # Changelog

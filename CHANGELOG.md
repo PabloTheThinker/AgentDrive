@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Skills — tiered library: universal + Grok/Claude/Codex vendors (2026-06-08)
+- **Layout:** `examples/skills/vendors/{grok,claude,codex}/` (24 vendor skills) alongside tiers 1–4 (37 bundled).
+- **`vendor-manifest.yaml`** + **`scripts/sync_vendor_skills.py`**: sync Grok from `~/.grok/skills`; curated Claude/Codex plugin paths.
+- **`registry.py`**: `harness`, `requires` on `SkillEntry`; `list_skills(harness=)`; `list_skills_by_tier()`.
+- **`compose.py`**: tiers 1–4 always in prompt; tier 5 only when `AGENTDRIVE_HARNESS=grok|claude|codex`.
+- **CLI:** `agentdrive skills list --harness grok` — grouped tier tables + harness filter.
+- **Universal:** added `mcp-agentdrive` — prefer MCP tools over vendor harness skills.
+- **Docs:** `SKILLS-LIBRARY.md`, `SKILLS-CATALOG.md`, `examples/skills/README.md` updated for 61-skill bench.
+- **Tests:** tier/harness filtering; vendor exclusion from default prompt matching.
+
 ### Skills — model-agnostic bench (drop Grok/Hermes vendor bundles) (2026-06-08)
 - **Removed** `examples/skills/backup/grok/` (14 Grok mirrors) and `backup/hermes/`.
 - **Added** `universal/` tier (13 skills): `changelog`, `verify-work`, `skill-authoring`, `systematic-debugging`, `swarm-orchestrator`, `swarm-worker`, `frontend-design`, `design-system`, `web-artifact`, `document-*`, `parallel-attempts`.

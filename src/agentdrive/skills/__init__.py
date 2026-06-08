@@ -7,6 +7,7 @@ from agentdrive.skills.registry import (
     get_skill,
     init_skill,
     list_skills,
+    list_skills_by_tier,
 )
 from agentdrive.skills.runner import run_skill
 
@@ -17,6 +18,7 @@ __all__ = [
     "get_skill",
     "init_skill",
     "list_skills",
+    "list_skills_by_tier",
     "match_skills_for_turn",
     "run_skill",
 ]

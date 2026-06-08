@@ -8,6 +8,7 @@ category: core
 role: shared
 tags: [golden-path, verify, onboarding, health]
 when_to_call: before or after first run, CI smoke, or when onboarding health is uncertain
+harness: agentdrive
 ---
 
 # Golden path verify

@@ -544,7 +544,13 @@ def cmd_skills(args: argparse.Namespace) -> int:
     json_output = getattr(args, "json_output", False)
 
     if sub == "list":
-        entries = list_skills()
+        from agentdrive.skills.registry import list_skills_by_tier
+
+        harness_filter = getattr(args, "skills_harness", None) or None
+        if harness_filter:
+            entries = list_skills(harness=harness_filter)
+        else:
+            entries = list_skills()
         if json_output:
             emit_json(
                 [
@@ -552,26 +558,56 @@ def cmd_skills(args: argparse.Namespace) -> int:
                         "name": e.name,
                         "description": e.description,
                         "operation": e.operation,
+                        "harness": e.harness,
+                        "category": e.category,
                         "path": str(e.path),
                     }
                     for e in entries
                 ]
             )
             return 0
+        if not entries and harness_filter:
+            console.print(f"[dim]No skills for harness={harness_filter}[/]")
+            return 0
         if not entries:
             console.print("[dim]No skills found. Add SKILL.md under ~/.agentdrive/skills/<name>/[/]")
             return 0
-        table = Table(title=f"Skills ({len(entries)})", show_header=True)
-        table.add_column("Name", style="cyan")
-        table.add_column("Operation")
-        table.add_column("Description", overflow="fold")
-        for entry in entries:
-            table.add_row(
-                entry.name,
-                entry.operation or "—",
-                entry.description[:120],
-            )
-        console.print(table)
+        if harness_filter:
+            table = Table(title=f"Skills · {harness_filter} ({len(entries)})", show_header=True)
+            table.add_column("Name", style="cyan")
+            table.add_column("Operation")
+            table.add_column("Description", overflow="fold")
+            for entry in entries:
+                table.add_row(entry.name, entry.operation or "—", entry.description[:120])
+            console.print(table)
+            return 0
+
+        tiers = list_skills_by_tier()
+        tier_labels = {
+            "agentdrive": "AgentDrive + hive (MCP)",
+            "universal": "Universal (any model)",
+            "grok": "Grok harness",
+            "claude": "Claude Code harness",
+            "codex": "Codex harness",
+        }
+        total = sum(len(v) for v in tiers.values())
+        console.print(f"[bold]Skills bench[/] · {total} total · tiers 1–4 work on MCP with any model\n")
+        for tier, label in tier_labels.items():
+            group = tiers.get(tier, [])
+            if not group:
+                continue
+            table = Table(title=label, show_header=True, expand=True)
+            table.add_column("Name", style="cyan", no_wrap=True)
+            table.add_column("Harness", style="dim")
+            table.add_column("Description", overflow="fold")
+            for entry in group:
+                table.add_row(
+                    entry.name,
+                    entry.harness or tier,
+                    entry.description[:100],
+                )
+            console.print(table)
+            console.print()
         return 0
 
     if sub == "show":

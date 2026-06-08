@@ -7,6 +7,7 @@ category: agentdrives
 role: pawn
 tags: [testing, pytest, coverage, quality, risk]
 when_to_call: are tests sufficient, what's missing, or pre-refactor risk check
+harness: agentdrive
 ---
 
 # Test gap finder

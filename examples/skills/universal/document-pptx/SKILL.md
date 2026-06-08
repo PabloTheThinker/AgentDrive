@@ -7,6 +7,7 @@ category: universal
 role: shared
 tags: [pptx, slides, presentation, universal]
 when_to_call: presentation, deck, or slides as deliverable
+harness: universal
 ---
 
 # Presentation

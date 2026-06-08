@@ -7,6 +7,7 @@ category: universal
 role: shared
 tags: [docx, word, document, universal]
 when_to_call: Word document, report, memo, or letter as deliverable
+harness: universal
 ---
 
 # Word document

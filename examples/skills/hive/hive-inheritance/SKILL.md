@@ -7,6 +7,7 @@ category: hive
 role: shared
 tags: [hive, inheritance, pool, swarm, pawn, ingest]
 when_to_call: pawn completing a task and returning knowledge to the Arisen or pool
+harness: agentdrive
 ---
 
 # Hive inheritance

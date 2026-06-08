@@ -7,6 +7,7 @@ category: agentdrives
 role: pawn
 tags: [cron, scheduling, ops, time]
 when_to_call: cron schedule confusion, authoring schedules, or ops timing questions
+harness: agentdrive
 ---
 
 # Cron translator

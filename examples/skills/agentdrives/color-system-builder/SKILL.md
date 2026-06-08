@@ -7,6 +7,7 @@ category: agentdrives
 role: pawn
 tags: [design, color, accessibility, ui, wcag]
 when_to_call: status panels, TUI themes, or UI tokens from a single brand color
+harness: agentdrive
 ---
 
 # Color system builder

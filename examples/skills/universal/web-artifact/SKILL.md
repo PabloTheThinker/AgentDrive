@@ -7,6 +7,7 @@ category: universal
 role: shared
 tags: [html, prototype, dashboard, universal]
 when_to_call: prototype, demo, dashboard, or handoff-ready UI artifact
+harness: universal
 ---
 
 # Web artifact

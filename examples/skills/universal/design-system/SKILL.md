@@ -7,6 +7,7 @@ category: universal
 role: shared
 tags: [design-system, tokens, brand, universal]
 when_to_call: brand consistency, DESIGN.md, or token extraction from code/CSS
+harness: universal
 ---
 
 # Design system

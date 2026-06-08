@@ -7,6 +7,7 @@ category: universal
 role: shared
 tags: [debugging, root-cause, troubleshooting, universal]
 when_to_call: bug, test failure, unexpected behavior, production incident
+harness: universal
 ---
 
 # Systematic debugging

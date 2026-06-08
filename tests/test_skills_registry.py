@@ -5,17 +5,35 @@ from __future__ import annotations
 from pathlib import Path
 
 from agentdrive.skills import get_skill, init_skill, list_skills, run_skill
+from agentdrive.skills.registry import list_skills_by_tier
 
 
-def test_list_skills_includes_bundled_examples():
+def test_list_skills_includes_bundled_and_vendor_tiers():
     entries = list_skills()
     names = {e.name for e in entries}
     assert "think" in names
     assert "golden-path-verify" in names
-    assert len(entries) >= 35
-    names = {e.name for e in entries}
     assert "changelog" in names
-    assert not any(n.startswith("grok-") for n in names)
+    assert "mcp-agentdrive" in names
+    assert "grok-changelog" in names
+    assert len(entries) >= 60
+
+    tiers = list_skills_by_tier()
+    assert len(tiers["agentdrive"]) >= 20
+    assert len(tiers["universal"]) >= 13
+    assert len(tiers["grok"]) >= 10
+
+
+def test_list_skills_harness_filter():
+    universal = list_skills(harness="universal")
+    assert universal
+    assert all(e.harness == "universal" for e in universal)
+    assert "changelog" in {e.name for e in universal}
+    assert "think" not in {e.name for e in universal}
+
+    grok = list_skills(harness="grok")
+    assert grok
+    assert all(e.harness == "grok" for e in grok)
 
 
 def test_get_skill_missing():

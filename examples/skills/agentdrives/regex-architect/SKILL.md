@@ -7,6 +7,7 @@ category: agentdrives
 role: pawn
 tags: [regex, parsing, validation, text, specialist]
 when_to_call: write, read, audit, or debug a regular expression
+harness: agentdrive
 ---
 
 # Regex architect

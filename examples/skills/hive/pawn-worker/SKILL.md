@@ -7,6 +7,7 @@ category: hive
 role: pawn
 tags: [pawn, swarm, worker, hive, inheritance, quest]
 when_to_call: spawned as subagent to implement, fix, or complete a single assigned task
+harness: agentdrive
 related_skills: ['hive-inheritance', 'arisen-orchestrator']
 ---
 

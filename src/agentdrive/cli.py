@@ -3756,6 +3756,13 @@ def build_parser() -> argparse.ArgumentParser:
     skills_subs = p.add_subparsers(dest="skills_subcommand")
 
     sk_list = skills_subs.add_parser("list", help="List discovered skills")
+    sk_list.add_argument(
+        "--harness",
+        dest="skills_harness",
+        metavar="NAME",
+        choices=["agentdrive", "universal", "grok", "claude", "codex"],
+        help="Filter to one harness tier (default: show all tiers)",
+    )
     sk_list.add_argument("--json", dest="json_output", action="store_true")
     sk_list.set_defaults(func=cmd_skills)
 

@@ -7,6 +7,7 @@ category: agentdrives
 role: pawn
 tags: [sql, database, explain, query]
 when_to_call: user pastes SQL and wants execution analysis without being a DBA
+harness: agentdrive
 ---
 
 # SQL explain

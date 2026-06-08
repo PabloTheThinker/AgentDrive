@@ -7,6 +7,7 @@ category: agentdrives
 role: pawn
 tags: [api, semver, versioning, breaking]
 when_to_call: API surface changed and semver or migration guidance is needed
+harness: agentdrive
 ---
 
 # API versioning advisor

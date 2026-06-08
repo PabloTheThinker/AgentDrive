@@ -301,3 +301,11 @@ universal:
       Try multiple approaches to the same problem, compare outcomes objectively,
       keep the best. Works with any runtime that can spawn isolated attempts.
     when_to_call: uncertain best approach, compare implementations, or explore alternatives
+
+  mcp-agentdrive:
+    role: shared
+    tags: [mcp, agentdrive, universal, tools]
+    description: >
+      Use AgentDrive MCP tools from any connected model — think, pool query, learnings,
+      golden-path verify. Prefer this over vendor-specific harness skills when on MCP.
+    when_to_call: model is connected via agentdrive MCP and needs pool, think, or learnings

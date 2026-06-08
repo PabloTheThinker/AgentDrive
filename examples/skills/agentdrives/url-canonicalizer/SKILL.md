@@ -7,6 +7,7 @@ category: agentdrives
 role: pawn
 tags: [url, security, parsing, tracking]
 when_to_call: clean, compare, or security-audit URLs
+harness: agentdrive
 ---
 
 # URL canonicalizer

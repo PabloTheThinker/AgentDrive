@@ -7,6 +7,7 @@ category: agentdrives
 role: pawn
 tags: [git, diff, pr, commit, narrative]
 when_to_call: PR description, commit summary, or explaining a diff to reviewers
+harness: agentdrive
 ---
 
 # Diff narrator

@@ -9,6 +9,7 @@ category: core
 role: shared
 tags: [pool, dna, query, hive, genomes]
 when_to_call: search the pool, find matching genomes, or orient before implementation
+harness: agentdrive
 ---
 
 # Pool query

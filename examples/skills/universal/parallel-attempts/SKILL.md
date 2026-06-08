@@ -7,6 +7,7 @@ category: universal
 role: arisen
 tags: [parallel, evaluation, implementation, universal]
 when_to_call: uncertain best approach, compare implementations, or explore alternatives
+harness: universal
 ---
 
 # Parallel attempts

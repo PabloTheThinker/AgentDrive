@@ -9,6 +9,7 @@ category: core
 role: shared
 tags: [learnings, memory, hive, record]
 when_to_call: durable decision, runbook note, or pawn handoff worth remembering
+harness: agentdrive
 ---
 
 # Learnings log

@@ -7,6 +7,7 @@ category: agentdrives
 role: pawn
 tags: [debugging, errors, stacktrace, root-cause]
 when_to_call: user pastes an error, exception, or failing test output
+harness: agentdrive
 ---
 
 # Error translator

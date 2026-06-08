@@ -7,6 +7,7 @@ category: hive
 role: pawn
 tags: [pawn, scout, research, map, reconnaissance]
 when_to_call: orientation, audit, reconnaissance before a worker pawn acts
+harness: agentdrive
 ---
 
 # Pawn scout

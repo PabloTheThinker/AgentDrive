@@ -2,15 +2,38 @@
 
 from __future__ import annotations
 
+import os
 import re
 
-from agentdrive.skills.registry import SkillEntry, discover_skills
+from agentdrive.skills.registry import SkillEntry, discover_skills, list_skills_by_tier
 
 _TOKEN_RE = re.compile(r"[a-z0-9][a-z0-9_-]{1,}")
+
+_TIER_LABELS = {
+    "agentdrive": "AgentDrive + hive (MCP operations & pawns)",
+    "universal": "Universal (any model via MCP or plain tools)",
+    "grok": "Grok harness (native Grok CLI tools)",
+    "claude": "Claude Code harness",
+    "codex": "Codex CLI harness",
+}
+
+
+def active_harness() -> str | None:
+    """Optional filter from env or config — AGENTDRIVE_HARNESS=grok|claude|codex."""
+    return (os.environ.get("AGENTDRIVE_HARNESS") or "").strip().lower() or None
 
 
 def _tokenize(text: str) -> set[str]:
     return {t for t in _TOKEN_RE.findall(text.lower()) if len(t) > 2}
+
+
+def _include_in_prompt(entry: SkillEntry, *, active: str | None) -> bool:
+    h = (entry.harness or "agentdrive").lower()
+    if h in ("agentdrive", "universal"):
+        return True
+    if active and h == active:
+        return True
+    return False
 
 
 def _score_skill(entry: SkillEntry, message: str, *, role: str | None) -> float:
@@ -36,7 +59,9 @@ def _score_skill(entry: SkillEntry, message: str, *, role: str | None) -> float:
         if tag.lower() in message.lower():
             score += 3.0
 
-    if entry.when_to_call and any(w in message.lower() for w in entry.when_to_call.lower().split()[:6]):
+    if entry.when_to_call and any(
+        w in message.lower() for w in entry.when_to_call.lower().split()[:6]
+    ):
         score += 1.5
 
     if role:
@@ -55,10 +80,14 @@ def match_skills_for_turn(
     *,
     top_k: int = 3,
     role: str | None = None,
+    harness: str | None = None,
 ) -> list[SkillEntry]:
     """Rank skills by keyword/tag overlap with the user message."""
+    active = harness or active_harness()
     ranked: list[tuple[float, SkillEntry]] = []
     for entry in discover_skills():
+        if not _include_in_prompt(entry, active=active):
+            continue
         score = _score_skill(entry, message, role=role)
         if score > 0:
             ranked.append((score, entry))
@@ -66,18 +95,32 @@ def match_skills_for_turn(
     return [entry for _, entry in ranked[:top_k]]
 
 
-def format_skills_catalog(*, limit: int = 24) -> str:
-    """Compact bench list for the system prompt."""
-    entries = discover_skills()
-    if not entries:
+def format_skills_catalog(*, per_tier: int = 8, harness: str | None = None) -> str:
+    """Tiered bench list for the system prompt."""
+    active = harness or active_harness()
+    tiers = list_skills_by_tier()
+    if not any(tiers.values()):
         return ""
 
     lines = ["\n## Skills on your bench (invoke with /skill <name>)"]
-    for entry in entries[:limit]:
-        role_note = f" [{entry.role}]" if entry.role else ""
-        lines.append(f"  - {entry.name}{role_note}: {entry.description[:100]}")
-    if len(entries) > limit:
-        lines.append(f"  - … +{len(entries) - limit} more (`agentdrive skills list`)")
+    order = ["agentdrive", "universal", "grok", "claude", "codex"]
+    for tier in order:
+        entries = tiers.get(tier, [])
+        if not entries:
+            continue
+        if tier not in ("agentdrive", "universal") and tier != active:
+            lines.append(
+                f"\n### {_TIER_LABELS[tier]} "
+                f"({len(entries)} skills — set AGENTDRIVE_HARNESS={tier} to inject)"
+            )
+            continue
+        lines.append(f"\n### {_TIER_LABELS[tier]}")
+        shown = entries[:per_tier]
+        for entry in shown:
+            role_note = f" [{entry.role}]" if entry.role else ""
+            lines.append(f"  - {entry.name}{role_note}: {entry.description[:90]}")
+        if len(entries) > len(shown):
+            lines.append(f"  - … +{len(entries) - len(shown)} more")
     return "\n".join(lines)
 
 
@@ -95,7 +138,8 @@ def format_matched_skill_bodies(
         body = entry.body.strip()
         if len(body) > body_limit:
             body = body[: body_limit - 1] + "…"
-        lines.append(f"\n### {entry.name}\n{body}")
+        harness_note = f" ({entry.harness})" if entry.harness else ""
+        lines.append(f"\n### {entry.name}{harness_note}\n{body}")
     return "\n".join(lines)
 
 
@@ -103,14 +147,18 @@ def compose_skills_block(
     user_message: str,
     *,
     role: str | None = None,
+    harness: str | None = None,
     include_catalog: bool = True,
     top_k: int = 2,
 ) -> str:
     """Full skills section for build_system_prompt."""
-    matched = match_skills_for_turn(user_message, top_k=top_k, role=role)
+    active = harness or active_harness()
+    matched = match_skills_for_turn(
+        user_message, top_k=top_k, role=role, harness=active
+    )
     parts: list[str] = []
     if include_catalog:
-        catalog = format_skills_catalog()
+        catalog = format_skills_catalog(harness=active)
         if catalog:
             parts.append(catalog)
     if matched:

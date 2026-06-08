@@ -7,6 +7,7 @@ category: universal
 role: shared
 tags: [skills, authoring, scaffold, universal]
 when_to_call: create a new skill, document a repeatable workflow
+harness: universal
 ---
 
 # Skill authoring

@@ -1,19 +1,43 @@
 # AgentDrive Skills Library
 
 **Status:** shipped (2026-06-08)  
-**Principle:** **Model-agnostic** — bundled skills work with any LLM (Ollama, Grok, Claude, Cursor, etc.). No vendor-specific mirrors in the repo.
+**Principle:** **Tiered and model-agnostic** — tiers 1–4 work with any LLM via AgentDrive MCP. Tier 5 vendor skills activate only when that harness is running.
 
 ---
 
-## Why not Grok/Hermes backups?
+## Organization
 
-Earlier versions copied `~/.grok/skills` into the bundle. That was wrong for a product bench:
+```
+examples/skills/
+  catalog.yaml              # tiers 1–4 canonical descriptions
+  vendor-manifest.yaml      # Grok / Claude / Codex sync sources
+  think/                    # tier 1 (core)
+  golden-path-verify/
+  core/                     # tier 1 — runnable MCP ops
+  hive/                     # tier 2 — Arisen + pawns
+  agentdrives/              # tier 3 — narrow specialists
+  universal/                # tier 4 — any model, no vendor tools
+  vendors/
+    grok/                   # tier 5a — Grok CLI native tools
+    claude/                 # tier 5b — Claude Code plugins
+    codex/                  # tier 5c — Codex CLI plugins
 
-- Grok skills assume Grok tools (`task`, `image_gen`, Universal Brush)
-- Names like `grok-changelog` confuse operators on other models
-- The repo should ship **universal playbooks**, not harness backups
+~/.agentdrive/skills/       # personal overlays — wins on name collision
+```
 
-**Vendor-specific skills** belong in `~/.agentdrive/skills/` on your machine (personal overlay). The bundled library is for everyone.
+| Tier | Folder | Harness | Who uses it |
+|------|--------|---------|-------------|
+| **1** | `core/`, `think/`, `golden-path-verify/` | `agentdrive` | Any model on **AgentDrive MCP** |
+| **2** | `hive/` | `agentdrive` | Arisen/pawn coordination |
+| **3** | `agentdrives/` | `agentdrive` | Narrow prodigy pawns |
+| **4** | `universal/` | `universal` | Any model — changelog, debugging, documents, UI |
+| **5a** | `vendors/grok/` | `grok` | Grok CLI (`task`, `image_gen`, Universal Brush, …) |
+| **5b** | `vendors/claude/` | `claude` | Claude Code plugin runtime |
+| **5c** | `vendors/codex/` | `codex` | OpenAI Codex CLI plugins |
+
+**Rule:** Connected via AgentDrive MCP → use tiers **1–4**. Prefer `changelog` / `verify-work` / `mcp-agentdrive` over `grok-changelog` when you only have MCP.
+
+Set `AGENTDRIVE_HARNESS=grok|claude|codex` to inject tier-5 skills into the system prompt and match them on each turn.
 
 ---
 
@@ -28,32 +52,15 @@ Earlier versions copied `~/.grok/skills` into the bundle. That was wrong for a p
 
 ---
 
-## On-disk layout
+## Counts (after sync)
 
-```
-examples/skills/
-  think/                 # core
-  golden-path-verify/
-  core/                  # runnable ops (doctor, pool-query, …)
-  hive/                  # arisen + pawn playbooks
-  agentdrives/           # 12 narrow prodigies
-  universal/             # model-agnostic basics (changelog, verify-work, …)
-
-~/.agentdrive/skills/    # YOUR overlays — any vendor, wins on name collision
-```
-
-**36 bundled skills** — full descriptions: [SKILLS-CATALOG.md](SKILLS-CATALOG.md)
-
----
-
-## Tiers
-
-| Tier | Count | Purpose |
-|------|-------|---------|
-| **core** | 6 | Runnable AgentDrive ops (`think`, `doctor`, …) |
-| **hive** | 5 | Arisen/pawn coordination |
-| **agentdrives** | 12 | Narrow specialists (regex, SQL, diff, …) |
-| **universal** | 13 | Any-model basics (changelog, debugging, documents, UI) |
+| Group | Count | Notes |
+|-------|-------|-------|
+| Bundled (tiers 1–4) | 37 | From `catalog.yaml` |
+| Grok vendor | 14 | Synced from `~/.grok/skills` |
+| Claude vendor | 6 | Curated plugin skills |
+| Codex vendor | 4 | Curated plugin skills |
+| **Total** | **61** | Full catalog: [SKILLS-CATALOG.md](SKILLS-CATALOG.md) |
 
 ---
 
@@ -61,23 +68,25 @@ examples/skills/
 
 | Surface | Command |
 |---------|---------|
-| CLI | `agentdrive skills list\|show\|run\|init` |
+| CLI | `agentdrive skills list [--harness grok]` · `show` · `run` · `init` |
 | Chat | `/skills list`, `/skill <name>` |
-| System prompt | Auto catalog + matched skills per turn |
+| System prompt | Auto catalog (tiers 1–4 always; tier 5 when `AGENTDRIVE_HARNESS` set) + matched skills per turn |
 
 ---
 
-## Authoring
+## Refresh workflow
+
+```bash
+python scripts/sync_vendor_skills.py      # tier 5 from vendor-manifest.yaml
+python scripts/apply_skills_catalog.py    # tiers 1–4 from catalog.yaml
+python scripts/generate_skills_catalog_doc.py
+```
+
+Author a new bundled skill:
 
 ```bash
 agentdrive skills init my-skill --description "What it does"
-```
-
-Edit `examples/skills/catalog.yaml`, then:
-
-```bash
-python scripts/apply_skills_catalog.py
-python scripts/generate_skills_catalog_doc.py
+# then add entry to catalog.yaml and re-run apply + generate
 ```
 
 See also: [ASSESSMENT.md](ASSESSMENT.md), [SKILLS-SPEC.md](SKILLS-SPEC.md).

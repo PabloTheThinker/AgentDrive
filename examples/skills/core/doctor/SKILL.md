@@ -8,6 +8,7 @@ category: core
 role: shared
 tags: [doctor, health, diagnose, onboarding]
 when_to_call: errors, broken MCP, empty pool, or before golden-path run
+harness: agentdrive
 ---
 
 # Doctor

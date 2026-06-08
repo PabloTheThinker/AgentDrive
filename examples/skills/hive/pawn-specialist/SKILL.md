@@ -7,6 +7,7 @@ category: hive
 role: pawn
 tags: [pawn, specialist, agentdrive, narrow, prodigy]
 when_to_call: task clearly matches a bundled agentdrive (regex, cron, errors, tests)
+harness: agentdrive
 ---
 
 # Pawn specialist

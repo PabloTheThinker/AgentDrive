@@ -1,0 +1,51 @@
+# Vendor skill sources for scripts/sync_vendor_skills.py
+# Bundled copies live under examples/skills/vendors/{grok,claude,codex}/
+
+grok:
+  source_dir: ~/.grok/skills
+  name_prefix: grok-
+  harness: grok
+  requires: Grok CLI harness (task tool, image_gen, etc.)
+  # Auto-sync every subdirectory with SKILL.md
+
+claude:
+  name_prefix: claude-
+  harness: claude
+  requires: Claude Code plugin runtime
+  skills:
+    mcp-integration:
+      path: ~/.claude/plugins/marketplaces/claude-plugins-official/plugins/plugin-dev/skills/mcp-integration/SKILL.md
+      description: Integrate MCP servers into Claude Code plugins — stdio, SSE, HTTP, .mcp.json bundling.
+    skill-creator:
+      path: ~/.claude/plugins/marketplaces/claude-plugins-official/plugins/skill-creator/skills/skill-creator/SKILL.md
+      description: Author Claude Code skills — frontmatter, validation, packaging in plugins.
+    frontend-design:
+      path: ~/.claude/plugins/marketplaces/claude-plugins-official/plugins/frontend-design/skills/frontend-design/SKILL.md
+      description: Claude Code frontend design — distinctive UI before code; plugin-native workflow.
+    session-report:
+      path: ~/.claude/plugins/marketplaces/claude-plugins-official/plugins/session-report/skills/session-report/SKILL.md
+      description: Summarize a Claude Code session into a structured report for handoff.
+    claude-md-improver:
+      path: ~/.claude/plugins/marketplaces/claude-plugins-official/plugins/claude-md-management/skills/claude-md-improver/SKILL.md
+      description: Improve CLAUDE.md project instructions for Claude Code sessions.
+    plugin-structure:
+      path: ~/.claude/plugins/marketplaces/claude-plugins-official/plugins/plugin-dev/skills/plugin-structure/SKILL.md
+      description: Claude Code plugin layout — commands, agents, skills, hooks, MCP wiring.
+
+codex:
+  name_prefix: codex-
+  harness: codex
+  requires: OpenAI Codex CLI and curated plugins
+  skills:
+    github:
+      path: ~/.codex/plugins/cache/openai-curated/github/3f0def1b/skills/github/SKILL.md
+      description: Codex GitHub triage — repos, PRs, issues via connector; route to specialist workflows.
+    gh-fix-ci:
+      path: ~/.codex/plugins/cache/openai-curated/github/3f0def1b/skills/gh-fix-ci/SKILL.md
+      description: Diagnose and fix failing GitHub Actions CI from Codex.
+    gh-address-comments:
+      path: ~/.codex/plugins/cache/openai-curated/github/3f0def1b/skills/gh-address-comments/SKILL.md
+      description: Address PR review comments systematically from Codex.
+    yeet:
+      path: ~/.codex/plugins/cache/openai-curated/github/3f0def1b/skills/yeet/SKILL.md
+      description: Fast branch-and-PR publish flow from Codex when changes are ready to ship.
