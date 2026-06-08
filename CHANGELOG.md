@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Pattern 5 — skills registry + session slash + Grok spawn done (2026-06-07)
+- **`skills/`**: SKILL.md discovery (`~/.agentdrive/skills` + bundled `examples/skills`); `run_skill()` shared by CLI and chat.
+- **CLI**: `agentdrive skills list|show|run`; catalog entries for `session` and `skills`.
+- **Chat**: `/session events|replay [id]`, `/skills list`, `/skill <name> [args]`.
+- **Grok adapter**: `spawn_subagent` wrapper emits `SubagentDone` when spawn returns.
+- **`session_events.resolve_session_id`**: suffix match for session ids from `/sessions`.
+- **Tests**: `test_skills_registry.py`, `test_grok_spawn_telemetry.py`, session slash in `test_tui_experience.py`.
+
 ### UX proposal — patterns 1 & 5 closure (2026-06-07)
 - **`docs/UX-PROPOSAL.md`**: status table updated — session `events.jsonl`, `TranscriptLane`, genomes search parity marked shipped.
 

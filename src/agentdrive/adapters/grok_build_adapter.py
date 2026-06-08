@@ -272,27 +272,46 @@ class GrokBuildAgentDriveAdapter(AgentDriveAdapterBase):
                 subagent_id,
             )
 
-            try:
-                from agentdrive.agent.turn_telemetry import (
-                    emit_external_subagent_spawn,
-                    spawn_label_from_kwargs,
-                )
+            import time as _time
 
+            from agentdrive.agent.turn_telemetry import (
+                emit_external_subagent_done,
+                emit_external_subagent_spawn,
+                spawn_label_from_kwargs,
+            )
+
+            parent_id = (
+                current_sub or os.environ.get("AGENTDRIVE_SUBAGENT_ID") or "orchestrator"
+            )
+            label = spawn_label_from_kwargs(kwargs, args, subagent_id)
+            spawned_at = _time.monotonic()
+            spawn_ok = True
+
+            try:
                 emit_external_subagent_spawn(
                     subagent_id=subagent_id,
-                    parent_id=current_sub or os.environ.get("AGENTDRIVE_SUBAGENT_ID") or "orchestrator",
-                    label=spawn_label_from_kwargs(kwargs, args, subagent_id),
+                    parent_id=parent_id,
+                    label=label,
                     swarm_id=swarm_id,
                 )
             except Exception:
                 logger.debug("subagent spawn telemetry failed", exc_info=True)
 
-            # Call original (the real Grok spawner)
-            result = original(*args, **kwargs)
-
-            # If the result is an agent object that has an "id" or similar, we could
-            # attach metadata, but we keep it non-intrusive.
-            return result
+            try:
+                return original(*args, **kwargs)
+            except Exception:
+                spawn_ok = False
+                raise
+            finally:
+                try:
+                    emit_external_subagent_done(
+                        subagent_id=subagent_id,
+                        ok=spawn_ok,
+                        duration_s=_time.monotonic() - spawned_at,
+                        swarm_id=swarm_id,
+                    )
+                except Exception:
+                    logger.debug("subagent done telemetry failed", exc_info=True)
 
         # Install the wrapper in the original location(s)
         try:

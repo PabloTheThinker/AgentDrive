@@ -111,6 +111,29 @@ class ChatTurnTelemetry:
 _CHARS_PER_TOKEN = 4
 
 
+def emit_external_subagent_done(
+    *,
+    subagent_id: str,
+    ok: bool = True,
+    duration_s: float = 0.0,
+    session_id: str | None = None,
+    swarm_id: str | None = None,
+) -> None:
+    """Emit when an external sub-agent finishes (e.g. Grok spawn returns)."""
+    try:
+        emit(
+            SubagentDone(
+                subagent_id=subagent_id,
+                ok=ok,
+                duration_s=duration_s,
+                session_id=session_id,
+                swarm_id=swarm_id,
+            )
+        )
+    except Exception:
+        logger.debug("emit_external_subagent_done failed", exc_info=True)
+
+
 def emit_external_subagent_spawn(
     *,
     subagent_id: str,

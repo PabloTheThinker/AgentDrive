@@ -21,6 +21,22 @@ from agentdrive.events import (
 from agentdrive.utils.safe_paths import safe_name
 
 
+def resolve_session_id(agent_id: str, token: str) -> str | None:
+    """Resolve a session id or short suffix (from /sessions) to the full id."""
+    from agentdrive.agent.session import AgentSession
+
+    needle = token.strip()
+    if not needle:
+        return None
+
+    sessions = AgentSession.list_sessions(agent_id, limit=100)
+    for row in sessions:
+        sid = str(row.get("session_id") or "")
+        if sid == needle or sid.endswith(needle):
+            return sid
+    return needle if session_events_path(agent_id, needle).exists() else None
+
+
 def session_events_path(agent_id: str, session_id: str) -> Path:
     """Return the JSONL path for a session's typed event stream."""
     safe_agent = safe_name(agent_id)
@@ -171,5 +187,6 @@ __all__ = [
     "SessionEventRecorder",
     "format_event_summary",
     "replay_events",
+    "resolve_session_id",
     "session_events_path",
 ]

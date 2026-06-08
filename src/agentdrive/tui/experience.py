@@ -168,6 +168,8 @@ def handle_ops_slash(
     arg: str,
     *,
     palette: Palette | None = None,
+    agent_id: str = "agentdrive-agent",
+    current_session_id: str | None = None,
 ) -> None:
     """Dispatch /think, /learnings, /golden-path from chat (Pattern 5)."""
     p = palette or Palette(None)
@@ -271,6 +273,113 @@ def handle_ops_slash(
             console.print(
                 warn_line("Usage: /learnings list|log|search ...", palette=p)
             )
+        return
+
+    if cmd == "/session":
+        from agentdrive.session_events import (
+            format_event_summary,
+            replay_events,
+            resolve_session_id,
+            session_events_path,
+        )
+
+        tokens = arg.split() if arg else []
+        if not tokens:
+            sub = "events"
+            sid_token = current_session_id or ""
+        elif tokens[0].lower() in ("events", "replay", "list"):
+            sub = tokens[0].lower()
+            sid_token = tokens[1] if len(tokens) > 1 else (current_session_id or "")
+        else:
+            sub = "events"
+            sid_token = tokens[0]
+
+        if not sid_token:
+            console.print(
+                warn_line(
+                    "Usage: /session events|replay [session_id]  (omit id for current session)",
+                    palette=p,
+                )
+            )
+            return
+
+        resolved = resolve_session_id(agent_id, sid_token) or sid_token
+        path = session_events_path(agent_id, resolved)
+        events = replay_events(path)
+
+        if not path.exists():
+            console.print(warn_line(f"No events at {path}", palette=p))
+            return
+
+        console.print(
+            f"  [dim]session[/] [{p.accent}]{resolved}[/]  "
+            f"[dim]· {len(events)} events · {path.name}[/]"
+        )
+        console.print()
+
+        if sub == "replay":
+            for idx, ev in enumerate(events, 1):
+                console.print(f"  [dim]{idx:>3}[/]  {format_event_summary(ev)}")
+        elif sub in ("events", "list"):
+            for ev in events[-40:]:
+                console.print(f"  {format_event_summary(ev)}")
+            if len(events) > 40:
+                console.print(f"  [dim]… {len(events) - 40} earlier events (use replay)[/]")
+        else:
+            console.print(
+                warn_line("Usage: /session events|replay <session_id>", palette=p)
+            )
+        return
+
+    if cmd in ("/skills", "/skill"):
+        from agentdrive.skills import list_skills, run_skill
+        from agentdrive.skills.runner import format_skill_result
+
+        if cmd == "/skills":
+            sub = (arg.split()[0] if arg else "list").lower()
+            if sub == "list":
+                entries = list_skills()
+                if not entries:
+                    console.print(warn_line("No skills found under ~/.agentdrive/skills", palette=p))
+                    return
+                for entry in entries:
+                    op = f" [dim]→ {entry.operation}[/]" if entry.operation else ""
+                    console.print(
+                        f"  [{p.accent}]{entry.name}[/]{op}  "
+                        f"[dim]{entry.description[:60]}[/]"
+                    )
+                console.print()
+                console.print(
+                    Text.from_markup(
+                        f"[{p.muted}]Run:[/] [{p.accent}]/skill <name> [args][/]"
+                    )
+                )
+            else:
+                console.print(warn_line("Usage: /skills list", palette=p))
+            return
+
+        # /skill <name> [args]
+        parts = arg.split(maxsplit=1)
+        if not parts:
+            console.print(warn_line("Usage: /skill <name> [args]", palette=p))
+            return
+        name, skill_arg = parts[0], parts[1] if len(parts) > 1 else ""
+        result = run_skill(name, skill_arg)
+        if not result.get("success"):
+            console.print(warn_line(str(result.get("error", "skill failed")), palette=p))
+            return
+        if summary := result.get("result"):
+            if isinstance(summary, dict) and summary.get("steps"):
+                for item in summary.get("steps", []):
+                    ok = item.get("success", False)
+                    glyph = "✓" if ok else "○"
+                    style = p.ok if ok else p.muted
+                    console.print(
+                        f"  [{style}]{glyph}[/] {item.get('step')} — {item.get('detail', '')}"
+                    )
+                return
+        console.print()
+        console.print(format_skill_result(result))
         return
 
     console.print(warn_line(f"Unknown ops slash: {cmd}", palette=p))

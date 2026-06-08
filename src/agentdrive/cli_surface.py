@@ -437,7 +437,10 @@ def cmd_session(args: argparse.Namespace) -> int:
         console.print("[red]Usage: agentdrive session events|replay <session_id>[/]")
         return 1
 
-    path = session_events_path(agent_id, session_id.strip())
+    from agentdrive.session_events import resolve_session_id
+
+    resolved = resolve_session_id(agent_id, session_id.strip()) or session_id.strip()
+    path = session_events_path(agent_id, resolved)
     events = replay_events(path)
 
     if sub == "events":
@@ -446,7 +449,7 @@ def cmd_session(args: argparse.Namespace) -> int:
                 {
                     "success": True,
                     "agent_id": agent_id,
-                    "session_id": session_id.strip(),
+                    "session_id": resolved,
                     "path": str(path),
                     "count": len(events),
                     "events": events,
@@ -467,7 +470,7 @@ def cmd_session(args: argparse.Namespace) -> int:
                 {
                     "success": True,
                     "agent_id": agent_id,
-                    "session_id": session_id.strip(),
+                    "session_id": resolved,
                     "path": str(path),
                     "count": len(events),
                     "timeline": [format_event_summary(ev) for ev in events],
@@ -478,7 +481,7 @@ def cmd_session(args: argparse.Namespace) -> int:
             console.print(f"[yellow]No events file at[/] {path}")
             return 1
         console.print(
-            f"[bold]Session replay[/] · agent={agent_id} · session={session_id.strip()}"
+            f"[bold]Session replay[/] · agent={agent_id} · session={resolved}"
         )
         console.print(f"[dim]{path}[/]\n")
         for idx, ev in enumerate(events, 1):
@@ -487,6 +490,96 @@ def cmd_session(args: argparse.Namespace) -> int:
         return 0
 
     console.print("[red]Unknown session subcommand[/]")
+    return 1
+
+
+def cmd_skills(args: argparse.Namespace) -> int:
+    """SKILL.md registry — list, show, run (Pattern 5)."""
+    from agentdrive.skills import get_skill, list_skills, run_skill
+    from agentdrive.skills.runner import format_skill_result
+
+    sub = getattr(args, "skills_subcommand", None) or "list"
+    json_output = getattr(args, "json_output", False)
+
+    if sub == "list":
+        entries = list_skills()
+        if json_output:
+            emit_json(
+                [
+                    {
+                        "name": e.name,
+                        "description": e.description,
+                        "operation": e.operation,
+                        "path": str(e.path),
+                    }
+                    for e in entries
+                ]
+            )
+            return 0
+        if not entries:
+            console.print("[dim]No skills found. Add SKILL.md under ~/.agentdrive/skills/<name>/[/]")
+            return 0
+        table = Table(title=f"Skills ({len(entries)})", show_header=True)
+        table.add_column("Name", style="cyan")
+        table.add_column("Operation")
+        table.add_column("Description", overflow="fold")
+        for entry in entries:
+            table.add_row(
+                entry.name,
+                entry.operation or "—",
+                entry.description[:120],
+            )
+        console.print(table)
+        return 0
+
+    if sub == "show":
+        name = getattr(args, "skill_name", None) or ""
+        entry = get_skill(name)
+        if entry is None:
+            console.print(f"[red]Unknown skill:[/] {name}")
+            return 1
+        if json_output:
+            emit_json(
+                {
+                    "name": entry.name,
+                    "description": entry.description,
+                    "operation": entry.operation,
+                    "path": str(entry.path),
+                    "body": entry.body,
+                }
+            )
+            return 0
+        console.print(f"[bold cyan]{entry.name}[/]")
+        if entry.description:
+            console.print(entry.description)
+        if entry.operation:
+            console.print(f"[dim]operation:[/] {entry.operation}")
+        if entry.body:
+            console.print()
+            console.print(entry.body[:4000])
+        return 0
+
+    if sub == "run":
+        name = getattr(args, "skill_name", None) or ""
+        raw_arg = getattr(args, "skill_arg", None) or ""
+        if isinstance(raw_arg, list):
+            arg = " ".join(str(x) for x in raw_arg)
+        else:
+            arg = str(raw_arg)
+        if not name.strip():
+            console.print("[red]Usage: agentdrive skills run <name> [args][/]")
+            return 1
+        result = run_skill(name.strip(), arg)
+        if json_output:
+            emit_json(result)
+            return 0 if result.get("success") else 1
+        if not result.get("success"):
+            console.print(f"[red]{result.get('error', 'skill failed')}[/]")
+            return 1
+        console.print(format_skill_result(result))
+        return 0
+
+    console.print("[red]Unknown skills subcommand[/]")
     return 1
 
 

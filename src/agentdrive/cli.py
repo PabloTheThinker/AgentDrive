@@ -109,6 +109,7 @@ from agentdrive.cli_surface import (
     cmd_harness,
     cmd_learnings,
     cmd_session,
+    cmd_skills,
     cmd_think,
 )
 from agentdrive.setup import cmd_setup
@@ -3715,6 +3716,35 @@ def build_parser() -> argparse.ArgumentParser:
     se_replay.set_defaults(func=cmd_session)
 
     p.set_defaults(func=cmd_session, session_subcommand="events")
+
+    # skills — SKILL.md registry (Pattern 5)
+    p = subparsers.add_parser(
+        "skills",
+        help="SKILL.md capabilities — list, show, run (shared with /skill in chat)",
+    )
+    skills_subs = p.add_subparsers(dest="skills_subcommand")
+
+    sk_list = skills_subs.add_parser("list", help="List discovered skills")
+    sk_list.add_argument("--json", dest="json_output", action="store_true")
+    sk_list.set_defaults(func=cmd_skills)
+
+    sk_show = skills_subs.add_parser("show", help="Show one skill metadata and body")
+    sk_show.add_argument("skill_name", help="Skill name from frontmatter")
+    sk_show.add_argument("--json", dest="json_output", action="store_true")
+    sk_show.set_defaults(func=cmd_skills)
+
+    sk_run = skills_subs.add_parser("run", help="Run a skill by name")
+    sk_run.add_argument("skill_name", help="Skill name")
+    sk_run.add_argument(
+        "skill_arg",
+        nargs="*",
+        default="",
+        help="Arguments passed to the skill operation",
+    )
+    sk_run.add_argument("--json", dest="json_output", action="store_true")
+    sk_run.set_defaults(func=cmd_skills)
+
+    p.set_defaults(func=cmd_skills, skills_subcommand="list")
 
     # harness — prompt composition
     p = subparsers.add_parser(

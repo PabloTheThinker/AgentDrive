@@ -80,6 +80,8 @@ CATALOG: tuple[CatalogEntry, ...] = (
     CatalogEntry("kanban", "Alias for board", "interfaces"),
     CatalogEntry("tui", "Professional TUI (genomes, chat, pool, MC view)", "interfaces"),
     CatalogEntry("repl", "Operator REPL (dispatch any subcommand interactively)", "interfaces"),
+    CatalogEntry("session events", "List typed events.jsonl for a chat session", "interfaces"),
+    CatalogEntry("session replay", "Replay session events as numbered timeline", "interfaces"),
     CatalogEntry("grid", "AD-Grid persistent intelligence substrate", "interfaces"),
     # setup
     CatalogEntry("setup", "Interactive setup wizard", "setup"),
@@ -168,6 +170,10 @@ CATALOG: tuple[CatalogEntry, ...] = (
     CatalogEntry("genomes list", "List registered genomes", "genomes"),
     CatalogEntry("genomes info", "Show one genome by ID", "genomes"),
     CatalogEntry("genomes search", "Search genomes by task description", "genomes"),
+    # skills
+    CatalogEntry("skills list", "List SKILL.md capabilities", "discovery"),
+    CatalogEntry("skills show", "Show one skill metadata and body", "discovery"),
+    CatalogEntry("skills run", "Run a skill (same path as /skill in chat)", "discovery"),
     # config
     CatalogEntry("config show", "Show configuration", "config"),
     CatalogEntry("config get", "Get one config key", "config"),

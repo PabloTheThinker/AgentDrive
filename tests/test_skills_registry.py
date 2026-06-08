@@ -1,0 +1,43 @@
+"""Tests for SKILL.md registry and runner (Pattern 5)."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from agentdrive.skills import get_skill, list_skills, run_skill
+
+
+def test_list_skills_includes_bundled_examples():
+    entries = list_skills()
+    names = {e.name for e in entries}
+    assert "think" in names
+    assert "golden-path-verify" in names
+
+
+def test_get_skill_missing():
+    assert get_skill("definitely-not-a-skill-xyz") is None
+
+
+def test_run_skill_unknown():
+    result = run_skill("definitely-not-a-skill-xyz")
+    assert result.get("success") is False
+
+
+def test_run_golden_path_verify_skill(isolated_agentdrive_home):
+    result = run_skill("golden-path-verify")
+    assert result.get("skill") == "golden-path-verify"
+    inner = result.get("result")
+    assert isinstance(inner, dict)
+    assert "steps" in inner
+
+
+def test_user_skill_overlay(isolated_agentdrive_home):
+    skills_dir = isolated_agentdrive_home / "skills" / "custom-test"
+    skills_dir.mkdir(parents=True)
+    (skills_dir / "SKILL.md").write_text(
+        "---\nname: custom-test\ndescription: test skill\n---\n\nbody\n",
+        encoding="utf-8",
+    )
+    entry = get_skill("custom-test")
+    assert entry is not None
+    assert entry.path == Path(skills_dir / "SKILL.md")

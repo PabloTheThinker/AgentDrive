@@ -101,6 +101,10 @@ CHAT_HELP_SECTIONS = [
             ("/think <question>", "cited synthesis + gaps (no chat turn)"),
             ("/learnings list", "operational memory for this project"),
             ("/learnings log <key> <insight>", "record a learning"),
+            ("/session events [id]", "typed event stream for this or a session"),
+            ("/session replay [id]", "numbered timeline from events.jsonl"),
+            ("/skills list", "discover SKILL.md capabilities"),
+            ("/skill <name> [args]", "run a skill (same path as agentdrive skills run)"),
         ],
     ),
     (
@@ -276,6 +280,9 @@ class ChatView:
                 "/golden",
                 "/think",
                 "/learnings",
+                "/session",
+                "/skills",
+                "/skill",
                 "/clear",
                 "/new",
                 "/sessions",
@@ -885,11 +892,26 @@ class ChatView:
             self._cmd_genome(arg)
         elif cmd == "/genome-search":
             self._cmd_genome_search(arg)
-        elif cmd in ("/golden-path", "/golden", "/think", "/learnings"):
+        elif cmd in (
+            "/golden-path",
+            "/golden",
+            "/think",
+            "/learnings",
+            "/session",
+            "/skills",
+            "/skill",
+        ):
             from agentdrive.tui.experience import handle_ops_slash
 
             self.console.print()
-            handle_ops_slash(self.console, cmd, arg, palette=self.palette)
+            handle_ops_slash(
+                self.console,
+                cmd,
+                arg,
+                palette=self.palette,
+                agent_id=self.agent.agent_id,
+                current_session_id=self.agent.session.session_id,
+            )
             self.console.print()
             self._print_status_rule()
         elif cmd == "/chat":

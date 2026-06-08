@@ -13,9 +13,9 @@
 | **2 — Keep typing** | Shipped | `chat_loop.py` + `ChatView` custom `PromptSession`; queue, slash bypass, double-Enter |
 | **3 — Pool activity** | Shipped | `TranscriptLane` ribbons + `PoolActivityLane` thin row in streaming `Live` |
 | **4 — Sub-agent tree** | Shipped | `SwarmActivityLane` in chat; `ChatTurnTelemetry` per turn; Grok spawn emits |
-| **5 — CLI = slash** | Shipped (genomes) | `genomes_api.py` shared by CLI + chat; `genomes search` + `/genome-search`; golden-path ops + REPL |
+| **5 — CLI = slash** | Shipped | `genomes_api`, `skills` registry; `genomes search`, `/genome-search`, `/skill`, `agentdrive skills run`; golden-path ops + REPL |
 
-**Still open:** skills registry (no `SKILL.md` loader yet); full MessageDelta-driven chat body (streaming row still agent callback); TUI event replay viewer.
+**Still open:** full MessageDelta-driven chat body (streaming row still agent callback); rich TUI event replay panel (CLI + `/session` slash shipped).
 
 ---
 
@@ -133,8 +133,10 @@ Each node shows: status spinner, current tool, elapsed, tokens, cost, optional "
 4. ~~**Pattern 4**~~ — shipped (`swarm_lane.py`, `turn_telemetry.py`)
 5. ~~**Pattern 1 completion**~~ — `session_events.py`, `TranscriptLane`, `session events|replay` CLI
 6. ~~**Pattern 5 genomes**~~ — `genomes search`, `/genome-search`, `test_genomes_api.py`
-7. **Skills registry** — `SKILL.md` loader + `/skill` = `agentdrive skills run` (future)
+7. ~~**Skills registry**~~ — `skills/registry.py`, `agentdrive skills list|show|run`, `/skills` `/skill`
 8. **Streaming row on bus** — migrate `_stream_assistant_reply` to `MessageDelta` subscriber (optional polish)
+9. ~~**Session replay in TUI**~~ — `/session events|replay` + `agentdrive session replay`
+10. ~~**Grok spawn SubagentDone**~~ — wrapper emits done when spawn returns
 
 ---
 
