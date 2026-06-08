@@ -79,6 +79,7 @@ CATALOG: tuple[CatalogEntry, ...] = (
     CatalogEntry("board", "Mission Kanban Board (web UI)", "interfaces"),
     CatalogEntry("kanban", "Alias for board", "interfaces"),
     CatalogEntry("tui", "Professional TUI (genomes, chat, pool, MC view)", "interfaces"),
+    CatalogEntry("repl", "Operator REPL (dispatch any subcommand interactively)", "interfaces"),
     CatalogEntry("grid", "AD-Grid persistent intelligence substrate", "interfaces"),
     # setup
     CatalogEntry("setup", "Interactive setup wizard", "setup"),

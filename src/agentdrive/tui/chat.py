@@ -56,6 +56,7 @@ from agentdrive.tui.chrome import (
     warn_line,
 )
 from agentdrive.tui.loading import MicroSpinner
+from agentdrive.tui.swarm_lane import SwarmActivityLane
 
 # Nominal context window assumed when the active model is unknown.
 _NOMINAL_CONTEXT = 100_000
@@ -69,6 +70,7 @@ CHAT_HELP_SECTIONS = [
             ("/help", "show this panel"),
             ("/clear  /new", "start a fresh session (confirm)"),
             ("/retry", "re-run the last user message"),
+            ("(empty) Enter Enter", "interrupt the current turn (double-Enter)"),
             ("/steer <goal>", "set a persistent goal for the agent"),
             ("/unsteer", "clear the steering goal"),
         ],
@@ -157,6 +159,8 @@ class ChatView:
         # Cleared at the start of each turn by _sync_turn, set by the
         # PoolMatch handler. Tuple of (genome_id, top_score).
         self._active_form: tuple[str, float] | None = None
+        # Pattern 4 — live sub-agent tree pinned above streaming body.
+        self._swarm_lane = SwarmActivityLane(palette=self.palette)
 
         history_file = get_agentdrive_home() / ".agentdrive_chat_history"
 
@@ -310,10 +314,10 @@ class ChatView:
                 return "EXIT"
             return None
 
-        # Reuse the existing PromptSession so the multiline / shift-enter /
-        # backslash-newline keybindings and FileHistory shipped above stay
-        # in force. Double-Enter interrupt is wired in a follow-up — for
-        # now the value of Pattern 2 is the queue + slash bypass.
+        # Reuse the existing PromptSession so multiline / shift-enter /
+        # backslash-newline keybindings, FileHistory, and double-Enter
+        # interrupt (empty buffer) all stay in force.
+        self._swarm_lane.attach()
         self._chat_loop = ChatLoop(
             self.console,
             prompt_fn=self._composer_prompt,
@@ -344,9 +348,6 @@ class ChatView:
             QuarantineRejected,
             QuarantineSubmitted,
             ReconciliationDelta,
-            SubagentDone,
-            SubagentSpawn,
-            SubagentTool,
             subscribe,
             unsubscribe,
         )
@@ -367,30 +368,6 @@ class ChatView:
             self.console.print(
                 f"  [dim]▸ pool · outcome[/] [{p.genome}]{ev.genome_id}[/]  "
                 f"[dim]score {ev.score:.2f}[/]"
-            )
-
-        # Pattern 4 — sub-agent activity ribbons. The full inline-tree
-        # render (rich.tree.Tree inside the streaming Live region) lands
-        # when real multi-agent dispatch ships; today these ribbons let
-        # the user feel swarm activity when external orchestrators emit
-        # SubagentSpawn / SubagentTool / SubagentTokens / SubagentDone
-        # events on the default bus. `agentdrive demo-swarm` proves the
-        # rendering on a scripted simulation.
-        def _ribbon_subagent_spawn(ev: SubagentSpawn) -> None:
-            self.console.print(
-                f"  [dim]▸ swarm · spawn[/] [{p.framework}]{ev.subagent_id}[/]  [dim]{ev.label}[/]"
-            )
-
-        def _ribbon_subagent_tool(ev: SubagentTool) -> None:
-            self.console.print(
-                f"  [dim]▸ swarm ·[/] [{p.framework}]{ev.subagent_id}[/] [dim]tool[/] {ev.tool}"
-            )
-
-        def _ribbon_subagent_done(ev: SubagentDone) -> None:
-            glyph = "[green]✓[/]" if ev.ok else "[red]✗[/]"
-            self.console.print(
-                f"  [dim]▸ swarm ·[/] [{p.framework}]{ev.subagent_id}[/] "
-                f"{glyph} [dim]{ev.duration_s:.1f}s[/]"
             )
 
         def _ribbon_evolved(ev: GenomeEvolved) -> None:
@@ -487,9 +464,6 @@ class ChatView:
         _sub_tokens.append(subscribe(_ribbon_match, [PoolMatch]))
         _sub_tokens.append(subscribe(_ribbon_ingest, [PoolIngest]))
         _sub_tokens.append(subscribe(_ribbon_outcome, [PoolOutcome]))
-        _sub_tokens.append(subscribe(_ribbon_subagent_spawn, [SubagentSpawn]))
-        _sub_tokens.append(subscribe(_ribbon_subagent_tool, [SubagentTool]))
-        _sub_tokens.append(subscribe(_ribbon_subagent_done, [SubagentDone]))
         _sub_tokens.append(subscribe(_ribbon_evolved, [GenomeEvolved]))
         _sub_tokens.append(subscribe(_ribbon_confidence, [ConfidenceUpdated]))
         _sub_tokens.append(subscribe(_ribbon_inheritance_received, [InheritanceReceived]))
@@ -508,6 +482,7 @@ class ChatView:
             self._exit_action = self._exit_action or "exit"
         finally:
             self._chat_loop = None
+            self._swarm_lane.detach()
             for tok in _sub_tokens:
                 try:
                     unsubscribe(tok)
@@ -811,6 +786,7 @@ class ChatView:
             self.console.print(f"  {rich_escape(line)}")
 
     def _stream_assistant_reply(self, message: str) -> None:
+        self._swarm_lane.reset()
         ts = datetime.now().strftime("%H:%M")
         p = self.palette
         model_label = self.agent.model_label()
@@ -850,10 +826,16 @@ class ChatView:
                 text = "".join(accumulator)
             cursor_visible = (int(time.monotonic() * 2.4) % 2) == 0
 
+            parts: list[Any] = []
+            swarm = self._swarm_lane.renderable()
+            if swarm is not None:
+                parts.append(Padding(swarm, (0, 0, 1, 0)))
+
             if text:
                 body: Any = Padding(Markdown(text), (0, 0, 0, 2))
             else:
                 body = Padding(Text("…", style=p.muted), (0, 0, 0, 2))
+            parts.append(body)
 
             cursor_line = Text()
             cursor_line.append("  ")
@@ -862,8 +844,9 @@ class ChatView:
             else:
                 cursor_line.append(" ")
             cursor_line.append(f"   {indicator.frame()}", style="")
+            parts.append(cursor_line)
 
-            return Group(body, cursor_line)
+            return Group(*parts)
 
         interrupted_by_signal = False
         try:
@@ -907,9 +890,16 @@ class ChatView:
             # Don't join indefinitely; let the worker keep finishing in the
             # background, but return promptly so the composer regains focus.
             t.join(timeout=2)
+            summary = self._swarm_lane.summary_line()
+            if summary:
+                self.console.print(f"  {summary}")
             self.console.print()
             self._print_status_rule()
             return
+
+        summary = self._swarm_lane.summary_line()
+        if summary:
+            self.console.print(f"  {summary}")
 
         result = result_container.get("result")
         if result and result.pulled_genomes:

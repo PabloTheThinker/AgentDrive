@@ -187,6 +187,31 @@ def test_ops_list_shows_new_cli_commands(isolated_agentdrive_home):
     assert "harness" in out and "compose" in out
 
 
+def test_repl_dispatch_line(isolated_agentdrive_home, monkeypatch):
+    """REPL dispatch_line routes through the same argparse handlers."""
+    from agentdrive.cli import build_parser
+    from agentdrive.cli_repl import dispatch_line
+
+    monkeypatch.setenv("AGENTDRIVE_HOME", str(isolated_agentdrive_home))
+    parser = build_parser()
+    assert dispatch_line("exit", parser) == -1
+    assert dispatch_line("", parser) is None
+    code = dispatch_line("commands list", parser)
+    assert code == 0
+
+
+def test_repl_subcommand_help(isolated_agentdrive_home):
+    result = _run_cli("repl", "--help", home=isolated_agentdrive_home)
+    assert result.returncode == 0
+    assert "REPL" in result.stdout or "repl" in result.stdout.lower()
+
+
+def test_cli_flag_in_help(isolated_agentdrive_home):
+    result = _run_cli("--help", home=isolated_agentdrive_home)
+    assert result.returncode == 0
+    assert "--cli" in result.stdout
+
+
 def test_eval_replay_missing_file(isolated_agentdrive_home):
     result = _run_cli(
         "eval",

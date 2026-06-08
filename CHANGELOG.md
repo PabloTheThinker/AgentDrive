@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Terminal experience — swarm tree + operator REPL (2026-06-07)
+- **`tui/swarm_lane.py`**: `SwarmActivityLane` wired into chat streaming `Live` region (Pattern 4); post-turn summary line; `reset()` + lock deadlock fix; child-only summary counts.
+- **`tui/chat.py`**: sub-agent tree pinned above streaming body during turns; double-Enter documented in `/help`; subagent ribbons replaced by live tree.
+- **`cli_repl.py`**: operator REPL dispatching through same `argparse` handlers as subcommands (Pattern 5).
+- **CLI**: `agentdrive repl`; `--cli` and `AGENTDRIVE_NO_TUI=1` skip default TUI for REPL.
+- **Tests**: `tests/test_swarm_lane.py`; REPL cases in `tests/test_cli_commands.py`.
+
 ### Terminal experience — golden path in TUI (2026-06-07)
 - **`tui/experience.py`**: golden-path gate, status segment, ops-backed `/golden-path`, `/think`, `/learnings` slash commands.
 - **Chat welcome + status rule**: show gate when incomplete; golden path section in welcome panel.

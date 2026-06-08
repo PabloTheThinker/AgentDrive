@@ -4,7 +4,8 @@ Agent Drive CLI - Production-grade command line interface.
 Just typing `agentdrive` launches the full interactive TUI experience.
 
 Subcommand structure:
-  agentdrive                    # Default: launch the TUI
+  agentdrive                    # Default: launch the TUI (or REPL with --cli / AGENTDRIVE_NO_TUI=1)
+  agentdrive repl               # Operator REPL — same handlers as subcommands
   agentdrive board              # Launch localhost Kanban Mission Board (web) — like `hermes dashboard`
   agentdrive kanban             # Alias for board
   agentdrive mission            # Full real-time Mission Control Tower (loop + fabric + static fire)
@@ -98,6 +99,7 @@ from agentdrive.drive.drive import DriveQuery, get_default_drive
 
 # Genome for direct loading during ingest (pool will persist via registry)
 from agentdrive.genome.models import Genome
+from agentdrive.cli_repl import cmd_repl
 from agentdrive.cli_surface import (
     build_help_epilog,
     cmd_commands,
@@ -3298,7 +3300,19 @@ def build_parser() -> argparse.ArgumentParser:
         epilog=build_help_epilog(),
     )
     parser.add_argument("--version", action="store_true", help="Show version and exit")
+    parser.add_argument(
+        "--cli",
+        action="store_true",
+        help="Skip default TUI; launch operator REPL when no subcommand is given",
+    )
     subparsers = parser.add_subparsers(dest="command")
+
+    # repl — operator shell (Pattern 5)
+    p = subparsers.add_parser(
+        "repl",
+        help="Operator REPL — dispatch any subcommand interactively (no TUI)",
+    )
+    p.set_defaults(func=cmd_repl)
 
     # Mission Control — the new unified real-time interface (recommended)
     p = subparsers.add_parser(
@@ -4118,7 +4132,18 @@ def main() -> None:
             console.print(f"[red]Error:[/] {exc}")
             sys.exit(1)
     else:
-        # No subcommand — default to launching the TUI experience
+        # No subcommand — TUI by default; REPL when --cli or AGENTDRIVE_NO_TUI=1.
+        no_tui = getattr(args, "cli", False) or os.environ.get("AGENTDRIVE_NO_TUI", "").lower() in (
+            "1",
+            "true",
+            "yes",
+        )
+        if no_tui:
+            from agentdrive.cli_repl import run_repl
+
+            sys.exit(run_repl(parser=parser))
+
+        # Default: launch the TUI experience
         # (also covers bare `agentdrive tui` before explicit subparser was registered)
         if not tried_onboarding:
             try:
@@ -4126,14 +4151,15 @@ def main() -> None:
 
                 mission_url = getattr(args, "mission_url", None)
                 if not mission_url:
-                    import os as _os
-                    mission_url = _os.environ.get("AGENTDRIVE_MISSION_URL") or _os.environ.get("AGENTDRIVE_MC_URL")
+                    mission_url = os.environ.get("AGENTDRIVE_MISSION_URL") or os.environ.get(
+                        "AGENTDRIVE_MC_URL"
+                    )
                 launch_tui(mission_url=mission_url)
             except Exception as e:
                 logger.exception("Failed to launch TUI")
                 console.print(f"[red]Could not launch TUI:[/] {rich_escape(str(e))}")
                 console.print(
-                    "[dim]Falling back to help. You can also run 'agentdrive tui' explicitly.[/]"
+                    "[dim]Falling back to help. Try 'agentdrive repl' or 'agentdrive --cli'.[/]"
                 )
                 parser.print_help()
                 sys.exit(1)
