@@ -113,6 +113,8 @@ agentdrive think "What does my AgentDrive contain after first install?"
 
 This calls `Drive.think()` with mandatory gap analysis. You get citations, gaps, and contradictions — not a generic LLM answer.
 
+**No provider yet?** `agentdrive golden-path run` skips live `think` and prints a hint. Use `--dry-run` or configure a provider:
+
 Provider required for live synthesis (not dry-run). Configure with:
 
 ```bash

@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Golden path swarm — refinements (2026-06-07)
+- **`scripts/install.sh`**: thin wrapper → canonical root `install.sh` (fixes MCP-less legacy path).
+- **Provider-aware `golden-path run`**: skips live `think` without provider (`--require-provider` to enforce).
+- **`emit_json()`**: all `cli_surface` `--json` paths use plain stdout (no Rich wrap); `tests/test_cli_json_output.py`.
+- **Web stub `/`**: returns golden-path CLI pointers; TUI welcome adds golden-path section.
+- **README**: "What AgentDrive is / isn't" + AD-Grid demoted under Advanced.
+
 ### Golden path — canonical first-run (2026-06-07)
 - **`docs/GOLDEN_PATH.md`**: authoritative ~10 min path (install → doctor → mcp → think → learnings → query).
 - **`golden_path.py` + `agentdrive golden-path`**: `steps`, `verify`, `run` (--dry-run for CI).

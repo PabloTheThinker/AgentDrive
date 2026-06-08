@@ -15,6 +15,17 @@ from agentdrive import get_agentdrive_home
 from agentdrive.operations import run_operation
 
 
+def provider_configured() -> bool:
+    """Return True when an AI provider is set in config."""
+    try:
+        from agentdrive.providers import load_config_provider
+
+        cfg = load_config_provider()
+        return bool(cfg and cfg[0])
+    except Exception:
+        return False
+
+
 @dataclass(frozen=True)
 class GoldenStep:
     """One step in the golden path."""
@@ -212,6 +223,7 @@ def run_walkthrough(
     dry_run: bool = False,
     stop_on_fail: bool = True,
     skip_install: bool = True,
+    skip_think_without_provider: bool = True,
 ) -> dict[str, Any]:
     """Execute golden-path operations (install step is verify-only unless skip_install=False)."""
     results: list[dict[str, Any]] = []
@@ -277,8 +289,22 @@ def run_walkthrough(
             }
             if dry_run:
                 kwargs["dry_run"] = True
+            elif skip_think_without_provider and not provider_configured():
+                results.append(
+                    {
+                        "step": step.id,
+                        "title": step.title,
+                        "success": True,
+                        "skipped": True,
+                        "detail": "no provider configured — run: agentdrive provider set <name>",
+                        "hint": "agentdrive think \"...\" --dry-run  # works without provider",
+                    }
+                )
+                continue
             result = run_operation("think", **kwargs)
             entry = {"step": step.id, "title": step.title, "success": result.get("success"), "result": result}
+            if not result.get("success") and not dry_run and not provider_configured():
+                entry["hint"] = "agentdrive provider set openai --model gpt-4o"
             results.append(entry)
             if stop_on_fail and not result.get("success"):
                 break

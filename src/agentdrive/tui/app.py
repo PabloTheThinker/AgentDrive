@@ -766,6 +766,17 @@ class AgentDriveTUI:
                 palette=p,
             ),
             Section(
+                "Golden path",
+                [
+                    ("golden-path", "first-run walkthrough (CLI)"),
+                    ("mcp install", "wire Grok/Cursor/Claude"),
+                    ("think", "cited synthesis + gaps"),
+                    ("learnings log", "operational memory"),
+                ],
+                palette=p,
+                key_width=14,
+            ),
+            Section(
                 "Begin",
                 [
                     ("chat", "talk to your agents"),

@@ -47,6 +47,13 @@ def test_run_walkthrough_dry_run(isolated_agentdrive_home: Path):
     assert "query" in step_ids
 
 
+def test_run_walkthrough_skips_think_without_provider(isolated_agentdrive_home: Path):
+    result = run_walkthrough(dry_run=False, stop_on_fail=False, skip_think_without_provider=True)
+    think = next(s for s in result["steps"] if s["step"] == "think")
+    assert think.get("skipped") is True
+    assert "provider" in str(think.get("detail", "")).lower()
+
+
 def test_verify_all_dry(isolated_agentdrive_home: Path):
     result = verify_all()
     assert "steps" in result

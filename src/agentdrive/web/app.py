@@ -33,11 +33,19 @@ def create_app(auth_db: Path | None = None) -> FastAPI:
     )
 
     @app.get("/")
-    async def root() -> dict[str, str]:
+    async def root() -> dict[str, object]:
         return {
             "message": "Legacy web UI has been removed.",
             "status": "new UI in development",
             "core_functionality": "fully available via Python API, TUI, and CLI",
+            "golden_path": {
+                "doc": "docs/GOLDEN_PATH.md",
+                "cli_steps": "agentdrive golden-path steps",
+                "cli_run": "agentdrive golden-path run",
+                "cli_verify": "agentdrive golden-path verify",
+                "install": "curl -fsSL https://vektraindustries.com/agentdrive/install.sh | bash",
+                "mcp": "agentdrive mcp install && agentdrive mcp doctor",
+            },
         }
 
     @app.get("/health")

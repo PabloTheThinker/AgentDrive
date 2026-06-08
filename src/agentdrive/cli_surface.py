@@ -28,6 +28,11 @@ from agentdrive.operations import run_operation
 console = Console()
 
 
+def emit_json(payload: Any, *, indent: int = 2) -> None:
+    """Write JSON to stdout without Rich soft-wrap (safe for piping/jq)."""
+    print(json.dumps(payload, indent=indent, default=str))
+
+
 def print_operation_result(
     name: str,
     result: dict[str, Any],
@@ -37,7 +42,7 @@ def print_operation_result(
 ) -> None:
     """Pretty-print or JSON-emit an operation handler result."""
     if json_output:
-        console.print(json.dumps(result, indent=2, default=str))
+        emit_json(result)
         return
 
     success = result.get("success", False)
@@ -145,7 +150,7 @@ def cmd_learnings(args: argparse.Namespace) -> int:
             kwargs["dry_run"] = True
         result = run_operation("learnings_list", **kwargs)
         if getattr(args, "json_output", False):
-            console.print(json.dumps(result, indent=2, default=str))
+            emit_json(result)
             return 0 if result.get("success") else 1
 
         entries = result.get("entries") or []
@@ -177,13 +182,7 @@ def cmd_learnings(args: argparse.Namespace) -> int:
         store = LearningsStore(slug=getattr(args, "slug", None))
         hits = store.search(query.strip(), limit=getattr(args, "limit", 10))
         if getattr(args, "json_output", False):
-            console.print(
-                json.dumps(
-                    {"success": True, "slug": store.slug, "query": query, "hits": hits},
-                    indent=2,
-                    default=str,
-                )
-            )
+            emit_json({"success": True, "slug": store.slug, "query": query, "hits": hits})
             return 0
 
         table = Table(title=f"Learnings search: {query!r}", show_header=True)
@@ -341,7 +340,7 @@ def cmd_eval(args: argparse.Namespace) -> int:
     result = replay_genome_artifact_file(artifact_path, tolerance=tolerance)
 
     if getattr(args, "json_output", False):
-        console.print(json.dumps(result, indent=2, default=str))
+        emit_json(result)
     else:
         passed = result.get("pass", False)
         style = "green" if passed else "red"
@@ -440,7 +439,7 @@ def cmd_golden_path(args: argparse.Namespace) -> int:
                 }
                 for s in GOLDEN_STEPS
             ]
-            print(json.dumps(payload, indent=2))
+            emit_json(payload)
         else:
             table = Table(title="AgentDrive golden path", show_header=True)
             table.add_column("#", style="dim", width=3)
@@ -463,7 +462,7 @@ def cmd_golden_path(args: argparse.Namespace) -> int:
         else:
             result = verify_all(include_optional=not getattr(args, "skip_optional", False))
         if json_output:
-            print(json.dumps(result, indent=2, default=str))
+            emit_json(result)
         else:
             steps = result.get("steps") or [result]
             table = Table(title="Golden path verification", show_header=True)
@@ -487,9 +486,10 @@ def cmd_golden_path(args: argparse.Namespace) -> int:
         result = run_walkthrough(
             dry_run=bool(getattr(args, "dry_run", False)),
             stop_on_fail=not getattr(args, "continue_on_fail", False),
+            skip_think_without_provider=not getattr(args, "require_provider", False),
         )
         if json_output:
-            print(json.dumps(result, indent=2, default=str))
+            emit_json(result)
         else:
             table = Table(
                 title=f"Golden path run ({'dry-run' if result.get('dry_run') else 'live'})",

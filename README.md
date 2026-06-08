@@ -102,6 +102,28 @@ Or read the full guide: **[docs/GOLDEN_PATH.md](docs/GOLDEN_PATH.md)**
 
 Advanced (AD-Grid, Mission Control, federation) comes *after* the golden path — see [docs/AD_GRID_JOIN.md](docs/AD_GRID_JOIN.md).
 
+## What AgentDrive is (and isn't)
+
+**AgentDrive is:**
+- Local-first **structural memory** for AI agents (genomes, Experience Graph, learnings)
+- A **queryable DNA pool** that grows with your work (`drive query`, `think`, harness)
+- **MCP-native** — any model in Grok/Cursor/Claude can call the same tools the system uses internally
+- **User-sovereign** — your data stays in `~/.agentdrive/`, with quarantine and caps for trust
+
+**AgentDrive is not:**
+- A hosted vector DB or chat-memory SaaS
+- A drop-in replacement for your editor's built-in context
+- Ready-to-use without ~10 minutes of setup (that's what the golden path is for)
+- Only AD-Grid / Mission Control (those are **advanced** layers on top of the Drive)
+
+**The compounding loop:** `think` → `learnings log` → `drive query` → next session's `harness compose`. That's the product.
+
+---
+
+## Advanced — AD-Grid & Mission Control
+
+> Complete [docs/GOLDEN_PATH.md](docs/GOLDEN_PATH.md) first. AD-Grid assumes a seeded drive and MCP literacy.
+
 ## The Foundation + AD-Grid (The Persistent World)
 
 The Experience Graph + durable substrate is the bedrock.

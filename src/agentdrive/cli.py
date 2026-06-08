@@ -3720,6 +3720,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     gp_run = gp_subs.add_parser("run", help="Execute golden-path operations")
     gp_run.add_argument("--dry-run", action="store_true", help="Plan mutating steps without writes")
+    gp_run.add_argument(
+        "--require-provider",
+        action="store_true",
+        help="Fail think step when no AI provider is configured (default: skip with hint)",
+    )
     gp_run.add_argument("--continue-on-fail", action="store_true", help="Keep going after a failed step")
     gp_run.add_argument("--json", dest="json_output", action="store_true")
     gp_run.set_defaults(func=cmd_golden_path)
