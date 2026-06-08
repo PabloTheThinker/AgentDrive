@@ -58,6 +58,7 @@ from agentdrive.tui.chrome import (
 from agentdrive.tui.loading import MicroSpinner
 from agentdrive.tui.pool_lane import PoolActivityLane
 from agentdrive.tui.swarm_lane import SwarmActivityLane
+from agentdrive.tui.transcript_lane import TranscriptLane
 
 # Nominal context window assumed when the active model is unknown.
 _NOMINAL_CONTEXT = 100_000
@@ -115,6 +116,7 @@ CHAT_HELP_SECTIONS = [
             ("/doctor", "animated health check"),
             ("/board", "AgentDrive Mission Board (kanban)"),
             ("/genomes", "browse the genome registry"),
+            ("/genome-search <query>", "search genomes by task description"),
             ("/view <id>", "inspect a specific genome"),
             ("/run <id>", "execute a genome"),
             ("/scan <path>", "extract DNA from a run"),
@@ -164,6 +166,8 @@ class ChatView:
         self._swarm_lane = SwarmActivityLane(palette=self.palette)
         # Pattern 3 — thin pool status row below stream during turns.
         self._pool_lane = PoolActivityLane(palette=self.palette)
+        # Pattern 1 — bus-driven transcript ribbons (pool/evolution/federation).
+        self._transcript_lane = TranscriptLane(self.console, self.palette)
 
         history_file = get_agentdrive_home() / ".agentdrive_chat_history"
 
@@ -223,9 +227,10 @@ class ChatView:
     _RESERVED_WORDS = {"exit", "quit", "q", ":q", "bye"}
 
     # Slash commands that delegate to the legacy TUI dispatch (top-level commands).
-    # Note: /genomes, /g, /genome (singular), /view, /v are handled natively
-    # in this class via _cmd_genomes / _cmd_genome — Pattern 5 (shared
-    # genomes_api logic, chat-native rendering).
+    # Note: /genomes, /g, /genome (singular), /genome-search, /view, /v are
+    # handled natively in this class via _cmd_genomes / _cmd_genome /
+    # _cmd_genome_search — Pattern 5 (shared genomes_api logic, chat-native
+    # rendering).
     _DELEGATED_SLASH = {
         "/status",
         "/s",
@@ -287,6 +292,7 @@ class ChatView:
                 "/genomes",
                 "/g",
                 "/genome",
+                "/genome-search",
                 "/view",
                 "/v",
                 "/back",
@@ -322,6 +328,7 @@ class ChatView:
         # interrupt (empty buffer) all stay in force.
         self._swarm_lane.attach()
         self._pool_lane.attach()
+        self._transcript_lane.attach()
         self._chat_loop = ChatLoop(
             self.console,
             prompt_fn=self._composer_prompt,
@@ -331,168 +338,27 @@ class ChatView:
         self._chat_loop.register_sync_turn_runner(_sync_turn)
         self._chat_loop.register_slash_handler(_slash)
 
-        # Pattern 3 — live pool activity ribbons. Subscribe to pool events
-        # on the default bus so the user sees the DNA pool grow during
-        # chat instead of only via /pool between turns. Handlers run on
-        # whatever thread emitted (the agent worker thread); Rich Console
-        # is thread-safe so plain console.print is fine even while a
-        # Live region is rendering.
-        from agentdrive.events import (
-            ConfidenceUpdated,
-            GenomeEvolved,
-            InheritanceAbsorbed,
-            InheritanceReceived,
-            PeerSyncCompleted,
-            PeerSyncStarted,
-            PeerTrustChanged,
-            PoolIngest,
-            PoolMatch,
-            PoolOutcome,
-            QuarantineApproved,
-            QuarantineRejected,
-            QuarantineSubmitted,
-            ReconciliationDelta,
-            subscribe,
-            unsubscribe,
-        )
+        # Active Form header — PoolMatch stays on ChatView (not TranscriptLane).
+        from agentdrive.events import PoolMatch, subscribe, unsubscribe
 
-        p = self.palette
-        _sub_tokens = []
+        _pool_match_token = subscribe(self._on_pool_match, [PoolMatch])
 
-        def _ribbon_match(ev: PoolMatch) -> None:
-            self._on_pool_match(ev)
-
-        def _ribbon_ingest(ev: PoolIngest) -> None:
-            self.console.print(
-                f"  [dim]▸ pool · ingested[/] [{p.genome}]{ev.genome_id}[/]  "
-                f"[dim]src {ev.source} · actor {ev.actor}[/]"
-            )
-
-        def _ribbon_outcome(ev: PoolOutcome) -> None:
-            self.console.print(
-                f"  [dim]▸ pool · outcome[/] [{p.genome}]{ev.genome_id}[/]  "
-                f"[dim]score {ev.score:.2f}[/]"
-            )
-
-        def _ribbon_evolved(ev: GenomeEvolved) -> None:
-            uses = ev.evidence.get("uses", 0) if isinstance(ev.evidence, dict) else 0
-            avg = ev.evidence.get("avg_score", 0.0) if isinstance(ev.evidence, dict) else 0.0
-            try:
-                avg_f = float(avg)
-            except (TypeError, ValueError):
-                avg_f = 0.0
-            self.console.print(
-                f"  [bold magenta]▸ EVOLVED · {ev.genome_id} → ultimate · "
-                f"uses={uses} · avg={avg_f:.2f}[/]"
-            )
-
-        # Pool-evolution ribbons — confidence, inheritance, quarantine.
-        # These surface the new federated-learning layer's activity inline
-        # in the transcript, matching the existing dim ribbon style.
-        def _ribbon_confidence(ev: ConfidenceUpdated) -> None:
-            stars = "★" * ev.stars + "☆" * (5 - ev.stars)
-            self.console.print(
-                f"  [dim]▸ confidence ·[/] [{p.genome}]{ev.genome_id}[/] "
-                f"[bold {p.accent}]{stars}[/] [dim]({ev.encounters} encounters)[/]"
-            )
-
-        def _ribbon_inheritance_received(ev: InheritanceReceived) -> None:
-            n_in = len(ev.genomes_absorbed)
-            n_out = len(ev.genomes_rejected)
-            origin = ev.subagent_id or "swarm"
-            self.console.print(
-                f"  [dim]▸ inheritance ·[/] [{p.framework}]{origin}[/] returned · "
-                f"[dim]{n_in} absorbed · {n_out} rejected[/]"
-            )
-
-        def _ribbon_inheritance_absorbed(ev: InheritanceAbsorbed) -> None:
-            self.console.print(
-                f"  [dim]▸ inheritance · absorbed[/] [{p.genome}]{ev.genome_id}[/] "
-                f"[dim]from {ev.source_subagent_id}[/]"
-            )
-
-        def _ribbon_quarantine_submitted(ev: QuarantineSubmitted) -> None:
-            self.console.print(
-                f"  [bold {p.warn}]▸ quarantine · pending review[/] "
-                f"[{p.genome}]{ev.genome_id or '—'}[/] "
-                f"[dim]from {ev.source_peer} · {ev.quarantine_id[:8]}[/]"
-            )
-
-        def _ribbon_quarantine_approved(ev: QuarantineApproved) -> None:
-            self.console.print(
-                f"  [{p.ok}]▸ quarantine · approved[/] "
-                f"[{p.genome}]{ev.genome_id or '—'}[/] "
-                f"[dim]by {ev.approved_by}[/]"
-            )
-
-        def _ribbon_quarantine_rejected(ev: QuarantineRejected) -> None:
-            self.console.print(
-                f"  [{p.error}]▸ quarantine · rejected[/] "
-                f"[{p.genome}]{ev.genome_id or '—'}[/] "
-                f"[dim]{ev.reason}[/]"
-            )
-
-        # Reconciliation + peer ribbons — surface the federated learning
-        # loop. Quiet by default: reconciliation only emits a ribbon when
-        # there's actually a delta worth seeing.
-        def _ribbon_reconciliation_delta(ev: ReconciliationDelta) -> None:
-            n_new = len(ev.new_genomes)
-            n_upd = len(ev.updated_genomes)
-            if n_new == 0 and n_upd == 0:
-                return
-            parts = []
-            if n_new:
-                parts.append(f"{n_new} new")
-            if n_upd:
-                parts.append(f"{n_upd} updated")
-            self.console.print(f"  [dim]▸ reconciliation ·[/] [{p.accent}]{' · '.join(parts)}[/]")
-
-        def _ribbon_peer_sync_started(ev: PeerSyncStarted) -> None:
-            self.console.print(f"  [dim]▸ peer sync ·[/] [{p.framework}]{ev.peer_id}[/] [dim]…[/]")
-
-        def _ribbon_peer_sync_completed(ev: PeerSyncCompleted) -> None:
-            tone = p.ok if ev.errors == 0 else p.warn
-            self.console.print(
-                f"  [{tone}]▸ peer sync ·[/] [{p.framework}]{ev.peer_id}[/] "
-                f"[dim]{ev.submitted} submitted to quarantine · "
-                f"{ev.errors} error{'s' if ev.errors != 1 else ''} · "
-                f"{ev.duration_ms} ms[/]"
-            )
-
-        def _ribbon_peer_trust(ev: PeerTrustChanged) -> None:
-            self.console.print(
-                f"  [dim]▸ peer ·[/] [{p.framework}]{ev.peer_id}[/] "
-                f"[dim]trust:[/] {ev.old_level} → [bold]{ev.new_level}[/]"
-            )
-
-        _sub_tokens.append(subscribe(_ribbon_match, [PoolMatch]))
-        _sub_tokens.append(subscribe(_ribbon_ingest, [PoolIngest]))
-        _sub_tokens.append(subscribe(_ribbon_outcome, [PoolOutcome]))
-        _sub_tokens.append(subscribe(_ribbon_evolved, [GenomeEvolved]))
-        _sub_tokens.append(subscribe(_ribbon_confidence, [ConfidenceUpdated]))
-        _sub_tokens.append(subscribe(_ribbon_inheritance_received, [InheritanceReceived]))
-        _sub_tokens.append(subscribe(_ribbon_inheritance_absorbed, [InheritanceAbsorbed]))
-        _sub_tokens.append(subscribe(_ribbon_quarantine_submitted, [QuarantineSubmitted]))
-        _sub_tokens.append(subscribe(_ribbon_quarantine_approved, [QuarantineApproved]))
-        _sub_tokens.append(subscribe(_ribbon_quarantine_rejected, [QuarantineRejected]))
-        _sub_tokens.append(subscribe(_ribbon_reconciliation_delta, [ReconciliationDelta]))
-        _sub_tokens.append(subscribe(_ribbon_peer_sync_started, [PeerSyncStarted]))
-        _sub_tokens.append(subscribe(_ribbon_peer_sync_completed, [PeerSyncCompleted]))
-        _sub_tokens.append(subscribe(_ribbon_peer_trust, [PeerTrustChanged]))
-
+        # Pattern 1 — record the full typed event stream for this session.
+        self.agent.attach_session_recorder()
         try:
             _asyncio.run(self._chat_loop.run())
         except KeyboardInterrupt:
             self._exit_action = self._exit_action or "exit"
         finally:
             self._chat_loop = None
+            self.agent.detach_session_recorder()
             self._swarm_lane.detach()
             self._pool_lane.detach()
-            for tok in _sub_tokens:
-                try:
-                    unsubscribe(tok)
-                except Exception:
-                    pass
+            self._transcript_lane.detach()
+            try:
+                unsubscribe(_pool_match_token)
+            except Exception:
+                pass
 
         if self._exit_action == "back":
             self._print_goodbye(brief=True)
@@ -1017,6 +883,8 @@ class ChatView:
             self._cmd_genomes(arg)
         elif cmd in ("/genome", "/view", "/v"):
             self._cmd_genome(arg)
+        elif cmd == "/genome-search":
+            self._cmd_genome_search(arg)
         elif cmd in ("/golden-path", "/golden", "/think", "/learnings"):
             from agentdrive.tui.experience import handle_ops_slash
 
@@ -1487,6 +1355,76 @@ class ChatView:
             section_panel(
                 Tree(rows, palette=p),
                 title=f"Genomes  ({len(entries)})",
+                palette=p,
+            )
+        )
+        hint = Text()
+        hint.append("Inspect with ", style=p.muted)
+        hint.append("/genome <id>", style=f"bold {p.accent}")
+        hint.append("  ·  search with ", style=p.muted)
+        hint.append("/genome-search <query>", style=f"bold {p.accent}")
+        self.console.print(hint)
+        self._print_status_rule()
+
+    def _cmd_genome_search(self, query: str = "") -> None:
+        """Chat-native genome search. Logic via genomes_api.search_genomes."""
+        from agentdrive import genomes_api
+
+        p = self.palette
+        query = (query or "").strip()
+        if not query:
+            self.console.print()
+            self.console.print(
+                warn_line(
+                    f"Usage: [{p.accent}]/genome-search <query>[/]  "
+                    f"— list all with [{p.accent}]/genomes[/]",
+                    palette=p,
+                )
+            )
+            self.console.print()
+            self._print_status_rule()
+            return
+
+        try:
+            with MicroSpinner(self.console, "searching genomes…", accent=p.accent):
+                matches = genomes_api.search_genomes(query)
+        except Exception as e:
+            self.console.print()
+            self.console.print(error_line(f"Search error: {rich_escape(str(e))}", palette=p))
+            self.console.print()
+            self._print_status_rule()
+            return
+
+        if not matches:
+            self.console.print()
+            self.console.print(
+                warn_line(
+                    f"No matching genomes for [{p.genome}]{rich_escape(query[:80])}[/]. "
+                    "Try broadening the description.",
+                    palette=p,
+                )
+            )
+            self.console.print()
+            self._print_status_rule()
+            return
+
+        rows: list[TreeRow] = []
+        for idx, m in enumerate(matches, 1):
+            dom = ", ".join(m.domains[:2]) or "—"
+            label = (
+                f"[{p.muted}]{idx:>2}[/]  [bold {p.genome}]{m.genome_id}[/] "
+                f"[dim]@{m.version}[/]"
+            )
+            secondary = (
+                f"{dom}  [{p.muted}]·[/] score [{p.evolution}]{m.score:.2f}[/]"
+            )
+            rows.append(TreeRow(label=label, secondary=secondary))
+
+        self.console.print()
+        self.console.print(
+            section_panel(
+                Tree(rows, palette=p),
+                title=f"Genome Search  ({len(matches)})  ·  {query[:60]}",
                 palette=p,
             )
         )

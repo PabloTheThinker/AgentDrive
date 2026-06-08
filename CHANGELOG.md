@@ -6,6 +6,27 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### UX proposal — patterns 1 & 5 closure (2026-06-07)
+- **`docs/UX-PROPOSAL.md`**: status table updated — session `events.jsonl`, `TranscriptLane`, genomes search parity marked shipped.
+
+### Terminal experience — session event recording (2026-06-07)
+- **`session_events.py`**: `SessionEventRecorder` appends default_bus events to `~/.agentdrive/agents/<agent>/sessions/<session_id>/events.jsonl`; `replay_events`, `format_event_summary`.
+- **Chat + agent**: recorder attached for the active session in `tui/chat.py` `enter()` and `AgentDriveAgent.send()` (rebinds on `/new` / `/resume`).
+- **CLI**: `agentdrive session events <session_id>` and `agentdrive session replay <session_id>`.
+- **Tests**: `tests/test_session_events.py`.
+
+### Pattern 5 — genomes search parity (2026-06-07)
+- **`genomes_api.py`**: fix `InheritanceManifest` return-type import (`TYPE_CHECKING`).
+- **CLI**: `agentdrive genomes search <query>` — pool query via `genomes_api.search_genomes()`.
+- **Chat**: `/genome-search <query>` — chat-native tree rendering (Pattern 5).
+- **`cli_catalog.py`**: catalog entry for `genomes search`.
+- **Tests**: `tests/test_genomes_api.py` (`list_genomes`, `get_genome` missing, `search_genomes`).
+
+### Terminal experience — transcript lane (2026-06-07)
+- **`tui/transcript_lane.py`**: `TranscriptLane` — bus-driven transcript ribbons for pool/evolution/confidence/inheritance/quarantine/peer/reconciliation events (Pattern 1).
+- **`tui/chat.py`**: inline ribbon handlers replaced by `TranscriptLane`; `PoolMatch` active-form header stays on `ChatView._on_pool_match`.
+- **Tests**: `tests/test_transcript_lane.py`.
+
 ### Terminal experience — turn telemetry + pool lane (2026-06-07)
 - **`agent/turn_telemetry.py`**: `ChatTurnTelemetry` emits subagent bus events on every `AgentDriveAgent.send()` turn.
 - **`tui/pool_lane.py`**: `PoolActivityLane` — thin pool status row below stream during turns (Pattern 3 v1).

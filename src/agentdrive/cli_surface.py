@@ -420,6 +420,76 @@ def cmd_commands(args: argparse.Namespace) -> int:
     return 1
 
 
+def cmd_session(args: argparse.Namespace) -> int:
+    """Inspect or replay per-session typed event streams (Pattern 1)."""
+    from agentdrive.session_events import (
+        format_event_summary,
+        replay_events,
+        session_events_path,
+    )
+
+    sub = getattr(args, "session_subcommand", None)
+    session_id = getattr(args, "session_id", None) or ""
+    agent_id = getattr(args, "agent_id", None) or "agentdrive-agent"
+    json_output = getattr(args, "json_output", False)
+
+    if not session_id.strip():
+        console.print("[red]Usage: agentdrive session events|replay <session_id>[/]")
+        return 1
+
+    path = session_events_path(agent_id, session_id.strip())
+    events = replay_events(path)
+
+    if sub == "events":
+        if json_output:
+            emit_json(
+                {
+                    "success": True,
+                    "agent_id": agent_id,
+                    "session_id": session_id.strip(),
+                    "path": str(path),
+                    "count": len(events),
+                    "events": events,
+                }
+            )
+            return 0
+        if not path.exists():
+            console.print(f"[yellow]No events file at[/] {path}")
+            return 1
+        for ev in events:
+            console.print(format_event_summary(ev))
+        console.print(f"\n[dim]{len(events)} event(s) · {path}[/]")
+        return 0
+
+    if sub == "replay":
+        if json_output:
+            emit_json(
+                {
+                    "success": True,
+                    "agent_id": agent_id,
+                    "session_id": session_id.strip(),
+                    "path": str(path),
+                    "count": len(events),
+                    "timeline": [format_event_summary(ev) for ev in events],
+                }
+            )
+            return 0
+        if not path.exists():
+            console.print(f"[yellow]No events file at[/] {path}")
+            return 1
+        console.print(
+            f"[bold]Session replay[/] · agent={agent_id} · session={session_id.strip()}"
+        )
+        console.print(f"[dim]{path}[/]\n")
+        for idx, ev in enumerate(events, 1):
+            console.print(f"[dim]{idx:>4}[/]  {format_event_summary(ev)}")
+        console.print(f"\n[dim]{len(events)} event(s)[/]")
+        return 0
+
+    console.print("[red]Unknown session subcommand[/]")
+    return 1
+
+
 def cmd_golden_path(args: argparse.Namespace) -> int:
     """Run or verify the canonical first-run golden path."""
     from agentdrive.golden_path import GOLDEN_STEPS, run_walkthrough, verify_all, verify_step

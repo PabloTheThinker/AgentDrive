@@ -26,6 +26,7 @@ from typing import Any
 
 from agentdrive.agent.session import AgentSession, Turn
 from agentdrive.agent.turn_telemetry import ChatTurnTelemetry
+from agentdrive.session_events import SessionEventRecorder
 from agentdrive.events import (
     MessageComplete,
     MessageDelta,
@@ -98,6 +99,7 @@ class AgentDriveAgent:
         self.session = session or AgentSession(agent_id=agent_id)
         self._llm: AgentDriveLLM | None = None
         self._last_pulled: list[dict[str, Any]] = []
+        self._session_recorder: SessionEventRecorder | None = None
 
     # ─────────────────────────────────────────────────────────────────
     # Provider / model
@@ -189,6 +191,29 @@ class AgentDriveAgent:
         return "\n".join(parts)
 
     # ─────────────────────────────────────────────────────────────────
+    # Session event recording (Pattern 1)
+    # ─────────────────────────────────────────────────────────────────
+
+    def attach_session_recorder(self) -> None:
+        """Start recording default_bus events for the current session."""
+        if (
+            self._session_recorder is not None
+            and self._session_recorder.agent_id == self.agent_id
+            and self._session_recorder.session_id == self.session.session_id
+            and self._session_recorder.attached
+        ):
+            return
+        self.detach_session_recorder()
+        self._session_recorder = SessionEventRecorder(self.agent_id, self.session.session_id)
+        self._session_recorder.attach()
+
+    def detach_session_recorder(self) -> None:
+        """Stop recording and close the session events file."""
+        if self._session_recorder is not None:
+            self._session_recorder.close()
+            self._session_recorder = None
+
+    # ─────────────────────────────────────────────────────────────────
     # The turn loop
     # ─────────────────────────────────────────────────────────────────
 
@@ -204,6 +229,7 @@ class AgentDriveAgent:
         as it arrives (for live TUI rendering). The full text is returned
         in the TurnResult.
         """
+        self.attach_session_recorder()
         start = time.monotonic()
         telemetry = ChatTurnTelemetry(
             session_id=getattr(self.session, "session_id", None),
@@ -357,10 +383,18 @@ class AgentDriveAgent:
     # ─────────────────────────────────────────────────────────────────
 
     def new_session(self) -> None:
+        was_recording = self._session_recorder is not None
+        self.detach_session_recorder()
         self.session.clear()
+        if was_recording:
+            self.attach_session_recorder()
 
     def resume(self, session_id: str) -> None:
+        was_recording = self._session_recorder is not None
+        self.detach_session_recorder()
         self.session = AgentSession.load(self.agent_id, session_id)
+        if was_recording:
+            self.attach_session_recorder()
 
     def list_sessions(self, limit: int = 20) -> list[dict[str, Any]]:
         return AgentSession.list_sessions(self.agent_id, limit=limit)

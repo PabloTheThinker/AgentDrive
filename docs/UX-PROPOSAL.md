@@ -9,13 +9,13 @@
 
 | Pattern | Status | Where |
 |---------|--------|-------|
-| **1 — Typed event bus** | Partial | `events.py`; harness/agent emit; chat still mixes imperative `console.print` + lane subscribers |
+| **1 — Typed event bus** | Shipped (v1) | `events.py` + `session_events.py`; `TranscriptLane` bus-driven ribbons; per-session `events.jsonl`; `agentdrive session events\|replay` |
 | **2 — Keep typing** | Shipped | `chat_loop.py` + `ChatView` custom `PromptSession`; queue, slash bypass, double-Enter |
-| **3 — Pool activity** | Shipped (v1) | Inline ribbons + `PoolActivityLane` thin row in streaming `Live` |
-| **4 — Sub-agent tree** | Shipped (v1) | `SwarmActivityLane` in chat; `ChatTurnTelemetry` per turn; Grok spawn emits |
-| **5 — CLI = slash** | Partial | Golden-path ops, `agentdrive repl`; genomes/skills not fully unified |
+| **3 — Pool activity** | Shipped | `TranscriptLane` ribbons + `PoolActivityLane` thin row in streaming `Live` |
+| **4 — Sub-agent tree** | Shipped | `SwarmActivityLane` in chat; `ChatTurnTelemetry` per turn; Grok spawn emits |
+| **5 — CLI = slash** | Shipped (genomes) | `genomes_api.py` shared by CLI + chat; `genomes search` + `/genome-search`; golden-path ops + REPL |
 
-**Still open:** full renderer-driven chat (Pattern 1 completion), `events.jsonl` session replay, universal slash=CLI audit.
+**Still open:** skills registry (no `SKILL.md` loader yet); full MessageDelta-driven chat body (streaming row still agent callback); TUI event replay viewer.
 
 ---
 
@@ -131,8 +131,10 @@ Each node shows: status spinner, current tool, elapsed, tokens, cost, optional "
 2. ~~**Pattern 2**~~ — shipped
 3. ~~**Pattern 3**~~ — shipped (ribbons + `pool_lane.py`)
 4. ~~**Pattern 4**~~ — shipped (`swarm_lane.py`, `turn_telemetry.py`)
-5. **Pattern 1 completion** — migrate remaining `console.print` in chat to bus-driven renderers; add `events.jsonl` recorder
-6. **Pattern 5 completion** — shared genomes/skills module; slash = CLI everywhere
+5. ~~**Pattern 1 completion**~~ — `session_events.py`, `TranscriptLane`, `session events|replay` CLI
+6. ~~**Pattern 5 genomes**~~ — `genomes search`, `/genome-search`, `test_genomes_api.py`
+7. **Skills registry** — `SKILL.md` loader + `/skill` = `agentdrive skills run` (future)
+8. **Streaming row on bus** — migrate `_stream_assistant_reply` to `MessageDelta` subscriber (optional polish)
 
 ---
 

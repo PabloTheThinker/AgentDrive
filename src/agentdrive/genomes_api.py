@@ -14,9 +14,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from agentdrive.drive.drive import DriveQuery, get_default_drive
+
+if TYPE_CHECKING:
+    from agentdrive.inheritance import InheritanceManifest
 from agentdrive.registry import GenomeRegistry
 
 # ─────────────────────────────────────────────────────────────────────

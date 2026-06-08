@@ -167,6 +167,7 @@ CATALOG: tuple[CatalogEntry, ...] = (
     # genomes
     CatalogEntry("genomes list", "List registered genomes", "genomes"),
     CatalogEntry("genomes info", "Show one genome by ID", "genomes"),
+    CatalogEntry("genomes search", "Search genomes by task description", "genomes"),
     # config
     CatalogEntry("config show", "Show configuration", "config"),
     CatalogEntry("config get", "Get one config key", "config"),

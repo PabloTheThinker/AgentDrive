@@ -108,6 +108,7 @@ from agentdrive.cli_surface import (
     cmd_graph,
     cmd_harness,
     cmd_learnings,
+    cmd_session,
     cmd_think,
 )
 from agentdrive.setup import cmd_setup
@@ -348,6 +349,55 @@ def cmd_genomes(args: argparse.Namespace) -> int:
                 f"Eval scores: {info.evaluation_score}",
                 title=f"Genome: {args.id}",
                 border_style="cyan",
+            )
+        )
+        return 0
+
+    if args.subcommand == "search":
+        from agentdrive.tui.chrome import (
+            Palette,
+            Tree,
+            TreeRow,
+            info_line,
+            section_panel,
+        )
+        from agentdrive.tui.skin_engine import skin
+
+        query = " ".join(getattr(args, "id", None) or []).strip()
+        if not query:
+            console.print("[red]Usage: agentdrive genomes search <query>[/]")
+            return 1
+
+        matches = genomes_api.search_genomes(query)
+        p = Palette(skin)
+
+        if not matches:
+            console.print()
+            console.print(
+                info_line(
+                    f"No matching genomes for [agentdrive.genome]{query[:80]}[/]. "
+                    "Try broadening the description or use "
+                    "[agentdrive.genome]agentdrive drive query[/].",
+                    palette=p,
+                )
+            )
+            return 0
+
+        rows = []
+        for idx, m in enumerate(matches, 1):
+            dom = ", ".join(m.domains[:2]) or "—"
+            label = f"[dim]{idx:>2}[/]  [bold]{m.genome_id}[/]  [dim]@{m.version}[/]"
+            secondary = f"{dom}  · score {m.score:.2f}"
+            if m.path:
+                secondary += f"  · {m.path}"
+            rows.append(TreeRow(label=label, secondary=secondary))
+
+        console.print()
+        console.print(
+            section_panel(
+                Tree(rows, palette=p),
+                title=f"Genome Search  ({len(matches)})  ·  {query[:60]}",
+                palette=p,
             )
         )
         return 0
@@ -3375,8 +3425,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     # genomes
     p = subparsers.add_parser("genomes", help="Genome registry operations")
-    p.add_argument("subcommand", nargs="?", choices=["list", "info"], default="list")
-    p.add_argument("id", nargs="?", help="Genome ID for 'info'")
+    p.add_argument("subcommand", nargs="?", choices=["list", "info", "search"], default="list")
+    p.add_argument("id", nargs="*", help="Genome ID for 'info' or query words for 'search'")
     p.set_defaults(func=cmd_genomes)
 
     # patterns — Fabric-style pattern-as-genome catalog
@@ -3628,6 +3678,43 @@ def build_parser() -> argparse.ArgumentParser:
     lr_search.set_defaults(func=cmd_learnings)
 
     p.set_defaults(func=cmd_learnings, learnings_subcommand="list")
+
+    # session — typed event stream inspect / replay (Pattern 1)
+    p = subparsers.add_parser(
+        "session",
+        help="Per-session typed event stream (events.jsonl inspect / replay)",
+    )
+    session_subs = p.add_subparsers(dest="session_subcommand")
+
+    se_events = session_subs.add_parser(
+        "events",
+        help="List one-line summaries of recorded session events",
+    )
+    se_events.add_argument("session_id", help="Session id (full or suffix from /sessions)")
+    se_events.add_argument(
+        "--agent-id",
+        dest="agent_id",
+        default="agentdrive-agent",
+        help="Agent id (default: agentdrive-agent)",
+    )
+    se_events.add_argument("--json", dest="json_output", action="store_true")
+    se_events.set_defaults(func=cmd_session)
+
+    se_replay = session_subs.add_parser(
+        "replay",
+        help="Replay session events as a numbered timeline",
+    )
+    se_replay.add_argument("session_id", help="Session id (full or suffix from /sessions)")
+    se_replay.add_argument(
+        "--agent-id",
+        dest="agent_id",
+        default="agentdrive-agent",
+        help="Agent id (default: agentdrive-agent)",
+    )
+    se_replay.add_argument("--json", dest="json_output", action="store_true")
+    se_replay.set_defaults(func=cmd_session)
+
+    p.set_defaults(func=cmd_session, session_subcommand="events")
 
     # harness — prompt composition
     p = subparsers.add_parser(
