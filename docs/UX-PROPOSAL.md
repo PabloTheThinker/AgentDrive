@@ -1,21 +1,33 @@
 # Agent Drive UX Proposal — what to learn from the reference CLI, what to build
 
-**Status:** draft for review. Nothing committed.
-**Premise:** the reference CLI feels smooth. Agent Drive doesn't (yet). The patterns are recreatable in Python+Rich without copying Ink. Below: 5 patterns ordered by user-impact ÷ build-cost, plus the one thing genuinely hard to recreate and how to work around it.
+**Status:** partially shipped (2026-06-07). See commits `acaa451` and follow-ups.
+**Premise:** the reference CLI feels smooth. Agent Drive is closing the gap via Python+Rich patterns (no Ink rewrite). Below: 5 patterns ordered by user-impact ÷ build-cost, plus implementation status.
 
 ---
 
-## The diagnosis (current Agent Drive)
+## Shipped vs remaining (2026-06-07)
 
-Agent Drive already has the bones: a `prompt_toolkit` composer, a `Live`-based streaming region, a slash-command surface, a status rule, and dedicated pool / DNA / sessions panels. What it lacks is **flow**:
+| Pattern | Status | Where |
+|---------|--------|-------|
+| **1 — Typed event bus** | Partial | `events.py`; harness/agent emit; chat still mixes imperative `console.print` + lane subscribers |
+| **2 — Keep typing** | Shipped | `chat_loop.py` + `ChatView` custom `PromptSession`; queue, slash bypass, double-Enter |
+| **3 — Pool activity** | Shipped (v1) | Inline ribbons + `PoolActivityLane` thin row in streaming `Live` |
+| **4 — Sub-agent tree** | Shipped (v1) | `SwarmActivityLane` in chat; `ChatTurnTelemetry` per turn; Grok spawn emits |
+| **5 — CLI = slash** | Partial | Golden-path ops, `agentdrive repl`; genomes/skills not fully unified |
 
-- **The agent runs, the input blocks.** `prompt_session.prompt()` blocks the main loop during a turn. You can't queue your next thought.
-- **Pool activity is invisible during chat.** You can `/pool` between turns, but the moment a turn starts the pool goes dark. The "DNA grows with use" claim is the value prop — and the user never sees it happening.
-- **Sub-agents are lanes, not a live tree.** Mission Board shows pending/running/done buckets, but you can't see a parallel swarm's tree, per-node cost, or which sub-agent is stuck.
-- **Render calls are imperative.** The chat view calls `console.print(...)` from inside business logic. There's no event vocabulary, so any new affordance (cost badges, tool-call ribbons, pool-grow flashes) has to be wired in by hand at every emit site.
-- **Slash commands and skills duplicate code paths.** The CLI subcommand and the slash command both exist but route through different functions.
+**Still open:** full renderer-driven chat (Pattern 1 completion), `events.jsonl` session replay, universal slash=CLI audit.
 
-None of these are bugs. They're architectural choices that worked when Agent Drive was a CLI with a chat surface tacked on. They're now the ceiling on how alive the product can feel.
+---
+
+## The diagnosis (original — largely addressed)
+
+Agent Drive already had the bones. The gaps below drove this proposal; most are now mitigated:
+
+- ~~**The agent runs, the input blocks.**~~ → `ChatLoop` async composer + turn queue
+- ~~**Pool activity is invisible during chat.**~~ → ribbons + `PoolActivityLane` during streaming
+- ~~**Sub-agents are lanes, not a live tree.**~~ → `SwarmActivityLane` + turn telemetry
+- **Render calls are imperative.** → bus exists; chat still hand-wires subscribers (Pattern 1 remainder)
+- **Slash commands and skills duplicate code paths.** → golden path + REPL unified; genomes TBD
 
 ---
 
@@ -113,16 +125,14 @@ Each node shows: status spinner, current tool, elapsed, tokens, cost, optional "
 
 ---
 
-## Recommended build order
+## Recommended build order (updated)
 
-1. **Spike (0.5 day).** Prove `prompt_toolkit.prompt_async` + Rich `Live` + `patch_stdout` cooperate. Tiny throwaway script. **Go/no-go gate** before anything else.
-2. **Pattern 1 — event bus (1 day).** Foundation for everything below.
-3. **Pattern 2 — keep-typing (1.5 days).** Highest perceived-fluency win.
-4. **Pattern 3 — pool activity ribbon (0.5 day).** Makes Agent Drive's value prop visible. Cheap.
-5. **Pattern 5 — shared skills/genomes path (0.5 day).** Refactor; sets up model-suggested invocations.
-6. **Pattern 4 — live sub-agent tree (1 day).** Biggest "deeper agent integration" visual. Last because it leans on everything above.
-
-**Total: ~5 dev-days.** Demoable as we go — each pattern ships as its own commit and the chat keeps working in between.
+1. ~~**Spike**~~ — validated (`chat_loop.py` + `patch_stdout`)
+2. ~~**Pattern 2**~~ — shipped
+3. ~~**Pattern 3**~~ — shipped (ribbons + `pool_lane.py`)
+4. ~~**Pattern 4**~~ — shipped (`swarm_lane.py`, `turn_telemetry.py`)
+5. **Pattern 1 completion** — migrate remaining `console.print` in chat to bus-driven renderers; add `events.jsonl` recorder
+6. **Pattern 5 completion** — shared genomes/skills module; slash = CLI everywhere
 
 ---
 

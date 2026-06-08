@@ -56,6 +56,7 @@ from agentdrive.tui.chrome import (
     warn_line,
 )
 from agentdrive.tui.loading import MicroSpinner
+from agentdrive.tui.pool_lane import PoolActivityLane
 from agentdrive.tui.swarm_lane import SwarmActivityLane
 
 # Nominal context window assumed when the active model is unknown.
@@ -161,6 +162,8 @@ class ChatView:
         self._active_form: tuple[str, float] | None = None
         # Pattern 4 — live sub-agent tree pinned above streaming body.
         self._swarm_lane = SwarmActivityLane(palette=self.palette)
+        # Pattern 3 — thin pool status row below stream during turns.
+        self._pool_lane = PoolActivityLane(palette=self.palette)
 
         history_file = get_agentdrive_home() / ".agentdrive_chat_history"
 
@@ -318,6 +321,7 @@ class ChatView:
         # backslash-newline keybindings, FileHistory, and double-Enter
         # interrupt (empty buffer) all stay in force.
         self._swarm_lane.attach()
+        self._pool_lane.attach()
         self._chat_loop = ChatLoop(
             self.console,
             prompt_fn=self._composer_prompt,
@@ -483,6 +487,7 @@ class ChatView:
         finally:
             self._chat_loop = None
             self._swarm_lane.detach()
+            self._pool_lane.detach()
             for tok in _sub_tokens:
                 try:
                     unsubscribe(tok)
@@ -787,6 +792,7 @@ class ChatView:
 
     def _stream_assistant_reply(self, message: str) -> None:
         self._swarm_lane.reset()
+        self._pool_lane.reset()
         ts = datetime.now().strftime("%H:%M")
         p = self.palette
         model_label = self.agent.model_label()
@@ -845,6 +851,10 @@ class ChatView:
                 cursor_line.append(" ")
             cursor_line.append(f"   {indicator.frame()}", style="")
             parts.append(cursor_line)
+
+            pool = self._pool_lane.renderable()
+            if pool is not None:
+                parts.append(Padding(pool, (0, 0, 0, 0)))
 
             return Group(*parts)
 

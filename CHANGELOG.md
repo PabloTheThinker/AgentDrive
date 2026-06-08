@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Terminal experience — turn telemetry + pool lane (2026-06-07)
+- **`agent/turn_telemetry.py`**: `ChatTurnTelemetry` emits subagent bus events on every `AgentDriveAgent.send()` turn.
+- **`tui/pool_lane.py`**: `PoolActivityLane` — thin pool status row below stream during turns (Pattern 3 v1).
+- **Grok adapter**: `spawn_subagent` wrapper emits `SubagentSpawn` for external swarms.
+- **`docs/UX-PROPOSAL.md`**: updated shipped vs remaining table.
+- **Tests**: `test_pool_lane.py`, `test_turn_telemetry.py`.
+
 ### Terminal experience — swarm tree + operator REPL (2026-06-07)
 - **`tui/swarm_lane.py`**: `SwarmActivityLane` wired into chat streaming `Live` region (Pattern 4); post-turn summary line; `reset()` + lock deadlock fix; child-only summary counts.
 - **`tui/chat.py`**: sub-agent tree pinned above streaming body during turns; double-Enter documented in `/help`; subagent ribbons replaced by live tree.

@@ -25,6 +25,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from agentdrive.agent.session import AgentSession, Turn
+from agentdrive.agent.turn_telemetry import ChatTurnTelemetry
 from agentdrive.events import (
     MessageComplete,
     MessageDelta,
@@ -204,6 +205,12 @@ class AgentDriveAgent:
         in the TurnResult.
         """
         start = time.monotonic()
+        telemetry = ChatTurnTelemetry(
+            session_id=getattr(self.session, "session_id", None),
+            swarm_id=getattr(self.harness, "swarm_id", None),
+            subagent_id=getattr(self.harness, "subagent_id", None),
+        )
+        telemetry.begin()
 
         # 1. Record the user turn immediately
         self.session.append(Turn(role="user", content=message))
@@ -237,10 +244,13 @@ class AgentDriveAgent:
                 )
             except Exception:
                 logger.debug("Failed to emit MessageComplete (no_model)", exc_info=True)
+            telemetry.finish(ok=False, error="no_model")
             return TurnResult(text=text, pulled_genomes=[], duration_s=0.0, error="no_model")
 
         # 2. Build system prompt (pulls DNA as side effect)
         system = self.build_system_prompt(message)
+        n_matched = len(self._last_pulled)
+        telemetry.tool(f"pool.query({n_matched} genomes)")
         history = self.session.history_for_llm(max_turns=self.history_turns)
 
         # The current user message is now the last element of history;
@@ -250,6 +260,7 @@ class AgentDriveAgent:
         # 3. Stream
         accumulated_parts: list[str] = []
         error: str | None = None
+        telemetry.tool("llm.stream")
         try:
             for chunk in llm.stream(
                 prompt=message,
@@ -272,6 +283,7 @@ class AgentDriveAgent:
                     )
                 except Exception:
                     logger.debug("Failed to emit MessageDelta", exc_info=True)
+                telemetry.add_chunk(chunk)
                 if on_chunk:
                     on_chunk(chunk)
         except Exception as exc:
@@ -299,6 +311,7 @@ class AgentDriveAgent:
         )
 
         # 5. Record outcome → pool grows
+        telemetry.tool("record_outcome")
         try:
             self.harness.record_outcome(
                 {
@@ -329,6 +342,8 @@ class AgentDriveAgent:
             )
         except Exception:
             logger.debug("Failed to emit MessageComplete", exc_info=True)
+
+        telemetry.finish(ok=error is None, error=error)
 
         return TurnResult(
             text=text,

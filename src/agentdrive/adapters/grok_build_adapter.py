@@ -272,6 +272,21 @@ class GrokBuildAgentDriveAdapter(AgentDriveAdapterBase):
                 subagent_id,
             )
 
+            try:
+                from agentdrive.agent.turn_telemetry import (
+                    emit_external_subagent_spawn,
+                    spawn_label_from_kwargs,
+                )
+
+                emit_external_subagent_spawn(
+                    subagent_id=subagent_id,
+                    parent_id=current_sub or os.environ.get("AGENTDRIVE_SUBAGENT_ID") or "orchestrator",
+                    label=spawn_label_from_kwargs(kwargs, args, subagent_id),
+                    swarm_id=swarm_id,
+                )
+            except Exception:
+                logger.debug("subagent spawn telemetry failed", exc_info=True)
+
             # Call original (the real Grok spawner)
             result = original(*args, **kwargs)
 
