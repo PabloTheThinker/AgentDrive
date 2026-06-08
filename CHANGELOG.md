@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### CLI discovery + full-surface commands (2026-06-07)
+- **`cli_catalog.py`**: categorized command catalog (70+ entries) powering discovery and help epilog.
+- **`cli_surface.py`**: handlers for `think`, `learnings` (log/list/search), `harness compose`, `graph`/`experience`, `eval replay`, `commands` (list/tree/search).
+- **CLI**: `agentdrive pool` alias for `drive`; richer `--help` epilog; all 25 ops registry entries now have `cli_command` strings.
+- **Tests**: `tests/test_cli_commands.py` (13 cases).
+
 ### MCP connection hardening — any-model onboarding (2026-06-07)
 - **`adapters/mcp_config.py`**: resolves launcher (PATH binary → venv → `python -m` module fallback); client config paths; merge-write for Grok/Cursor/Claude/Continue.
 - **CLI**: `agentdrive mcp install`, `mcp doctor`, `mcp tools`; `mcp config --json|--write|--client|--uvx`.

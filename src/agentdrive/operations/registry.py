@@ -623,7 +623,7 @@ OPERATIONS: list[OperationSpec] = [
         description="Cited Drive.think synthesis with mandatory gap analysis",
         category="synthesis",
         read_only=True,
-        cli_command=None,
+        cli_command="agentdrive think",
         mcp_tool="agentdrive_think",
     ),
     OperationSpec(
@@ -751,7 +751,7 @@ OPERATIONS: list[OperationSpec] = [
         description="Execute the phased dream maintenance cycle",
         category="dreaming",
         read_only=False,
-        cli_command=None,
+        cli_command="agentdrive dream run",
         mcp_tool="agentdrive_dream_run",
     ),
     OperationSpec(
@@ -759,7 +759,7 @@ OPERATIONS: list[OperationSpec] = [
         description="Return dream cycle lock and last audit log snapshot",
         category="dreaming",
         read_only=True,
-        cli_command=None,
+        cli_command="agentdrive dream status",
         mcp_tool="agentdrive_dream_status",
     ),
     OperationSpec(
@@ -775,7 +775,7 @@ OPERATIONS: list[OperationSpec] = [
         description="Dense Experience Graph context pack for Parent-style briefings",
         category="experience_graph",
         read_only=True,
-        cli_command=None,
+        cli_command="agentdrive graph context-pack",
         mcp_tool="experience_graph_get_context_pack",
     ),
     OperationSpec(
@@ -783,7 +783,7 @@ OPERATIONS: list[OperationSpec] = [
         description="Record explicit structural reasoning into the Experience Graph",
         category="experience_graph",
         read_only=False,
-        cli_command=None,
+        cli_command="agentdrive graph record",
         mcp_tool="experience_graph_record_reasoning",
     ),
     OperationSpec(
@@ -791,7 +791,7 @@ OPERATIONS: list[OperationSpec] = [
         description="Return schema and examples for authoring reasoning traces",
         category="experience_graph",
         read_only=True,
-        cli_command=None,
+        cli_command="agentdrive graph suggest",
         mcp_tool="experience_graph_suggest_reasoning_structure",
     ),
     OperationSpec(
@@ -799,7 +799,7 @@ OPERATIONS: list[OperationSpec] = [
         description="Append one gstack-style operational learning entry",
         category="learnings",
         read_only=False,
-        cli_command=None,
+        cli_command="agentdrive learnings log",
         mcp_tool="agentdrive_learnings_log",
     ),
     OperationSpec(
@@ -807,7 +807,7 @@ OPERATIONS: list[OperationSpec] = [
         description="List recent operational learnings for the current project slug",
         category="learnings",
         read_only=True,
-        cli_command=None,
+        cli_command="agentdrive learnings list",
         mcp_tool="agentdrive_learnings_list",
     ),
     OperationSpec(
@@ -815,7 +815,7 @@ OPERATIONS: list[OperationSpec] = [
         description="Compose a harness prompt with DNA, learnings, and optional Fabric layers",
         category="harness",
         read_only=True,
-        cli_command=None,
+        cli_command="agentdrive harness compose",
         mcp_tool="agentdrive_harness_compose",
     ),
 ]

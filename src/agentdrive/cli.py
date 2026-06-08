@@ -15,7 +15,13 @@ Subcommand structure:
   agentdrive tui [--mission ws://<tailscale-magic-dns>/]  # TUI with cross-process MC client (no port needed with tailscale serve)
   agentdrive onboard            # Lightweight first-run consent flow
   agentdrive doctor
-  agentdrive drive ...
+  agentdrive drive ...              agentdrive pool ... (alias)
+  agentdrive think "question"
+  agentdrive learnings log|list|search
+  agentdrive harness compose
+  agentdrive graph context-pack|record|suggest
+  agentdrive eval replay <artifact.json>
+  agentdrive commands list|tree|search
 
 First run (or `agentdrive setup`) gives you an interactive wizard that detects
 your AI agents, sets up your AgentDrives, and asks for consent on automatic sub-agent
@@ -92,6 +98,15 @@ from agentdrive.drive.drive import DriveQuery, get_default_drive
 
 # Genome for direct loading during ingest (pool will persist via registry)
 from agentdrive.genome.models import Genome
+from agentdrive.cli_surface import (
+    build_help_epilog,
+    cmd_commands,
+    cmd_eval,
+    cmd_graph,
+    cmd_harness,
+    cmd_learnings,
+    cmd_think,
+)
 from agentdrive.setup import cmd_setup
 from agentdrive.workers import get_default_adapter
 
@@ -3237,36 +3252,50 @@ def cmd_demo_swarm(args: argparse.Namespace) -> int:
         default_bus.unsubscribe(token)
 
 
+def _register_drive_parsers(
+    subparsers: argparse._SubParsersAction,
+    *,
+    names: tuple[str, ...] = ("drive",),
+    help_text: str = "AgentDrive: status, ingest genomes, query by task, detailed stats",
+) -> None:
+    """Register drive (and optional pool alias) with identical subcommands."""
+    for name in names:
+        p = subparsers.add_parser(name, help=help_text)
+        pool_subs = p.add_subparsers(dest="pool_subcommand")
+        ps = pool_subs.add_parser(
+            "status", help="Show Drive status, integration with registry, recent activity"
+        )
+        ps.set_defaults(func=cmd_pool)
+        pi = pool_subs.add_parser(
+            "ingest", help="Ingest a genome directory (manifest + files) into this Drive"
+        )
+        pi.add_argument(
+            "genome_dir",
+            help="Filesystem path to a genome directory (e.g. genomes/examples/xxx-v1)",
+        )
+        pi.set_defaults(func=cmd_pool)
+        pq = pool_subs.add_parser(
+            "query", help="Semantic query of the Drive for genomes relevant to a task description"
+        )
+        pq.add_argument(
+            "task",
+            help='Natural language task description (e.g. "security incident postmortem")',
+        )
+        pq.add_argument("--limit", type=int, default=5, help="Maximum number of results (default 5)")
+        pq.add_argument("--min-score", type=float, default=0.0, help="Minimum evaluation score filter")
+        pq.set_defaults(func=cmd_pool)
+        pst = pool_subs.add_parser(
+            "stats", help="Full pool statistics (ingest counts, sources, actors, registry metrics)"
+        )
+        pst.set_defaults(func=cmd_pool)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="agentdrive",
         description="AgentDrive — local-first Drive for AI agents",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""First run:  agentdrive                    (guided onboarding + TUI)
-Setup:     agentdrive setup              (full wizard, all sections)
-TUI:       agentdrive tui [--mission ws://host:port]   (launch directly; --mission for cross-process live MC Tower)
-# Web UI removed — legacy localhost page wiped. New interface coming.
-Help:      agentdrive doctor             (system health check)
-
-Drive operations:
-  agentdrive drive status         agentdrive drive stats
-  agentdrive drive ingest <dir>   agentdrive drive query "task description"
-
-Provider & model:
-  agentdrive provider list            agentdrive provider set <name> --model <id>
-  agentdrive provider key <name>      agentdrive model list
-  agentdrive model set <model-id>
-
-Genomes & config:
-  agentdrive genomes list             agentdrive config show
-  agentdrive config get <key>         agentdrive config set <key> <value>
-  agentdrive scan /path/to/run
-
-Self-manage:
-  agentdrive update        agentdrive reinstall        agentdrive clean        agentdrive uninstall
-
-  AGENTDRIVE_HOME=/tmp/test agentdrive doctor          (isolated test environment)
-""",
+        epilog=build_help_epilog(),
     )
     parser.add_argument("--version", action="store_true", help="Show version and exit")
     subparsers = parser.add_subparsers(dest="command")
@@ -3517,40 +3546,175 @@ Self-manage:
     p.add_argument("subcommand", nargs="?", default="list")
     p.set_defaults(func=cmd_workers)
 
-    # pool — first-class queryable persistent pool service
+    # drive / pool — first-class queryable persistent pool service
+    _register_drive_parsers(
+        subparsers,
+        names=("drive",),
+        help_text="AgentDrive: status, ingest genomes, query by task, detailed stats (persistent JSONL + registry)",
+    )
+    _register_drive_parsers(
+        subparsers,
+        names=("pool",),
+        help_text="Alias for drive (same subcommands: status, ingest, query, stats)",
+    )
+
+    # think — cited synthesis with mandatory gaps
     p = subparsers.add_parser(
-        "drive",
-        help="AgentDrive: status, ingest genomes, query by task, detailed stats (persistent JSONL + registry)",
+        "think",
+        help="Cited Drive.think synthesis with mandatory gap analysis",
     )
-    pool_subs = p.add_subparsers(dest="pool_subcommand")
-    # status (default)
-    ps = pool_subs.add_parser(
-        "status", help="Show Drive status, integration with registry, recent activity"
+    p.add_argument("question", help="Question or task to synthesize against the Drive")
+    p.add_argument(
+        "--no-experience-layer",
+        action="store_true",
+        help="Skip preferring the experience layer during synthesis",
     )
-    ps.set_defaults(func=cmd_pool)
-    # ingest
-    pi = pool_subs.add_parser(
-        "ingest", help="Ingest a genome directory (manifest + files) into this Drive"
+    p.add_argument("--dry-run", action="store_true", help="Plan without calling synthesis")
+    p.add_argument("--json", dest="json_output", action="store_true", help="Emit full JSON result")
+    p.set_defaults(func=cmd_think)
+
+    # learnings — gstack-style operational memory
+    p = subparsers.add_parser(
+        "learnings",
+        help="Operational learnings JSONL (log / list / search)",
     )
-    pi.add_argument(
-        "genome_dir", help="Filesystem path to a genome directory (e.g. genomes/examples/xxx-v1)"
+    learn_subs = p.add_subparsers(dest="learnings_subcommand")
+
+    lr_list = learn_subs.add_parser("list", help="List recent learnings for current project slug")
+    lr_list.add_argument("--slug", help="Override project slug (default: git repo basename)")
+    lr_list.add_argument("--limit", type=int, default=20)
+    lr_list.add_argument("--json", dest="json_output", action="store_true")
+    lr_list.set_defaults(func=cmd_learnings)
+
+    lr_log = learn_subs.add_parser("log", help="Append one learning entry")
+    lr_log.add_argument("--key", required=True, help="Stable key (alphanumeric, hyphens, underscores)")
+    lr_log.add_argument("--insight", required=True, help="Learning insight text")
+    lr_log.add_argument(
+        "--type",
+        default="pattern",
+        choices=["pattern", "pitfall", "preference", "architecture", "tool", "operational", "investigation"],
     )
-    pi.set_defaults(func=cmd_pool)
-    # query
-    pq = pool_subs.add_parser(
-        "query", help="Semantic query of the Drive for genomes relevant to a task description"
+    lr_log.add_argument("--confidence", type=int, default=5, help="1-10 confidence (default 5)")
+    lr_log.add_argument(
+        "--source",
+        default="observed",
+        choices=["observed", "user-stated", "inferred", "cross-model"],
     )
-    pq.add_argument(
-        "task", help='Natural language task description (e.g. "security incident postmortem")'
+    lr_log.add_argument("--skill", default="harness")
+    lr_log.add_argument("--slug", help="Override project slug")
+    lr_log.add_argument("--dry-run", action="store_true")
+    lr_log.add_argument("--json", dest="json_output", action="store_true")
+    lr_log.set_defaults(func=cmd_learnings)
+
+    lr_search = learn_subs.add_parser("search", help="Token search over key/insight/files")
+    lr_search.add_argument("query", help="Search query (space-separated tokens)")
+    lr_search.add_argument("--slug", help="Override project slug")
+    lr_search.add_argument("--limit", type=int, default=10)
+    lr_search.add_argument("--json", dest="json_output", action="store_true")
+    lr_search.set_defaults(func=cmd_learnings)
+
+    p.set_defaults(func=cmd_learnings, learnings_subcommand="list")
+
+    # harness — prompt composition
+    p = subparsers.add_parser(
+        "harness",
+        help="Compose harness prompts (DNA + learnings + optional Fabric layers)",
     )
-    pq.add_argument("--limit", type=int, default=5, help="Maximum number of results (default 5)")
-    pq.add_argument("--min-score", type=float, default=0.0, help="Minimum evaluation score filter")
-    pq.set_defaults(func=cmd_pool)
-    # stats
-    pst = pool_subs.add_parser(
-        "stats", help="Full pool statistics (ingest counts, sources, actors, registry metrics)"
+    harness_subs = p.add_subparsers(dest="harness_subcommand")
+    hc = harness_subs.add_parser("compose", help="Compose a full harness context prompt")
+    hc.add_argument("--task", help="Current task description")
+    hc.add_argument("--prompt", help="Base system prompt (default: generic agent)")
+    hc.add_argument("--slug", help="Learnings slug override")
+    hc.add_argument("--pattern", help="Fabric pattern name")
+    hc.add_argument("--strategy", help="Fabric strategy layer name")
+    hc.add_argument("--context", help="Fabric context layer name")
+    hc.add_argument("--session-id", dest="session_id", help="Session layer id")
+    hc.add_argument("--input-text", dest="input_text", help="Pattern {{input}} substitution")
+    hc.add_argument("--agent-id", dest="agent_id", default="cli-harness")
+    hc.add_argument("--dry-run", action="store_true")
+    hc.add_argument("--json", dest="json_output", action="store_true")
+    hc.set_defaults(func=cmd_harness)
+    p.set_defaults(func=cmd_harness, harness_subcommand="compose")
+
+    def _register_graph_parsers(names: tuple[str, ...], help_text: str) -> None:
+        for gname in names:
+            gp = subparsers.add_parser(gname, help=help_text)
+            graph_subs = gp.add_subparsers(dest="graph_subcommand")
+
+            gcp = graph_subs.add_parser(
+                "context-pack", help="Dense Experience Graph context pack for briefings"
+            )
+            gcp.add_argument("--swarm-id", dest="swarm_id", help="Swarm id override")
+            gcp.add_argument(
+                "--reasoning-style",
+                dest="reasoning_style",
+                default="balanced",
+                choices=[
+                    "balanced",
+                    "high_lift_patterns_only",
+                    "weak_links_focus",
+                    "structural_analogies",
+                    "continuations_only",
+                ],
+            )
+            gcp.add_argument("--lookback-days", type=int, default=7)
+            gcp.add_argument("--max-tokens", type=int, default=1800)
+            gcp.add_argument("--dry-run", action="store_true")
+            gcp.add_argument("--json", dest="json_output", action="store_true")
+            gcp.set_defaults(func=cmd_graph)
+
+            gs = graph_subs.add_parser(
+                "suggest", help="Schema and examples for authoring reasoning traces"
+            )
+            gs.add_argument("--swarm-id", dest="swarm_id")
+            gs.add_argument("--dry-run", action="store_true")
+            gs.add_argument("--json", dest="json_output", action="store_true")
+            gs.set_defaults(func=cmd_graph)
+
+            gr = graph_subs.add_parser("record", help="Record structural reasoning into the graph")
+            gr.add_argument("--swarm-id", dest="swarm_id")
+            gr.add_argument("--cycle-id", dest="cycle_id")
+            gr.add_argument("--summary", help="Short reasoning summary")
+            gr.add_argument("--reasoning-file", dest="reasoning_file", help="JSON reasoning object file")
+            gr.add_argument("--dry-run", action="store_true")
+            gr.add_argument("--json", dest="json_output", action="store_true")
+            gr.set_defaults(func=cmd_graph)
+
+            gp.set_defaults(func=cmd_graph, graph_subcommand="context-pack")
+
+    _register_graph_parsers(
+        ("graph",),
+        "Experience Graph: context-pack, record reasoning, suggest structure",
     )
-    pst.set_defaults(func=cmd_pool)
+    _register_graph_parsers(
+        ("experience",),
+        "Alias for graph (Experience Graph commands)",
+    )
+
+    # eval — artifact replay
+    p = subparsers.add_parser("eval", help="Evaluation utilities (harness replay)")
+    eval_subs = p.add_subparsers(dest="eval_subcommand")
+    er = eval_subs.add_parser("replay", help="Re-score a stored research artifact JSON")
+    er.add_argument("artifact", help="Path to genome/research artifact JSON")
+    er.add_argument("--tolerance", type=float, default=0.05, help="Goodness score tolerance")
+    er.add_argument("--json", dest="json_output", action="store_true")
+    er.set_defaults(func=cmd_eval)
+    p.set_defaults(func=cmd_eval, eval_subcommand="replay")
+
+    # commands — CLI discovery
+    p = subparsers.add_parser(
+        "commands",
+        help="Discover all CLI commands (list / tree / search)",
+    )
+    cmd_subs = p.add_subparsers(dest="commands_subcommand")
+    cl = cmd_subs.add_parser("list", help="All commands grouped by category")
+    cl.set_defaults(func=cmd_commands)
+    ct = cmd_subs.add_parser("tree", help="Indented command tree")
+    ct.set_defaults(func=cmd_commands)
+    cs = cmd_subs.add_parser("search", help="Search commands by keyword")
+    cs.add_argument("query", help="Search terms")
+    cs.set_defaults(func=cmd_commands)
+    p.set_defaults(func=cmd_commands, commands_subcommand="list")
 
     # provider
     p = subparsers.add_parser("provider", help="List and manage AI model providers")
