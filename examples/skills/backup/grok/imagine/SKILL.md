@@ -1,13 +1,14 @@
 ---
 name: grok-imagine
-description: "Backup of Grok harness skill `imagine` for swarm pawns and hive bench."
-source: grok-backup
-role: shared
+description: >
+  Image generation workflow — when to code vs generate, prompt craft, reference handling, factual grounding, asset consistency. Hive copy.
 category: backup
-tags: [grok, backup, hive, pawn]
+role: shared
+source: grok-backup
 backup_of: imagine
 backup_path: ~/.grok/skills/imagine/SKILL.md
-when_to_call: when a pawn or connected agent needs the same workflow Grok uses for imagine
+tags: [grok, image, visual, prompt]
+when_to_call: generate or edit images, visual assets, or image tool decisions
 ---
 
 # Grok backup — imagine

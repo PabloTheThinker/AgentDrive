@@ -1,11 +1,12 @@
 ---
 name: pawn-scout
-description: "Pawn scout — explore codebase or docs and report map + risks without implementing."
+description: >
+  Exploration pawn — map codebase or docs, list risks, recommend next pawn or skill. Read and report; do not ship code unless asked.
 category: hive
 role: pawn
-tags: [pawn, scout, research, hive]
 source: agentdrive-hive
-when_to_call: need orientation, audit, or reconnaissance before the worker pawn acts
+tags: [pawn, scout, research, map, reconnaissance]
+when_to_call: orientation, audit, reconnaissance before a worker pawn acts
 ---
 
 # Pawn scout

@@ -1,13 +1,14 @@
 ---
 name: grok-universal-brush
-description: "Backup of Grok harness skill `universal-brush` for swarm pawns and hive bench."
-source: grok-backup
-role: shared
+description: >
+  Universal Brush design studio — conversational visual work with live canvas preview for prototypes, decks, and marketing. Hive copy.
 category: backup
-tags: [grok, backup, hive, pawn]
+role: shared
+source: grok-backup
 backup_of: universal-brush
 backup_path: ~/.grok/skills/universal-brush/SKILL.md
-when_to_call: when a pawn or connected agent needs the same workflow Grok uses for universal-brush
+tags: [grok, design, prototype, canvas, visual]
+when_to_call: visual prototypes, slides, or marketing designs with live preview
 ---
 
 # Grok backup — universal-brush

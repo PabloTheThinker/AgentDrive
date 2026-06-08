@@ -1,13 +1,14 @@
 ---
 name: grok-check-work
-description: "Backup of Grok harness skill `check-work` for swarm pawns and hive bench."
-source: grok-backup
-role: shared
+description: >
+  Self-verification via verifier subagent — review diffs, run tests, fix until pass. Hive copy for pawns finishing implementation work.
 category: backup
-tags: [grok, backup, hive, pawn]
+role: shared
+source: grok-backup
 backup_of: check-work
 backup_path: ~/.grok/skills/check-work/SKILL.md
-when_to_call: when a pawn or connected agent needs the same workflow Grok uses for check-work
+tags: [grok, verify, review, testing, hive]
+when_to_call: check work, verify changes, self-verify before handoff
 ---
 
 # Grok backup — check-work

@@ -63,6 +63,15 @@ def main() -> int:
         print(f"  synced grok-{skill_dir.name}")
 
     print(f"Synced {copied} Grok skills → {DEST_ROOT}")
+
+    apply = REPO_ROOT / "scripts" / "apply_skills_catalog.py"
+    if apply.is_file():
+        import subprocess
+        import sys
+
+        print("Applying catalog descriptions…")
+        subprocess.run([sys.executable, str(apply)], check=True)
+
     return 0
 
 

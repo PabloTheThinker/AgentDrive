@@ -1,13 +1,14 @@
 ---
 name: grok-create-skill
-description: "Backup of Grok harness skill `create-skill` for swarm pawns and hive bench."
-source: grok-backup
-role: shared
+description: >
+  Interactively scaffold a new SKILL.md with frontmatter, triggers, and body. Hive copy; use agentdrive skills init for AgentDrive-native skills.
 category: backup
-tags: [grok, backup, hive, pawn]
+role: shared
+source: grok-backup
 backup_of: create-skill
 backup_path: ~/.grok/skills/create-skill/SKILL.md
-when_to_call: when a pawn or connected agent needs the same workflow Grok uses for create-skill
+tags: [grok, skills, authoring, scaffold]
+when_to_call: user wants to create or scaffold a new skill
 ---
 
 # Grok backup — create-skill

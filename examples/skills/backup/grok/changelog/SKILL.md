@@ -1,13 +1,14 @@
 ---
 name: grok-changelog
-description: "Backup of Grok harness skill `changelog` for swarm pawns and hive bench."
-source: grok-backup
-role: shared
+description: >
+  Maintain CHANGELOG.md after code or config changes — dated sections, Added/Changed/Fixed, verification hints. Hive copy of Grok changelog skill for pawns.
 category: backup
-tags: [grok, backup, hive, pawn]
+role: shared
+source: grok-backup
 backup_of: changelog
 backup_path: ~/.grok/skills/changelog/SKILL.md
-when_to_call: when a pawn or connected agent needs the same workflow Grok uses for changelog
+tags: [grok, changelog, documentation, hive]
+when_to_call: end of implementation, session log, or user asks what changed
 ---
 
 # Grok backup — changelog

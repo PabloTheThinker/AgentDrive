@@ -1,11 +1,12 @@
 ---
 name: doctor
-description: "Health check — install, MCP, pool, and config sanity."
+description: >
+  Run AgentDrive health checks — install, config, MCP bridge, pool, and environment sanity. First diagnostic when something feels broken.
 agentdrive_operation: doctor
 category: core
 role: shared
-tags: [doctor, health, onboarding]
-when_to_call: something feels broken or before a golden-path run
+tags: [doctor, health, diagnose, onboarding]
+when_to_call: errors, broken MCP, empty pool, or before golden-path run
 ---
 
 # Doctor

@@ -1,13 +1,13 @@
 ---
 name: grok-pptx
-description: "Backup of Grok harness skill `pptx` for swarm pawns and hive bench."
-source: grok-backup
-role: shared
+description: Create or edit PowerPoint decks — slides, layouts, speaker notes, templates. Hive copy for presentation pawn work.
 category: backup
-tags: [grok, backup, hive, pawn]
+role: shared
+source: grok-backup
 backup_of: pptx
 backup_path: ~/.grok/skills/pptx/SKILL.md
-when_to_call: when a pawn or connected agent needs the same workflow Grok uses for pptx
+tags: [grok, slides, presentation, deck, pptx]
+when_to_call: deck, slides, presentation, or pptx file
 ---
 
 # Grok backup — pptx

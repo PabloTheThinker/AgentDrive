@@ -1,10 +1,11 @@
 ---
 name: regex-architect
-description: "Build regex from examples first; always ship rejection-set proof."
+description: >
+  Build and audit regular expressions sample-first — positives, negatives, commented form, and rejection-set proof. Never ship regex without examples.
 category: agentdrives
 role: pawn
-tags: [regex, parsing, validation, specialist]
-when_to_call: user wants to write, read, or audit a regular expression
+tags: [regex, parsing, validation, text, specialist]
+when_to_call: write, read, audit, or debug a regular expression
 ---
 
 # Regex architect

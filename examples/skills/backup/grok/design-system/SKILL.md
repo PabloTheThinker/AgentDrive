@@ -1,13 +1,14 @@
 ---
 name: grok-design-system
-description: "Backup of Grok harness skill `design-system` for swarm pawns and hive bench."
-source: grok-backup
-role: shared
+description: >
+  Ingest or generate DESIGN.md tokens from code, CSS, or screenshots — living design contract for consistent UI generations. Hive copy.
 category: backup
-tags: [grok, backup, hive, pawn]
+role: shared
+source: grok-backup
 backup_of: design-system
 backup_path: ~/.grok/skills/design-system/SKILL.md
-when_to_call: when a pawn or connected agent needs the same workflow Grok uses for design-system
+tags: [grok, design-system, tokens, brand]
+when_to_call: brand tokens, design system, or consistent UI generation
 ---
 
 # Grok backup — design-system

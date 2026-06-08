@@ -1,11 +1,12 @@
 ---
 name: systematic-debugging
-description: "4-phase root cause debugging — no fixes before investigation."
+description: >
+  Four-phase root-cause debugging — investigate, pattern-match, hypothesize, fix. No fixes before understanding WHY. Stop after three failed fixes and question architecture.
 category: backup
 role: shared
 source: hermes-adapted
-tags: [debugging, hermes, troubleshooting]
-when_to_call: any bug, test failure, or unexpected behavior
+tags: [debugging, root-cause, hermes, troubleshooting]
+when_to_call: bug, test failure, unexpected behavior, or production incident
 ---
 
 # Systematic debugging (Hermes-adapted)

@@ -1,13 +1,14 @@
 ---
 name: grok-docx
-description: "Backup of Grok harness skill `docx` for swarm pawns and hive bench."
-source: grok-backup
-role: shared
+description: >
+  Create, read, and edit Word documents — reports, memos, templates, tracked changes. Hive copy for document pawn deliverables.
 category: backup
-tags: [grok, backup, hive, pawn]
+role: shared
+source: grok-backup
 backup_of: docx
 backup_path: ~/.grok/skills/docx/SKILL.md
-when_to_call: when a pawn or connected agent needs the same workflow Grok uses for docx
+tags: [grok, word, docx, document]
+when_to_call: Word doc, docx file, report, memo, or letter deliverable
 ---
 
 # Grok backup — docx

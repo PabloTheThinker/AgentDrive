@@ -1,11 +1,12 @@
 ---
 name: golden-path-verify
+description: >
+  Verify the seven-step first-run loop (install, doctor, MCP, think, learnings, query) without mutating state. Reports which steps pass or fail.
+agentdrive_operation: golden_path_verify
 category: core
 role: shared
-tags: [golden-path, verify, onboarding]
-when_to_call: check install MCP learnings query loop before or after first run
-description: Check golden path install → mcp → learnings → query without mutating state.
-agentdrive_operation: golden_path_verify
+tags: [golden-path, verify, onboarding, health]
+when_to_call: before or after first run, CI smoke, or when onboarding health is uncertain
 ---
 
 # Golden path verify

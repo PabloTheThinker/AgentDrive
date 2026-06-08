@@ -1,10 +1,11 @@
 ---
 name: sql-explain
-description: "Explain SQL execution intent, indexes touched, and cost class."
+description: >
+  Explain a SQL query in plain English — intent, tables, indexes, join strategy, cost class, and risks (full scan, implicit cast, N+1).
 category: agentdrives
 role: pawn
-tags: [sql, database, explain]
-when_to_call: user pastes a SQL query and wants plain-English execution analysis
+tags: [sql, database, explain, query]
+when_to_call: user pastes SQL and wants execution analysis without being a DBA
 ---
 
 # SQL explain

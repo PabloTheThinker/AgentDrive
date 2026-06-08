@@ -1,13 +1,14 @@
 ---
 name: grok-help
-description: "Backup of Grok harness skill `help` for swarm pawns and hive bench."
-source: grok-backup
-role: shared
+description: >
+  Grok harness documentation and setup help — MCP, auth, skills, slash commands. Hive copy for pawns answering operator setup questions.
 category: backup
-tags: [grok, backup, hive, pawn]
+role: shared
+source: grok-backup
 backup_of: help
 backup_path: ~/.grok/skills/help/SKILL.md
-when_to_call: when a pawn or connected agent needs the same workflow Grok uses for help
+tags: [grok, help, setup, configuration]
+when_to_call: setup, configuration, MCP, or harness feature questions
 ---
 
 # Grok backup — help

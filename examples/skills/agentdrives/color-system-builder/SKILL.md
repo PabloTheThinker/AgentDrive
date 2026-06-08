@@ -1,10 +1,11 @@
 ---
 name: color-system-builder
-description: "Brand primary → full palette with WCAG contrast pairings for UI roles."
+description: >
+  Expand one brand primary into a full UI palette with WCAG contrast pairings for bg, surface, accent, ok, warn, and error roles.
 category: agentdrives
 role: pawn
-tags: [design, color, accessibility, ui]
-when_to_call: user needs a status panel or UI palette from one brand color
+tags: [design, color, accessibility, ui, wcag]
+when_to_call: status panels, TUI themes, or UI tokens from a single brand color
 ---
 
 # Color system builder

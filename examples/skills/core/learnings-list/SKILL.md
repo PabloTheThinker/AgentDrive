@@ -1,11 +1,11 @@
 ---
 name: learnings-list
-description: "List operational learnings for this project."
+description: List operational learnings already recorded for this project — the hive's short-term shared memory.
 agentdrive_operation: learnings_list
 category: core
 role: shared
-tags: [learnings, memory, hive]
-when_to_call: user asks what we already learned or recorded
+tags: [learnings, memory, hive, list]
+when_to_call: user asks what we already learned, decided, or recorded
 ---
 
 # Learnings list

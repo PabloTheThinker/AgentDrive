@@ -1,12 +1,13 @@
 ---
 name: pawn-worker
-description: "Pawn worker — headless subagent that executes one quest and returns inheritance to the hive."
+description: >
+  Headless pawn executing one scoped quest — pull DNA first, finish or block with a specific reason, return structured inheritance to the Arisen.
 category: hive
 role: pawn
-tags: [pawn, swarm, worker, hive, inheritance]
 source: agentdrive-hive
-related_skills: [hive-inheritance, arisen-orchestrator]
-when_to_call: spawned as a subagent to complete a single scoped task
+tags: [pawn, swarm, worker, hive, inheritance, quest]
+when_to_call: spawned as subagent to implement, fix, or complete a single assigned task
+related_skills: ['hive-inheritance', 'arisen-orchestrator']
 ---
 
 # Pawn worker

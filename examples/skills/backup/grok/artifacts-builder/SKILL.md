@@ -1,13 +1,14 @@
 ---
 name: grok-artifacts-builder
-description: "Backup of Grok harness skill `artifacts-builder` for swarm pawns and hive bench."
-source: grok-backup
-role: shared
+description: >
+  Build self-contained web artifacts (HTML/Tailwind or React) — prototypes, dashboards, interactive UIs with accessibility and dark mode. Hive copy.
 category: backup
-tags: [grok, backup, hive, pawn]
+role: shared
+source: grok-backup
 backup_of: artifacts-builder
 backup_path: ~/.grok/skills/artifacts-builder/SKILL.md
-when_to_call: when a pawn or connected agent needs the same workflow Grok uses for artifacts-builder
+tags: [grok, artifacts, html, prototype, dashboard]
+when_to_call: interactive prototype, dashboard, or live-preview web artifact
 ---
 
 # Grok backup — artifacts-builder

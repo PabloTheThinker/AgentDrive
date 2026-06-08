@@ -1,10 +1,10 @@
 ---
 name: api-versioning-advisor
-description: "Classify API changes as patch/minor/major; list breaking surface."
+description: Classify API changes as patch, minor, or major; enumerate breaking consumers and migration notes. Defaults conservative.
 category: agentdrives
 role: pawn
-tags: [api, semver, versioning]
-when_to_call: user changed an API and needs semver guidance
+tags: [api, semver, versioning, breaking]
+when_to_call: API surface changed and semver or migration guidance is needed
 ---
 
 # API versioning advisor

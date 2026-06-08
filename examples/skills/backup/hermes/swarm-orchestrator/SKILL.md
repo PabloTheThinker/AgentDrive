@@ -1,12 +1,13 @@
 ---
 name: swarm-orchestrator
-description: "Orchestrator playbook — route work through pawns; do not do pawn work yourself."
+description: >
+  Hermes kanban-orchestrator adapted for AgentDrive — decompose quests, dispatch pawns, collect inheritance. Anti-rule: do not implement pawn work yourself.
 category: backup
 role: arisen
 source: hermes-adapted
-tags: [swarm, kanban, orchestrator, hermes]
-related_skills: [swarm-worker, arisen-orchestrator]
+tags: [swarm, orchestrator, kanban, hermes, decompose]
 when_to_call: multi-step project needs decomposition and pawn dispatch
+related_skills: ['swarm-worker', 'arisen-orchestrator']
 ---
 
 # Swarm orchestrator (Hermes kanban-orchestrator → AgentDrive)

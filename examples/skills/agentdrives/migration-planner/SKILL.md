@@ -1,10 +1,11 @@
 ---
 name: migration-planner
-description: "Forward migration + rollback + at-scale failure modes."
+description: >
+  Plan forward migration and rollback with pre-flight checks and at-scale failure modes (locks, downtime, backfill duration).
 category: agentdrives
 role: pawn
-tags: [migration, schema, ops]
-when_to_call: user plans a schema or data migration
+tags: [migration, schema, database, ops, rollback]
+when_to_call: schema change, data migration, or production cutover planning
 ---
 
 # Migration planner

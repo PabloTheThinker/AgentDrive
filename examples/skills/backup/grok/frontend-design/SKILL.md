@@ -1,13 +1,14 @@
 ---
 name: grok-frontend-design
-description: "Backup of Grok harness skill `frontend-design` for swarm pawns and hive bench."
-source: grok-backup
-role: shared
+description: >
+  Production-grade frontend UI with distinctive aesthetics — typography, motion, spatial detail. Avoid generic AI slop. Hive copy for UI pawn work.
 category: backup
-tags: [grok, backup, hive, pawn]
+role: shared
+source: grok-backup
 backup_of: frontend-design
 backup_path: ~/.grok/skills/frontend-design/SKILL.md
-when_to_call: when a pawn or connected agent needs the same workflow Grok uses for frontend-design
+tags: [grok, ui, frontend, design, react]
+when_to_call: build web components, pages, landing pages, or React/Tailwind UI
 ---
 
 # Grok backup — frontend-design

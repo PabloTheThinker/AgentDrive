@@ -1,11 +1,12 @@
 ---
 name: arisen-orchestrator
-description: "The Arisen — main AgentDrive agent that commands pawns and owns the hive pool."
+description: >
+  The Arisen playbook — decompose user quests, spawn pawns, curate hive learnings, and synthesize outcomes. Command; do not grind.
 category: hive
 role: arisen
-tags: [hive, pawn, orchestrator, swarm, arisen]
 source: agentdrive-hive
-when_to_call: coordinating multi-step work, spawning pawns, or deciding what the hive should learn next
+tags: [hive, pawn, orchestrator, swarm, arisen, command]
+when_to_call: multi-step work, swarm coordination, or deciding what the hive should learn
 ---
 
 # Arisen orchestrator (hive command)

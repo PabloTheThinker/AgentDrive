@@ -1,0 +1,353 @@
+# Canonical AgentDrive skills catalog — descriptions applied to SKILL.md frontmatter.
+# Regenerate: python scripts/apply_skills_catalog.py
+
+core:
+  think:
+    role: arisen
+    operation: think
+    argument: question
+    tags: [think, synthesis, pool, hive, memory]
+    description: >
+      Cited synthesis from your AgentDrive pool with mandatory gap analysis.
+      Use before delegating to pawns or when you need grounded answers from DNA + learnings.
+    when_to_call: user needs a cited answer from the pool, gap analysis, or pre-delegation research
+
+  golden-path-verify:
+    role: shared
+    operation: golden_path_verify
+    tags: [golden-path, verify, onboarding, health]
+    description: >
+      Verify the seven-step first-run loop (install, doctor, MCP, think, learnings, query)
+      without mutating state. Reports which steps pass or fail.
+    when_to_call: before or after first run, CI smoke, or when onboarding health is uncertain
+
+  learnings-log:
+    role: shared
+    operation: learnings_log
+    argument: input
+    tags: [learnings, memory, hive, record]
+    description: >
+      Record one operational learning (key + insight) into the shared hive so future
+      sessions and pawns inherit the note.
+    when_to_call: durable decision, runbook note, or pawn handoff worth remembering
+
+  learnings-list:
+    role: shared
+    operation: learnings_list
+    tags: [learnings, memory, hive, list]
+    description: >
+      List operational learnings already recorded for this project — the hive's
+      short-term shared memory.
+    when_to_call: user asks what we already learned, decided, or recorded
+
+  pool-query:
+    role: shared
+    operation: pool_query
+    argument: task
+    tags: [pool, dna, query, hive, genomes]
+    description: >
+      Semantic search over the AgentDrive pool — find genomes and DNA relevant to a task.
+      How pawns pull knowledge from the hive before acting.
+    when_to_call: search the pool, find matching genomes, or orient before implementation
+
+  doctor:
+    role: shared
+    operation: doctor
+    tags: [doctor, health, diagnose, onboarding]
+    description: >
+      Run AgentDrive health checks — install, config, MCP bridge, pool, and environment sanity.
+      First diagnostic when something feels broken.
+    when_to_call: errors, broken MCP, empty pool, or before golden-path run
+
+hive:
+  arisen-orchestrator:
+    role: arisen
+    tags: [hive, pawn, orchestrator, swarm, arisen, command]
+    description: >
+      The Arisen playbook — decompose user quests, spawn pawns, curate hive learnings,
+      and synthesize outcomes. Command; do not grind.
+    when_to_call: multi-step work, swarm coordination, or deciding what the hive should learn
+
+  pawn-worker:
+    role: pawn
+    tags: [pawn, swarm, worker, hive, inheritance, quest]
+    description: >
+      Headless pawn executing one scoped quest — pull DNA first, finish or block with
+      a specific reason, return structured inheritance to the Arisen.
+    when_to_call: spawned as subagent to implement, fix, or complete a single assigned task
+
+  pawn-scout:
+    role: pawn
+    tags: [pawn, scout, research, map, reconnaissance]
+    description: >
+      Exploration pawn — map codebase or docs, list risks, recommend next pawn or skill.
+      Read and report; do not ship code unless asked.
+    when_to_call: orientation, audit, reconnaissance before a worker pawn acts
+
+  pawn-specialist:
+    role: pawn
+    tags: [pawn, specialist, agentdrive, narrow, prodigy]
+    description: >
+      Narrow-domain pawn — follow one agentdrive skill literally (regex, SQL, diff, etc.).
+      Returns specialist artifact plus one hive learning line.
+    when_to_call: task clearly matches a bundled agentdrive (regex, cron, errors, tests)
+
+  hive-inheritance:
+    role: shared
+    tags: [hive, inheritance, pool, swarm, pawn, ingest]
+    description: >
+      Package pawn outcomes for parent ingest — summary, genomes used, new patterns,
+      learnings key, and self-score for the shared pool.
+    when_to_call: pawn completing a task and returning knowledge to the Arisen or pool
+
+agentdrives:
+  regex-architect:
+    role: pawn
+    tags: [regex, parsing, validation, text, specialist]
+    description: >
+      Build and audit regular expressions sample-first — positives, negatives,
+      commented form, and rejection-set proof. Never ship regex without examples.
+    when_to_call: write, read, audit, or debug a regular expression
+
+  sql-explain:
+    role: pawn
+    tags: [sql, database, explain, query]
+    description: >
+      Explain a SQL query in plain English — intent, tables, indexes, join strategy,
+      cost class, and risks (full scan, implicit cast, N+1).
+    when_to_call: user pastes SQL and wants execution analysis without being a DBA
+
+  cron-translator:
+    role: pawn
+    tags: [cron, scheduling, ops, time]
+    description: >
+      Translate between cron expressions, plain English, and next fire times.
+      Flags day-of-month vs day-of-week conflicts.
+    when_to_call: cron schedule confusion, authoring schedules, or ops timing questions
+
+  diff-narrator:
+    role: pawn
+    tags: [git, diff, pr, commit, narrative]
+    description: >
+      Write a one-paragraph why-this-changed from a git diff — user impact and motivation,
+      not a line-by-line restatement. Ends with reviewer focus bullets.
+    when_to_call: PR description, commit summary, or explaining a diff to reviewers
+
+  release-notes:
+    role: pawn
+    tags: [changelog, release, git, notes]
+    description: >
+      Turn a commit range into release notes — Added, Changed, Fixed, Security —
+      framed by user impact, not implementation detail.
+    when_to_call: release notes, changelog from commits, or version announcement draft
+
+  error-translator:
+    role: pawn
+    tags: [debugging, errors, stacktrace, root-cause]
+    description: >
+      Translate a stack trace to one-sentence root cause plus minimal fix.
+      States missing evidence instead of guessing when uncertain.
+    when_to_call: user pastes an error, exception, or failing test output
+
+  api-versioning-advisor:
+    role: pawn
+    tags: [api, semver, versioning, breaking]
+    description: >
+      Classify API changes as patch, minor, or major; enumerate breaking consumers
+      and migration notes. Defaults conservative.
+    when_to_call: API surface changed and semver or migration guidance is needed
+
+  migration-planner:
+    role: pawn
+    tags: [migration, schema, database, ops, rollback]
+    description: >
+      Plan forward migration and rollback with pre-flight checks and at-scale failure modes
+      (locks, downtime, backfill duration).
+    when_to_call: schema change, data migration, or production cutover planning
+
+  url-canonicalizer:
+    role: pawn
+    tags: [url, security, parsing, tracking]
+    description: >
+      Canonicalize URLs, strip trackers, explain query parameters, and flag suspicious
+      patterns (open redirect, homoglyph, IP literals).
+    when_to_call: clean, compare, or security-audit URLs
+
+  color-system-builder:
+    role: pawn
+    tags: [design, color, accessibility, ui, wcag]
+    description: >
+      Expand one brand primary into a full UI palette with WCAG contrast pairings
+      for bg, surface, accent, ok, warn, and error roles.
+    when_to_call: status panels, TUI themes, or UI tokens from a single brand color
+
+  prompt-distiller:
+    role: pawn
+    tags: [prompt, tokens, llm, cost, review]
+    description: >
+      Distill a verbose prompt to minimum tokens while preserving constraints,
+      output format, and success criteria. Shows before/after cuts.
+    when_to_call: prompt too long, cost review, or tightening system instructions
+
+  test-gap-finder:
+    role: pawn
+    tags: [testing, pytest, coverage, quality, risk]
+    description: >
+      Compare a function to its tests and list uncovered cases ranked by risk.
+      Finds gaps first; does not write tests unless asked.
+    when_to_call: are tests sufficient, what's missing, or pre-refactor risk check
+
+backup_hermes:
+  systematic-debugging:
+    role: shared
+    source: hermes-adapted
+    tags: [debugging, root-cause, hermes, troubleshooting]
+    description: >
+      Four-phase root-cause debugging — investigate, pattern-match, hypothesize, fix.
+      No fixes before understanding WHY. Stop after three failed fixes and question architecture.
+    when_to_call: bug, test failure, unexpected behavior, or production incident
+
+  swarm-orchestrator:
+    role: arisen
+    source: hermes-adapted
+    tags: [swarm, orchestrator, kanban, hermes, decompose]
+    description: >
+      Hermes kanban-orchestrator adapted for AgentDrive — decompose quests, dispatch pawns,
+      collect inheritance. Anti-rule: do not implement pawn work yourself.
+    when_to_call: multi-step project needs decomposition and pawn dispatch
+
+  swarm-worker:
+    role: pawn
+    source: hermes-adapted
+    tags: [swarm, worker, kanban, hermes, handoff]
+    description: >
+      Hermes kanban-worker adapted for pawns — structured handoffs, retry discipline,
+      scope limits, and review-required blocking patterns.
+    when_to_call: dispatched worker pawn on a scoped implementation or research task
+
+backup_grok:
+  grok-changelog:
+    role: shared
+    backup_of: changelog
+    tags: [grok, changelog, documentation, hive]
+    description: >
+      Maintain CHANGELOG.md after code or config changes — dated sections, Added/Changed/Fixed,
+      verification hints. Hive copy of Grok changelog skill for pawns.
+    when_to_call: end of implementation, session log, or user asks what changed
+
+  grok-check-work:
+    role: shared
+    backup_of: check-work
+    tags: [grok, verify, review, testing, hive]
+    description: >
+      Self-verification via verifier subagent — review diffs, run tests, fix until pass.
+      Hive copy for pawns finishing implementation work.
+    when_to_call: check work, verify changes, self-verify before handoff
+
+  grok-create-skill:
+    role: shared
+    backup_of: create-skill
+    tags: [grok, skills, authoring, scaffold]
+    description: >
+      Interactively scaffold a new SKILL.md with frontmatter, triggers, and body.
+      Hive copy; use agentdrive skills init for AgentDrive-native skills.
+    when_to_call: user wants to create or scaffold a new skill
+
+  grok-help:
+    role: shared
+    backup_of: help
+    tags: [grok, help, setup, configuration]
+    description: >
+      Grok harness documentation and setup help — MCP, auth, skills, slash commands.
+      Hive copy for pawns answering operator setup questions.
+    when_to_call: setup, configuration, MCP, or harness feature questions
+
+  grok-frontend-design:
+    role: shared
+    backup_of: frontend-design
+    tags: [grok, ui, frontend, design, react]
+    description: >
+      Production-grade frontend UI with distinctive aesthetics — typography, motion,
+      spatial detail. Avoid generic AI slop. Hive copy for UI pawn work.
+    when_to_call: build web components, pages, landing pages, or React/Tailwind UI
+
+  grok-design-system:
+    role: shared
+    backup_of: design-system
+    tags: [grok, design-system, tokens, brand]
+    description: >
+      Ingest or generate DESIGN.md tokens from code, CSS, or screenshots — living
+      design contract for consistent UI generations. Hive copy.
+    when_to_call: brand tokens, design system, or consistent UI generation
+
+  grok-artifacts-builder:
+    role: shared
+    backup_of: artifacts-builder
+    tags: [grok, artifacts, html, prototype, dashboard]
+    description: >
+      Build self-contained web artifacts (HTML/Tailwind or React) — prototypes, dashboards,
+      interactive UIs with accessibility and dark mode. Hive copy.
+    when_to_call: interactive prototype, dashboard, or live-preview web artifact
+
+  grok-best-of-n:
+    role: arisen
+    backup_of: best-of-n
+    tags: [grok, parallel, tournament, implementation]
+    description: >
+      Implement a task N ways in parallel, evaluate candidates, apply the winner.
+      Hive copy for Arisen-level parallel implementation tournaments.
+    when_to_call: best of n, try multiple approaches, parallel implementations
+
+  grok-docx:
+    role: shared
+    backup_of: docx
+    tags: [grok, word, docx, document]
+    description: >
+      Create, read, and edit Word documents — reports, memos, templates, tracked changes.
+      Hive copy for document pawn deliverables.
+    when_to_call: Word doc, docx file, report, memo, or letter deliverable
+
+  grok-xlsx:
+    role: shared
+    backup_of: xlsx
+    tags: [grok, spreadsheet, xlsx, csv, data]
+    description: >
+      Open, edit, or create spreadsheets — formulas, charts, messy data cleanup.
+      Deliverable must be xlsx/csv/tsv. Hive copy.
+    when_to_call: spreadsheet file as primary input or output
+
+  grok-pptx:
+    role: shared
+    backup_of: pptx
+    tags: [grok, slides, presentation, deck, pptx]
+    description: >
+      Create or edit PowerPoint decks — slides, layouts, speaker notes, templates.
+      Hive copy for presentation pawn work.
+    when_to_call: deck, slides, presentation, or pptx file
+
+  grok-imagine:
+    role: shared
+    backup_of: imagine
+    tags: [grok, image, visual, prompt]
+    description: >
+      Image generation workflow — when to code vs generate, prompt craft, reference handling,
+      factual grounding, asset consistency. Hive copy.
+    when_to_call: generate or edit images, visual assets, or image tool decisions
+
+  grok-universal-brush:
+    role: shared
+    backup_of: universal-brush
+    tags: [grok, design, prototype, canvas, visual]
+    description: >
+      Universal Brush design studio — conversational visual work with live canvas preview
+      for prototypes, decks, and marketing. Hive copy.
+    when_to_call: visual prototypes, slides, or marketing designs with live preview
+
+  grok-ren:
+    role: arisen
+    backup_of: ren
+    tags: [grok, ren, brand, operator, persona]
+    description: >
+      Ren Interest Brand Operator — autonomous brand loops, persona contract, Polsia-style
+      persistent operator. Project-specific; hive copy for brand operator pawns.
+    when_to_call: Ren persona, interest brand operator, or brand embodiment tasks

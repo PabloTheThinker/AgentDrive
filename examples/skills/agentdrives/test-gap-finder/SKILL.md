@@ -1,10 +1,11 @@
 ---
 name: test-gap-finder
-description: "List test cases NOT covered, ranked by risk — better than write more tests blindly."
+description: >
+  Compare a function to its tests and list uncovered cases ranked by risk. Finds gaps first; does not write tests unless asked.
 category: agentdrives
 role: pawn
-tags: [testing, pytest, quality]
-when_to_call: user asks if tests are sufficient or what's missing
+tags: [testing, pytest, coverage, quality, risk]
+when_to_call: are tests sufficient, what's missing, or pre-refactor risk check
 ---
 
 # Test gap finder

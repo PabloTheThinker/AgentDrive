@@ -1,13 +1,14 @@
 ---
 name: grok-best-of-n
-description: "Backup of Grok harness skill `best-of-n` for swarm pawns and hive bench."
-source: grok-backup
-role: shared
+description: >
+  Implement a task N ways in parallel, evaluate candidates, apply the winner. Hive copy for Arisen-level parallel implementation tournaments.
 category: backup
-tags: [grok, backup, hive, pawn]
+role: arisen
+source: grok-backup
 backup_of: best-of-n
 backup_path: ~/.grok/skills/best-of-n/SKILL.md
-when_to_call: when a pawn or connected agent needs the same workflow Grok uses for best-of-n
+tags: [grok, parallel, tournament, implementation]
+when_to_call: best of n, try multiple approaches, parallel implementations
 ---
 
 # Grok backup — best-of-n

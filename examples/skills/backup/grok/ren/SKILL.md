@@ -1,13 +1,14 @@
 ---
 name: grok-ren
-description: "Backup of Grok harness skill `ren` for swarm pawns and hive bench."
-source: grok-backup
-role: shared
+description: >
+  Ren Interest Brand Operator — autonomous brand loops, persona contract, Polsia-style persistent operator. Project-specific; hive copy for brand operator pawns.
 category: backup
-tags: [grok, backup, hive, pawn]
+role: arisen
+source: grok-backup
 backup_of: ren
 backup_path: ~/.grok/skills/ren/SKILL.md
-when_to_call: when a pawn or connected agent needs the same workflow Grok uses for ren
+tags: [grok, ren, brand, operator, persona]
+when_to_call: Ren persona, interest brand operator, or brand embodiment tasks
 ---
 
 # Grok backup — ren

@@ -1,10 +1,10 @@
 ---
 name: cron-translator
-description: "Translate cron ↔ plain English ↔ next N fire times."
+description: Translate between cron expressions, plain English, and next fire times. Flags day-of-month vs day-of-week conflicts.
 category: agentdrives
 role: pawn
-tags: [cron, ops, scheduling]
-when_to_call: user has a cron expression or wants a schedule in cron form
+tags: [cron, scheduling, ops, time]
+when_to_call: cron schedule confusion, authoring schedules, or ops timing questions
 ---
 
 # Cron translator

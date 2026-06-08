@@ -1,12 +1,13 @@
 ---
 name: pool-query
-description: "Semantic drive query — find relevant genomes for a task."
+description: >
+  Semantic search over the AgentDrive pool — find genomes and DNA relevant to a task. How pawns pull knowledge from the hive before acting.
 agentdrive_operation: pool_query
 argument: task
 category: core
 role: shared
-tags: [pool, dna, query, hive]
-when_to_call: user wants to search the AgentDrive pool or find matching DNA
+tags: [pool, dna, query, hive, genomes]
+when_to_call: search the pool, find matching genomes, or orient before implementation
 ---
 
 # Pool query

@@ -1,13 +1,13 @@
 ---
 name: grok-xlsx
-description: "Backup of Grok harness skill `xlsx` for swarm pawns and hive bench."
-source: grok-backup
-role: shared
+description: Open, edit, or create spreadsheets — formulas, charts, messy data cleanup. Deliverable must be xlsx/csv/tsv. Hive copy.
 category: backup
-tags: [grok, backup, hive, pawn]
+role: shared
+source: grok-backup
 backup_of: xlsx
 backup_path: ~/.grok/skills/xlsx/SKILL.md
-when_to_call: when a pawn or connected agent needs the same workflow Grok uses for xlsx
+tags: [grok, spreadsheet, xlsx, csv, data]
+when_to_call: spreadsheet file as primary input or output
 ---
 
 # Grok backup — xlsx

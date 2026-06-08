@@ -58,40 +58,22 @@ Discovery: `discover_skills()` walks `**/*.SKILL.md` under user + bundled roots.
 
 ## Catalog (bundled)
 
-### Core (runnable)
+**Full descriptions for all 40 skills:** [SKILLS-CATALOG.md](SKILLS-CATALOG.md)
 
-| Skill | Operation |
-|-------|-----------|
-| `think` | `think` |
-| `golden-path-verify` | verify walkthrough |
-| `learnings-log` | `learnings_log` |
-| `learnings-list` | `learnings_list` |
-| `pool-query` | `pool_query` |
-| `doctor` | `doctor` |
+Canonical source: `examples/skills/catalog.yaml` — edit descriptions there, then:
 
-### Hive (prompt playbooks)
+```bash
+python scripts/apply_skills_catalog.py      # patch SKILL.md frontmatter
+python scripts/generate_skills_catalog_doc.py # refresh docs/SKILLS-CATALOG.md
+```
 
-| Skill | Role |
-|-------|------|
-| `arisen-orchestrator` | arisen |
-| `pawn-worker` | pawn |
-| `pawn-scout` | pawn |
-| `pawn-specialist` | pawn |
-| `hive-inheritance` | shared |
-
-### Agentdrives (12 narrow prodigies)
-
-`regex-architect`, `sql-explain`, `cron-translator`, `diff-narrator`, `release-notes`, `error-translator`, `api-versioning-advisor`, `migration-planner`, `url-canonicalizer`, `color-system-builder`, `prompt-distiller`, `test-gap-finder`
-
-### Backup — Grok harness (14)
-
-Synced from `~/.grok/skills` via `scripts/sync_grok_skills_backup.py`:
-
-`grok-changelog`, `grok-check-work`, `grok-create-skill`, `grok-help`, `grok-frontend-design`, … (prefix `grok-`)
-
-### Backup — Hermes-adapted (3)
-
-`systematic-debugging`, `swarm-orchestrator`, `swarm-worker`
+| Tier | Count | Examples |
+|------|-------|----------|
+| Core (runnable ops) | 6 | `think`, `pool-query`, `doctor` |
+| Hive (pawn playbooks) | 5 | `arisen-orchestrator`, `pawn-worker` |
+| Agentdrives (specialists) | 12 | `regex-architect`, `error-translator` |
+| Grok backup | 14 | `grok-check-work`, `grok-changelog` |
+| Hermes-adapted | 3 | `systematic-debugging`, `swarm-worker` |
 
 ---
 

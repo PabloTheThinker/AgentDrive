@@ -1,10 +1,11 @@
 ---
 name: url-canonicalizer
-description: "Normalize URLs, strip trackers, flag suspicious patterns, explain query params."
+description: >
+  Canonicalize URLs, strip trackers, explain query parameters, and flag suspicious patterns (open redirect, homoglyph, IP literals).
 category: agentdrives
 role: pawn
-tags: [url, security, parsing]
-when_to_call: user shares URLs to clean, compare, or audit
+tags: [url, security, parsing, tracking]
+when_to_call: clean, compare, or security-audit URLs
 ---
 
 # URL canonicalizer

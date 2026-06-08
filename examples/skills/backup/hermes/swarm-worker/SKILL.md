@@ -1,12 +1,13 @@
 ---
 name: swarm-worker
-description: "Worker pitfalls for AgentDrive swarm pawns — handoffs, retries, scope."
+description: >
+  Hermes kanban-worker adapted for pawns — structured handoffs, retry discipline, scope limits, and review-required blocking patterns.
 category: backup
 role: pawn
 source: hermes-adapted
-tags: [swarm, kanban, worker, hermes, pawn]
-related_skills: [pawn-worker, hive-inheritance]
-when_to_call: dispatched as a worker pawn on a scoped task
+tags: [swarm, worker, kanban, hermes, handoff]
+when_to_call: dispatched worker pawn on a scoped implementation or research task
+related_skills: ['pawn-worker', 'hive-inheritance']
 ---
 
 # Swarm worker (Hermes kanban-worker → AgentDrive)

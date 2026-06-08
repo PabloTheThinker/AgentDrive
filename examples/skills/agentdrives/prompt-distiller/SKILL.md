@@ -1,10 +1,11 @@
 ---
 name: prompt-distiller
-description: "Minimum-tokens prompt that preserves intent — for cost and review."
+description: >
+  Distill a verbose prompt to minimum tokens while preserving constraints, output format, and success criteria. Shows before/after cuts.
 category: agentdrives
 role: pawn
-tags: [prompt, tokens, llm]
-when_to_call: user has a verbose prompt to tighten
+tags: [prompt, tokens, llm, cost, review]
+when_to_call: prompt too long, cost review, or tightening system instructions
 ---
 
 # Prompt distiller

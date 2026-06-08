@@ -1,10 +1,11 @@
 ---
 name: release-notes
-description: "Aggregate commits into Added/Changed/Fixed/Security with user-impact framing."
+description: >
+  Turn a commit range into release notes — Added, Changed, Fixed, Security — framed by user impact, not implementation detail.
 category: agentdrives
 role: pawn
-tags: [changelog, release, git]
-when_to_call: user needs release notes or changelog from a commit range
+tags: [changelog, release, git, notes]
+when_to_call: release notes, changelog from commits, or version announcement draft
 ---
 
 # Release notes

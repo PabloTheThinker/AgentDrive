@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Skills catalog — proper descriptions for all 40 skills (2026-06-08)
+- **`examples/skills/catalog.yaml`**: canonical name, role, description, when_to_call, tags for every skill.
+- **`docs/SKILLS-CATALOG.md`**: generated human-readable catalog with full descriptions per skill.
+- **`scripts/apply_skills_catalog.py`**: patch SKILL.md frontmatter from catalog.
+- **`scripts/generate_skills_catalog_doc.py`**: regenerate SKILLS-CATALOG.md from catalog.yaml.
+
 ### Skills library — hive/pawn bench, Grok backup, Hermes patterns (2026-06-08)
 - **`docs/ASSESSMENT.md`**: product assessment — what we have, gaps, prioritized next steps.
 - **`docs/SKILLS-LIBRARY.md`**: catalog, Arisen/pawn/hive metaphor, layout, refresh instructions.

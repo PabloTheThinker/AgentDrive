@@ -10,7 +10,9 @@ Shipped with the `agentdrive` package under `examples/skills/`. User skills in `
 - **backup/grok/** — Grok harness mirrors for swarm pawns
 - **backup/hermes/** — Hermes kanban/debug patterns adapted for AgentDrive
 
-Full catalog: `docs/SKILLS-LIBRARY.md`
+Full catalog with descriptions: `docs/SKILLS-CATALOG.md`  
+Layout and hive metaphor: `docs/SKILLS-LIBRARY.md`  
+Canonical metadata: `catalog.yaml` (run `scripts/apply_skills_catalog.py` after edits)
 
 ## Sync Grok backups
 
