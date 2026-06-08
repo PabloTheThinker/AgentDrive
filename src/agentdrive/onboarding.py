@@ -322,16 +322,26 @@ def run_onboarding() -> bool:
             extras=[
                 Text(""),
                 Section(
-                    "Try next",
+                    "Golden path (do this next)",
                     [
-                        ("agentdrive", "open the agent chat"),
+                        ("agentdrive golden-path steps", "numbered first-run commands"),
+                        ("agentdrive mcp install", "wire Grok/Cursor/Claude MCP"),
+                        ("agentdrive golden-path run", "doctor → think → learnings → query"),
+                        ("agentdrive think", "cited synthesis + gap analysis"),
+                        ("agentdrive drive query", "semantic genome search"),
+                    ],
+                    palette=PALETTE,
+                    key_width=28,
+                ),
+                Section(
+                    "Also useful",
+                    [
                         ("agentdrive provider set", "connect an AI model"),
-                        ("agentdrive pool status", "check pool health"),
                         ("agentdrive doctor", "full system health check"),
                         ("agentdrive setup", "re-run any setup section"),
                     ],
                     palette=PALETTE,
-                    key_width=20,
+                    key_width=28,
                 ),
             ],
         )

@@ -43,6 +43,24 @@ else
     INTERACTIVE=false
 fi
 
+prompt_yes_no() {
+    local prompt="$1"
+    local default="${2:-yes}"
+    if [ "$INTERACTIVE" != true ]; then
+        return 0
+    fi
+    local hint="Y/n"
+    if [ "$default" = "no" ]; then
+        hint="y/N"
+    fi
+    read -r -p "$prompt [$hint] " reply || reply=""
+    reply="${reply:-$default}"
+    case "$reply" in
+        [yY]|[yY][eE][sS]) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 # Parse args
 BRANCH="main"
 DEV_MODE=false
@@ -161,20 +179,21 @@ if command -v agentdrive >/dev/null 2>&1; then
 fi
 
 echo ""
-echo "Next steps:"
+echo "Golden path (recommended — ~10 min, see docs/GOLDEN_PATH.md):"
 
 if command -v agentdrive >/dev/null 2>&1; then
+    echo "  agentdrive golden-path steps    # numbered first-run commands"
     echo "  agentdrive doctor"
-    echo "  agentdrive setup"
+    echo "  agentdrive mcp install && agentdrive mcp doctor"
+    echo "  agentdrive golden-path run      # think → learnings → drive query"
 else
+    echo "  ~/.local/bin/agentdrive golden-path steps"
     echo "  ~/.local/bin/agentdrive doctor"
 fi
 
 echo ""
 echo "Connect any AI model (Grok, Claude, Cursor, Continue, local models):"
-echo "  agentdrive mcp install    # pip [mcp] + write client configs"
-echo "  agentdrive mcp doctor     # verify 25+ tools ready"
-echo "  agentdrive mcp config       # show resolved launcher + paste snippets"
+echo "  agentdrive mcp config           # paste-ready snippets for your client"
 echo ""
 echo "One-liner to re-run this installer anytime:"
 echo "  curl -fsSL https://vektraindustries.com/agentdrive/install.sh | bash"

@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Golden path — canonical first-run (2026-06-07)
+- **`docs/GOLDEN_PATH.md`**: authoritative ~10 min path (install → doctor → mcp → think → learnings → query).
+- **`golden_path.py` + `agentdrive golden-path`**: `steps`, `verify`, `run` (--dry-run for CI).
+- **`examples/00_golden_path.sh`**: runnable shell walkthrough.
+- **Onboarding/setup/doctor/install** now steer to golden path instead of scattered next-steps.
+- **README Start Here** rewritten; HELP Quick Start + MCP.md link to golden path.
+- **`install.sh`**: fixed missing `prompt_yes_no`; post-install prints golden-path commands.
+- **`install_smoke.sh`**: adds `golden-path run --dry-run`.
+- **Tests**: `tests/test_golden_path.py`.
+
 ### CLI discovery + full-surface commands (2026-06-07)
 - **`cli_catalog.py`**: categorized command catalog (70+ entries) powering discovery and help epilog.
 - **`cli_surface.py`**: handlers for `think`, `learnings` (log/list/search), `harness compose`, `graph`/`experience`, `eval replay`, `commands` (list/tree/search).

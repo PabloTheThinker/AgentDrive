@@ -43,6 +43,7 @@ CATEGORY_ORDER: tuple[str, ...] = (
     "trust",
     "ops",
     "maintenance",
+    "golden_path",
     "discovery",
 )
 
@@ -68,6 +69,7 @@ CATEGORY_LABELS: dict[str, str] = {
     "ops": "Operations registry",
     "maintenance": "Self-management",
     "discovery": "Discovery",
+    "golden_path": "Golden path (first-run)",
 }
 
 
@@ -200,6 +202,10 @@ CATALOG: tuple[CatalogEntry, ...] = (
     CatalogEntry("clean", "Clean cache and data (keeps config)", "maintenance"),
     CatalogEntry("uninstall", "Uninstall AgentDrive package", "maintenance"),
     CatalogEntry("demo-swarm", "Scripted sub-agent tree demo", "maintenance"),
+    # golden_path
+    CatalogEntry("golden-path steps", "Show numbered first-run golden path", "golden_path"),
+    CatalogEntry("golden-path verify", "Check golden-path step completion", "golden_path"),
+    CatalogEntry("golden-path run", "Execute golden-path walkthrough", "golden_path"),
     # discovery
     CatalogEntry("commands list", "All CLI commands by category", "discovery"),
     CatalogEntry("commands tree", "Indented command tree", "discovery"),
@@ -245,6 +251,11 @@ def format_epilog() -> str:
         "  agentdrive sprint ship              gstack-style ship chain",
         "  agentdrive dream run                Phased maintenance cycle",
         "  agentdrive mcp install              Wire MCP into Grok/Cursor/Claude",
+        "",
+        "Golden path (first run):",
+        "  agentdrive golden-path steps          Numbered walkthrough",
+        "  agentdrive golden-path run            Execute install→think→query chain",
+        "  agentdrive golden-path verify         Check what's done",
         "",
         "Discover everything:",
         "  agentdrive commands list              All commands by category",

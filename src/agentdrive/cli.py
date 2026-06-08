@@ -102,6 +102,7 @@ from agentdrive.cli_surface import (
     build_help_epilog,
     cmd_commands,
     cmd_eval,
+    cmd_golden_path,
     cmd_graph,
     cmd_harness,
     cmd_learnings,
@@ -1132,19 +1133,18 @@ def _run_doctor(verbose: bool = False) -> int:
                 from rich.text import Text as _T
 
                 guidance = _T.from_markup(
-                    "[bold]First-run recovery commands (Self-Healing First-Run & Experience Seed Operator):[/]\n\n"
+                    "[bold]Golden path (recommended first-run):[/]\n\n"
+                    "  [bold cyan]agentdrive golden-path run[/]\n"
+                    "    Walkthrough: doctor → mcp → seed → think → learnings → drive query\n\n"
+                    "  [bold cyan]agentdrive golden-path steps[/]\n"
+                    "    Show numbered commands (see [dim]docs/GOLDEN_PATH.md[/])\n\n"
+                    "[bold]If registry is still empty after auto-seed:[/]\n\n"
                     "  [bold cyan]agentdrive reconcile seed-experience-v3[/]\n"
-                    "    Creates minimal KG index bootstrap, experience layer v3 seed genome\n"
-                    "    + living-experience observation (page type), basic reconciliation state,\n"
-                    "    trust self-identity placeholder, and clean directory structure.\n\n"
-                    "  [bold cyan]agentdrive doctor[/]   — re-check after running the seed command\n\n"
-                    "Guarantees for self-hosted AgentDrive role-swarm users:\n"
-                    "• new instances start coherent\n"
-                    "• experience layer present from first think\n"
-                    "• defensive healing for production reliability\n\n"
-                    "The seed artifacts are ingestible directly into a fresh stabilization swarm drive."
+                    "    Bootstrap experience layer v3 + KG index + living-experience seed genome\n\n"
+                    "  [bold cyan]agentdrive doctor[/]   — re-check\n\n"
+                    "Auto-seed usually runs on first Drive access. The golden path verifies the full loop."
                 )
-                console.print(section_panel("First-run recovery guidance", [guidance], palette=p))
+                console.print(section_panel("First-run guidance", [guidance], palette=p))
             except Exception:
                 pass
         return 0
@@ -3700,6 +3700,31 @@ def build_parser() -> argparse.ArgumentParser:
     er.add_argument("--json", dest="json_output", action="store_true")
     er.set_defaults(func=cmd_eval)
     p.set_defaults(func=cmd_eval, eval_subcommand="replay")
+
+    # golden-path — canonical first-run walkthrough
+    p = subparsers.add_parser(
+        "golden-path",
+        help="First-run golden path: install → doctor → mcp → think → learnings → query",
+    )
+    gp_subs = p.add_subparsers(dest="golden_subcommand")
+
+    gp_steps = gp_subs.add_parser("steps", help="Show numbered golden-path commands")
+    gp_steps.add_argument("--json", dest="json_output", action="store_true")
+    gp_steps.set_defaults(func=cmd_golden_path)
+
+    gp_verify = gp_subs.add_parser("verify", help="Verify golden-path step completion")
+    gp_verify.add_argument("--step", help="Verify one step (install, doctor, mcp, seed, think, learnings, query)")
+    gp_verify.add_argument("--skip-optional", action="store_true", help="Skip optional seed check")
+    gp_verify.add_argument("--json", dest="json_output", action="store_true")
+    gp_verify.set_defaults(func=cmd_golden_path)
+
+    gp_run = gp_subs.add_parser("run", help="Execute golden-path operations")
+    gp_run.add_argument("--dry-run", action="store_true", help="Plan mutating steps without writes")
+    gp_run.add_argument("--continue-on-fail", action="store_true", help="Keep going after a failed step")
+    gp_run.add_argument("--json", dest="json_output", action="store_true")
+    gp_run.set_defaults(func=cmd_golden_path)
+
+    p.set_defaults(func=cmd_golden_path, golden_subcommand="steps")
 
     # commands — CLI discovery
     p = subparsers.add_parser(

@@ -71,32 +71,36 @@ Once connected, your model gets the full Experience Graph v3 surfaces (the same 
 
 See [docs/MCP.md](docs/MCP.md) for connection details and [docs/FOR_AI_MODELS.md](docs/FOR_AI_MODELS.md) for the dedicated onboarding guide written specifically for AI models. The latter is the single best document to give any LLM when you want it to deeply understand and use the system effectively from the start.
 
-## Start Here
+## Start Here — Golden Path (~10 minutes)
 
-**One-liner (recommended):**
+**Install:**
 
 ```bash
 curl -fsSL https://vektraindustries.com/agentdrive/install.sh | bash
 ```
 
-With options:
+**Then run the golden path:**
 
 ```bash
-curl -fsSL https://vektraindustries.com/agentdrive/install.sh | bash -s -- --dev
-```
-
-After install:
-
-```bash
+agentdrive golden-path steps          # see numbered commands
 agentdrive doctor
-agentdrive mcp config
+agentdrive mcp install && agentdrive mcp doctor
+agentdrive golden-path run            # seed → think → learnings → drive query
 ```
 
-See [docs/MCP.md](docs/MCP.md) for connection details across Grok / Claude / Cursor / Continue.dev, and [docs/FOR_AI_MODELS.md](docs/FOR_AI_MODELS.md) for the dedicated LLM onboarding guide.
+Or read the full guide: **[docs/GOLDEN_PATH.md](docs/GOLDEN_PATH.md)**
 
-See [docs/MCP.md](docs/MCP.md) for the exact flow for your client.
+| Step | What it proves |
+|------|----------------|
+| `doctor` | Local home, config, registry healthy |
+| `mcp install` | Your AI CLI can call Experience Graph + DNA tools |
+| `think` | Cited synthesis with gap analysis (not generic chat) |
+| `learnings log` | Operational memory persists across sessions |
+| `drive query` | Semantic search over your DNA pool |
 
-The stabilization-wave-20260531 drive contains the living record of the system being used to build itself.
+**MCP details:** [docs/MCP.md](docs/MCP.md) · **For AI models:** [docs/FOR_AI_MODELS.md](docs/FOR_AI_MODELS.md)
+
+Advanced (AD-Grid, Mission Control, federation) comes *after* the golden path — see [docs/AD_GRID_JOIN.md](docs/AD_GRID_JOIN.md).
 
 ## The Foundation + AD-Grid (The Persistent World)
 

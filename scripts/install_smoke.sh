@@ -21,6 +21,7 @@ fi
 agentdrive --version
 agentdrive doctor
 agentdrive mcp doctor >/dev/null
+agentdrive golden-path run --dry-run
 agentdrive dream run --dry-run
 python "$ROOT/examples/01_hello_drive.py"
 

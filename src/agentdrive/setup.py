@@ -600,16 +600,26 @@ def run_setup(sections: list[str] | None = None) -> bool:
             extras=[
                 Text(""),
                 Section(
-                    "Try next",
+                    "Golden path",
+                    [
+                        ("agentdrive golden-path run", "complete first-run loop"),
+                        ("agentdrive mcp install", "connect your AI CLI"),
+                        ("agentdrive think", "first cited synthesis"),
+                        ("agentdrive learnings log", "record operational memory"),
+                        ("agentdrive drive query", "query the DNA pool"),
+                    ],
+                    palette=PALETTE,
+                    key_width=28,
+                ),
+                Section(
+                    "Also useful",
                     [
                         ("agentdrive setup swarm", "tweak sub-agent pool policies"),
-                        ("agentdrive setup ai", "change AI provider or API key"),
                         ("agentdrive provider set", "switch AI provider from CLI"),
-                        ("agentdrive model set", "switch model from CLI"),
                         ("agentdrive", "launch the agent chat"),
                     ],
                     palette=PALETTE,
-                    key_width=22,
+                    key_width=28,
                 ),
             ],
         )

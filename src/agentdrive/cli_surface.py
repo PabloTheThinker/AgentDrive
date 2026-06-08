@@ -421,6 +421,100 @@ def cmd_commands(args: argparse.Namespace) -> int:
     return 1
 
 
+def cmd_golden_path(args: argparse.Namespace) -> int:
+    """Run or verify the canonical first-run golden path."""
+    from agentdrive.golden_path import GOLDEN_STEPS, run_walkthrough, verify_all, verify_step
+
+    sub = getattr(args, "golden_subcommand", None) or "verify"
+    json_output = getattr(args, "json_output", False)
+
+    if sub == "steps":
+        if json_output:
+            payload = [
+                {
+                    "id": s.id,
+                    "title": s.title,
+                    "command": s.command,
+                    "description": s.description,
+                    "optional": s.optional,
+                }
+                for s in GOLDEN_STEPS
+            ]
+            print(json.dumps(payload, indent=2))
+        else:
+            table = Table(title="AgentDrive golden path", show_header=True)
+            table.add_column("#", style="dim", width=3)
+            table.add_column("Step", style="cyan")
+            table.add_column("Command", overflow="fold")
+            table.add_column("Notes", overflow="fold")
+            for i, step in enumerate(GOLDEN_STEPS, 1):
+                note = "optional (auto-seeds)" if step.optional else ""
+                table.add_row(str(i), step.title, step.command, note)
+            console.print(table)
+            console.print()
+            console.print("[dim]Docs: docs/GOLDEN_PATH.md[/]")
+            console.print("[dim]Run: agentdrive golden-path run[/]")
+        return 0
+
+    if sub == "verify":
+        step_id = getattr(args, "step", None)
+        if step_id:
+            result = verify_step(step_id)
+        else:
+            result = verify_all(include_optional=not getattr(args, "skip_optional", False))
+        if json_output:
+            print(json.dumps(result, indent=2, default=str))
+        else:
+            steps = result.get("steps") or [result]
+            table = Table(title="Golden path verification", show_header=True)
+            table.add_column("Step", style="cyan")
+            table.add_column("Status")
+            table.add_column("Detail", overflow="fold")
+            for item in steps:
+                ok = item.get("success", False)
+                status = "[green]pass[/]" if ok else "[red]fail[/]"
+                table.add_row(
+                    str(item.get("step") or item.get("title") or "?"),
+                    status,
+                    str(item.get("detail") or item.get("error") or ""),
+                )
+            console.print(table)
+            if "passed" in result:
+                console.print(f"\n[dim]{result['passed']}/{result['total']} steps passed[/]")
+        return 0 if result.get("success") else 1
+
+    if sub == "run":
+        result = run_walkthrough(
+            dry_run=bool(getattr(args, "dry_run", False)),
+            stop_on_fail=not getattr(args, "continue_on_fail", False),
+        )
+        if json_output:
+            print(json.dumps(result, indent=2, default=str))
+        else:
+            table = Table(
+                title=f"Golden path run ({'dry-run' if result.get('dry_run') else 'live'})",
+                show_header=True,
+            )
+            table.add_column("Step", style="cyan")
+            table.add_column("Status")
+            table.add_column("Notes", overflow="fold")
+            for item in result.get("steps") or []:
+                ok = item.get("success", False)
+                status = "[green]ok[/]" if ok else "[red]fail[/]"
+                note = item.get("detail") or item.get("note") or ""
+                if item.get("skipped"):
+                    status = "[dim]skip[/]"
+                    note = item.get("detail") or "already satisfied"
+                table.add_row(str(item.get("step", "?")), status, str(note))
+            console.print(table)
+            console.print(f"\n[dim]{result.get('passed', 0)}/{result.get('total', 0)} steps[/]")
+            console.print("[dim]Full guide: docs/GOLDEN_PATH.md[/]")
+        return 0 if result.get("success") else 1
+
+    console.print("[red]Unknown golden-path subcommand[/]")
+    return 1
+
+
 def build_help_epilog() -> str:
     """Epilog string for the root argparse parser."""
     return format_epilog()

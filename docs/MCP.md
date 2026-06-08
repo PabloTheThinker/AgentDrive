@@ -20,6 +20,12 @@ agentdrive mcp doctor
 
 Restart your AI client, then verify with `experience_graph_get_context_pack` or `agentdrive_think`.
 
+**Full first-run chain (install → MCP → think → learnings → query):** [GOLDEN_PATH.md](GOLDEN_PATH.md)
+
+```bash
+agentdrive golden-path run    # automated walkthrough after mcp install
+```
+
 ---
 
 ## Clone + editable dev install

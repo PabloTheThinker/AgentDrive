@@ -234,25 +234,31 @@ The engine core, safety model, and operator surfaces are solid and exercised.
 
 ---
 
-## Quick Start
+## Quick Start (Golden Path)
+
+Full guide: **[docs/GOLDEN_PATH.md](docs/GOLDEN_PATH.md)**
 
 ```bash
-# Install
-curl -fsSL https://raw.githubusercontent.com/PabloTheThinker/AgentDrive/main/scripts/install.sh | bash
-# or
-python3 -m pip install --user git+https://github.com/PabloTheThinker/AgentDrive.git
+# Install (canonical — includes MCP)
+curl -fsSL https://vektraindustries.com/agentdrive/install.sh | bash
 
+# Golden path
+agentdrive golden-path steps
 agentdrive doctor
-agentdrive drive status
-agentdrive
-# (or `agentdrive web` and open http://127.0.0.1:8421)
+agentdrive mcp install && agentdrive mcp doctor
+agentdrive golden-path run
+
+# Or step-by-step
+agentdrive think "What does my AgentDrive contain?"
+agentdrive learnings log --key first-run --insight "Golden path complete"
+agentdrive drive query "dedup identical agent outputs"
 ```
 
-First useful commands:
+After the golden path, explore:
 ```bash
-agentdrive drive query "security incident postmortem"
 agentdrive quarantine list
-agentdrive reconcile
+agentdrive sprint ship --dry-run
+agentdrive commands search <keyword>
 ```
 
 ---
