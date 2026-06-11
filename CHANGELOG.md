@@ -6,6 +6,65 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Fixed — `scripts/install.sh` piped install (`curl | bash`)
+
+- **`scripts/install.sh`** — when piped (no `BASH_SOURCE`), fetches canonical `install.sh` from GitHub instead of failing with `BASH_SOURCE[0]: unbound variable` and `//install.sh` path error.
+- Local git-clone path unchanged: still `exec`s root `install.sh`.
+
+### Verify
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/PabloTheThinker/AgentDrive/main/scripts/install.sh | bash -s -- --help
+```
+
+---
+
+### Professional Documentation Website (Mintlify-style Instruction Manual)
+
+Created a full professional documentation site under `docs/` modeled directly on the OpenClaw documentation website (Mintlify `docs.json` + hierarchical structure + beautiful landing + focused pages) with strong Hermes-inspired clarity (explicit "when to use", recipes, tables, rules for agents/models).
+
+- `docs/docs.json` — full Mintlify configuration with navigation groups, branding, redirects from old flat docs, and client links.
+- `docs/index.md` — polished landing page with hero, cards, philosophy, and clear paths for humans and models.
+- Strong **AI Models** section (`docs/ai-models/`):
+  - `rules-and-patterns.md` — the canonical instruction manual / Golden Rules (catalog first, 6-step loop, record reasoning, clone helpers, etc.).
+  - `quickstart.md` and `local-models.md` — explicit first-class support and guidance for local models + cloned git setups.
+- Reorganized supporting content:
+  - `start/` (golden-path, install, getting-started)
+  - `concepts/` (overview, experience-graph, six-step-loop)
+  - `mcp/` (overview, connect, for-claude-cursor-codex)
+- Added `docs/AGENTS.md` (style guide for AI contributors working in clones).
+- Updated root `README.md` to prominently direct users and models to the new professional docs site.
+- This gives both humans and (especially) AI models — frontier or local — a first-class, navigable, self-improving instruction manual in the exact style the user requested.
+
+### README + FOR_AI_MODELS.md — improved rules and guidance for AI models and local models (2026-06-09)
+- **README.md**: Added prominent "For AI models" callout near the top with direct instructions (call the catalog first). Strengthened the "Use With Any AI CLI or Local Model" section with clone/dev emphasis, `get_mcp_config_snippet`, and stronger links to the canonical rules document. Updated the "Autonomy That Compounds" section to highlight local models and the value of the Experience Graph for them. Made references to FOR_AI_MODELS.md clearer and more directive ("the canonical rules for the AI").
+- **docs/FOR_AI_MODELS.md** (the main "rules for the AI and local models"):
+  - New **Golden Rules** section at the top (catalog first, 6-step loop sacred, record reasoning, clone helpers, etc.).
+  - Completely refreshed "How to Connect (MCP)" section with first-action emphasis on the catalog, clone/dev flow, and `get_mcp_config_snippet`.
+  - Expanded and modernized the Experience Graph tools table with better "when to use" guidance drawn from live catalog rich docs.
+  - Significantly strengthened "Recommended Behavior for Good Agents" with explicit do's, anti-patterns, and local/autonomous agent advice.
+  - Updated Quick Start Checklist to be session-start actionable and reference the new clone/config tools.
+  - Added dedicated "Local Models & Cloned Setups" content in the Living Example section.
+  - Overall tone made more direct and prescriptive ("you, the model") while remaining practical.
+- **MCP server instructions** (the prompt models receive on connection): Synced the "first actions for any model" language to match the improved docs (catalog first, clone section, `get_mcp_config_snippet`, 6-step loop).
+- These changes make it dramatically clearer for both frontier models and especially **local models** (Continue + Ollama, direct stdio, etc.) — whether the user has a global install or a `git clone` — exactly how to behave and which tools to reach for first.
+
+### MCP tools — clone/dev + Claude/Cursor/Codex/other models (2026-06-09 follow-up)
+- Added `agentdrive_get_mcp_config_snippet(client=...)` MCP tool. Any connected model (especially Claude or a Codex-style/Continue agent) can call it while attached to the user's local git clone and receive a precise, ready-to-output config block + paste instructions for that client's settings (claude_desktop_config.json, Cursor mcp.json, generic, etc.).
+- Enhanced `agentdrive_mcp_catalog` with a new top-level section `clone_dev_setup_for_claude_cursor_codex_and_others` that surfaces dev/clone detection, one-time setup commands, and client-specific tips.
+- `mcp_config.py`: new `get_clone_aware_client_config()` that returns tailored blocks + instructions when running from a local clone (detected via pyproject + src layout). "codex" is treated as a first-class alias (maps to robust generic/Continue-style output).
+- Server instructions now explicitly tell models: when the user cloned, use the catalog's dev section or the `get_mcp_config_snippet` helper to give the user the exact config for their Claude/Cursor/etc.
+- Goal: When a user does `git clone .../AgentDrive`, their Claude, Cursor, Continue, or any other MCP-capable model can be pointed at the *local working tree* with almost zero friction — the model itself can drive the entire setup.
+
+### MCP tools — any-model integration hardening (richer docs, self-catalog, readOnly hints, generic clients) (2026-06-09)
+- **OperationSpec**: added optional `when_to_use` and `examples` fields so the operations registry (and therefore MCP) can carry model-friendly guidance.
+- **mcp_bridge.py**: `_rich_doc_for_op` now generates detailed, categorized docstrings for auto-registered tools (category + read_only + when_to_use + examples + "always returns JSON + dry_run support" + pointer to catalog). `add_tool` now passes `annotations={"readOnlyHint": ...}` (graceful fallback for older FastMCP).
+- **`agentdrive_mcp_catalog`**: new first-class MCP tool (and surfaced in server instructions). Any connected model (Grok/Claude/Cursor/local/custom agent) can call it as its very first action to receive a live categorized catalog of the full surface with usage recommendations. This is the canonical handshake for arbitrary MCP clients.
+- **mcp_config.py + generic clients**: `generic` client now has practical default paths (`.mcp/mcp.json`, cwd `mcp.json`, etc.). Added `get_generic_mcp_block`. `mcp config --client generic` and uvx paths are even more turnkey for custom agents, containers, or non-standard hosts.
+- **mcp_server.py (FastMCP)**: server `instructions` now lead with a crisp "for ANY model" quickstart that explicitly tells the connected LLM to call `agentdrive_mcp_catalog()` first. 40 tools registered (25 core ops + high-value experience/inhabitant/ExternalBridge surfaces + the new catalog).
+- **Docs**: `docs/MCP.md` expanded "What your model gets" + brand new "For arbitrary / custom AI models and agents" section recommending the catalog + uvx one-liner. `FOR_AI_MODELS.md` cross-referenced.
+- **Outcome**: Dramatically better experience for *any* AI model that speaks MCP. Models now get explicit, structured, self-describing tool metadata instead of having to guess from short descriptions. `mcp doctor` reports 40 tools and full registry coverage.
+
 ### Skills — tiered library: universal + Grok/Claude/Codex vendors (2026-06-08)
 - **Layout:** `examples/skills/vendors/{grok,claude,codex}/` (24 vendor skills) alongside tiers 1–4 (37 bundled).
 - **`vendor-manifest.yaml`** + **`scripts/sync_vendor_skills.py`**: sync Grok from `~/.grok/skills`; curated Claude/Codex plugin paths.
