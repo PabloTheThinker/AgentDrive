@@ -36,6 +36,8 @@ The user remains fully in control via ~/.agentdrive/config.yaml (DriveSettings).
 from __future__ import annotations
 
 import argparse
+from contextlib import asynccontextmanager
+from io import TextIOWrapper
 import json
 import logging
 import sys
@@ -1095,6 +1097,97 @@ def create_mcp_server() -> FastMCP:
     return mcp
 
 
+@asynccontextmanager
+async def _stdio_server_compat():
+    """Line-oriented stdio transport for MCP SDKs whose anyio wrapper stalls.
+
+    Some local combinations of Python/AnyIO/MCP do not yield lines from
+    ``anyio.wrap_file(sys.stdin)`` until EOF. MCP clients keep stdin open, so
+    initialize hangs. This transport keeps the same MCP stream contract but
+    reads blocking stdio in worker threads.
+    """
+    import queue
+    import threading
+
+    import anyio
+    from mcp import types
+    from mcp.shared.message import SessionMessage
+
+    read_stream_writer, read_stream = anyio.create_memory_object_stream(0)
+    write_stream, write_stream_reader = anyio.create_memory_object_stream(0)
+    stdout = TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+    stdin_lines: queue.Queue[bytes] = queue.Queue()
+
+    def _read_stdin_lines() -> None:
+        while True:
+            raw = sys.stdin.buffer.readline()
+            stdin_lines.put(raw)
+            if not raw:
+                break
+
+    def _write_line(line: str) -> None:
+        stdout.write(line + "\n")
+        stdout.flush()
+
+    threading.Thread(
+        target=_read_stdin_lines,
+        name="agentdrive-mcp-stdin",
+        daemon=True,
+    ).start()
+
+    async def stdin_reader() -> None:
+        try:
+            async with read_stream_writer:
+                while True:
+                    try:
+                        raw = stdin_lines.get_nowait()
+                    except queue.Empty:
+                        await anyio.sleep(0.01)
+                        continue
+                    if not raw:
+                        break
+                    try:
+                        message = types.JSONRPCMessage.model_validate_json(
+                            raw.decode("utf-8", errors="replace")
+                        )
+                    except Exception as exc:
+                        await read_stream_writer.send(exc)
+                        continue
+                    await read_stream_writer.send(SessionMessage(message))
+        except anyio.ClosedResourceError:
+            await anyio.lowlevel.checkpoint()
+
+    async def stdout_writer() -> None:
+        try:
+            async with write_stream_reader:
+                async for session_message in write_stream_reader:
+                    payload = session_message.message.model_dump_json(
+                        by_alias=True, exclude_none=True
+                    )
+                    await anyio.to_thread.run_sync(_write_line, payload)
+        except anyio.ClosedResourceError:
+            await anyio.lowlevel.checkpoint()
+
+    async with anyio.create_task_group() as tg:
+        tg.start_soon(stdin_reader)
+        tg.start_soon(stdout_writer)
+        try:
+            yield read_stream, write_stream
+        finally:
+            tg.cancel_scope.cancel()
+
+
+async def _run_stdio_compat_async(server: Any) -> None:
+    """Run FastMCP over the compatibility stdio streams."""
+    async with _stdio_server_compat() as (read_stream, write_stream):
+        # FastMCP does not expose a public stream runner; the low-level server does.
+        await server._mcp_server.run(  # noqa: SLF001
+            read_stream,
+            write_stream,
+            server._mcp_server.create_initialization_options(),  # noqa: SLF001
+        )
+
+
 def run_mcp_server(
     transport: str = "stdio",
     host: str = "127.0.0.1",
@@ -1125,7 +1218,9 @@ def run_mcp_server(
             # For network transports the run() method accepts transport
             server.run(transport=transport)  # type: ignore[arg-type]
         else:
-            server.run(transport="stdio")
+            import anyio
+
+            anyio.run(_run_stdio_compat_async, server)
     except KeyboardInterrupt:
         logger.info("MCP server stopped by user")
 

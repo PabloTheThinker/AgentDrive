@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import shutil
+import sys
+from datetime import timedelta
 
 import pytest
 
@@ -54,6 +56,36 @@ def test_count_mcp_tools_at_least_registry_ops():
     if not mcp_package_available():
         pytest.skip("mcp not installed")
     assert count_mcp_tools() >= 25
+
+
+def test_stdio_mcp_client_initializes_and_lists_tools(tmp_path):
+    pytest.importorskip("mcp")
+    import anyio
+    from mcp import ClientSession
+    from mcp.client.stdio import StdioServerParameters, stdio_client
+
+    async def smoke() -> None:
+        server = StdioServerParameters(
+            command=sys.executable,
+            args=["-m", "agentdrive.adapters.mcp_server", "--transport", "stdio"],
+            env={
+                "AGENTDRIVE_HOME": str(tmp_path / ".agentdrive"),
+                "PYTHONUNBUFFERED": "1",
+            },
+        )
+        async with stdio_client(server) as (read, write):
+            async with ClientSession(
+                read,
+                write,
+                read_timeout_seconds=timedelta(seconds=5),
+            ) as session:
+                await session.initialize()
+                tools = await session.list_tools()
+                names = {tool.name for tool in tools.tools}
+                assert "agentdrive_mcp_catalog" in names
+                assert "experience_graph_get_context_pack" in names
+
+    anyio.run(smoke)
 
 
 def test_write_client_config_dry_run_cursor(tmp_path, monkeypatch: pytest.MonkeyPatch):
