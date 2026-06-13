@@ -29,6 +29,7 @@ from agentdrive.events import (
 )
 from agentdrive.genome.models import Genome, GenomeManifest
 from agentdrive.inheritance import (
+    InheritedSkillCandidate,
     InheritanceManifest,
     InheritanceResult,
     list_manifests,
@@ -37,6 +38,8 @@ from agentdrive.inheritance import (
     record_manifest,
 )
 from agentdrive.registry import GenomeRegistry
+from agentdrive.skills.compose import match_skills_for_turn
+from agentdrive.skills.registry import get_skill
 
 # ─────────────────────────────────────────────────────────────────────
 # fixtures
@@ -98,6 +101,21 @@ def _build_manifest(swarm_id: str, subagent_id: str, created: list[str]) -> Inhe
     )
 
 
+def _skill_candidate(name: str = "incident-retrospective-playbook") -> InheritedSkillCandidate:
+    return InheritedSkillCandidate(
+        name=name,
+        description="Reusable playbook learned by a sub-agent during incident review",
+        body=(
+            "# Incident Retrospective Playbook\n\n"
+            "1. Pull the recent failure timeline.\n"
+            "2. Compare the parent hypothesis against sub-agent findings.\n"
+            "3. Record reusable prevention DNA and follow-up owners."
+        ),
+        tags=["incident", "retrospective", "subagent"],
+        evidence={"score": 0.86, "source_task": "incident review"},
+    )
+
+
 # ─────────────────────────────────────────────────────────────────────
 # tests
 # ─────────────────────────────────────────────────────────────────────
@@ -107,6 +125,7 @@ def test_manifest_round_trips_to_disk(isolated_agentdrive_home: Path) -> None:
     swarm = "swarm-A"
     sub = "sub-001"
     manifest = _build_manifest(swarm, sub, ["learned-genome"])
+    manifest.skills_created.append(_skill_candidate())
 
     p = manifest_path(swarm, sub)
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -117,11 +136,75 @@ def test_manifest_round_trips_to_disk(isolated_agentdrive_home: Path) -> None:
     assert back.subagent_id == sub
     assert back.swarm_id == swarm
     assert back.genomes_created == ["learned-genome"]
+    assert back.skills_created[0].name == "incident-retrospective-playbook"
     assert back.duration_s == 12.5
 
     listed = list_manifests(swarm_id=swarm)
     assert len(listed) == 1
     assert listed[0].subagent_id == sub
+
+
+def test_record_manifest_installs_subagent_skill_into_parent_bench(
+    registry: GenomeRegistry,
+    clean_bus: None,
+    isolated_agentdrive_home: Path,
+) -> None:
+    parent_pool = AgentDrive(registry=registry)
+    manifest = _build_manifest("swarm-A", "analyst-7", [])
+    manifest.skills_created.append(_skill_candidate())
+
+    absorbed_events: list[InheritanceAbsorbed] = []
+    summary: list[InheritanceReceived] = []
+    t1 = subscribe(absorbed_events.append, [InheritanceAbsorbed])
+    t2 = subscribe(summary.append, [InheritanceReceived])
+    try:
+        result = record_manifest(
+            manifest,
+            target_pool=parent_pool,
+            auto_absorb=True,
+        )
+    finally:
+        unsubscribe(t1)
+        unsubscribe(t2)
+
+    assert result.skills_absorbed == ["incident-retrospective-playbook"]
+    assert result.skills_rejected == []
+
+    installed = get_skill("incident-retrospective-playbook")
+    assert installed is not None
+    assert installed.category == "inherited"
+    assert installed.role == "shared"
+    assert installed.source == "inheritance:swarm-A:analyst-7"
+    assert "Pull the recent failure timeline" in installed.body
+
+    matched = match_skills_for_turn("run an incident retrospective after this outage")
+    assert any(skill.name == "incident-retrospective-playbook" for skill in matched)
+    assert any(e.skill_name == "incident-retrospective-playbook" for e in absorbed_events)
+    assert summary[0].skills_absorbed == ["incident-retrospective-playbook"]
+
+
+def test_external_inherited_skills_are_not_installed_without_review(
+    registry: GenomeRegistry,
+    clean_bus: None,
+    isolated_agentdrive_home: Path,
+) -> None:
+    parent_pool = AgentDrive(registry=registry)
+    manifest = _build_manifest("federation-X", "peer-sub-1", [])
+    manifest.skills_created.append(_skill_candidate("peer-dangerous-playbook"))
+
+    result = record_manifest(
+        manifest,
+        target_pool=parent_pool,
+        auto_absorb=True,
+        quarantine_external=True,
+    )
+
+    assert result.skills_absorbed == []
+    assert result.skills_rejected == ["peer-dangerous-playbook"]
+    assert "external inherited skills require review" in result.reason_per_rejected[
+        "skill:peer-dangerous-playbook"
+    ]
+    assert get_skill("peer-dangerous-playbook") is None
 
 
 def test_record_manifest_with_auto_absorb_ingests_new_genomes(

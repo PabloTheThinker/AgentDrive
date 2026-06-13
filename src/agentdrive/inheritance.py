@@ -50,6 +50,52 @@ def _utc_now_iso() -> str:
 
 
 @dataclass
+class InheritedSkillCandidate:
+    """A reusable playbook a sub-agent proposes back to its parent."""
+
+    name: str
+    description: str = ""
+    body: str = ""
+    tags: list[str] = field(default_factory=list)
+    operation: str | None = None
+    evidence: dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_raw(cls, raw: Any) -> InheritedSkillCandidate | None:
+        if isinstance(raw, cls):
+            return raw
+        if not isinstance(raw, dict):
+            return None
+        name = str(raw.get("name") or raw.get("skill") or "").strip()
+        body = str(
+            raw.get("body") or raw.get("playbook") or raw.get("steps") or ""
+        ).strip()
+        if not name or not body:
+            return None
+        tags = raw.get("tags") or []
+        if isinstance(tags, str):
+            tag_list = [t.strip() for t in tags.split(",") if t.strip()]
+        elif isinstance(tags, list):
+            tag_list = [str(t).strip() for t in tags if str(t).strip()]
+        else:
+            tag_list = []
+        return cls(
+            name=name,
+            description=str(raw.get("description") or "").strip(),
+            body=body,
+            tags=tag_list,
+            operation=(
+                str(raw.get("operation") or raw.get("agentdrive_operation") or "").strip()
+                or None
+            ),
+            evidence=dict(raw.get("evidence") or {}),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
 class InheritanceManifest:
     """A single sub-agent's report of what it learned in one mission."""
 
@@ -57,21 +103,33 @@ class InheritanceManifest:
     swarm_id: str = ""
     genomes_pulled: list[str] = field(default_factory=list)
     genomes_created: list[str] = field(default_factory=list)
+    skills_created: list[InheritedSkillCandidate] = field(default_factory=list)
     outcomes_logged: list[dict[str, Any]] = field(default_factory=list)
     duration_s: float = 0.0
     created_at: str = field(default_factory=_utc_now_iso)
 
     def to_json(self) -> str:
-        return json.dumps(asdict(self), indent=2, default=str)
+        payload = asdict(self)
+        payload["skills_created"] = [s.to_dict() for s in self.skills_created]
+        return json.dumps(payload, indent=2, default=str)
 
     @classmethod
     def from_json(cls, data: str | bytes) -> InheritanceManifest:
         raw = json.loads(data)
+        skills = [
+            skill
+            for skill in (
+                InheritedSkillCandidate.from_raw(s)
+                for s in raw.get("skills_created", []) or []
+            )
+            if skill is not None
+        ]
         return cls(
             subagent_id=str(raw.get("subagent_id", "") or ""),
             swarm_id=str(raw.get("swarm_id", "") or ""),
             genomes_pulled=list(raw.get("genomes_pulled", []) or []),
             genomes_created=list(raw.get("genomes_created", []) or []),
+            skills_created=skills,
             outcomes_logged=list(raw.get("outcomes_logged", []) or []),
             duration_s=float(raw.get("duration_s", 0.0) or 0.0),
             created_at=str(raw.get("created_at", "") or _utc_now_iso()),
@@ -85,6 +143,8 @@ class InheritanceResult:
     manifest: InheritanceManifest
     genomes_absorbed: list[str] = field(default_factory=list)
     genomes_rejected: list[str] = field(default_factory=list)
+    skills_absorbed: list[str] = field(default_factory=list)
+    skills_rejected: list[str] = field(default_factory=list)
     reason_per_rejected: dict[str, str] = field(default_factory=dict)
 
 
@@ -225,6 +285,8 @@ def record_manifest(
 
     absorbed: list[str] = []
     rejected: list[str] = []
+    skills_absorbed: list[str] = []
+    skills_rejected: list[str] = []
     reasons: dict[str, str] = {}
 
     needs_quarantine = quarantine_external and source_pool is not None
@@ -289,11 +351,48 @@ def record_manifest(
                 rejected.append(gid)
                 reasons[gid] = f"ingest failed: {str(exc)[:80]}"
 
+        for skill in manifest.skills_created:
+            key = f"skill:{skill.name}"
+            if quarantine_external:
+                skills_rejected.append(skill.name)
+                reasons[key] = "external inherited skills require review before install"
+                continue
+            try:
+                from agentdrive.skills.registry import install_inherited_skill
+
+                install_inherited_skill(
+                    name=skill.name,
+                    description=skill.description,
+                    body=skill.body,
+                    tags=skill.tags,
+                    operation=skill.operation,
+                    swarm_id=manifest.swarm_id,
+                    source_subagent_id=manifest.subagent_id,
+                )
+                skills_absorbed.append(skill.name)
+                try:
+                    emit(
+                        InheritanceAbsorbed(
+                            skill_name=skill.name,
+                            source_subagent_id=manifest.subagent_id,
+                            parent_pool=getattr(target_pool, "name", "main"),
+                            swarm_id=manifest.swarm_id or None,
+                            subagent_id=manifest.subagent_id or None,
+                        )
+                    )
+                except Exception:
+                    logger.debug("Failed to emit skill InheritanceAbsorbed", exc_info=True)
+            except Exception as exc:
+                skills_rejected.append(skill.name)
+                reasons[key] = f"skill install failed: {str(exc)[:80]}"
+
     try:
         emit(
             InheritanceReceived(
                 genomes_absorbed=list(absorbed),
                 genomes_rejected=list(rejected),
+                skills_absorbed=list(skills_absorbed),
+                skills_rejected=list(skills_rejected),
                 swarm_id=manifest.swarm_id or None,
                 subagent_id=manifest.subagent_id or None,
             )
@@ -305,6 +404,8 @@ def record_manifest(
         manifest=manifest,
         genomes_absorbed=absorbed,
         genomes_rejected=rejected,
+        skills_absorbed=skills_absorbed,
+        skills_rejected=skills_rejected,
         reason_per_rejected=reasons,
     )
 
@@ -428,6 +529,7 @@ except Exception:
 
 
 __all__ = [
+    "InheritedSkillCandidate",
     "InheritanceManifest",
     "InheritanceResult",
     "record_manifest",

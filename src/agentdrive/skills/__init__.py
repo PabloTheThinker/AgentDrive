@@ -6,6 +6,7 @@ from agentdrive.skills.registry import (
     discover_skills,
     get_skill,
     init_skill,
+    install_inherited_skill,
     list_skills,
     list_skills_by_tier,
 )
@@ -17,6 +18,7 @@ __all__ = [
     "discover_skills",
     "get_skill",
     "init_skill",
+    "install_inherited_skill",
     "list_skills",
     "list_skills_by_tier",
     "match_skills_for_turn",

@@ -206,6 +206,63 @@ def _normalize_skill_name(name: str) -> str:
     return cleaned
 
 
+def install_inherited_skill(
+    *,
+    name: str,
+    description: str,
+    body: str,
+    source_subagent_id: str,
+    swarm_id: str = "",
+    tags: list[str] | tuple[str, ...] | None = None,
+    operation: str | None = None,
+    force: bool = False,
+) -> Path:
+    """Install a sub-agent playbook as a parent-visible SKILL.md.
+
+    This is the Hermes-style skill learning path for AgentDrive: a sub-agent
+    can hand back a reusable playbook in its inheritance manifest, and the
+    parent stores it as an auditable, discoverable skill instead of opaque chat
+    memory.
+    """
+    slug = _normalize_skill_name(name)
+    source = safe_name(source_subagent_id or "subagent")
+    swarm = safe_name(swarm_id or "default")
+    skill_dir = get_agentdrive_home() / "skills" / "inherited" / swarm / source / slug
+    skill_md = skill_dir / "SKILL.md"
+    if skill_md.exists() and not force:
+        raise FileExistsError(f"Inherited skill already exists: {skill_md}")
+
+    tag_values = [str(tag).strip() for tag in (tags or []) if str(tag).strip()]
+    if "inherited" not in tag_values:
+        tag_values.append("inherited")
+    if source_subagent_id and source_subagent_id not in tag_values:
+        tag_values.append(source_subagent_id)
+
+    meta: dict[str, Any] = {
+        "name": slug,
+        "description": description.strip() or f"Inherited skill from {source_subagent_id}",
+        "harness": "agentdrive",
+        "category": "inherited",
+        "role": "shared",
+        "tags": tag_values,
+        "source": f"inheritance:{swarm_id or 'default'}:{source_subagent_id or 'subagent'}",
+        "when_to_call": "Use when a task matches the sub-agent playbook captured in this inherited skill.",
+    }
+    if operation:
+        meta["agentdrive_operation"] = operation
+
+    skill_dir.mkdir(parents=True, exist_ok=True)
+    skill_md.write_text(
+        "---\n"
+        + yaml.safe_dump(meta, sort_keys=False).strip()
+        + "\n---\n\n"
+        + body.strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    return skill_md
+
+
 def init_skill(name: str, *, description: str = "", force: bool = False) -> Path:
     """Scaffold ``~/.agentdrive/skills/<name>/SKILL.md`` with frontmatter template."""
     slug = _normalize_skill_name(name)

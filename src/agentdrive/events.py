@@ -130,6 +130,8 @@ class InheritanceReceived(Event):
 
     genomes_absorbed: list[str] = field(default_factory=list)
     genomes_rejected: list[str] = field(default_factory=list)
+    skills_absorbed: list[str] = field(default_factory=list)
+    skills_rejected: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -137,6 +139,7 @@ class InheritanceAbsorbed(Event):
     """A single foreign genome was absorbed via an inheritance manifest."""
 
     genome_id: str = ""
+    skill_name: str = ""
     source_subagent_id: str = ""
     parent_pool: str = ""
 

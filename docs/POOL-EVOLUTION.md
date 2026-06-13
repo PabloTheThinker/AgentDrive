@@ -101,6 +101,14 @@ context exit. Reconciler (§3.2) consumes them. New CLI:
 **Impact:** high. **Risk:** schema churn — version the manifest from day
 one.
 
+**Hermes-style skill ferrying.** The manifest also carries
+`skills_created`: reusable playbooks distilled from the sub-agent's actual
+successful work. Local sub-agent skills install into
+`~/.agentdrive/skills/inherited/<swarm>/<subagent>/<skill>/SKILL.md`, making
+them discoverable by the normal skills catalog and prompt matcher. External
+peer skills are rejected for review by default; they must not bypass the same
+trust boundary as foreign DNA.
+
 ### 3.6 Federated peer registry
 Opt-in directory of trusted peer AgentDrive instances (other operators, external
 agent frameworks that speak the pool protocol) the reconciler may poll.
