@@ -44,6 +44,7 @@ from pathlib import Path
 from typing import Any
 
 from agentdrive.knowledge_graph.link_extraction import TypedEdge
+from agentdrive.memory import MemoryTraceCandidate, triage_memory_candidates
 from agentdrive.utils.safe_paths import PathTraversalError, safe_join
 
 try:
@@ -1394,9 +1395,16 @@ class ExperienceGraphRecorder:
             "top_weak_clusters": [],
             "strong_continuations": [],
             "recent_high_value_densifications": [],
+            "memory_systems_triage": {},
             "actionable_structural_recommendations": [],
             "compact_graph_summary": f"{agg.get('cycle_count', 0)} cycles, {agg.get('cross_cycle_edge_count', 0)} cross edges, coh={fab_coh}, style={style}",
         }
+
+        def _floatish(value: Any, default: float) -> float:
+            try:
+                return float(value)
+            except (TypeError, ValueError):
+                return default
 
         # Style-tuned population of the structural pack (deepened for Parent reasoning power)
         include_weaks = style in ("balanced", "weak_links_focus")
@@ -1461,11 +1469,99 @@ class ExperienceGraphRecorder:
                 "Call find_structural_similarities on key fabric elements for cross-element pattern matches with full traces"
             )
 
+        # Trim for token budget before memory triage so queues reference the final pack contents.
+        if max_tokens < 1200:
+            pack["strong_continuations"] = pack["strong_continuations"][:2]
+            pack["recent_high_value_densifications"] = pack[
+                "recent_high_value_densifications"
+            ][:1]
+
+        memory_candidates: list[MemoryTraceCandidate] = []
+        for item in pack["top_weak_clusters"]:
+            coherence = _floatish(item.get("coherence"), 0.5)
+            signal = _floatish(item.get("gbrain_signal_score"), 0.65)
+            cycle_id = item.get("cycle_id") or "unknown"
+            memory_candidates.append(
+                MemoryTraceCandidate(
+                    item_id=f"weak_cluster:{cycle_id}",
+                    source="experience_graph.top_weak_clusters",
+                    memory_kind="episodic",
+                    salience=signal,
+                    retrieval_relevance=0.82,
+                    coherence=coherence,
+                    trust=0.72,
+                    novelty=min(1.0, 0.45 + (1.0 - coherence) * 0.35),
+                    contradiction_pressure=max(0.0, 1.0 - coherence),
+                    consolidation_depth=0.2,
+                    metadata={
+                        "cycle_id": cycle_id,
+                        "edge_count": item.get("edge_count"),
+                        "artifact_count": item.get("artifact_count"),
+                    },
+                )
+            )
+
+        for item in pack["strong_continuations"]:
+            source = item.get("source") or "unknown"
+            relation = item.get("relation") or "continues"
+            target = item.get("target") or "unknown"
+            memory_candidates.append(
+                MemoryTraceCandidate(
+                    item_id=f"continuation:{source}->{relation}->{target}",
+                    source="experience_graph.strong_continuations",
+                    memory_kind="semantic",
+                    rehearsal_count=2,
+                    salience=_floatish(item.get("gbrain_signal_score"), 0.78),
+                    retrieval_relevance=0.72,
+                    coherence=0.86,
+                    trust=0.86,
+                    novelty=0.25,
+                    consolidation_depth=0.75,
+                    metadata={
+                        "source": source,
+                        "target": target,
+                        "relation": relation,
+                        "provenance": item.get("provenance"),
+                    },
+                )
+            )
+
+        for item in pack["recent_high_value_densifications"]:
+            lift = _floatish(item.get("lift"), 0.0)
+            coherence_after = _floatish(item.get("coherence_after"), 0.82)
+            cycle_id = item.get("cycle") or "unknown"
+            memory_candidates.append(
+                MemoryTraceCandidate(
+                    item_id=f"densification:{cycle_id}",
+                    source="experience_graph.recent_high_value_densifications",
+                    memory_kind="procedural",
+                    salience=_floatish(item.get("gbrain_signal_score"), 0.74),
+                    retrieval_relevance=0.76,
+                    coherence=coherence_after,
+                    trust=0.82,
+                    novelty=min(1.0, 0.35 + abs(lift) * 3.0),
+                    consolidation_depth=0.45,
+                    metadata={
+                        "cycle_id": cycle_id,
+                        "lift": item.get("lift"),
+                        "coherence_before": item.get("coherence_before"),
+                        "coherence_after": item.get("coherence_after"),
+                        "key_edges": item.get("key_edges"),
+                    },
+                )
+            )
+
+        pack["memory_systems_triage"] = triage_memory_candidates(
+            memory_candidates, per_route_limit=3
+        )
+
         # Pre-computed actionable structural steers (Parent can accept or refine) — style aware
         base_recs = [
             "Prioritize densification on lowest-coh cross-cycle clusters (use record_parent_fabric_reasoning to declare exactly which edges)",
             "Extend proven strong continuations (research-constitutions patterns have shown +0.03–0.05 coherence lift)",
             "Record explicit fabric reasoning trace when deciding — this becomes queryable DNA for future Parent decisions (use get_fabric_reasoning_traces_for_element + get_parent_reasoning_history)",
+            "Use memory_systems_triage: keep working_set items in scarce context, reconcile "
+            "reconsolidate items before treating them as precedent, and consolidate durable patterns into DNA",
         ]
         if style == "high_lift_patterns_only":
             pack["actionable_structural_recommendations"] = [
@@ -1479,11 +1575,6 @@ class ExperienceGraphRecorder:
             ] or base_recs
         else:
             pack["actionable_structural_recommendations"] = base_recs
-
-        # Trim for token budget (crude but effective)
-        if max_tokens < 1200:
-            pack["strong_continuations"] = pack["strong_continuations"][:2]
-            pack["recent_high_value_densifications"] = pack["recent_high_value_densifications"][:1]
 
         # Always emit via publish_event_sync (recorder as clean point) + KG TypedEdge with gbrain provenance
         try:

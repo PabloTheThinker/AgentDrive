@@ -104,28 +104,60 @@ Uses `uvx --from agentdrive[mcp] agentdrive-mcp --transport stdio` — no venv r
 
 ---
 
-## What your model gets
+## What your model gets (and how any model should start)
 
-**Experience Graph v3**
+**Best first action for *any* AI model** (Grok, Claude, Cursor, local LLMs, custom agents, Windsurf, Continue...):
 
-- `experience_graph_get_context_pack`
-- `experience_graph_record_reasoning`
-- `experience_graph_find_structural_similarities`
+```text
+Call agentdrive_mcp_catalog() right away.
+```
+
+It returns a live, categorized, machine-readable list of every tool with `read_only` flags, `when_to_use` guidance, and examples. This is the canonical "any-model" on-ramp.
+
+**Experience Graph v3 (primary surfaces)**
+
+- `experience_graph_get_context_pack` (call early for dense briefing)
+- `experience_graph_record_reasoning` (write your structural decisions back)
 - `experience_graph_suggest_reasoning_structure`
-- …
+- `experience_graph_find_structural_similarities`, `get_reasoning_traces_for_element`, ...
 
-**Drive + operations (auto-registered from registry)**
+**Core Drive + ops (auto-registered, 25+ via the operations registry)**
 
-- `agentdrive_think`, `agentdrive_pool_query`, `agentdrive_doctor`
-- `agentdrive_dream_run`, `agentdrive_patterns_list`, …
+- `agentdrive_think`, `agentdrive_pool_query`, `agentdrive_doctor`, `agentdrive_record_outcome`
+- `agentdrive_dream_run` / `dream_status`, `reconcile_*`, `learnings_log` / `learnings_list`
+- `agentdrive_mcp_catalog` (the self-describing catalog)
 
-Run `agentdrive mcp tools` for the full list (40+ tools).
+**AD-Grid Inhabitant + ExternalBridge code agency (high leverage)**
+
+- `agentdrive_inhabitant_read_source`, `..._propose_code_change`, `..._apply_change`
+- `agentdrive_register_program` (declare yourself as a first-class attributed inhabitant)
+- `agentdrive_get_council_activity`
+
+Run `agentdrive mcp tools` (CLI) or call the catalog tool for the current full live list (~39–40+ tools). All tools return parseable JSON.
 
 ---
 
 ## Onboarding document for models
 
 Give connected models **`docs/FOR_AI_MODELS.md`** — written for LLMs covering the 6-step loop, tool usage, and autonomous behavior.
+
+## For arbitrary / custom AI models and agents
+
+AgentDrive is deliberately built so *any* MCP-capable system can participate as a first-class citizen:
+
+- Use `agentdrive mcp config --uvx` for a zero-install `uvx` command line (great for containers, one-off agents, or models without local installs).
+- Use `agentdrive mcp config --client generic --json` (or just the emitted `mcpServers` block) for custom hosts, Zed, custom Python/TS MCP clients, remote agents, etc.
+- The `agentdrive_mcp_catalog` tool is the universal handshake. Any model should call it first.
+- All tools are JSON-in / JSON-string-out and carry `readOnlyHint` annotations where applicable.
+- The long server instructions + the rich per-tool docs (populated from the operations registry + when_to_use/examples) are designed to be consumed by models that have never seen AgentDrive before.
+
+Example one-liner for a completely custom agent:
+
+```bash
+uvx --from agentdrive[mcp] agentdrive-mcp --transport stdio
+```
+
+Then point your client's MCP stdio config at that command. The model will discover everything via `agentdrive_mcp_catalog`.
 
 ---
 

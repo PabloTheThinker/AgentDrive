@@ -6,7 +6,7 @@ import json
 from collections.abc import Callable
 from typing import Any
 
-from agentdrive.operations.registry import OPERATIONS, run_operation
+from agentdrive.operations.registry import OPERATIONS, OperationSpec, run_operation
 
 OperationToolFn = Callable[..., str]
 
@@ -17,6 +17,37 @@ def _default_mcp_tool_name(op_name: str, mcp_tool: str | None) -> str | None:
     if op_name.startswith("experience_graph_"):
         return op_name.replace("experience_graph_", "experience_graph_", 1)
     return f"agentdrive_{op_name}"
+
+
+def _rich_doc_for_op(op: "OperationSpec") -> str:
+    """Produce a model-friendly, self-contained docstring for MCP tool registration.
+
+    Any AI model (Grok, Claude, Cursor, local LLM, custom agent) benefits from
+    explicit guidance on category, mutability, usage, and return shape.
+    """
+    lines: list[str] = [op.description.strip()]
+
+    lines.append(f"\n[category={op.category}] [read_only={op.read_only}]")
+    if op.read_only:
+        lines.append("Safe for frequent / exploratory calls. No side effects on the Drive.")
+    else:
+        lines.append("Mutating operation — use with care and prefer dry_run=True first when available.")
+
+    if getattr(op, "when_to_use", None):
+        lines.append(f"\nWhen to use: {op.when_to_use}")
+
+    if getattr(op, "examples", None):
+        exs = op.examples or []
+        lines.append("Examples: " + " | ".join(exs[:3]))
+
+    lines.append(
+        "\nReturns: Always a JSON string (parse it!). Supports dry_run=True for most ops "
+        "(returns a plan instead of executing). All results include an 'operation' and 'success' field for reliable handling by any model."
+    )
+    lines.append(
+        "Tip for arbitrary models: Call agentdrive_mcp_catalog() early in a conversation to get the full live list of tools with usage notes."
+    )
+    return "\n".join(lines)
 
 
 def _make_op_tool(op_name: str, description: str) -> OperationToolFn:
@@ -52,8 +83,15 @@ def register_operations_as_mcp_tools(
             continue
         if tool_name in skip:
             continue
-        fn = _make_op_tool(op.name, op.description)
-        mcp.add_tool(fn, name=tool_name, description=op.description)
+        rich_doc = _rich_doc_for_op(op)
+        fn = _make_op_tool(op.name, rich_doc)
+        # Pass readOnlyHint so capable MCP clients / models can reason about safety
+        annotations: dict[str, Any] | None = {"readOnlyHint": bool(op.read_only)}
+        try:
+            mcp.add_tool(fn, name=tool_name, description=op.description, annotations=annotations)
+        except TypeError:
+            # Older FastMCP may not accept annotations kwarg — fall back gracefully
+            mcp.add_tool(fn, name=tool_name, description=op.description)
         registered.append(tool_name)
         skip.add(tool_name)
     return registered

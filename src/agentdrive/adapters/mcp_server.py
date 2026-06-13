@@ -132,6 +132,11 @@ def create_mcp_server() -> FastMCP:
         "agentdrive",
         instructions=(
             "AgentDrive MCP Server — structural Experience Graph + DNA for AI agents.\n\n"
+            "**For ANY model (Grok, Claude, Cursor, local LLMs, custom agents, Continue, Windsurf, Codex-style...):**\n"
+            "1. Call `agentdrive_mcp_catalog()` as your absolute first action (this is the live source of truth + dev/clone guidance).\n"
+            "2. If the user has a local git clone, look for the `clone_dev_setup_for_claude_cursor_codex_and_others` section in the catalog and/or call `agentdrive_get_mcp_config_snippet(client=...)` to give the human the exact config for their client.\n"
+            "3. On non-trivial work: `experience_graph_get_context_pack` → reason → `experience_graph_record_reasoning` (use `suggest_reasoning_structure` first for high-signal traces).\n"
+            "4. Follow the sacred 6-step loop. The Overseer serves the Parent. The Parent is accountable. The graph is the witness.\n\n"
             "Canonical operation contracts live in agentdrive.operations (``agentdrive ops list`` / "
             "``agentdrive ops export``); MCP tool names map to that registry.\n\n"
             "This gives you (the model) a living, queryable Experience Graph (v3) — an Obsidian-style structural memory fabric with TypedEdges, cross-cycle continuations, coherence signals, and explicit reasoning traces. It is designed so your decisions can compound instead of reset.\n\n"
@@ -953,6 +958,139 @@ def create_mcp_server() -> FastMCP:
         skip_names=existing_mcp_tool_names(mcp),
         expose_unmapped=True,
     )
+
+    # ------------------------------------------------------------------
+    # Self-describing catalog tool — the single best improvement for
+    # "any AI model" integration. Any MCP-connected model (Grok, Claude,
+    # Cursor, local LLM, custom agent, Continue, Windsurf, etc.) should
+    # call this very early to receive a live, categorized, machine-readable
+    # map of every tool + when_to_use guidance + mutability hints.
+    # ------------------------------------------------------------------
+
+    def _mcp_display_name(op: Any) -> str:
+        if getattr(op, "mcp_tool", None):
+            return op.mcp_tool
+        if str(op.name).startswith("experience_graph_"):
+            return str(op.name)
+        return f"agentdrive_{op.name}"
+
+    @mcp.tool()
+    def agentdrive_mcp_catalog(
+        include_read_only: bool = True,
+        include_mutating: bool = True,
+        format: str = "compact",
+    ) -> str:
+        """
+        LIVE self-describing catalog of the entire AgentDrive MCP surface.
+
+        Call this as one of your very first actions in any new session or when
+        you (the model) feel unsure what tools are available or how to use them
+        effectively with this user's Drive + Experience Graph.
+
+        Returns a compact or detailed JSON catalog grouped by category,
+        with read_only flags, usage hints (when available), and recommended
+        first-call patterns. This is the "any model" on-ramp.
+
+        format: "compact" (default, good for most models) or "full".
+        """
+        from agentdrive.operations.mcp_bridge import _rich_doc_for_op  # type: ignore[attr-defined]
+        from agentdrive.operations.registry import OPERATIONS
+
+        catalog: dict[str, Any] = {
+            "server": "agentdrive",
+            "version": "mcp",
+            "total_core_ops": len(OPERATIONS),
+            "note": "Core ops are auto-registered via the operations registry. Additional high-value tools (experience_graph_*, inhabitant_*, register_program, get_council_activity, the catalog itself, etc.) are defined directly in this MCP server. All tools return JSON strings for easy parsing by any model.",
+            "recommendation_for_models": "1. Call agentdrive_mcp_catalog() very early. 2. Call experience_graph_get_context_pack() (or agentdrive_get_dna_for_task) for grounding. 3. Use experience_graph_record_reasoning() on all important decisions. 4. For code changes use the three inhabitant_* tools + register_program for attribution.",
+            "categories": {},
+        }
+
+        for op in OPERATIONS:
+            if (op.read_only and not include_read_only) or (not op.read_only and not include_mutating):
+                continue
+            cat = catalog["categories"].setdefault(op.category, {"tools": []})
+            entry: dict[str, Any] = {
+                "name": _mcp_display_name(op),
+                "read_only": op.read_only,
+                "description": op.description,
+            }
+            if getattr(op, "when_to_use", None):
+                entry["when_to_use"] = op.when_to_use
+            if getattr(op, "examples", None):
+                entry["examples"] = op.examples
+            if format == "full":
+                try:
+                    entry["rich_doc"] = _rich_doc_for_op(op)
+                except Exception:
+                    pass
+            cat["tools"].append(entry)
+
+        # Prominent always-on tools (hand-registered in this server on top of the 25 core ops)
+        catalog["high_value_always_present_tools"] = [
+            "experience_graph_get_context_pack — primary briefing (call early and often)",
+            "experience_graph_record_reasoning — write your structural reasoning back into the living graph",
+            "experience_graph_suggest_reasoning_structure — get the exact template before recording",
+            "agentdrive_inhabitant_read_source / _propose_code_change / _apply_change — AD-Grid code agency (with program_id + constitution refs)",
+            "agentdrive_register_program — declare any external model/CLI as a first-class attributed inhabitant",
+            "agentdrive_get_council_activity — observe live Council (Perfectionist / Guardian / ExternalBridge) work",
+            "agentdrive_think + agentdrive_pool_query + agentdrive_record_outcome — core synthesis / retrieval / learning loop",
+        ]
+
+        # Dev/clone + Claude/Cursor/Codex/other models support.
+        # This section (and the helper tool below) makes it trivial for any model
+        # connected to a user's local clone to give the user the precise config
+        # snippet for their Claude Desktop, Cursor, Continue, etc.
+        try:
+            from agentdrive.adapters import mcp_config as _mcp_cfg
+            clone_info = _mcp_cfg.get_clone_aware_client_config("generic")
+            catalog["clone_dev_setup_for_claude_cursor_codex_and_others"] = {
+                "purpose": "Ready-to-use guidance when the user cloned AgentDrive instead of a global install.",
+                "detected_clone": bool(_mcp_cfg._repo_root()),
+                "commands": clone_info.get("recommended_one_time_setup_from_clone", []),
+                "block": clone_info.get("mcpServers_block"),
+                "claude": "Use in claude_desktop_config.json (restart Claude Desktop).",
+                "cursor": "Use in ~/.cursor/mcp.json (reload Cursor).",
+                "codex_continue": "Generic block works well.",
+            }
+        except Exception:
+            pass
+
+        return json.dumps(catalog, indent=2 if format == "full" else None, default=str)
+
+    # ------------------------------------------------------------------
+    # Helper tool that Claude, Codex-style agents, Cursor, etc. can call
+    # while attached to the user's *cloned* AgentDrive. It returns a
+    # complete, ready-to-hand-to-the-user config snippet for that client's
+    # settings file.
+    # ------------------------------------------------------------------
+    @mcp.tool()
+    def agentdrive_get_mcp_config_snippet(client: str = "generic") -> str:
+        """
+        Get a precise MCP config block + instructions for the requested client,
+        tailored for a local git clone of AgentDrive (the common dev case).
+
+        Clients: claude, cursor, codex, continue, generic, windsurf, vscode.
+
+        When a user says "hook you up to my local clone in my Claude" or similar,
+        call this tool and then output the result directly to them.
+        """
+        try:
+            from agentdrive.adapters import mcp_config as _mcp_cfg
+            c = (client or "generic").lower()
+            if c in ("codex", "continue"):
+                c = "generic"
+            info = _mcp_cfg.get_clone_aware_client_config(c)  # type: ignore[arg-type]
+            payload = {
+                "client": client,
+                "mcpServers": info.get("mcpServers_block"),
+                "instructions": info.get("human_instructions"),
+                "dev_notes": info.get("dev_clone_notes"),
+                "run_once_from_clone": info.get("recommended_one_time_setup_from_clone"),
+                "after_you_paste": "Restart the app completely, then ask me to run agentdrive_mcp_catalog() to prove I'm now using your local clone's data and code.",
+            }
+            return json.dumps(payload, indent=2)
+        except Exception as e:
+            return json.dumps({"error": str(e)})
 
     return mcp
 

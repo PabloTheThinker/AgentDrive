@@ -8,6 +8,13 @@
 
 AgentDrive is a structural memory system for agents that must grow from their own decisions. Not a vector store. Not a document dump. A living graph where every connection, every hesitation, every breakthrough is recorded with provenance and weight — and can be reasoned over directly by the agents themselves.
 
+> **For AI models (Grok, Claude, Cursor, local LLMs via Continue/Ollama, custom agents):**\
+> Read the professional **[Instruction Manual](/docs)** (Mintlify-style docs site) — especially the **[Rules & Patterns for AI Models](/docs/ai-models/rules-and-patterns)**.\
+> Your first action after connecting via MCP: call `agentdrive_mcp_catalog()`.\
+> Clone/dev, local models, and client-specific recipes are fully supported and documented.
+
+This is the primary interface and "rules" document for any model, frontier or local.
+
 It exists for one reason: so autonomous work can compound instead of reset.
 
 ## The Experience Graph
@@ -45,31 +52,43 @@ A real-time Tower and TUI where you watch the 6-step pulse, see the graph evolve
 **Self-referential DNA.**  
 Every meaningful decision, every MCP call, every coherence shift is recorded on the drive with gbrain scoring and full provenance. Future agents — including entirely new autonomous runs — stand on the actual history of what came before.
 
-## Autonomy That Compounds
+## Autonomy That Compounds (Especially for Local Models)
 
-The intended use is non-stop autonomous agents running on local models.
+The primary intended use is **continuous autonomous agents**, particularly local models, that live inside the system over time.
 
-Give an agent a Research Constitution and a connection to the Experience Graph. Let it run. It will gather structural context, make decisions it can explain, write the reasoning back into the graph, and get measurably sharper over time.
+Give a local model (via Continue, direct stdio MCP, or an agent harness) a Research Constitution + MCP access to the Experience Graph. It can:
+- Start every significant cycle by calling `experience_graph_get_context_pack`
+- Make structural decisions and record them with `experience_graph_record_reasoning`
+- Use `agentdrive_register_program` to become a first-class, attributable inhabitant in the AD-Grid
+- Participate in long-running Council-governed work on the `stabilization-wave-20260531` drive (or your own)
 
-No cloud dependency. No stateless tool-calling loops. Just continuous, grounded work that leaves a richer substrate for the next cycle.
+The graph gets better because the model reasons inside it. Local models especially benefit: they finally have durable, queryable, structural memory that survives sessions and improves with use.
 
-This is what local models have been missing: a memory they can actually think with.
+See the dedicated guide **[docs/FOR_AI_MODELS.md](docs/FOR_AI_MODELS.md)** (and the AD-Grid join guide) for the exact patterns, sacred 6-step loop, and "how a good agent behaves" rules.
 
-### Use With Any AI CLI (Grok, Claude, Cursor, Local Models)
+### Use With Any AI CLI or Local Model (Grok, Claude, Cursor, Continue, Ollama, etc.)
 
-AgentDrive speaks the Model Context Protocol natively.
+**Primary interface for all models (frontier and local):** Model Context Protocol (MCP).
 
 ```bash
-agentdrive mcp install   # one command: pip [mcp] + write client configs
-agentdrive mcp doctor    # verify 25+ tools + resolved launcher
-agentdrive mcp config    # show paste-ready snippets for your machine
+# One-command setup (works for clones too)
+agentdrive mcp install
+agentdrive mcp doctor
+agentdrive mcp config          # or --client claude / cursor / generic
 ```
 
-Works after `pip install agentdrive[mcp]`, the root `install.sh`, or `git clone` + `pip install -e ".[mcp]"`. The config resolver picks the right binary or Python module fallback automatically.
+- Works for **git clone** dev setups (`pip install -e ".[mcp]"` + module fallback or local shim).
+- Local models: Excellent with Continue.dev, Ollama + MCP clients, LM Studio, or any stdio-capable agent.
+- Models connected to a clone can call `agentdrive_get_mcp_config_snippet(client="claude")` (or "cursor", "codex", "generic") to generate the exact config block for the human.
 
-Once connected, your model gets the full Experience Graph v3 surfaces (the same ones used internally by the Parent and Overseer) plus DNA tools — complete with gbrain scoring and provenance.
+Once connected via MCP, any model has direct access to the same Experience Graph v3 tools the internal Parent/Overseer/Council use (`experience_graph_get_context_pack`, `record_reasoning`, etc.) plus the full DNA/pool/operations surface.
 
-See [docs/MCP.md](docs/MCP.md) for connection details and [docs/FOR_AI_MODELS.md](docs/FOR_AI_MODELS.md) for the dedicated onboarding guide written specifically for AI models. The latter is the single best document to give any LLM when you want it to deeply understand and use the system effectively from the start.
+**Mandatory first action for any model:** Call `agentdrive_mcp_catalog()` immediately. It returns the live categorized tool list with `when_to_use`, examples, read-only hints, and (for clones) a dev setup section.
+
+See:
+- [docs/MCP.md](docs/MCP.md) — connection, clone/dev, client-specific snippets
+- [docs/FOR_AI_MODELS.md](docs/FOR_AI_MODELS.md) — the detailed rules, 6-step loop, recommended patterns, and "how to think inside the graph" written for LLMs (the canonical document to keep in context)
+- The live catalog tool (authoritative tool list + guidance)
 
 ## Start Here — Golden Path (~10 minutes)
 
@@ -98,7 +117,9 @@ Or read the full guide: **[docs/GOLDEN_PATH.md](docs/GOLDEN_PATH.md)**
 | `learnings log` | Operational memory persists across sessions |
 | `drive query` | Semantic search over your DNA pool |
 
-**MCP details:** [docs/MCP.md](docs/MCP.md) · **For AI models:** [docs/FOR_AI_MODELS.md](docs/FOR_AI_MODELS.md)
+**Primary hosted manual (easy to read on the web):** https://your-vektra-site/agentdrive#manual (the professional instruction manual lives directly on the Vektra Industries page).
+
+Source docs (for reference): `docs/` in this repo (also set up as a Mintlify-style site).
 
 Advanced (AD-Grid, Mission Control, federation) comes *after* the golden path — see [docs/AD_GRID_JOIN.md](docs/AD_GRID_JOIN.md).
 

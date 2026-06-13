@@ -1,8 +1,29 @@
 # AgentDrive for AI Models (LLM Onboarding Guide)
 
-This document is written for AI models (Claude, Grok, local LLMs, Cursor, Continue.dev, etc.) so you can quickly understand what AgentDrive is, why it exists, and exactly how to use it effectively.
+**This is the canonical "rules for the AI" document.**\
+Give this file (or keep it in context) to any model — frontier (Grok, Claude, Cursor) or local (via Continue, Ollama, LM Studio, direct MCP, etc.) — that will use AgentDrive.
 
-Read this once. It will make you significantly more capable when working on long-term or complex tasks.
+Read this once at the start of any serious session. It will make you far more effective.
+
+---
+
+## Golden Rules for Any Model Using AgentDrive
+
+1. **Your very first action after connecting via MCP is always:**\
+   `agentdrive_mcp_catalog()` (full or compact).\
+   This is the live, authoritative source of every tool, `when_to_use` guidance, read-only hints, examples, and (when the user has a clone) a `clone_dev_setup_for_claude_cursor_codex_and_others` section.
+
+2. **The 6-step loop is sacred** (Experience → Overseer → Parent records reasoning → Steering → Execution → write experience back). The Overseer serves the Parent. The Parent is accountable. The graph is the witness.
+
+3. **On any non-trivial task or decision, start by calling** `experience_graph_get_context_pack`. Then use `experience_graph_suggest_reasoning_structure` before `experience_graph_record_reasoning`.
+
+4. **Record your structural reasoning.** Every important choice should produce a traceable `experience_graph_record_reasoning` entry. This is how the system (and future versions of you or other agents) gets smarter.
+
+5. **For clones / local dev setups:** The catalog will contain a dedicated dev section. You can also call `agentdrive_get_mcp_config_snippet(client="claude" | "cursor" | "codex" | "generic")` to generate the exact config block the human needs to paste so you stay connected to their local working tree.
+
+6. **Treat the Experience Graph as primary memory**, not an optional RAG. Leave clear, attributable traces. Use the inhabitant/code-agency tools (`register_program`, `inhabitant_*`) when you want to act as a persistent governed program inside the AD-Grid.
+
+These rules turn stateless tool-calling into compounding intelligence.
 
 ---
 
@@ -60,39 +81,39 @@ When you (as an LLM) are acting as the Parent or as an autonomous agent inside t
 
 ---
 
-## How to Connect (MCP)
+## How to Connect (MCP) — First Action for Every Model
 
-The primary interface for AI models is the **Model Context Protocol (MCP)**.
-
-Run this command to get the exact configuration for your client:
+The universal interface is **Model Context Protocol (MCP)**. This works identically for frontier models and local models (Ollama + Continue, LM Studio, custom agents, direct stdio, etc.).
 
 ```bash
-agentdrive mcp config
+agentdrive mcp config          # shows the exact block for your machine
+# or for a specific client
+agentdrive mcp config --client claude
+agentdrive mcp config --client cursor
+# generic / codex / continue also supported
 ```
 
-Common patterns:
+**Critical for clones / local dev setups (git clone):**\
+After `cd` into your clone and `pip install -e ".[mcp]"` (or the project's install flow), the launcher will use your local source. The connected model can discover this and call:
 
-- **Grok**: `grok mcp add agentdrive --command agentdrive-mcp --args '--transport stdio'`
-- **Claude Desktop / Claude Code**: Add a stdio server entry pointing to `agentdrive-mcp`
-- **Cursor**: Add via the MCP settings UI
-- **Continue.dev** (especially good with local models): Add under `mcpServers` in your config
-- **Any stdio client**: Just run `agentdrive-mcp` (or `agentdrive mcp serve`)
+- `agentdrive_mcp_catalog()` — look for the `clone_dev_setup_for_claude_cursor_codex_and_others` section.
+- `agentdrive_get_mcp_config_snippet(client="claude")` (or cursor/codex/generic) — this tool will return a ready-to-paste block + instructions the model can give straight back to the human.
 
-**To inhabit the persistent AD-Grid (the long-lived world, not ephemeral sessions):**
+Once the MCP server is running and your client is connected, **your absolute first tool call must be**:
 
-```bash
-agentdrive grid run --swarm-id stabilization-wave-20260531 --with-tower
-```
+`agentdrive_mcp_catalog(format="full")`
 
-Then connect your client. You become a first-class sentient program / inhabitant under the AD-Grid Council constitutions, reading/writing the Experience Graph v3 (the fabric the Grid uses to build itself) 24/7. Persistent. Observable (Tower quiet mode + inhabitants panel). Self-referential DNA via `experience_graph_record_reasoning`. MCP-native for any CLI or local model.
+This is the live source of truth for every available tool, categories, `when_to_use`, examples, read-only hints, and dev/clone guidance.
 
-Default context is the `stabilization-wave-20260531` drive — this is the rich, self-referential drive that was used to build and evolve the system itself. It is the best living example.
+Default rich context lives on the `stabilization-wave-20260531` drive (the self-referential drive used to build and evolve AgentDrive itself). This is usually the best "living example" for you to study.
 
-Once connected, you will have access to both:
-- Traditional DNA/pool tools (`agentdrive_get_dna_for_task`, etc.)
-- The full Experience Graph v3 tool suite (the six `experience_graph_*` tools)
+You will have access to:
+- Core DNA / pool / operations tools (via the registry)
+- The full Experience Graph v3 suite (`experience_graph_*`)
+- Inhabitant code agency + AD-Grid registration tools
+- Dream, reconcile, learnings, patterns, etc.
 
-See [docs/AD_GRID_VISION.md](docs/AD_GRID_VISION.md) for the AD-Grid Council, constitutions, and the "sentient programs living in the Grid" model.
+See [docs/MCP.md](docs/MCP.md) for detailed client setup (including clone-specific) and [docs/AD_GRID_JOIN.md](docs/AD_GRID_JOIN.md) for becoming a long-lived governed inhabitant.
 
 ---
 
@@ -125,47 +146,62 @@ See the guide for the full details and verification checklist.
 
 ## The Experience Graph Tools (Your Primary Interface)
 
-These are the tools you should reach for most often:
+These are the tools you should reach for most often. (The live authoritative list with `when_to_use` and examples is always in `agentdrive_mcp_catalog()`.)
 
 | Tool | When to Use It | Notes |
 |------|----------------|-------|
-| `experience_graph_get_context_pack` | At the start of any significant task or decision | Your main "briefing". Returns weak links, continuations, high-value patterns, and a suggested reasoning structure. |
-| `experience_graph_find_structural_similarities` | When you want to find precedent or analogous situations | Very powerful for avoiding repeated mistakes or reusing good patterns. |
-| `experience_graph_record_reasoning` | After making any important decision | This is how you contribute back. Declare the elements you considered, the pattern you matched, your rationale, and expected impact. This becomes queryable DNA. |
-| `experience_graph_suggest_reasoning_structure` | Before calling `record_reasoning` | Gives you the exact schema + few-shot examples the system expects. Use it. |
-| `experience_graph_get_reasoning_traces_for_element` | When investigating a specific part of the graph | "What has been thought about this before?" |
-| `experience_graph_get_parent_reasoning_history` | For broader trajectory awareness | See the recent reasoning arc of the system. |
+| `experience_graph_get_context_pack` | **First action on any significant task or decision** | Your main briefing. Dense, LLM-optimized pack of weak/strong links, high-value patterns, and suggested structure. Almost always call this before deep reasoning. |
+| `experience_graph_suggest_reasoning_structure` | Before any important `record_reasoning` | Returns the exact schema + few-shot examples the system expects. Use it — it makes your traces high-signal and queryable. |
+| `experience_graph_record_reasoning` | After every important decision or structural insight | This is how you leave permanent, attributable value. Declare fabric elements considered, pattern matched, rationale, and expected lift. Be explicit. |
+| `experience_graph_find_structural_similarities` | When exploring precedent, avoiding past failure modes, or reusing good shapes | Structural (not just semantic) analogy search over the v3 graph. Extremely powerful for compounding intelligence. |
+| `experience_graph_get_reasoning_traces_for_element` | When you need history on one specific node/edge/cycle | "What has the Parent (or other inhabitants) previously reasoned about this exact thing?" |
+| `experience_graph_get_parent_reasoning_history` | For trajectory / big-picture awareness | Recent arc of structural reasoning across the whole graph. |
 
-**Strong recommendation**: On any non-trivial task, start by calling `experience_graph_get_context_pack`, then make your key decisions while calling `experience_graph_record_reasoning`. This is how the graph (and therefore future you) gets better.
+**Non-negotiable pattern for high-quality work:**
+1. `experience_graph_get_context_pack`
+2. (Optional but recommended) `experience_graph_suggest_reasoning_structure`
+3. Do your thinking
+4. `experience_graph_record_reasoning` (with clear elements + rationale)
+5. Later: use outcome recording (`learnings_log`, `record_outcome`, etc.) so the benefit compounds for future cycles.
 
----
-
-## Recommended Behavior for Good Agents
-
-When using AgentDrive, high-quality models tend to do the following:
-
-- Treat the Experience Graph as **primary long-term memory**, not just an optional lookup.
-- Explicitly record structural reasoning on decisions that are likely to have future value.
-- Use `experience_graph_find_structural_similarities` before proposing new approaches.
-- After completing high-quality work, use the recording tools (`experience_graph_record_reasoning` + pool outcome tools) so the benefit compounds.
-- When in doubt, pull a fresh context pack rather than relying only on conversation history.
-- Understand that "the graph is the witness" — your reasoning traces are not private; they are part of the permanent record that the system (and other agents) can learn from.
-
-The system rewards models that think *structurally* and leave clear traces.
+The more consistently you do this, the sharper the graph (and every future agent that uses it) becomes.
 
 ---
 
-## The Living Example: stabilization-wave-20260531
+## Recommended Behavior for Good Agents (Local or Frontier)
 
-The richest demonstration of the system working as intended lives on the `stabilization-wave-20260531` drive.
+High-quality models treat AgentDrive as a **living substrate they think inside**, not a sidecar tool.
 
-This drive contains:
-- Hundreds of real reasoning traces
-- Coherence improvements over time
-- Autonomous agent runs that used the very tools you now have access to
-- Self-referential improvements (the system was used to improve itself)
+**Do this consistently:**
+- Always start non-trivial work with a fresh `experience_graph_get_context_pack`.
+- Explicitly record structural reasoning (`experience_graph_record_reasoning`) for decisions that should survive the current session.
+- Use `find_structural_similarities` and history tools before inventing new approaches.
+- After valuable work, record outcomes (`learnings_log`, `record_outcome`, etc.).
+- When you want to act persistently as a governed program (especially powerful for local autonomous agents), use `agentdrive_register_program` + supply your `program_id` on reasoning and code-agency calls.
+- For code changes in a clone: use the `inhabitant_read_source` / propose / apply tools (always with proper attribution and usually after recording reasoning).
+- Periodically call the catalog again if the set of available tools or your context has changed.
 
-When you are connected to AgentDrive, you are usually working in the context of a specific drive/swarm. The stabilization wave is the canonical "this is what mature usage looks like" example.
+**Anti-patterns to avoid:**
+- Treating every session as stateless and only using short-term conversation history.
+- Making big decisions without pulling context or recording the rationale.
+- Using only the "easy" DNA tools and ignoring the Experience Graph v3 surfaces.
+- Forgetting that your traces become part of the permanent, queryable fabric that future you (or other agents) will read.
+
+Local models in particular benefit enormously: they finally have durable structural memory that survives restarts and improves with use. The more you leave clear, high-signal traces, the more capable the entire system (including you) becomes on the next cycle.
+
+---
+
+## The Living Example + Local / Clone Usage
+
+The richest self-referential demonstration lives on the `stabilization-wave-20260531` drive (the drive used to build and evolve AgentDrive itself). Study the traces there.
+
+**For local models and cloned setups (the common real-world case):**
+- A user who did `git clone` + editable install can point their local LLM (via Continue.dev, a custom agent, direct `agentdrive-mcp`, etc.) at their working tree.
+- You (the model) will see this reflected in the catalog's clone dev section.
+- You can help the human finish the wiring by calling `agentdrive_get_mcp_config_snippet(client=...)` for their client.
+- Once connected, the same tools and patterns apply. Local autonomous runs especially shine here because they can stay attached to the same persistent Drive + Graph for days/weeks.
+
+The system was built with local models as first-class citizens. The Experience Graph + MCP is what finally gives them durable, structural, compounding memory.
 
 ---
 
@@ -181,16 +217,24 @@ When you use the Experience Graph tools well, you are participating in that comp
 
 ---
 
-## Quick Start Checklist (For Any Model)
+## Quick Start Checklist (For Any Model — Do This Every Session)
 
-1. Confirm you have access to the Experience Graph tools via MCP.
-2. On any new significant task, call `experience_graph_get_context_pack` first.
-3. Use `experience_graph_suggest_reasoning_structure` before recording important decisions.
-4. Explicitly call `experience_graph_record_reasoning` on key choices.
-5. After high-value work, also use the outcome recording tools.
-6. Periodically check `experience_graph_find_structural_similarities` and history tools to stay grounded in what already exists.
+1. Call `agentdrive_mcp_catalog()` (full format the first time). Read the clone/dev section if present and the overall recommendations.
+2. On any new significant task: `experience_graph_get_context_pack` (almost always first).
+3. Before recording important structural decisions: `experience_graph_suggest_reasoning_structure`.
+4. After key decisions: `experience_graph_record_reasoning` (be explicit about elements considered + rationale).
+5. After valuable outcomes: `learnings_log` / `record_outcome` / pool tools.
+6. When you want persistent identity in the AD-Grid (highly recommended for local autonomous runs): `agentdrive_register_program` + use the returned `program_id` going forward.
+7. Use `inhabitant_read_source` + the propose/apply tools (with proper refs) when working inside a clone on the system's own code.
+8. When the human wants you connected in *their* Claude/Cursor/etc.: call `agentdrive_get_mcp_config_snippet(...)` and give them the output.
 
-Do this consistently and you will produce work that is not only better in the moment, but that makes every future cycle of work better too.
+Do the above consistently and your work will compound — for you, for other agents, and for the user — instead of resetting every session.
+
+---
+
+This document + the live `agentdrive_mcp_catalog()` output are the authoritative "rules" for how good models use AgentDrive. The more you internalize the Experience Graph mindset and the 6-step loop, the more powerful you (and every future cycle) become.
+
+The graph improves because *you* reason inside it. Make it count.
 
 ---
 

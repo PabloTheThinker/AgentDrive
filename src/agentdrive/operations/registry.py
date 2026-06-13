@@ -20,7 +20,11 @@ from typing import Any
 
 @dataclass(frozen=True)
 class OperationSpec:
-    """Declarative contract for one AgentDrive operation."""
+    """Declarative contract for one AgentDrive operation.
+
+    Used for CLI surfaces, MCP tool registration, and self-describing catalogs
+    exposed to any AI model via MCP.
+    """
 
     name: str
     description: str
@@ -28,6 +32,9 @@ class OperationSpec:
     read_only: bool
     cli_command: str | None = None
     mcp_tool: str | None = None
+    # Rich metadata to help arbitrary AI models (Claude, Grok, Cursor, local LLMs, custom agents) decide when/how to call
+    when_to_use: str = ""
+    examples: list[str] | None = None  # short natural language or arg examples
 
 
 OperationHandler = Callable[..., dict[str, Any]]
@@ -624,6 +631,8 @@ OPERATIONS: list[OperationSpec] = [
         category="synthesis",
         read_only=True,
         cli_command="agentdrive think",
+        when_to_use="Use for any non-trivial question where you need fused evidence from the pool + Experience Graph + honest gap reporting. Always call with prefer_experience_layer=True unless you explicitly want pure LLM mode.",
+        examples=["think(question='How should I structure long-horizon agent memory?')", "think with dry_run first to plan"],
         mcp_tool="agentdrive_think",
     ),
     OperationSpec(
@@ -632,6 +641,8 @@ OPERATIONS: list[OperationSpec] = [
         category="drive",
         read_only=True,
         cli_command="agentdrive drive query",
+        when_to_use="First-line retrieval before any synthesis or planning. Returns ranked genomes with relevance scores and framework steps. Prefer over raw vector search when you want Drive-native DNA packets.",
+        examples=["pool_query(task='self-healing patterns for distributed agents', limit=6)"],
         mcp_tool="agentdrive_pool_query",
     ),
     OperationSpec(
@@ -688,6 +699,8 @@ OPERATIONS: list[OperationSpec] = [
         category="system",
         read_only=True,
         cli_command="agentdrive doctor",
+        when_to_use="Call at the start of any session or when the user complains about missing data/tools. Also great for models to self-check their environment before heavy work.",
+        examples=["doctor(verbose=True)"],
         mcp_tool="agentdrive_doctor",
     ),
     OperationSpec(
@@ -801,6 +814,8 @@ OPERATIONS: list[OperationSpec] = [
         read_only=False,
         cli_command="agentdrive learnings log",
         mcp_tool="agentdrive_learnings_log",
+        when_to_use="Call after any non-trivial task (success or failure). The entries become queryable by future think / retrieval and improve the model's own long-term performance on this user's problems.",
+        examples=["learnings_log(task='debugged MCP tool schema', outcome={'quality': 0.85, 'key_observation': '...'})"],
     ),
     OperationSpec(
         name="learnings_list",

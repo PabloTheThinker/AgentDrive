@@ -25,7 +25,8 @@ def test_mcp_package_available_when_installed():
 def test_resolve_mcp_launcher_returns_stdio_args():
     launcher = resolve_mcp_launcher()
     assert launcher.command
-    assert launcher.args[:2] == ["--transport", "stdio"]
+    transport_index = launcher.args.index("--transport")
+    assert launcher.args[transport_index + 1] == "stdio"
     assert launcher.method in ("binary", "module", "uvx")
 
 

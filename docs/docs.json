@@ -1,0 +1,139 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "AgentDrive",
+  "description": "Local-first structural memory and Experience Graph for AI agents and autonomous swarms. MCP-native. Works with any model — frontier or local. Clones beautifully.",
+  "theme": "mint",
+  "icons": {
+    "library": "lucide"
+  },
+  "logo": {
+    "light": "/assets/logo-mascot.jpg",
+    "dark": "/assets/mascot-guardian.jpg"
+  },
+  "favicon": "/assets/logo-mascot.jpg",
+  "colors": {
+    "primary": "#0A84FF",
+    "dark": "#0A84FF",
+    "light": "#5AC8FA"
+  },
+  "styling": {
+    "codeblocks": {
+      "theme": {
+        "dark": "dracula",
+        "light": "github-light"
+      }
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/pablothethinker/AgentDrive",
+        "icon": "github"
+      },
+      {
+        "label": "Releases",
+        "href": "https://github.com/pablothethinker/AgentDrive/releases",
+        "icon": "package"
+      }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/pablothethinker/AgentDrive"
+    }
+  },
+  "navigation": {
+    "groups": [
+      {
+        "group": "Get Started",
+        "pages": [
+          "index",
+          "start/golden-path",
+          "start/install",
+          "start/first-run"
+        ]
+      },
+      {
+        "group": "Core Concepts",
+        "pages": [
+          "concepts/overview",
+          "concepts/experience-graph",
+          "concepts/six-step-loop",
+          "concepts/drive-and-genomes",
+          "concepts/ad-grid"
+        ]
+      },
+      {
+        "group": "Using with AI Models",
+        "pages": [
+          "ai-models/quickstart",
+          "ai-models/rules-and-patterns",
+          "ai-models/local-models",
+          "ai-models/clones-and-dev",
+          "ai-models/mcp-catalog"
+        ]
+      },
+      {
+        "group": "MCP & Integration",
+        "pages": [
+          "mcp/overview",
+          "mcp/connect",
+          "mcp/tools-reference",
+          "mcp/for-claude-cursor-codex",
+          "mcp/server-instructions"
+        ]
+      },
+      {
+        "group": "CLI Reference",
+        "pages": [
+          "cli/index",
+          "cli/doctor",
+          "cli/mcp",
+          "cli/think",
+          "cli/pool",
+          "cli/dream",
+          "cli/grid"
+        ]
+      },
+      {
+        "group": "Advanced",
+        "pages": [
+          "advanced/dream-cycle",
+          "advanced/mission-control",
+          "advanced/inhabitants",
+          "advanced/skills"
+        ]
+      },
+      {
+        "group": "Reference",
+        "pages": [
+          "reference/operations",
+          "reference/tools",
+          "reference/schemas"
+        ]
+      },
+      {
+        "group": "Help & Troubleshooting",
+        "pages": [
+          "help/troubleshooting",
+          "help/faq"
+        ]
+      }
+    ]
+  },
+  "redirects": [
+    {
+      "source": "/FOR_AI_MODELS",
+      "destination": "/ai-models/rules-and-patterns"
+    },
+    {
+      "source": "/MCP",
+      "destination": "/mcp/overview"
+    },
+    {
+      "source": "/GOLDEN_PATH",
+      "destination": "/start/golden-path"
+    }
+  ]
+}

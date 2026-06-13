@@ -207,12 +207,19 @@ def test_get_fabric_context_pack_returns_expected_keys(recorder: ExperienceGraph
         "top_weak_clusters",
         "strong_continuations",
         "recent_high_value_densifications",
+        "memory_systems_triage",
         "actionable_structural_recommendations",
         "compact_graph_summary",
     ):
         assert key in pack
     assert pack["reasoning_style"] == "balanced"
     assert isinstance(pack["top_weak_clusters"], list)
+    assert set(pack["memory_systems_triage"]["queues"]) == {
+        "working_set",
+        "consolidate",
+        "reconsolidate",
+        "archive",
+    }
 
 
 def test_get_recent_parent_fabric_reasoning_traces_returns_list(
