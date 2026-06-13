@@ -207,6 +207,31 @@ def test_external_inherited_skills_are_not_installed_without_review(
     assert get_skill("peer-dangerous-playbook") is None
 
 
+def test_oversized_inherited_skills_are_rejected(
+    registry: GenomeRegistry,
+    clean_bus: None,
+    isolated_agentdrive_home: Path,
+) -> None:
+    parent_pool = AgentDrive(registry=registry)
+    manifest = _build_manifest("swarm-A", "analyst-7", [])
+    candidate = _skill_candidate("too-large-playbook")
+    candidate.body = "# Too Large\n\n" + ("repeat this step\n" * 1200)
+    manifest.skills_created.append(candidate)
+
+    result = record_manifest(
+        manifest,
+        target_pool=parent_pool,
+        auto_absorb=True,
+    )
+
+    assert result.skills_absorbed == []
+    assert result.skills_rejected == ["too-large-playbook"]
+    assert "Inherited skill body must be <=" in result.reason_per_rejected[
+        "skill:too-large-playbook"
+    ]
+    assert get_skill("too-large-playbook") is None
+
+
 def test_record_manifest_with_auto_absorb_ingests_new_genomes(
     registry: GenomeRegistry, clean_bus: None
 ) -> None:

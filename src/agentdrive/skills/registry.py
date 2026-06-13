@@ -33,6 +33,9 @@ class SkillEntry:
 
 
 _FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n(.*)", re.DOTALL)
+_MAX_INHERITED_SKILL_NAME_CHARS = 64
+_MAX_INHERITED_SKILL_DESCRIPTION_CHARS = 1024
+_MAX_INHERITED_SKILL_BODY_CHARS = 15_000
 
 
 def _skills_roots() -> list[Path]:
@@ -206,6 +209,24 @@ def _normalize_skill_name(name: str) -> str:
     return cleaned
 
 
+def _validate_inherited_skill(slug: str, description: str, body: str) -> None:
+    if len(slug) > _MAX_INHERITED_SKILL_NAME_CHARS:
+        raise ValueError(
+            f"Inherited skill name must be <= {_MAX_INHERITED_SKILL_NAME_CHARS} chars"
+        )
+    if len(description) > _MAX_INHERITED_SKILL_DESCRIPTION_CHARS:
+        raise ValueError(
+            "Inherited skill description must be <= "
+            f"{_MAX_INHERITED_SKILL_DESCRIPTION_CHARS} chars"
+        )
+    if not body.strip():
+        raise ValueError("Inherited skill body cannot be empty")
+    if len(body) > _MAX_INHERITED_SKILL_BODY_CHARS:
+        raise ValueError(
+            f"Inherited skill body must be <= {_MAX_INHERITED_SKILL_BODY_CHARS} chars"
+        )
+
+
 def install_inherited_skill(
     *,
     name: str,
@@ -225,6 +246,10 @@ def install_inherited_skill(
     memory.
     """
     slug = _normalize_skill_name(name)
+    desc = description.strip() or f"Inherited skill from {source_subagent_id}"
+    skill_body = body.strip()
+    _validate_inherited_skill(slug, desc, skill_body)
+
     source = safe_name(source_subagent_id or "subagent")
     swarm = safe_name(swarm_id or "default")
     skill_dir = get_agentdrive_home() / "skills" / "inherited" / swarm / source / slug
@@ -240,7 +265,7 @@ def install_inherited_skill(
 
     meta: dict[str, Any] = {
         "name": slug,
-        "description": description.strip() or f"Inherited skill from {source_subagent_id}",
+        "description": desc,
         "harness": "agentdrive",
         "category": "inherited",
         "role": "shared",
@@ -256,7 +281,7 @@ def install_inherited_skill(
         "---\n"
         + yaml.safe_dump(meta, sort_keys=False).strip()
         + "\n---\n\n"
-        + body.strip()
+        + skill_body
         + "\n",
         encoding="utf-8",
     )

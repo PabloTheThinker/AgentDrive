@@ -105,9 +105,11 @@ one.
 `skills_created`: reusable playbooks distilled from the sub-agent's actual
 successful work. Local sub-agent skills install into
 `~/.agentdrive/skills/inherited/<swarm>/<subagent>/<skill>/SKILL.md`, making
-them discoverable by the normal skills catalog and prompt matcher. External
-peer skills are rejected for review by default; they must not bypass the same
-trust boundary as foreign DNA.
+them discoverable by the normal skills catalog and prompt matcher. Like
+Hermes self-evolution candidates, inherited skills are constraint-gated before
+installation: bounded name/description/body size, non-empty body, no overwrite
+without force, and external peer skills rejected for review by default. They
+must not bypass the same trust boundary as foreign DNA.
 
 ### 3.6 Federated peer registry
 Opt-in directory of trusted peer AgentDrive instances (other operators, external
