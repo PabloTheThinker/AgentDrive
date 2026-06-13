@@ -46,7 +46,7 @@ These are the tools you will use constantly (the live details and examples are a
 
 `experience_graph_get_context_pack` includes `memory_systems_triage`, a human-inspired routing layer for scarce context.
 
-Use its queues this way:
+Use its `control_plan` first. It gives the next focus, the context order, and per-route instructions. The raw queues mean:
 
 - `working_set` — Put these items in active reasoning first.
 - `reconsolidate` — Resolve or update these before treating them as precedent.

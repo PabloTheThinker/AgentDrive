@@ -41,4 +41,6 @@ It routes candidates into:
 - `reconsolidate`: important but unstable or conflicting material that needs update before reuse.
 - `archive`: addressable material that should stay out of active context.
 
+The triage output also includes `control_plan`, a compact action plan for agents. It tells the model the next focus, the order to spend context, and the concrete action for each queue.
+
 `experience_graph_get_context_pack` now exposes `memory_systems_triage` so agents get a usable memory-control surface every time they request the structural briefing.

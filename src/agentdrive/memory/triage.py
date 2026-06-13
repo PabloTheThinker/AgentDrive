@@ -78,6 +78,26 @@ class MemoryTriageResult:
         return asdict(self)
 
 
+ROUTE_ACTIONS: dict[str, dict[str, str]] = {
+    "working_set": {
+        "action": "load_into_active_context",
+        "instruction": "Use these items first in scarce model context.",
+    },
+    "reconsolidate": {
+        "action": "resolve_before_reuse",
+        "instruction": "Check, update, or contradict these items before treating them as precedent.",
+    },
+    "consolidate": {
+        "action": "promote_to_durable_structure",
+        "instruction": "Turn these items into durable graph, DNA, or learning abstractions.",
+    },
+    "archive": {
+        "action": "keep_addressable_out_of_context",
+        "instruction": "Leave these out of active context unless the task directly needs them.",
+    },
+}
+
+
 def _score_candidate(candidate: MemoryTraceCandidate) -> MemoryTriageResult:
     retention = forgetting_curve_strength(
         candidate.age_days,
@@ -140,6 +160,39 @@ def _score_candidate(candidate: MemoryTraceCandidate) -> MemoryTriageResult:
     )
 
 
+def build_memory_control_plan(queues: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
+    """Build deterministic agent instructions from routed memory queues."""
+    route_order = ["working_set", "reconsolidate", "consolidate", "archive"]
+    steps: list[dict[str, Any]] = []
+    for route in route_order:
+        items = queues.get(route, [])
+        action = ROUTE_ACTIONS[route]
+        steps.append(
+            {
+                "route": route,
+                "action": action["action"],
+                "instruction": action["instruction"],
+                "count": len(items),
+                "item_ids": [str(item.get("item_id", "")) for item in items],
+            }
+        )
+
+    if queues.get("working_set"):
+        next_focus = "reason_over_working_set"
+    elif queues.get("reconsolidate"):
+        next_focus = "resolve_reconsolidation_queue"
+    elif queues.get("consolidate"):
+        next_focus = "schedule_consolidation"
+    else:
+        next_focus = "no_active_memory_work"
+
+    return {
+        "next_focus": next_focus,
+        "primary_context_order": route_order,
+        "steps": steps,
+    }
+
+
 def triage_memory_candidates(
     candidates: list[MemoryTraceCandidate],
     *,
@@ -182,4 +235,5 @@ def triage_memory_candidates(
         ],
         "queues": queues,
         "counts": {name: len(items) for name, items in queues.items()},
+        "control_plan": build_memory_control_plan(queues),
     }

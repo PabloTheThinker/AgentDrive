@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from agentdrive.memory import (
     MemoryTraceCandidate,
+    build_memory_control_plan,
     forgetting_curve_strength,
     triage_memory_candidates,
 )
@@ -98,3 +99,19 @@ def test_triage_caps_each_route_and_preserves_schema() -> None:
         "archive",
     }
     assert summary["counts"]["working_set"] == 2
+    assert summary["control_plan"]["next_focus"] == "reason_over_working_set"
+
+
+def test_control_plan_is_stable_for_empty_queues() -> None:
+    queues = {"working_set": [], "consolidate": [], "reconsolidate": [], "archive": []}
+
+    plan = build_memory_control_plan(queues)
+
+    assert plan["next_focus"] == "no_active_memory_work"
+    assert plan["primary_context_order"] == [
+        "working_set",
+        "reconsolidate",
+        "consolidate",
+        "archive",
+    ]
+    assert [step["route"] for step in plan["steps"]] == plan["primary_context_order"]

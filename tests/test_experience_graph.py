@@ -220,6 +220,10 @@ def test_get_fabric_context_pack_returns_expected_keys(recorder: ExperienceGraph
         "reconsolidate",
         "archive",
     }
+    assert (
+        pack["memory_systems_triage"]["control_plan"]["primary_context_order"][0]
+        == "working_set"
+    )
 
 
 def test_get_recent_parent_fabric_reasoning_traces_returns_list(

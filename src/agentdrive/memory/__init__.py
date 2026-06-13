@@ -3,6 +3,7 @@
 from agentdrive.memory.triage import (
     MemoryTraceCandidate,
     MemoryTriageResult,
+    build_memory_control_plan,
     forgetting_curve_strength,
     triage_memory_candidates,
 )
@@ -10,6 +11,7 @@ from agentdrive.memory.triage import (
 __all__ = [
     "MemoryTraceCandidate",
     "MemoryTriageResult",
+    "build_memory_control_plan",
     "forgetting_curve_strength",
     "triage_memory_candidates",
 ]
