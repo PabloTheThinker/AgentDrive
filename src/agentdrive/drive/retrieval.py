@@ -119,7 +119,10 @@ def fuse_scored_with_rrf(
                     "reasoning": rel.get("reasoning"),
                     "page_type": page_types.get(gid, ""),
                     "graph_signal": graph_signals.get(gid, {}).get("gbrain_signal_score"),
-                    "rankings": {name: ids.index(gid) + 1 if gid in ids else None for name, ids in rankings.items()},
+                    "rankings": {
+                        name: ids.index(gid) + 1 if gid in ids else None
+                        for name, ids in rankings.items()
+                    },
                 },
             )
         except Exception:

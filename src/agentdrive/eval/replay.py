@@ -24,7 +24,9 @@ def _scores_from_artifact(data: dict[str, Any]) -> dict[str, Any] | None:
         if isinstance(kdo, dict) and kdo.get("decision"):
             return {
                 "decision": kdo.get("decision"),
-                "overall_goodness": (ev or {}).get("overall_goodness") if isinstance(ev, dict) else None,
+                "overall_goodness": (ev or {}).get("overall_goodness")
+                if isinstance(ev, dict)
+                else None,
             }
     manifest = data.get("manifest") or {}
     if isinstance(manifest, dict):
@@ -64,7 +66,9 @@ def _artifact_to_after_state(data: dict[str, Any]) -> dict[str, Any]:
         "proposals_executed": [1],
         "citation_count": 4,
         "experience_layer_v3_seed_referenced": True,
-        "feeds_experience_layer": bool(fw.get("high_signal", True)) if isinstance(fw, dict) else True,
+        "feeds_experience_layer": bool(fw.get("high_signal", True))
+        if isinstance(fw, dict)
+        else True,
         "contradictions_addressed": contradictions_addressed,
     }
 

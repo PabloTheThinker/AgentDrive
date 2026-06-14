@@ -692,9 +692,7 @@ class ChatView:
         result_container: dict = {}
 
         self._message_lane.reset()
-        self._message_lane.set_session_id(
-            getattr(self.agent.session, "session_id", None)
-        )
+        self._message_lane.set_session_id(getattr(self.agent.session, "session_id", None))
 
         def worker() -> None:
             try:
@@ -1438,12 +1436,9 @@ class ChatView:
         for idx, m in enumerate(matches, 1):
             dom = ", ".join(m.domains[:2]) or "—"
             label = (
-                f"[{p.muted}]{idx:>2}[/]  [bold {p.genome}]{m.genome_id}[/] "
-                f"[dim]@{m.version}[/]"
+                f"[{p.muted}]{idx:>2}[/]  [bold {p.genome}]{m.genome_id}[/] [dim]@{m.version}[/]"
             )
-            secondary = (
-                f"{dom}  [{p.muted}]·[/] score [{p.evolution}]{m.score:.2f}[/]"
-            )
+            secondary = f"{dom}  [{p.muted}]·[/] score [{p.evolution}]{m.score:.2f}[/]"
             rows.append(TreeRow(label=label, secondary=secondary))
 
         self.console.print()

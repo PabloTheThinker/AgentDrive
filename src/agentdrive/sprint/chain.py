@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Any
 
 from agentdrive.drive.drive import get_default_drive
-from agentdrive.registry import GenomeRegistry
 from agentdrive.reconciliation import ReconciliationRunner
+from agentdrive.registry import GenomeRegistry
 from agentdrive.sprint.checkpoint import CheckpointPending, CheckpointStore
 from agentdrive.synthesis.engine import _ensure_mandatory_gaps
 

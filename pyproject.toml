@@ -53,6 +53,8 @@ test = [
     # tests/test_chat_loop.py uses async def + @pytest.mark.asyncio.
     # Required in CI; locally most devs have it system-wide.
     "pytest-asyncio>=1.4.0",
+    # CI exercises the MCP catalog/server as a first-class AgentDrive surface.
+    "mcp>=1.0.0",
 ]
 mcp = [
     "mcp>=1.0.0",

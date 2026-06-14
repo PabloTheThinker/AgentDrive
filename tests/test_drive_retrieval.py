@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from datetime import UTC, datetime
 
 import pytest
@@ -27,7 +26,9 @@ def _genome(
     )
     return Genome(
         manifest=manifest,
-        framework={"steps": [{"id": str(i), "name": s} for i, s in enumerate(framework_steps or [])]},
+        framework={
+            "steps": [{"id": str(i), "name": s} for i, s in enumerate(framework_steps or [])]
+        },
         reasoning_patterns={p: {"weight": 1.0} for p in (patterns or [])},
     )
 

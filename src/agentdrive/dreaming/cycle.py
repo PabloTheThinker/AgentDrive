@@ -20,8 +20,8 @@ from typing import Any
 
 from agentdrive.constants import get_agentdrive_home
 from agentdrive.drive.drive import AgentDrive, get_default_drive
-from agentdrive.registry import GenomeRegistry
 from agentdrive.reconciliation import ReconciliationRunner
+from agentdrive.registry import GenomeRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,10 @@ def _publish_dream_phase_event(
                 stop_gate=stop_gate,
                 run_id=run_id,
                 detail=result.detail,
-                metadata={"source": "dreaming.cycle", "stabilization_wave": "stabilization-wave-20260531"},
+                metadata={
+                    "source": "dreaming.cycle",
+                    "stabilization_wave": "stabilization-wave-20260531",
+                },
             )
         )
     except Exception:
@@ -236,8 +239,7 @@ def _run_reconcile(
         report = runner.scan_once()
         detail = report.to_dict()
         msg = (
-            f"Reconciliation: {len(report.new_genomes)} new, "
-            f"{len(report.updated_genomes)} updated"
+            f"Reconciliation: {len(report.new_genomes)} new, {len(report.updated_genomes)} updated"
         )
         success = True
     return DreamCycleResult(
@@ -460,8 +462,8 @@ _PHASE_RUNNERS = {
     "consolidate": lambda *, pool, registry, dry_run, swarm_id, state_path: _run_consolidate(
         dry_run=dry_run
     ),
-    "grade_confidence": lambda *, pool, registry, dry_run, swarm_id, state_path: _run_grade_confidence(
-        registry=registry
+    "grade_confidence": lambda *, pool, registry, dry_run, swarm_id, state_path: (
+        _run_grade_confidence(registry=registry)
     ),
     "purge_stale": lambda *, pool, registry, dry_run, swarm_id, state_path: _run_purge_stale(
         dry_run=dry_run, swarm_id=swarm_id
@@ -535,7 +537,9 @@ def run_dream_cycle(
             result.dry_run = dry_run
             result.duration_ms = result.duration_ms or int((time.monotonic() - t_phase) * 1000)
             results.append(result)
-            _append_audit(run_id=run_id, result=result, home=agent_home, extra={"run_complete": False})
+            _append_audit(
+                run_id=run_id, result=result, home=agent_home, extra={"run_complete": False}
+            )
             _publish_dream_phase_event(result, run_id=run_id, stop_gate=spec.stop_gate)
 
             if not result.success:

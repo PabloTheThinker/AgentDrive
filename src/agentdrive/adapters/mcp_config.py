@@ -9,7 +9,6 @@ binary paths or client-specific JSON/TOML formats.
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import subprocess
 import sys
@@ -412,8 +411,7 @@ def export_client_bundle(*, prefer_uvx: bool = False) -> dict[str, Any]:
         "grok_toml": get_grok_toml_snippet(prefer_uvx=prefer_uvx),
         "grok_cli": get_grok_cli_command(prefer_uvx=prefer_uvx),
         "clients": {
-            client: [str(p) for p in paths]
-            for client, paths in client_config_paths().items()
+            client: [str(p) for p in paths] for client, paths in client_config_paths().items()
         },
         "onboarding_doc": "docs/FOR_AI_MODELS.md",
         "connection_doc": "docs/MCP.md",
@@ -425,7 +423,9 @@ def get_generic_mcp_block(*, prefer_uvx: bool = False) -> dict[str, Any]:
     return get_mcp_server_block(prefer_uvx=prefer_uvx)
 
 
-def get_clone_aware_client_config(client: ClientId = "generic", *, clone_root: str | None = None) -> dict[str, Any]:
+def get_clone_aware_client_config(
+    client: ClientId = "generic", *, clone_root: str | None = None
+) -> dict[str, Any]:
     """
     Return a ready-to-use MCP server block + human instructions tailored for when
     the user has *cloned* AgentDrive (dev/editable mode) instead of a global pip install.
@@ -446,7 +446,7 @@ def get_clone_aware_client_config(client: ClientId = "generic", *, clone_root: s
             "the agentdrive-mcp shim should be used. "
             "Alternative pure-dev command (no install needed):\n"
             f"  command: {sys.executable}\n"
-            f"  args: [\"-m\", \"agentdrive.adapters.mcp_server\", \"--transport\", \"stdio\"]\n"
+            f'  args: ["-m", "agentdrive.adapters.mcp_server", "--transport", "stdio"]\n'
             f"  (optionally set env PYTHONPATH={root / 'src'} )"
         )
 
@@ -461,7 +461,8 @@ def get_clone_aware_client_config(client: ClientId = "generic", *, clone_root: s
         "client": client,
         "mcpServers_block": block,
         "human_instructions": instructions.get(client, instructions["generic"]),
-        "dev_clone_notes": dev_notes or "Run from inside your AgentDrive clone for best dev experience.",
+        "dev_clone_notes": dev_notes
+        or "Run from inside your AgentDrive clone for best dev experience.",
         "recommended_one_time_setup_from_clone": [
             "cd /path/to/your/AgentDrive/clone",
             "python -m pip install -e '.[mcp]'   # or use the project's install.sh",

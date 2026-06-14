@@ -38,7 +38,9 @@ def test_learnings_dir_uses_isolated_home(isolated_agentdrive_home: Path) -> Non
 
 def test_log_search_count_and_dedup(isolated_agentdrive_home: Path) -> None:
     store = LearningsStore(slug="test-project")
-    store.log(_sample_entry(key="foo", insight="foo related guidance", ts="2026-06-01T00:00:00+00:00"))
+    store.log(
+        _sample_entry(key="foo", insight="foo related guidance", ts="2026-06-01T00:00:00+00:00")
+    )
     store.log(
         _sample_entry(
             key="foo",

@@ -9,8 +9,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 from agentdrive.cli_catalog import CATALOG, search_catalog
 from agentdrive.cli_surface import build_help_epilog
 

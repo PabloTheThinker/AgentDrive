@@ -36,11 +36,11 @@ The user remains fully in control via ~/.agentdrive/config.yaml (DriveSettings).
 from __future__ import annotations
 
 import argparse
-from contextlib import asynccontextmanager
-from io import TextIOWrapper
 import json
 import logging
 import sys
+from contextlib import asynccontextmanager
+from io import TextIOWrapper
 from typing import Any
 
 logger = logging.getLogger("agentdrive.mcp_server")
@@ -712,6 +712,7 @@ def create_mcp_server() -> FastMCP:
         try:
             # Discover project root (supports editable src/ installs and site-packages)
             import agentdrive
+
             pkg_path = Path(agentdrive.__file__).resolve().parent
             root = pkg_path
             for _ in range(6):
@@ -727,7 +728,10 @@ def create_mcp_server() -> FastMCP:
             rel = (path or "").strip().lstrip("/")
             if not rel or ".." in rel or rel.startswith(".."):
                 return json.dumps(
-                    {"error": "Path traversal or empty path rejected (safe read only)", "swarm_id": effective_swarm}
+                    {
+                        "error": "Path traversal or empty path rejected (safe read only)",
+                        "swarm_id": effective_swarm,
+                    }
                 )
             parts = [p for p in rel.split("/") if p and p not in (".", "..")]
             full_path: Path = safe_join(base, *parts)
@@ -739,12 +743,19 @@ def create_mcp_server() -> FastMCP:
                 full_path = safe_join(ad_sub, *parts)
             if not full_path.exists() or not full_path.is_file():
                 return json.dumps(
-                    {"error": f"File not found or not readable: {rel}", "tried": str(full_path), "swarm_id": effective_swarm}
+                    {
+                        "error": f"File not found or not readable: {rel}",
+                        "tried": str(full_path),
+                        "swarm_id": effective_swarm,
+                    }
                 )
             allowed_ext = {".py", ".md", ".json", ".yaml", ".yml", ".txt", ".rst"}
             if full_path.suffix not in allowed_ext:
                 return json.dumps(
-                    {"error": f"Extension {full_path.suffix} not permitted for inhabitant source reads", "swarm_id": effective_swarm}
+                    {
+                        "error": f"Extension {full_path.suffix} not permitted for inhabitant source reads",
+                        "swarm_id": effective_swarm,
+                    }
                 )
 
             with open(full_path, "r", encoding="utf-8", errors="replace") as f:
@@ -763,7 +774,9 @@ def create_mcp_server() -> FastMCP:
                 default=str,
             )
         except PathTraversalError as pte:
-            return json.dumps({"error": f"Path safety violation: {pte}", "swarm_id": effective_swarm})
+            return json.dumps(
+                {"error": f"Path safety violation: {pte}", "swarm_id": effective_swarm}
+            )
         except Exception as exc:
             return json.dumps({"error": str(exc), "swarm_id": effective_swarm})
 
@@ -786,7 +799,6 @@ def create_mcp_server() -> FastMCP:
         """
         import time as _time
 
-
         effective_swarm = swarm_id or "stabilization-wave-20260531"
         if not program_id:
             return json.dumps({"error": "program_id required (declare or register_model_program)"})
@@ -795,7 +807,11 @@ def create_mcp_server() -> FastMCP:
         const_refs = constitution_refs or []
         user_refs = user_objective_refs or []
         if not const_refs and not user_refs:
-            return json.dumps({"error": "At least one of constitution_refs or user_objective_refs required (UserSovereigntyClause + Program Contract)"})
+            return json.dumps(
+                {
+                    "error": "At least one of constitution_refs or user_objective_refs required (UserSovereigntyClause + Program Contract)"
+                }
+            )
 
         try:
             system = _get_integrated_system(effective_swarm)
@@ -857,14 +873,17 @@ def create_mcp_server() -> FastMCP:
         """
         import time as _time
 
-
         effective_swarm = swarm_id or "stabilization-wave-20260531"
         if not program_id or not target_file or not patch_diff:
             return json.dumps({"error": "program_id, target_file, patch_diff required"})
         const_refs = constitution_refs or []
         user_refs = user_objective_refs or []
         if not const_refs and not user_refs:
-            return json.dumps({"error": "At least one of constitution_refs or user_objective_refs required (sovereignty)"})
+            return json.dumps(
+                {
+                    "error": "At least one of constitution_refs or user_objective_refs required (sovereignty)"
+                }
+            )
 
         try:
             system = _get_integrated_system(effective_swarm)
@@ -876,7 +895,9 @@ def create_mcp_server() -> FastMCP:
             approved = bool(guardian_approval_token) or force
             verdict = "APPROVED_SIM" if approved else "PENDING_REAL_GUARDIAN_REVIEW"
             if force and not guardian_approval_token:
-                verdict = "APPROVED_SIM_FORCE (audit trail only; real Guardian may still veto via fabric)"
+                verdict = (
+                    "APPROVED_SIM_FORCE (audit trail only; real Guardian may still veto via fabric)"
+                )
 
             verdict_action = {
                 "type": "guardian_verdict",
@@ -973,15 +994,25 @@ def create_mcp_server() -> FastMCP:
             system.recorder.record_parent_fabric_reasoning(
                 cycle_id=None,
                 reasoning={
-                    "fabric_elements_considered": ["program_registration", manifest.get("program_id") or manifest.get("id")],
+                    "fabric_elements_considered": [
+                        "program_registration",
+                        manifest.get("program_id") or manifest.get("id"),
+                    ],
                     "structural_pattern_matched": "External MCP client declared as first-class AD-Grid inhabitant via register_program",
                     "decision_rationale": "ExternalBridge on-ramp complete. Program now carries Program Contract binding and can emit inhabitant_code_action + fabric reasoning with full attribution.",
                     "expected_lift_signal": 0.15,
                     "program_id": result.get("program_id"),
-                    "user_objective_refs": manifest.get("user_objective_refs", ["external-mcp-inhabitant"]),
-                    "constitution_refs": manifest.get("constitution_refs", ["research-constitution-ad-grid-program-contract@stabilization-wave-20260531"]),
+                    "user_objective_refs": manifest.get(
+                        "user_objective_refs", ["external-mcp-inhabitant"]
+                    ),
+                    "constitution_refs": manifest.get(
+                        "constitution_refs",
+                        [
+                            "research-constitution-ad-grid-program-contract@stabilization-wave-20260531"
+                        ],
+                    ),
                     "via": "agentdrive_register_program (ExternalBridge high-leverage follow-up)",
-                }
+                },
             )
             return json.dumps(result, indent=2, default=str)
         except Exception as exc:
@@ -1002,13 +1033,20 @@ def create_mcp_server() -> FastMCP:
         effective_swarm = swarm_id or "stabilization-wave-20260531"
         try:
             from agentdrive.grid.engine import GridConfig, GridEngine
+
             system = _get_integrated_system(effective_swarm)
             # Pull recent fabric reasoning (list return) that mentions Council roles or the contract
             history = system.recorder.get_parent_reasoning_history(lookback=limit * 2) or []
             if isinstance(history, dict):
                 history = history.get("traces") or history.get("history") or []
             council_traces = []
-            target_roles = roles or ["perfectionist", "guardian", "external-bridge", "program-contract", "externalbridge"]
+            target_roles = roles or [
+                "perfectionist",
+                "guardian",
+                "external-bridge",
+                "program-contract",
+                "externalbridge",
+            ]
             for trace in history[: limit * 2]:
                 text = str(trace).lower()
                 if any(r in text for r in target_roles):
@@ -1024,7 +1062,9 @@ def create_mcp_server() -> FastMCP:
             ]
             for elem in council_elems:
                 try:
-                    ts = system.recorder.get_fabric_reasoning_traces_for_element(element=elem, lookback=max(3, limit // 4))
+                    ts = system.recorder.get_fabric_reasoning_traces_for_element(
+                        element=elem, lookback=max(3, limit // 4)
+                    )
                     targeted.extend(ts or [])
                 except Exception:
                     pass
@@ -1037,14 +1077,29 @@ def create_mcp_server() -> FastMCP:
                 grid_health = {}
                 programs = []
             recent_activity = (council_traces + targeted)[:limit]
-            return json.dumps({
-                "swarm_id": effective_swarm,
-                "roles_requested": roles,
-                "recent_council_activity": recent_activity,
-                "grid_health_snapshot": {k: grid_health.get(k) for k in ("active_programs", "registered_programs", "active_research_threads", "status") if k in grid_health},
-                "active_programs_sample": [p.get("program_id") for p in programs[:5] if isinstance(p, dict)],
-                "note": "Queries via parent_fabric_reasoning + targeted get_fabric_reasoning_traces_for_element on Council constitutions + Program Contract + Grid health. Full traces via experience_graph_get_parent_reasoning_history or get_reasoning_traces_for_element. gbrain scores included in traces.",
-            }, indent=2, default=str)
+            return json.dumps(
+                {
+                    "swarm_id": effective_swarm,
+                    "roles_requested": roles,
+                    "recent_council_activity": recent_activity,
+                    "grid_health_snapshot": {
+                        k: grid_health.get(k)
+                        for k in (
+                            "active_programs",
+                            "registered_programs",
+                            "active_research_threads",
+                            "status",
+                        )
+                        if k in grid_health
+                    },
+                    "active_programs_sample": [
+                        p.get("program_id") for p in programs[:5] if isinstance(p, dict)
+                    ],
+                    "note": "Queries via parent_fabric_reasoning + targeted get_fabric_reasoning_traces_for_element on Council constitutions + Program Contract + Grid health. Full traces via experience_graph_get_parent_reasoning_history or get_reasoning_traces_for_element. gbrain scores included in traces.",
+                },
+                indent=2,
+                default=str,
+            )
         except Exception as exc:
             return json.dumps({"error": str(exc), "swarm_id": effective_swarm})
 
@@ -1106,7 +1161,9 @@ def create_mcp_server() -> FastMCP:
         }
 
         for op in OPERATIONS:
-            if (op.read_only and not include_read_only) or (not op.read_only and not include_mutating):
+            if (op.read_only and not include_read_only) or (
+                not op.read_only and not include_mutating
+            ):
                 continue
             cat = catalog["categories"].setdefault(op.category, {"tools": []})
             entry: dict[str, Any] = {
@@ -1142,6 +1199,7 @@ def create_mcp_server() -> FastMCP:
         # snippet for their Claude Desktop, Cursor, Continue, etc.
         try:
             from agentdrive.adapters import mcp_config as _mcp_cfg
+
             clone_info = _mcp_cfg.get_clone_aware_client_config("generic")
             catalog["clone_dev_setup_for_claude_cursor_codex_and_others"] = {
                 "purpose": "Ready-to-use guidance when the user cloned AgentDrive instead of a global install.",
@@ -1176,6 +1234,7 @@ def create_mcp_server() -> FastMCP:
         """
         try:
             from agentdrive.adapters import mcp_config as _mcp_cfg
+
             c = (client or "generic").lower()
             if c in ("codex", "continue"):
                 c = "generic"

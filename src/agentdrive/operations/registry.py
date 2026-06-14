@@ -54,9 +54,7 @@ def _dry_plan(operation: str, **plan: Any) -> dict[str, Any]:
 
 def _handler_think(**kwargs: Any) -> dict[str, Any]:
     question = str(
-        kwargs.get("question")
-        or kwargs.get("text")
-        or "What should I know about this AgentDrive?"
+        kwargs.get("question") or kwargs.get("text") or "What should I know about this AgentDrive?"
     )
     dry_run = bool(kwargs.get("dry_run", False))
     if dry_run:
@@ -109,13 +107,17 @@ def _handler_pool_query(**kwargs: Any) -> dict[str, Any]:
 
 
 def _handler_pool_status(**kwargs: Any) -> dict[str, Any]:
+    dry_run = bool(kwargs.get("dry_run", False))
+    if dry_run:
+        return _success(operation="pool_status", dry_run=True, stats={})
+
     from agentdrive.drive.drive import get_default_drive
 
     pool = get_default_drive()
     stats = pool.get_pool_stats()
     return _success(
         operation="pool_status",
-        dry_run=bool(kwargs.get("dry_run", False)),
+        dry_run=False,
         stats=stats,
     )
 
@@ -177,8 +179,8 @@ def _handler_reconcile_scan(**kwargs: Any) -> dict[str, Any]:
         return _dry_plan("reconcile_scan", would_scan=True)
 
     from agentdrive.drive.drive import get_default_drive
-    from agentdrive.registry import GenomeRegistry
     from agentdrive.reconciliation import ReconciliationRunner
+    from agentdrive.registry import GenomeRegistry
 
     pool = get_default_drive()
     registry = pool.registry if hasattr(pool, "registry") else GenomeRegistry()
@@ -338,7 +340,12 @@ def _handler_patterns_list(**kwargs: Any) -> dict[str, Any]:
         }
         for p in patterns
     ]
-    return _success(operation="patterns_list", dry_run=bool(kwargs.get("dry_run", False)), patterns=rows, count=len(rows))
+    return _success(
+        operation="patterns_list",
+        dry_run=bool(kwargs.get("dry_run", False)),
+        patterns=rows,
+        count=len(rows),
+    )
 
 
 def _handler_patterns_show(**kwargs: Any) -> dict[str, Any]:
@@ -351,7 +358,11 @@ def _handler_patterns_show(**kwargs: Any) -> dict[str, Any]:
     try:
         record = get_pattern(str(name))
     except PatternNotFoundError:
-        return {"success": False, "error": f"pattern not found: {name}", "operation": "patterns_show"}
+        return {
+            "success": False,
+            "error": f"pattern not found: {name}",
+            "operation": "patterns_show",
+        }
 
     manifest = record.manifest
     return _success(
@@ -370,7 +381,11 @@ def _handler_patterns_apply(**kwargs: Any) -> dict[str, Any]:
     name = kwargs.get("pattern_name") or kwargs.get("name") or kwargs.get("text")
     input_text = str(kwargs.get("input") or kwargs.get("input_text") or "")
     if not name:
-        return {"success": False, "error": "pattern_name is required", "operation": "patterns_apply"}
+        return {
+            "success": False,
+            "error": "pattern_name is required",
+            "operation": "patterns_apply",
+        }
     if bool(kwargs.get("dry_run", False)):
         return _dry_plan("patterns_apply", pattern_name=str(name), input_preview=input_text[:200])
 
@@ -379,7 +394,11 @@ def _handler_patterns_apply(**kwargs: Any) -> dict[str, Any]:
     try:
         prompt = apply_pattern(str(name), input_text)
     except PatternNotFoundError:
-        return {"success": False, "error": f"pattern not found: {name}", "operation": "patterns_apply"}
+        return {
+            "success": False,
+            "error": f"pattern not found: {name}",
+            "operation": "patterns_apply",
+        }
     return _success(operation="patterns_apply", pattern_name=str(name), prompt=prompt)
 
 
@@ -409,7 +428,9 @@ def _handler_patterns_import_fabric(**kwargs: Any) -> dict[str, Any]:
     fabric_root = resolve_fabric_root(source)
     dest_root = get_agentdrive_home() / "patterns"
     if pattern_name:
-        imported = [import_fabric_pattern(fabric_root, str(pattern_name), dest_root, overwrite=overwrite)]
+        imported = [
+            import_fabric_pattern(fabric_root, str(pattern_name), dest_root, overwrite=overwrite)
+        ]
     else:
         imported = import_fabric_corpus(fabric_root, limit=limit, overwrite=overwrite)
     return _success(
@@ -428,7 +449,9 @@ def _handler_dream_run(**kwargs: Any) -> dict[str, Any]:
 
     from agentdrive.dreaming.cycle import run_dream_cycle
 
-    results = run_dream_cycle(dry_run=dry_run, ack_phases=ack_phases or None, acquire_lock=not dry_run)
+    results = run_dream_cycle(
+        dry_run=dry_run, ack_phases=ack_phases or None, acquire_lock=not dry_run
+    )
     return _success(
         operation="dream_run",
         dry_run=dry_run,
@@ -449,7 +472,9 @@ def _handler_dream_status(**kwargs: Any) -> dict[str, Any]:
     from agentdrive.dreaming.cycle import get_dream_cycle_status
 
     status = get_dream_cycle_status()
-    return _success(operation="dream_status", dry_run=bool(kwargs.get("dry_run", False)), status=status)
+    return _success(
+        operation="dream_status", dry_run=bool(kwargs.get("dry_run", False)), status=status
+    )
 
 
 def _handler_cap_mint_mission(**kwargs: Any) -> dict[str, Any]:
@@ -495,7 +520,9 @@ def _handler_experience_graph_context_pack(**kwargs: Any) -> dict[str, Any]:
         lookback_days=lookback_days,
         max_tokens=max_tokens,
     )
-    return _success(operation="experience_graph_context_pack", swarm_id=effective, context_pack=pack)
+    return _success(
+        operation="experience_graph_context_pack", swarm_id=effective, context_pack=pack
+    )
 
 
 def _handler_experience_graph_record_reasoning(**kwargs: Any) -> dict[str, Any]:
@@ -507,7 +534,9 @@ def _handler_experience_graph_record_reasoning(**kwargs: Any) -> dict[str, Any]:
 
     if reasoning is None:
         reasoning = {
-            "summary": str(kwargs.get("summary") or kwargs.get("text") or "ops-registry dry reasoning"),
+            "summary": str(
+                kwargs.get("summary") or kwargs.get("text") or "ops-registry dry reasoning"
+            ),
             "elements": list(kwargs.get("elements") or []),
         }
     if not isinstance(reasoning, dict):
@@ -555,7 +584,9 @@ def _handler_learnings_log(**kwargs: Any) -> dict[str, Any]:
     entry = {
         "type": str(kwargs.get("type", "pattern")),
         "key": str(kwargs.get("key") or "ops-registry-entry"),
-        "insight": str(kwargs.get("insight") or kwargs.get("text") or "ops registry learning entry"),
+        "insight": str(
+            kwargs.get("insight") or kwargs.get("text") or "ops registry learning entry"
+        ),
         "confidence": int(kwargs.get("confidence", 5)),
         "source": str(kwargs.get("source", "observed")),
         "skill": str(kwargs.get("skill", "harness")),
@@ -586,7 +617,9 @@ def _handler_learnings_list(**kwargs: Any) -> dict[str, Any]:
 def _handler_harness_compose(**kwargs: Any) -> dict[str, Any]:
     from agentdrive.harness import Harness
 
-    base_prompt = str(kwargs.get("base_prompt") or kwargs.get("prompt") or "You are an AgentDrive agent.")
+    base_prompt = str(
+        kwargs.get("base_prompt") or kwargs.get("prompt") or "You are an AgentDrive agent."
+    )
     task = str(kwargs.get("task") or kwargs.get("text") or "")
     dry_run = bool(kwargs.get("dry_run", False))
     agent_id = str(kwargs.get("agent_id", "ops-registry"))
@@ -632,7 +665,10 @@ OPERATIONS: list[OperationSpec] = [
         read_only=True,
         cli_command="agentdrive think",
         when_to_use="Use for any non-trivial question where you need fused evidence from the pool + Experience Graph + honest gap reporting. Always call with prefer_experience_layer=True unless you explicitly want pure LLM mode.",
-        examples=["think(question='How should I structure long-horizon agent memory?')", "think with dry_run first to plan"],
+        examples=[
+            "think(question='How should I structure long-horizon agent memory?')",
+            "think with dry_run first to plan",
+        ],
         mcp_tool="agentdrive_think",
     ),
     OperationSpec(
@@ -815,7 +851,9 @@ OPERATIONS: list[OperationSpec] = [
         cli_command="agentdrive learnings log",
         mcp_tool="agentdrive_learnings_log",
         when_to_use="Call after any non-trivial task (success or failure). The entries become queryable by future think / retrieval and improve the model's own long-term performance on this user's problems.",
-        examples=["learnings_log(task='debugged MCP tool schema', outcome={'quality': 0.85, 'key_observation': '...'})"],
+        examples=[
+            "learnings_log(task='debugged MCP tool schema', outcome={'quality': 0.85, 'key_observation': '...'})"
+        ],
     ),
     OperationSpec(
         name="learnings_list",

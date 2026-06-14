@@ -42,12 +42,7 @@ def session_events_path(agent_id: str, session_id: str) -> Path:
     safe_agent = safe_name(agent_id)
     safe_session = safe_name(session_id)
     return (
-        get_agentdrive_home()
-        / "agents"
-        / safe_agent
-        / "sessions"
-        / safe_session
-        / "events.jsonl"
+        get_agentdrive_home() / "agents" / safe_agent / "sessions" / safe_session / "events.jsonl"
     )
 
 

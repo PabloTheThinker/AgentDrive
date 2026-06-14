@@ -161,7 +161,9 @@ def assimilate_inherited_skills(
         if review.recommendation == "prune" and prune:
             try:
                 path = prune_inherited_skill(review.name, reason=review.reason)
-                pruned.append({"skill_name": review.name, "path": str(path), "reason": review.reason})
+                pruned.append(
+                    {"skill_name": review.name, "path": str(path), "reason": review.reason}
+                )
             except Exception as exc:
                 errors.append({"skill_name": review.name, "action": "prune", "error": str(exc)})
             continue
@@ -447,11 +449,7 @@ def _read_skill_doc(path: Path) -> tuple[dict[str, Any], str]:
 
 def _write_skill_doc(path: Path, meta: dict[str, Any], body: str) -> None:
     path.write_text(
-        "---\n"
-        + yaml.safe_dump(meta, sort_keys=False).strip()
-        + "\n---\n\n"
-        + body.strip()
-        + "\n",
+        "---\n" + yaml.safe_dump(meta, sort_keys=False).strip() + "\n---\n\n" + body.strip() + "\n",
         encoding="utf-8",
     )
 

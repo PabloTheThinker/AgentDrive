@@ -106,7 +106,7 @@ def cmd_think(args: argparse.Namespace) -> int:
     """Cited Drive.think synthesis with mandatory gap analysis."""
     question = getattr(args, "question", None) or ""
     if not question.strip():
-        console.print("[red]Usage: agentdrive think \"your question\"[/]")
+        console.print('[red]Usage: agentdrive think "your question"[/]')
         return 1
     kwargs: dict[str, Any] = {
         "question": question.strip(),
@@ -124,9 +124,7 @@ def cmd_learnings(args: argparse.Namespace) -> int:
     if sub == "log":
         insight = getattr(args, "insight", None) or ""
         if not insight.strip():
-            console.print(
-                "[red]Usage: agentdrive learnings log --key <key> --insight \"...\"[/]"
-            )
+            console.print('[red]Usage: agentdrive learnings log --key <key> --insight "..."[/]')
             return 1
         kwargs: dict[str, Any] = {
             "key": getattr(args, "key", None) or "cli-entry",
@@ -236,9 +234,7 @@ def cmd_harness(args: argparse.Namespace) -> int:
         kwargs["dry_run"] = True
 
     if not kwargs.get("task") and not kwargs.get("base_prompt") and sys.stdin.isatty():
-        console.print(
-            "[red]Usage: agentdrive harness compose --task \"...\" [--pattern NAME][/]"
-        )
+        console.print('[red]Usage: agentdrive harness compose --task "..." [--pattern NAME][/]')
         return 1
 
     return _run_op("harness_compose", kwargs, json_output=getattr(args, "json_output", False))
@@ -301,7 +297,7 @@ def cmd_graph(args: argparse.Namespace) -> int:
             }
         else:
             console.print(
-                "[red]Usage: agentdrive graph record --summary \"...\" "
+                '[red]Usage: agentdrive graph record --summary "..." '
                 "or --reasoning-file path.json[/]"
             )
             return 1
@@ -466,7 +462,9 @@ def cmd_session(args: argparse.Namespace) -> int:
         if not path.exists():
             console.print(f"[yellow]No events file at[/] {path}")
             return 1
-        filter_note = f" · filter {type_filter} ({len(filtered)}/{len(events)})" if type_filter else ""
+        filter_note = (
+            f" · filter {type_filter} ({len(filtered)}/{len(events)})" if type_filter else ""
+        )
         console.print(f"[dim]{format_type_histogram(counts)}[/]{filter_note}\n")
         for ev in filtered:
             console.print(format_event_summary(ev))
@@ -491,7 +489,9 @@ def cmd_session(args: argparse.Namespace) -> int:
         if not path.exists():
             console.print(f"[yellow]No events file at[/] {path}")
             return 1
-        filter_note = f" · filter {type_filter} ({len(filtered)}/{len(events)})" if type_filter else ""
+        filter_note = (
+            f" · filter {type_filter} ({len(filtered)}/{len(events)})" if type_filter else ""
+        )
         console.print(
             f"[bold]Session replay[/] · agent={agent_id} · session={resolved}{filter_note}"
         )
@@ -577,7 +577,9 @@ def cmd_skills(args: argparse.Namespace) -> int:
             console.print(f"[dim]No skills for harness={harness_filter}[/]")
             return 0
         if not entries:
-            console.print("[dim]No skills found. Add SKILL.md under ~/.agentdrive/skills/<name>/[/]")
+            console.print(
+                "[dim]No skills found. Add SKILL.md under ~/.agentdrive/skills/<name>/[/]"
+            )
             return 0
         if harness_filter:
             table = Table(title=f"Skills · {harness_filter} ({len(entries)})", show_header=True)
@@ -598,7 +600,9 @@ def cmd_skills(args: argparse.Namespace) -> int:
             "codex": "Codex harness",
         }
         total = sum(len(v) for v in tiers.values())
-        console.print(f"[bold]Skills bench[/] · {total} total · tiers 1–4 work on MCP with any model\n")
+        console.print(
+            f"[bold]Skills bench[/] · {total} total · tiers 1–4 work on MCP with any model\n"
+        )
         for tier, label in tier_labels.items():
             group = tiers.get(tier, [])
             if not group:

@@ -6,7 +6,6 @@ from agentdrive.events import (
     SubagentDone,
     SubagentSpawn,
     SubagentTool,
-    default_bus,
     emit,
 )
 from agentdrive.tui.swarm_lane import SwarmActivityLane

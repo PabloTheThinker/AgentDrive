@@ -12,11 +12,7 @@ from agentdrive.operations.registry import export_operations_json, run_operation
 
 @pytest.fixture
 def mcp_server():
-    mcp = pytest.importorskip("mcp")
-    try:
-        from mcp.server.fastmcp import FastMCP
-    except ImportError:
-        pytest.skip("mcp package not installed")
+    pytest.importorskip("mcp.server.fastmcp")
     from agentdrive.adapters.mcp_server import create_mcp_server
 
     return create_mcp_server()
@@ -48,9 +44,9 @@ def test_auto_registered_doctor_dry_run_via_run_operation(isolated_agentdrive_ho
 
 
 def test_register_skips_existing_names() -> None:
-    from mcp.server.fastmcp import FastMCP
+    fastmcp = pytest.importorskip("mcp.server.fastmcp")
 
-    server = FastMCP("test-skip")
+    server = fastmcp.FastMCP("test-skip")
     server.add_tool(lambda: "ok", name="agentdrive_doctor", description="manual")
     before = set(server._tool_manager._tools.keys())  # noqa: SLF001
     registered = register_operations_as_mcp_tools(server, skip_names=before)

@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from agentdrive.constants import get_default_drive_path, get_genomes_dir
 from agentdrive.drive.bootstrap import (
     _migrate_legacy_personal_genomes,

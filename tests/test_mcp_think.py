@@ -85,9 +85,7 @@ def test_ensure_mandatory_gaps_injects_when_empty():
 
 def test_ensure_mandatory_gaps_preserves_existing_gaps():
     question = "How do we handle secret rotation?"
-    payload = _sample_result(
-        gaps=[Gap("Existing honest gap", "low", "noop")]
-    ).to_mcp_dict()
+    payload = _sample_result(gaps=[Gap("Existing honest gap", "low", "noop")]).to_mcp_dict()
 
     enriched = _ensure_mandatory_gaps(payload, question)
 

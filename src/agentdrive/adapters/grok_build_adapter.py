@@ -294,9 +294,7 @@ class GrokBuildAgentDriveAdapter(AgentDriveAdapterBase):
                 spawn_label_from_kwargs,
             )
 
-            parent_id = (
-                current_sub or os.environ.get("AGENTDRIVE_SUBAGENT_ID") or "orchestrator"
-            )
+            parent_id = current_sub or os.environ.get("AGENTDRIVE_SUBAGENT_ID") or "orchestrator"
             label = spawn_label_from_kwargs(kwargs, args, subagent_id)
             spawned_at = _time.monotonic()
             spawn_ok = True

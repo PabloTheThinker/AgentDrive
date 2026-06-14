@@ -26,7 +26,6 @@ from typing import Any
 
 from agentdrive.agent.session import AgentSession, Turn
 from agentdrive.agent.turn_telemetry import ChatTurnTelemetry
-from agentdrive.session_events import SessionEventRecorder
 from agentdrive.events import (
     MessageComplete,
     MessageDelta,
@@ -36,6 +35,7 @@ from agentdrive.events import (
 from agentdrive.harness.harness import Harness
 from agentdrive.providers.base import load_config_provider
 from agentdrive.providers.llm import AgentDriveLLM
+from agentdrive.session_events import SessionEventRecorder
 
 logger = logging.getLogger(__name__)
 

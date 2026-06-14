@@ -29,9 +29,9 @@ from agentdrive.events import (
 )
 from agentdrive.genome.models import Genome, GenomeManifest
 from agentdrive.inheritance import (
-    InheritedSkillCandidate,
     InheritanceManifest,
     InheritanceResult,
+    InheritedSkillCandidate,
     extract_skill_candidates_from_result,
     list_manifests,
     load_manifest,
@@ -303,9 +303,10 @@ def test_external_inherited_skills_are_not_installed_without_review(
 
     assert result.skills_absorbed == []
     assert result.skills_rejected == ["peer-dangerous-playbook"]
-    assert "external inherited skills require review" in result.reason_per_rejected[
-        "skill:peer-dangerous-playbook"
-    ]
+    assert (
+        "external inherited skills require review"
+        in result.reason_per_rejected["skill:peer-dangerous-playbook"]
+    )
     assert get_skill("peer-dangerous-playbook") is None
 
 
@@ -328,9 +329,9 @@ def test_oversized_inherited_skills_are_rejected(
 
     assert result.skills_absorbed == []
     assert result.skills_rejected == ["too-large-playbook"]
-    assert "Inherited skill body must be <=" in result.reason_per_rejected[
-        "skill:too-large-playbook"
-    ]
+    assert (
+        "Inherited skill body must be <=" in result.reason_per_rejected["skill:too-large-playbook"]
+    )
     assert get_skill("too-large-playbook") is None
 
 

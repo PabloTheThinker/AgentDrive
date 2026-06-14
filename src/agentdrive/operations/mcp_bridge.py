@@ -31,7 +31,9 @@ def _rich_doc_for_op(op: "OperationSpec") -> str:
     if op.read_only:
         lines.append("Safe for frequent / exploratory calls. No side effects on the Drive.")
     else:
-        lines.append("Mutating operation — use with care and prefer dry_run=True first when available.")
+        lines.append(
+            "Mutating operation — use with care and prefer dry_run=True first when available."
+        )
 
     if getattr(op, "when_to_use", None):
         lines.append(f"\nWhen to use: {op.when_to_use}")

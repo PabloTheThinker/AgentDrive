@@ -214,20 +214,15 @@ def _normalize_skill_name(name: str) -> str:
 
 def _validate_inherited_skill(slug: str, description: str, body: str) -> None:
     if len(slug) > _MAX_INHERITED_SKILL_NAME_CHARS:
-        raise ValueError(
-            f"Inherited skill name must be <= {_MAX_INHERITED_SKILL_NAME_CHARS} chars"
-        )
+        raise ValueError(f"Inherited skill name must be <= {_MAX_INHERITED_SKILL_NAME_CHARS} chars")
     if len(description) > _MAX_INHERITED_SKILL_DESCRIPTION_CHARS:
         raise ValueError(
-            "Inherited skill description must be <= "
-            f"{_MAX_INHERITED_SKILL_DESCRIPTION_CHARS} chars"
+            f"Inherited skill description must be <= {_MAX_INHERITED_SKILL_DESCRIPTION_CHARS} chars"
         )
     if not body.strip():
         raise ValueError("Inherited skill body cannot be empty")
     if len(body) > _MAX_INHERITED_SKILL_BODY_CHARS:
-        raise ValueError(
-            f"Inherited skill body must be <= {_MAX_INHERITED_SKILL_BODY_CHARS} chars"
-        )
+        raise ValueError(f"Inherited skill body must be <= {_MAX_INHERITED_SKILL_BODY_CHARS} chars")
 
 
 def install_inherited_skill(
@@ -281,11 +276,7 @@ def install_inherited_skill(
 
     skill_dir.mkdir(parents=True, exist_ok=True)
     skill_md.write_text(
-        "---\n"
-        + yaml.safe_dump(meta, sort_keys=False).strip()
-        + "\n---\n\n"
-        + skill_body
-        + "\n",
+        "---\n" + yaml.safe_dump(meta, sort_keys=False).strip() + "\n---\n\n" + skill_body + "\n",
         encoding="utf-8",
     )
     return skill_md

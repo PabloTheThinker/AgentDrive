@@ -94,7 +94,9 @@ class MissionControlHub:
     def __init__(self):
         self.active_connections: list[WebSocket] = []
         self._current_mission = None  # Will hold reference to IntegratedRealTimeEvolutionSystem
-        self._current_grid: Any = None  # AD-Grid persistent GridEngine attach (survives mission end)
+        self._current_grid: Any = (
+            None  # AD-Grid persistent GridEngine attach (survives mission end)
+        )
         # Bounded recent events (now full sendable payloads incl. seq) for smoke / replay / debugging.
         # Populated from ALL publish paths (the only way data flows core -> MC).
         self.recent_events: list[dict[str, Any]] = []
@@ -202,7 +204,9 @@ class MissionControlHub:
 
     @property
     def grid(self):
-        return self._current_grid or (getattr(self._current_mission, "grid", None) if self._current_mission else None)
+        return self._current_grid or (
+            getattr(self._current_mission, "grid", None) if self._current_mission else None
+        )
 
     # ------------------------------------------------------------------
     # Command router (inbound from UI / smoke). Commands are the return path.
@@ -360,9 +364,15 @@ class MissionControlHub:
                         "from_fabric", kwargs.get("triggered_from_fabric", True)
                     )
                 actions_taken = kwargs.get("actions_taken", ["mission_control_command"])
-                fabric_reasoning = kwargs.get("fabric_reasoning") or kwargs.get("structural_fabric_reasoning")
+                fabric_reasoning = kwargs.get("fabric_reasoning") or kwargs.get(
+                    "structural_fabric_reasoning"
+                )
                 fn = getattr(mission, "record_parent_decision", None)
-                result = fn(cid, decision, actions_taken, fabric_reasoning=fabric_reasoning) if callable(fn) else None
+                result = (
+                    fn(cid, decision, actions_taken, fabric_reasoning=fabric_reasoning)
+                    if callable(fn)
+                    else None
+                )
                 return {
                     "command": command,
                     "result": result,
@@ -654,10 +664,27 @@ class MissionControlHub:
             # DNA via recorder (if attached) + emits ParentDecisionEvent (visible in Tower fabric/decision timeline).
             # Full attribution: ilo-conductor-cockpit program + Program Contract + Guardian + 1780296458.
             # Called from UI buttons in Code Action Review Queue; produces living DNA for the self-referential loop.
-            elif command in ("review_code_action", "approve_code_action", "override_code_action", "review_inhabitant_code_action"):
-                slug = kwargs.get("code_action_slug") or kwargs.get("slug") or kwargs.get("target_slug")
-                verdict = kwargs.get("verdict", "approved_by_conductor" if "approve" in command.lower() else "overridden_by_conductor")
-                conductor_sig = kwargs.get("conductor_signature", "ilo-conductor-cockpit@stabilization-wave-20260531 + Contract + 1780296458")
+            elif command in (
+                "review_code_action",
+                "approve_code_action",
+                "override_code_action",
+                "review_inhabitant_code_action",
+            ):
+                slug = (
+                    kwargs.get("code_action_slug")
+                    or kwargs.get("slug")
+                    or kwargs.get("target_slug")
+                )
+                verdict = kwargs.get(
+                    "verdict",
+                    "approved_by_conductor"
+                    if "approve" in command.lower()
+                    else "overridden_by_conductor",
+                )
+                conductor_sig = kwargs.get(
+                    "conductor_signature",
+                    "ilo-conductor-cockpit@stabilization-wave-20260531 + Contract + 1780296458",
+                )
                 note = kwargs.get("note", f"Conductor Cockpit review: {verdict} on {slug}")
                 result = {"status": "review_ack", "slug": slug, "verdict": verdict, "note": note}
                 try:
@@ -697,7 +724,11 @@ class MissionControlHub:
                                     "research-constitution-ad-grid-program-contract@stabilization-wave-20260531",
                                     "research-constitution-guardian-integrity@stabilization-wave-20260531",
                                 ],
-                                user_objective_refs=["conductor-cockpit-steering", "1780296458", "code-action-review"],
+                                user_objective_refs=[
+                                    "conductor-cockpit-steering",
+                                    "1780296458",
+                                    "code-action-review",
+                                ],
                             )
                             result["verdict_dna_slug"] = vslug
                             result["dna_recorded"] = True
@@ -716,7 +747,9 @@ class MissionControlHub:
             elif command in ("get_council_activity", "council_activity"):
                 return {
                     "command": command,
-                    "result": {"note": "Full data via REST GET /api/grid/council-activity (uses get_council_activity fabric pattern)"},
+                    "result": {
+                        "note": "Full data via REST GET /api/grid/council-activity (uses get_council_activity fabric pattern)"
+                    },
                     "timestamp": time.time(),
                     "surface": "local_operator_only",
                 }
@@ -852,7 +885,9 @@ class MissionControlHub:
                         else None,
                     }
             # Always merge grid_health when Grid is attached (persistent AD-Grid observability)
-            gh = self._safe_grid_health(grid or (mission.grid if mission and hasattr(mission, "grid") else None))
+            gh = self._safe_grid_health(
+                grid or (mission.grid if mission and hasattr(mission, "grid") else None)
+            )
             base["grid_health"] = gh
             base["status"] = "ok" if (mission or grid) else "no_mission_attached"
             return base
@@ -880,8 +915,12 @@ class MissionControlHub:
         if mission is None:
             return {"status": "no_mission_attached"}
         try:
-            if hasattr(mission, "recorder") and hasattr(mission.recorder, "get_parent_facing_memory_fabric_briefing"):
-                briefing = mission.recorder.get_parent_facing_memory_fabric_briefing(lookback_days=7)
+            if hasattr(mission, "recorder") and hasattr(
+                mission.recorder, "get_parent_facing_memory_fabric_briefing"
+            ):
+                briefing = mission.recorder.get_parent_facing_memory_fabric_briefing(
+                    lookback_days=7
+                )
                 # Also surface quick recent cycle graphs if the recorder supports it
                 recent_graphs = []
                 try:
@@ -989,7 +1028,9 @@ def create_mission_control_app() -> FastAPI:
             "grid_health": grid_health,
             "recent_event_count": len(hub.recent_events),
             # Tight experience layer snapshot for the UI on initial load (reuses the rich derive that already calls recorder briefing when attached)
-            "experience_fabric": hub.derive_fabric_snapshot() if hasattr(hub, "derive_fabric_snapshot") else (fabric_snap if isinstance(fabric_snap, dict) else {}),
+            "experience_fabric": hub.derive_fabric_snapshot()
+            if hasattr(hub, "derive_fabric_snapshot")
+            else (fabric_snap if isinstance(fabric_snap, dict) else {}),
         }
 
     # === AgentDrive-native Mission Kanban Board API ===
@@ -1022,10 +1063,26 @@ def create_mission_control_app() -> FastAPI:
             return {"status": "no_experience_layer_attached"}
         try:
             recorder = mission.recorder
-            briefing = recorder.get_parent_facing_memory_fabric_briefing(lookback_days=7) if hasattr(recorder, "get_parent_facing_memory_fabric_briefing") else {}
-            recent = recorder.get_recent_loop_graphs(limit=4) if hasattr(recorder, "get_recent_loop_graphs") else []
-            weak = recorder.find_weak_across_recent_cycles(min_coherence=0.65, lookback=5) if hasattr(recorder, "find_weak_across_recent_cycles") else []
-            traces = recorder.get_recent_parent_fabric_reasoning_traces_for_panel(limit=5) if hasattr(recorder, "get_recent_parent_fabric_reasoning_traces") else []
+            briefing = (
+                recorder.get_parent_facing_memory_fabric_briefing(lookback_days=7)
+                if hasattr(recorder, "get_parent_facing_memory_fabric_briefing")
+                else {}
+            )
+            recent = (
+                recorder.get_recent_loop_graphs(limit=4)
+                if hasattr(recorder, "get_recent_loop_graphs")
+                else []
+            )
+            weak = (
+                recorder.find_weak_across_recent_cycles(min_coherence=0.65, lookback=5)
+                if hasattr(recorder, "find_weak_across_recent_cycles")
+                else []
+            )
+            traces = (
+                recorder.get_recent_parent_fabric_reasoning_traces_for_panel(limit=5)
+                if hasattr(recorder, "get_recent_parent_fabric_reasoning_traces")
+                else []
+            )
             return {
                 "briefing": briefing,
                 "recent_cycle_graphs": recent,
@@ -1054,7 +1111,9 @@ def create_mission_control_app() -> FastAPI:
             if not to:
                 return {"ok": False, "error": "missing 'to' status"}
             try:
-                to_status = __import__('agentdrive.board.mission_board', fromlist=['MissionStatus']).MissionStatus(to)
+                to_status = __import__(
+                    "agentdrive.board.mission_board", fromlist=["MissionStatus"]
+                ).MissionStatus(to)
             except Exception:
                 return {"ok": False, "error": f"invalid status '{to}'"}
             outcome = payload.get("outcome")
@@ -1079,9 +1138,7 @@ def create_mission_control_app() -> FastAPI:
 
         status = get_dream_cycle_status()
         recent = [
-            e
-            for e in hub.recent_events[-30:]
-            if getattr(e, "event_type", "") == "dream_phase"
+            e for e in hub.recent_events[-30:] if getattr(e, "event_type", "") == "dream_phase"
         ]
         status["recent_phase_events"] = [
             {
@@ -1110,7 +1167,11 @@ def create_mission_control_app() -> FastAPI:
                 h = dict(g._grid_health)
             else:
                 h = {"status": "attached"}
-            h["mode"] = "living" if h.get("active_research_threads", 0) or h.get("active_programs", 0) else "quiet"
+            h["mode"] = (
+                "living"
+                if h.get("active_research_threads", 0) or h.get("active_programs", 0)
+                else "quiet"
+            )
             return h
         except Exception as e:
             return {"status": "error", "error": str(e)[:120], "mode": "quiet"}
@@ -1135,12 +1196,22 @@ def create_mission_control_app() -> FastAPI:
         """Light status for quiet-mode banners and adaptive polling decisions in Tower."""
         g = hub.grid
         if g is None:
-            return {"attached": False, "mode": "no_grid", "recommendation": "start GridEngine for persistent AD-Grid view"}
+            return {
+                "attached": False,
+                "mode": "no_grid",
+                "recommendation": "start GridEngine for persistent AD-Grid view",
+            }
         try:
-            h = g.get_grid_health() if hasattr(g, "get_grid_health") else getattr(g, "_grid_health", {})
+            h = (
+                g.get_grid_health()
+                if hasattr(g, "get_grid_health")
+                else getattr(g, "_grid_health", {})
+            )
             return {
                 "attached": True,
-                "mode": "quiet" if not (h.get("active_research_threads") or h.get("active_programs")) else "active",
+                "mode": "quiet"
+                if not (h.get("active_research_threads") or h.get("active_programs"))
+                else "active",
                 "fabric_coherence_last": h.get("fabric_coherence_last", 0.0),
                 "active_programs": h.get("active_programs", 0),
                 "active_research_threads": h.get("active_research_threads", 0),
@@ -1178,15 +1249,30 @@ def create_mission_control_app() -> FastAPI:
         enriched = []
         for p in programs:
             pp = dict(p) if isinstance(p, dict) else {"raw": str(p)[:200]}
-            pp["status"] = "registered_inhabitant" if pp.get("program_id") else "manifest_incomplete"
-            pp["attribution"] = "GridEngine.register_model_program + ad-grid-program-contract@stabilization-wave-20260531"
+            pp["status"] = (
+                "registered_inhabitant" if pp.get("program_id") else "manifest_incomplete"
+            )
+            pp["attribution"] = (
+                "GridEngine.register_model_program + ad-grid-program-contract@stabilization-wave-20260531"
+            )
             pp["cockpit_note"] = "visible to Conductor for steering / override"
             enriched.append(pp)
         return {
             "inhabitants": enriched,
             "count": len(enriched),
-            "health_snapshot": {k: health.get(k) for k in ("active_programs", "active_research_threads", "status", "fabric_coherence_last") if k in health},
-            "council_threads": health.get("active_research_threads", health.get("research_threads", 3)),
+            "health_snapshot": {
+                k: health.get(k)
+                for k in (
+                    "active_programs",
+                    "active_research_threads",
+                    "status",
+                    "fabric_coherence_last",
+                )
+                if k in health
+            },
+            "council_threads": health.get(
+                "active_research_threads", health.get("research_threads", 3)
+            ),
             "mode": "living" if enriched or health.get("active_research_threads") else "quiet",
             "note": "Inhabitant Registrations & Status — from register_model_program DNA. Self-referential; all actions carry full attribution.",
             "generated_at": time.time(),
@@ -1200,7 +1286,13 @@ def create_mission_control_app() -> FastAPI:
         get_fabric_reasoning_traces_for_element on the three Council constitutions + Program Contract).
         Falls back to recent_events + grid health. Real-time via Tower polling + WS fabric events.
         """
-        effective_roles = [r.strip().lower() for r in (roles or "").split(",") if r.strip()] or ["perfectionist", "guardian", "external", "program-contract", "externalbridge"]
+        effective_roles = [r.strip().lower() for r in (roles or "").split(",") if r.strip()] or [
+            "perfectionist",
+            "guardian",
+            "external",
+            "program-contract",
+            "externalbridge",
+        ]
         council_elems = [
             "research-constitution-perfectionist-optimizer@stabilization-wave-20260531",
             "research-constitution-guardian-integrity@stabilization-wave-20260531",
@@ -1214,19 +1306,37 @@ def create_mission_control_app() -> FastAPI:
             rec = mission.recorder
             try:
                 if hasattr(rec, "get_recent_parent_fabric_reasoning_traces"):
-                    traces = rec.get_recent_parent_fabric_reasoning_traces_for_panel(limit=limit * 2) or []
+                    traces = (
+                        rec.get_recent_parent_fabric_reasoning_traces_for_panel(limit=limit * 2)
+                        or []
+                    )
                     for t in traces:
                         txt = str(t).lower() + str(t.get("fabric_elements_considered", []))
-                        if any(r in txt for r in effective_roles) or any(e in txt for e in council_elems):
-                            activity.append({"type": "parent_fabric_reasoning", "data": t, "gbrain": getattr(t, "gbrain_signal_score", 0.7)})
+                        if any(r in txt for r in effective_roles) or any(
+                            e in txt for e in council_elems
+                        ):
+                            activity.append(
+                                {
+                                    "type": "parent_fabric_reasoning",
+                                    "data": t,
+                                    "gbrain": getattr(t, "gbrain_signal_score", 0.7),
+                                }
+                            )
                 for elem in council_elems:
                     if len(activity) >= limit * 2:
                         break
                     if hasattr(rec, "get_fabric_reasoning_traces_for_element"):
                         try:
-                            ts = rec.get_fabric_reasoning_traces_for_element(element=elem, lookback=max(3, limit // 3)) or []
+                            ts = (
+                                rec.get_fabric_reasoning_traces_for_element(
+                                    element=elem, lookback=max(3, limit // 3)
+                                )
+                                or []
+                            )
                             for t in ts:
-                                activity.append({"type": "council_element_trace", "element": elem, "data": t})
+                                activity.append(
+                                    {"type": "council_element_trace", "element": elem, "data": t}
+                                )
                         except Exception:
                             pass
             except Exception:
@@ -1234,13 +1344,26 @@ def create_mission_control_app() -> FastAPI:
         # live from hub recent + grid
         for e in hub.recent_events[-40:]:
             s = str(e).lower()
-            if any(x in s for x in ["perfectionist", "guardian", "external-bridge", "council", "program-contract"]):
+            if any(
+                x in s
+                for x in [
+                    "perfectionist",
+                    "guardian",
+                    "external-bridge",
+                    "council",
+                    "program-contract",
+                ]
+            ):
                 activity.append({"type": "live_event", "event": e})
         g = hub.grid
         grid_snap = {}
         if g:
             try:
-                grid_snap = g.get_grid_health() if hasattr(g, "get_grid_health") else getattr(g, "_grid_health", {})
+                grid_snap = (
+                    g.get_grid_health()
+                    if hasattr(g, "get_grid_health")
+                    else getattr(g, "_grid_health", {})
+                )
             except Exception:
                 pass
         activity = activity[:limit]
@@ -1248,7 +1371,11 @@ def create_mission_control_app() -> FastAPI:
             "swarm_id": "stabilization-wave-20260531",
             "roles": effective_roles,
             "recent_council_activity": activity,
-            "grid_health": {k: grid_snap.get(k) for k in ("active_research_threads", "active_programs", "status") if k in grid_snap},
+            "grid_health": {
+                k: grid_snap.get(k)
+                for k in ("active_research_threads", "active_programs", "status")
+                if k in grid_snap
+            },
             "note": "Mirrors MCP agentdrive_get_council_activity. High-gbrain Council traces + proposals feed the Live Council Activity panel. Full provenance in Experience Graph.",
             "generated_at": time.time(),
             "dna_trace_ref": "parent_fabric_reasoning:1780296588",
@@ -1269,28 +1396,70 @@ def create_mission_control_app() -> FastAPI:
             rec = mission.recorder
             try:
                 if hasattr(rec, "loops_dir"):
-                    files = sorted(rec.loops_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:40]
+                    files = sorted(
+                        rec.loops_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True
+                    )[:40]
                     for f in files:
                         try:
                             data = json.loads(f.read_text())
-                            arts = (data.get("participating_artifacts", []) or data.get("artifacts", []) or [])
+                            arts = (
+                                data.get("participating_artifacts", [])
+                                or data.get("artifacts", [])
+                                or []
+                            )
                             for a in arts:
-                                if isinstance(a, dict) and str(a.get("artifact_type", "")).lower() == "inhabitant_code_action":
-                                    content = a.get("content_ref") or a.get("content") or a.get("ref") or {}
-                                    act = content.get("action", {}) if isinstance(content, dict) else {}
-                                    actions.append({
-                                        "slug": a.get("slug"),
-                                        "cycle_id": data.get("cycle_id") or a.get("cycle_id"),
-                                        "ts": a.get("ts") or data.get("started_at") or data.get("created_at") or 0,
-                                        "program_id": content.get("program_id") or act.get("program_id") or "unknown-inhabitant",
-                                        "action_type": act.get("type") if isinstance(act, dict) else str(act)[:30],
-                                        "action": act if isinstance(act, dict) else {"raw": str(act)[:120]},
-                                        "constitution_refs": content.get("constitution_refs", []) if isinstance(content, dict) else [],
-                                        "user_objective_refs": content.get("user_objective_refs", []) if isinstance(content, dict) else [],
-                                        "verdict": content.get("verdict") or content.get("guardian_verdict") or act.get("verdict"),
-                                        "content_preview": str(content)[:160] if content else "",
-                                        "source": "recorder_loops_scan",
-                                    })
+                                if (
+                                    isinstance(a, dict)
+                                    and str(a.get("artifact_type", "")).lower()
+                                    == "inhabitant_code_action"
+                                ):
+                                    content = (
+                                        a.get("content_ref")
+                                        or a.get("content")
+                                        or a.get("ref")
+                                        or {}
+                                    )
+                                    act = (
+                                        content.get("action", {})
+                                        if isinstance(content, dict)
+                                        else {}
+                                    )
+                                    actions.append(
+                                        {
+                                            "slug": a.get("slug"),
+                                            "cycle_id": data.get("cycle_id") or a.get("cycle_id"),
+                                            "ts": a.get("ts")
+                                            or data.get("started_at")
+                                            or data.get("created_at")
+                                            or 0,
+                                            "program_id": content.get("program_id")
+                                            or act.get("program_id")
+                                            or "unknown-inhabitant",
+                                            "action_type": act.get("type")
+                                            if isinstance(act, dict)
+                                            else str(act)[:30],
+                                            "action": act
+                                            if isinstance(act, dict)
+                                            else {"raw": str(act)[:120]},
+                                            "constitution_refs": content.get(
+                                                "constitution_refs", []
+                                            )
+                                            if isinstance(content, dict)
+                                            else [],
+                                            "user_objective_refs": content.get(
+                                                "user_objective_refs", []
+                                            )
+                                            if isinstance(content, dict)
+                                            else [],
+                                            "verdict": content.get("verdict")
+                                            or content.get("guardian_verdict")
+                                            or act.get("verdict"),
+                                            "content_preview": str(content)[:160]
+                                            if content
+                                            else "",
+                                            "source": "recorder_loops_scan",
+                                        }
+                                    )
                         except Exception:
                             continue
             except Exception:
@@ -1298,14 +1467,20 @@ def create_mission_control_app() -> FastAPI:
         # supplement with recent hub events (real-time proposals during Council threads)
         for e in hub.recent_events[-60:]:
             evs = str(e.get("data", e)).lower()
-            if "inhabitant_code_action" in evs or "code_action" in evs or "self_improvement_proposal" in evs:
-                actions.append({
-                    "slug": e.get("seq"),
-                    "from_live_event": True,
-                    "event_summary": str(e.get("data", {}))[:200],
-                    "ts": e.get("timestamp", 0),
-                    "source": "hub_recent_events",
-                })
+            if (
+                "inhabitant_code_action" in evs
+                or "code_action" in evs
+                or "self_improvement_proposal" in evs
+            ):
+                actions.append(
+                    {
+                        "slug": e.get("seq"),
+                        "from_live_event": True,
+                        "event_summary": str(e.get("data", {}))[:200],
+                        "ts": e.get("timestamp", 0),
+                        "source": "hub_recent_events",
+                    }
+                )
         actions = sorted(actions, key=lambda x: float(x.get("ts", 0) or 0), reverse=True)[:limit]
         return {
             "code_actions": actions,
@@ -1326,7 +1501,10 @@ def create_mission_control_app() -> FastAPI:
             rec = mission.recorder
             try:
                 if hasattr(rec, "get_recent_parent_fabric_reasoning_traces"):
-                    raw = rec.get_recent_parent_fabric_reasoning_traces_for_panel(limit=limit * 2) or []
+                    raw = (
+                        rec.get_recent_parent_fabric_reasoning_traces_for_panel(limit=limit * 2)
+                        or []
+                    )
                     for t in raw:
                         lift = t.get("expected_lift_signal") or t.get("expected_lift") or 0.0
                         if lift >= 0.02 or len(traces) < 3:  # bias to high value
@@ -1810,8 +1988,7 @@ class FireSession:
                     **{
                         k: v
                         for k, v in fields.items()
-                        if k
-                        not in ("log_line", "current_fabric_coherence", *recognized)
+                        if k not in ("log_line", "current_fabric_coherence", *recognized)
                     },
                 },
             )

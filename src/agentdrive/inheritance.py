@@ -86,9 +86,7 @@ class InheritedSkillCandidate:
         if not isinstance(raw, dict):
             return None
         name = str(raw.get("name") or raw.get("skill") or "").strip()
-        body = str(
-            raw.get("body") or raw.get("playbook") or raw.get("steps") or ""
-        ).strip()
+        body = str(raw.get("body") or raw.get("playbook") or raw.get("steps") or "").strip()
         if not name or not body:
             return None
         tags = raw.get("tags") or []
@@ -104,8 +102,7 @@ class InheritedSkillCandidate:
             body=body,
             tags=tag_list,
             operation=(
-                str(raw.get("operation") or raw.get("agentdrive_operation") or "").strip()
-                or None
+                str(raw.get("operation") or raw.get("agentdrive_operation") or "").strip() or None
             ),
             evidence=dict(raw.get("evidence") or {}),
         )
@@ -138,8 +135,7 @@ class InheritanceManifest:
         skills = [
             skill
             for skill in (
-                InheritedSkillCandidate.from_raw(s)
-                for s in raw.get("skills_created", []) or []
+                InheritedSkillCandidate.from_raw(s) for s in raw.get("skills_created", []) or []
             )
             if skill is not None
         ]

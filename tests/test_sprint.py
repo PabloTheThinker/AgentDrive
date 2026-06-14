@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
 from agentdrive.harness.harness import Harness
 from agentdrive.sprint import (
+    SHIP_CHAIN,
     CheckpointPending,
     CheckpointStore,
-    SHIP_CHAIN,
     run_ship_chain,
 )
 from agentdrive.sprint.chain import SprintResult

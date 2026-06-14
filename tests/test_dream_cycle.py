@@ -6,8 +6,6 @@ import json
 import threading
 from pathlib import Path
 
-import pytest
-
 from agentdrive.dreaming.cycle import (
     DREAM_PHASES,
     DreamCycleLockError,

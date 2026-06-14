@@ -82,10 +82,7 @@ def _load_all() -> dict[str, SkillUsage]:
     skills = raw.get("skills") if isinstance(raw, dict) else {}
     if not isinstance(skills, dict):
         return {}
-    return {
-        str(name): SkillUsage.from_raw(str(name), value)
-        for name, value in skills.items()
-    }
+    return {str(name): SkillUsage.from_raw(str(name), value) for name, value in skills.items()}
 
 
 def _save_all(items: dict[str, SkillUsage]) -> None:

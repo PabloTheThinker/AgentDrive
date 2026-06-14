@@ -185,11 +185,6 @@ from agentdrive.constants import (
     get_agentdrive_home,
     get_learnings_dir,
 )
-from agentdrive.learnings import (
-    LearningsStore,
-    ingest_learnings_to_experience,
-    resolve_learnings_slug,
-)
 
 # First-class re-exports for the deep high-continuity Conductor integration points
 # (lineage_immune + lineage_dna + the Grok / External High-Continuity Conductor Pattern Lineage Bridge live here)
@@ -279,6 +274,11 @@ from agentdrive.knowledge_graph.graph import (
     get_living_experience_for_topic,  # Experience layer entry point helper
     get_stale_entities,
     temporal_freshness_score,
+)
+from agentdrive.learnings import (
+    LearningsStore,
+    ingest_learnings_to_experience,
+    resolve_learnings_slug,
 )
 
 # Advanced trust, lineage, and observability surfaces (opt-in but first-class)

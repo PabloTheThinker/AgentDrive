@@ -24,9 +24,11 @@ class MissionEvent:
 
 # === Core Loop Events (the 6-step canonical loop) ===
 
+
 @dataclass
 class LoopStepEvent(MissionEvent):
     """Represents progress through one of the 6 canonical loop steps."""
+
     step: Literal[1, 2, 3, 4, 5, 6] = 1
     description: str = ""
     data: dict[str, Any] = field(default_factory=dict)
@@ -42,17 +44,21 @@ class FabricUpdateEvent(MissionEvent):
     considered (elements, pattern, expected lift) and allow clickable highlights
     on the fabric canvas.
     """
+
     fabric_coherence: float = 0.0
     delta_edges: int = 0
     affected_cycles: list[str] = field(default_factory=list)
     summary: str = ""
     graph_delta: dict[str, Any] | None = None  # For partial graph updates
-    parent_fabric_reasoning: dict[str, Any] | None = None  # Parent's explicit graph-native reasoning trace (elements_considered, structural_pattern, expected_lift, rationale)
+    parent_fabric_reasoning: dict[str, Any] | None = (
+        None  # Parent's explicit graph-native reasoning trace (elements_considered, structural_pattern, expected_lift, rationale)
+    )
 
 
 @dataclass
 class ParentDecisionEvent(MissionEvent):
     """A decision made by the Parent Conductor."""
+
     decision_summary: str = ""
     actions_taken: list[str] = field(default_factory=list)
     triggered_from_fabric: bool = False
@@ -62,6 +68,7 @@ class ParentDecisionEvent(MissionEvent):
 @dataclass
 class OverseerStateEvent(MissionEvent):
     """The Overseer's current metacognitive understanding (step 2 of the loop)."""
+
     adaptation_effectiveness: float = 0.0
     plateau_detected: bool = False
     fabric_coherence: float = 0.0
@@ -70,6 +77,7 @@ class OverseerStateEvent(MissionEvent):
 
 
 # === Static Fire Specific ===
+
 
 @dataclass
 class StaticFireEvent(MissionEvent):
@@ -85,7 +93,10 @@ class StaticFireEvent(MissionEvent):
     and on completion by harness using run_static_fire_with_mission_telemetry or direct calls.
     All via the single publish_event_sync path; never bypasses quarantine or auth.
     """
-    phase: Literal["starting", "running", "densifying", "measuring", "completed", "aborted"] = "idle"
+
+    phase: Literal["starting", "running", "densifying", "measuring", "completed", "aborted"] = (
+        "idle"
+    )
     duration_seconds: float = 0.0
     cycles_completed: int = 0
     current_fabric_coherence: float = 0.0
@@ -103,9 +114,11 @@ class StaticFireEvent(MissionEvent):
 
 # === System-level ===
 
+
 @dataclass
 class GridHealthEvent(MissionEvent):
     """Snapshot of GridEngine health surfaced in Mission Control."""
+
     health: dict[str, Any] = field(default_factory=dict)
 
 

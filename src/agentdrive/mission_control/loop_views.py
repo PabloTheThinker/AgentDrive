@@ -18,16 +18,19 @@ class LoopStateView:
     A live snapshot of the canonical 6-step Parent-Overseer-Research loop.
     This is the primary "single pane of glass" view.
     """
+
     cycle_id: str
     current_step: int  # 1-6
-    step_descriptions: dict[int, str] = field(default_factory=lambda: {
-        1: "Experience Layer + Runtime generating signals",
-        2: "Overseer ingesting experience + multi-cycle fabric",
-        3: "Overseer feeding understanding to Parent",
-        4: "Parent making real-time decisions",
-        5: "Decisions executing back into runtime",
-        6: "New experience + updated fabric flowing back to Overseer",
-    })
+    step_descriptions: dict[int, str] = field(
+        default_factory=lambda: {
+            1: "Experience Layer + Runtime generating signals",
+            2: "Overseer ingesting experience + multi-cycle fabric",
+            3: "Overseer feeding understanding to Parent",
+            4: "Parent making real-time decisions",
+            5: "Decisions executing back into runtime",
+            6: "New experience + updated fabric flowing back to Overseer",
+        }
+    )
     fabric_coherence: float = 0.0
     last_parent_decision: dict[str, Any] | None = None
     overseer_state: dict[str, Any] | None = None
@@ -40,6 +43,7 @@ class FabricView:
     Multi-cycle memory fabric view.
     This is what makes the user see "the whole system as one" across iterations.
     """
+
     overall_coherence: float
     active_cycles: list[str]
     total_cross_cycle_edges: int
@@ -59,6 +63,7 @@ class StaticFireTelemetry:
     Populated by Integrated.get_static_fire_telemetry() and by harnesses via
     the run_* helper or direct publish_static_fire_telemetry.
     """
+
     fire_id: str
     status: str  # "idle", "running", "completed", "aborted"
     started_at: float | None = None

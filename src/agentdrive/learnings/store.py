@@ -144,7 +144,9 @@ class LearningsStore:
         """Append one learning entry. Returns the normalized record written."""
         typ = str(entry.get("type") or "")
         if typ not in ALLOWED_TYPES:
-            raise ValueError(f"invalid learning type {typ!r}; must be one of: {sorted(ALLOWED_TYPES)}")
+            raise ValueError(
+                f"invalid learning type {typ!r}; must be one of: {sorted(ALLOWED_TYPES)}"
+            )
 
         key = str(entry.get("key") or "")
         if not key or not _KEY_RE.match(key):

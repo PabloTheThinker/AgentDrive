@@ -27,9 +27,7 @@ def _entry_hash(entry: dict[str, Any]) -> str:
     return hashlib.sha256(raw).hexdigest()[:12]
 
 
-def _observation_from_learning(
-    entry: dict[str, Any], *, slug: str, obs_id: str
-) -> dict[str, Any]:
+def _observation_from_learning(entry: dict[str, Any], *, slug: str, obs_id: str) -> dict[str, Any]:
     return {
         "schema_version": 3,
         "page_type": "living-experience",

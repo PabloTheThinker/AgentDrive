@@ -91,9 +91,7 @@ def _is_fabric_root(path: Path) -> bool:
 
 def _validate_fabric_root(path: Path) -> None:
     if not _is_fabric_root(path):
-        raise FileNotFoundError(
-            f"Not a Fabric repository (missing data/patterns): {path}"
-        )
+        raise FileNotFoundError(f"Not a Fabric repository (missing data/patterns): {path}")
 
 
 def _fabric_patterns_root(fabric_root: Path) -> Path:

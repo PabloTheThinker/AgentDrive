@@ -76,9 +76,7 @@ class SwarmActivityLane:
 
     def _is_active_locked(self) -> bool:
         """Swarm in flight — caller must hold ``_lock``."""
-        return self._child_count() > 0 and (
-            self._active or not self._tree.is_done()
-        )
+        return self._child_count() > 0 and (self._active or not self._tree.is_done())
 
     def renderable(self) -> RenderableType | None:
         """Rich renderable for the activity lane, or None when collapsed."""
@@ -92,9 +90,7 @@ class SwarmActivityLane:
     def summary_line(self) -> str | None:
         """One-line post-swarm summary when collapsed."""
         with self._lock:
-            children = [
-                n for n in self._tree.nodes() if n.subagent_id != self._root_id
-            ]
+            children = [n for n in self._tree.nodes() if n.subagent_id != self._root_id]
             if not children:
                 return None
             done = sum(1 for n in children if n.status == "done")
@@ -102,10 +98,7 @@ class SwarmActivityLane:
             total = len(children)
             p = self.palette
             if failed:
-                return (
-                    f"[{p.warn}]swarm · {done}/{total} ok · "
-                    f"[{p.error}]{failed} failed[/][/]"
-                )
+                return f"[{p.warn}]swarm · {done}/{total} ok · [{p.error}]{failed} failed[/][/]"
             return f"[{p.ok}]swarm · {done}/{total} sub-agents complete[/]"
 
     def reset(self) -> None:

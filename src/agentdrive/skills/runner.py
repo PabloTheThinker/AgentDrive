@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from agentdrive.operations import run_operation
-from agentdrive.skills.registry import SkillEntry, get_skill, skill_operation_kwargs
+from agentdrive.skills.registry import get_skill, skill_operation_kwargs
 from agentdrive.skills.usage import record_skill_run
 
 

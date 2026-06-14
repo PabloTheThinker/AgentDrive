@@ -111,13 +111,7 @@ def _score_candidate(candidate: MemoryTraceCandidate) -> MemoryTriageResult:
     contradiction = _clamp(candidate.contradiction_pressure)
     consolidation_depth = _clamp(candidate.consolidation_depth)
 
-    working = (
-        0.36 * relevance
-        + 0.24 * salience
-        + 0.18 * retention
-        + 0.12 * trust
-        + 0.10 * novelty
-    )
+    working = 0.36 * relevance + 0.24 * salience + 0.18 * retention + 0.12 * trust + 0.10 * novelty
     consolidation = (
         0.30 * salience
         + 0.24 * novelty

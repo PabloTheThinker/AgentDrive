@@ -854,9 +854,7 @@ class AgentDrive:
             elif "schema" in pt:
                 pt_boost = 0.07
             dream_b = (
-                0.09
-                if "dream" in pt or "observation" in str(getattr(g, "_page_type", ""))
-                else 0.0
+                0.09 if "dream" in pt or "observation" in str(getattr(g, "_page_type", "")) else 0.0
             )
             experience_b = (
                 0.22

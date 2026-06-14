@@ -10,6 +10,15 @@ Design goals:
 from __future__ import annotations
 
 from agentdrive.dreaming.candidate import CandidateSignal, DreamCandidate
+from agentdrive.dreaming.cycle import (
+    DREAM_PHASES,
+    DreamCycleLockError,
+    DreamCyclePending,
+    DreamCycleResult,
+    DreamPhaseSpec,
+    get_dream_cycle_status,
+    run_dream_cycle,
+)
 from agentdrive.dreaming.dilation import DilationPolicy, SleepWindow
 from agentdrive.dreaming.durable import (
     AGENTDRIVE_SWARM_ID,
@@ -33,15 +42,6 @@ from agentdrive.dreaming.durable import (
     run_tranche3_auto_calibration_job,
 )
 from agentdrive.dreaming.engine import DreamEngine, DreamEngineConfig
-from agentdrive.dreaming.cycle import (
-    DREAM_PHASES,
-    DreamCycleLockError,
-    DreamCyclePending,
-    DreamCycleResult,
-    DreamPhaseSpec,
-    get_dream_cycle_status,
-    run_dream_cycle,
-)
 from agentdrive.dreaming.phases import AdversarialResult, DeepResult, LightResult, RemResult
 
 __all__ = [

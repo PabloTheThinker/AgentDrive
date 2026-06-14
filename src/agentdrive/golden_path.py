@@ -154,7 +154,9 @@ def verify_step(step_id: str) -> dict[str, Any]:
             "step": step_id,
             "title": step.title,
             "optional": True,
-            "detail": "experience seed or genomes present" if ok else "empty registry — run seed-experience-v3",
+            "detail": "experience seed or genomes present"
+            if ok
+            else "empty registry — run seed-experience-v3",
         }
 
     if step_id == "think":
@@ -238,14 +240,33 @@ def run_walkthrough(
             continue
 
         if step.id == "doctor":
-            result = run_operation("doctor")
-            entry = {"step": step.id, "title": step.title, "success": result.get("success"), "result": result}
+            result = run_operation("doctor", dry_run=True) if dry_run else run_operation("doctor")
+            entry = {
+                "step": step.id,
+                "title": step.title,
+                "success": result.get("success"),
+                "result": result,
+            }
             results.append(entry)
             if stop_on_fail and not result.get("success"):
                 break
             continue
 
         if step.id == "mcp":
+            if dry_run:
+                results.append(
+                    {
+                        "step": step.id,
+                        "title": step.title,
+                        "success": True,
+                        "skipped": True,
+                        "dry_run": True,
+                        "detail": "MCP doctor skipped in dry-run",
+                        "note": "Run agentdrive mcp install && agentdrive mcp doctor to verify live clients.",
+                    }
+                )
+                continue
+
             from agentdrive.adapters.mcp_config import run_mcp_doctor
 
             report = run_mcp_doctor()
@@ -277,7 +298,12 @@ def run_walkthrough(
                 result = run_operation("reconcile_seed", dry_run=True)
             else:
                 result = run_operation("reconcile_seed")
-            entry = {"step": step.id, "title": step.title, "success": result.get("success"), "result": result}
+            entry = {
+                "step": step.id,
+                "title": step.title,
+                "success": result.get("success"),
+                "result": result,
+            }
             results.append(entry)
             if stop_on_fail and not result.get("success"):
                 break
@@ -297,12 +323,17 @@ def run_walkthrough(
                         "success": True,
                         "skipped": True,
                         "detail": "no provider configured — run: agentdrive provider set <name>",
-                        "hint": "agentdrive think \"...\" --dry-run  # works without provider",
+                        "hint": 'agentdrive think "..." --dry-run  # works without provider',
                     }
                 )
                 continue
             result = run_operation("think", **kwargs)
-            entry = {"step": step.id, "title": step.title, "success": result.get("success"), "result": result}
+            entry = {
+                "step": step.id,
+                "title": step.title,
+                "success": result.get("success"),
+                "result": result,
+            }
             if not result.get("success") and not dry_run and not provider_configured():
                 entry["hint"] = "agentdrive provider set openai --model gpt-4o"
             results.append(entry)
@@ -326,7 +357,12 @@ def run_walkthrough(
                     type="operational",
                     source="observed",
                 )
-            entry = {"step": step.id, "title": step.title, "success": result.get("success"), "result": result}
+            entry = {
+                "step": step.id,
+                "title": step.title,
+                "success": result.get("success"),
+                "result": result,
+            }
             results.append(entry)
             if stop_on_fail and not result.get("success"):
                 break
@@ -337,7 +373,12 @@ def run_walkthrough(
             if dry_run:
                 kwargs["dry_run"] = True
             result = run_operation("pool_query", **kwargs)
-            entry = {"step": step.id, "title": step.title, "success": result.get("success"), "result": result}
+            entry = {
+                "step": step.id,
+                "title": step.title,
+                "success": result.get("success"),
+                "result": result,
+            }
             results.append(entry)
             if stop_on_fail and not result.get("success"):
                 break

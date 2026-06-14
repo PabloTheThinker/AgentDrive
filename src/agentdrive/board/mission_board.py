@@ -87,11 +87,15 @@ class Mission:
     # === AgentDrive-native extensions (reworked for the 6-step + fabric world) ===
     cycle_id: str | None = None
     correlation_id: str | None = None
-    loop_step: int | None = None          # 1-6 from the canonical loop
-    source: str = ""                      # "parent_decision", "overseer_hunch", "grid", "healing", "static_fire", "user", "subagent"
-    fabric_contributions: list[dict[str, Any]] = field(default_factory=list)  # e.g. {"type": "densified_via_gardener", "lift": 0.041, "edges": 7}
+    loop_step: int | None = None  # 1-6 from the canonical loop
+    source: str = ""  # "parent_decision", "overseer_hunch", "grid", "healing", "static_fire", "user", "subagent"
+    fabric_contributions: list[dict[str, Any]] = field(
+        default_factory=list
+    )  # e.g. {"type": "densified_via_gardener", "lift": 0.041, "edges": 7}
     gbrain_signal_score: float | None = None
-    related_edge_ids: list[str] = field(default_factory=list)  # TypedEdge ids in the experience graph
+    related_edge_ids: list[str] = field(
+        default_factory=list
+    )  # TypedEdge ids in the experience graph
     static_fire_id: str | None = None
 
     @staticmethod
@@ -213,11 +217,13 @@ class MissionBoard:
             m.fabric_contributions.append(contribution)
             if "gbrain_signal_score" in contribution:
                 m.gbrain_signal_score = contribution["gbrain_signal_score"]
-            self._append({
-                "event": "fabric_contribution",
-                "mission_id": mission_id,
-                "contribution": contribution,
-            })
+            self._append(
+                {
+                    "event": "fabric_contribution",
+                    "mission_id": mission_id,
+                    "contribution": contribution,
+                }
+            )
             return m
 
     def get(self, mid: str) -> Mission | None:

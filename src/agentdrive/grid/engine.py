@@ -487,7 +487,12 @@ class GridEngine:
                 self._grid_health["status"] = "monitoring"
 
     def form_autonomous_research_thread(
-        self, *, roles: list[str] | None = None, budget: int = 1500, objective: str | None = None, **kwargs: Any
+        self,
+        *,
+        roles: list[str] | None = None,
+        budget: int = 1500,
+        objective: str | None = None,
+        **kwargs: Any,
     ) -> dict:
         """GridEngine surface for real-time Grid to dynamically spawn multi-agent
         research organizations. Wires directly to HealingFactor research org
@@ -506,11 +511,18 @@ class GridEngine:
             )
             # v3 GraphGardener minimal support in form_autonomous_research_thread (reuse manifest pattern)
             try:
-                if roles and any("gardener" in str(r).lower() or "graph" in str(r).lower() for r in roles):
+                if roles and any(
+                    "gardener" in str(r).lower() or "graph" in str(r).lower() for r in roles
+                ):
                     manifest["gardener"] = True
-                    manifest["fabric_briefing"] = {"source": "GraphGardener via GridEngine form + recorder", "stabilization_wave": "20260531"}
+                    manifest["fabric_briefing"] = {
+                        "source": "GraphGardener via GridEngine form + recorder",
+                        "stabilization_wave": "20260531",
+                    }
                     manifest["densification_history"] = []
-                    manifest["research_thread_lineage_fabric"] = {"constitution": "research-constitution-graphgardener-gridnative@stabilization-wave-20260531"}
+                    manifest["research_thread_lineage_fabric"] = {
+                        "constitution": "research-constitution-graphgardener-gridnative@stabilization-wave-20260531"
+                    }
             except Exception:
                 pass
             return manifest
@@ -557,9 +569,15 @@ class GridEngine:
             system = IntegratedRealTimeEvolutionSystem(swarm_id=effective_swarm)
             recorder = system.recorder
 
-            program_id = str(manifest.get("program_id") or manifest.get("id") or f"prog-{int(time.time())}")
-            user_objectives = manifest.get("user_objective_refs") or manifest.get("objectives") or []
-            constitution_refs = list(manifest.get("constitution_refs") or manifest.get("constitutions") or [])
+            program_id = str(
+                manifest.get("program_id") or manifest.get("id") or f"prog-{int(time.time())}"
+            )
+            user_objectives = (
+                manifest.get("user_objective_refs") or manifest.get("objectives") or []
+            )
+            constitution_refs = list(
+                manifest.get("constitution_refs") or manifest.get("constitutions") or []
+            )
 
             # === Wire Program Contract as MANDATORY in registration (enforce binding + DNA if missing) ===
             # This is the high-leverage enforcement: every registered inhabitant now binds to the
@@ -572,7 +590,8 @@ class GridEngine:
                 "research-constitution-ad-grid-program-contract@stabilization-wave-20260531",
             ]
             had_contract = any(
-                any(cr in str(c).lower() for cr in ("program-contract", "ad-grid-program-contract")) for c in constitution_refs
+                any(cr in str(c).lower() for cr in ("program-contract", "ad-grid-program-contract"))
+                for c in constitution_refs
             )
             for cref in contract_refs:
                 if cref not in constitution_refs:
@@ -587,7 +606,9 @@ class GridEngine:
                         "type": "program_contract_binding_enforced_at_registration",
                         "program_id": program_id,
                         "binding": "auto-injected mandatory Program Contract refs (top-level governance)",
-                        "original_manifest_const_refs": list(manifest.get("original_constitution_refs") or []),
+                        "original_manifest_const_refs": list(
+                            manifest.get("original_constitution_refs") or []
+                        ),
                         "enforced_by": "GridEngine.register_model_program",
                         "rationale": "Mandatory per Program Contract + Guardian constitution + ILO Guardian Lens deeper enforcement; closes gap where registration could precede binding",
                         "charter": "1780293824",
@@ -597,7 +618,8 @@ class GridEngine:
                         program_id=program_id or "unknown-program-at-reg",
                         action=bind_action,
                         constitution_refs=constitution_refs,
-                        user_objective_refs=user_objectives or ["system:self-registration-enforcement"],
+                        user_objective_refs=user_objectives
+                        or ["system:self-registration-enforcement"],
                     )
                 except Exception:
                     # Never fail registration on audit recording
@@ -664,19 +686,23 @@ class GridEngine:
 
             obs_dir = drive_path / "observations" / "meta-evolution"
             if obs_dir.exists():
-                for p in sorted(obs_dir.glob("*.json"), key=lambda x: x.stat().st_mtime, reverse=True)[:50]:
+                for p in sorted(
+                    obs_dir.glob("*.json"), key=lambda x: x.stat().st_mtime, reverse=True
+                )[:50]:
                     try:
                         data = json.loads(p.read_text())
                         if data.get("page_type") in ("model-program-manifest", "agent-program"):
                             m = data.get("manifest", {})
-                            programs.append({
-                                "program_id": m.get("program_id"),
-                                "created": m.get("created"),
-                                "user_objective_refs": m.get("user_objective_refs", []),
-                                "current_mandate": m.get("current_mandate"),
-                                "lifecycle": m.get("lifecycle"),
-                                "source_file": str(p),
-                            })
+                            programs.append(
+                                {
+                                    "program_id": m.get("program_id"),
+                                    "created": m.get("created"),
+                                    "user_objective_refs": m.get("user_objective_refs", []),
+                                    "current_mandate": m.get("current_mandate"),
+                                    "lifecycle": m.get("lifecycle"),
+                                    "source_file": str(p),
+                                }
+                            )
                     except Exception:
                         continue
 
@@ -740,7 +766,11 @@ class GridEngine:
             # Minimal v3 GraphGardener support in maintenance_loop (per task): detect gardener threads,
             # surface active_gardener_threads + last pass stamp for health/manifests (stabilization-wave drive)
             try:
-                gardener_cids = [c for c in self._active_research_thread_jobs if "graphgardener" in c or "gardener" in c]
+                gardener_cids = [
+                    c
+                    for c in self._active_research_thread_jobs
+                    if "graphgardener" in c or "gardener" in c
+                ]
                 self._grid_health["active_gardener_threads"] = len(gardener_cids)
                 if gardener_cids:
                     self._grid_health["last_gardener_pass_ts"] = now
@@ -809,12 +839,19 @@ class GridEngine:
                 "research_budget_per_iteration": budget,
                 "branch_policy": "governance_enforcement_and_inhabitant_binding",
                 "council_role": "Binding Program Contract (top-level rules)",
-                "high_signal_threshold": {"binding_violation_detected": 0, "attribution_completeness": 1.0},
+                "high_signal_threshold": {
+                    "binding_violation_detected": 0,
+                    "attribution_completeness": 1.0,
+                },
                 "enforcement": {
                     "guardian_gate_required": True,
-                    "mandatory_fields_on_all_actions": ["program_id", "user_objective_refs", "constitution_refs (incl. this contract)"],
-                    "escalation": "Adversary + explicit Conductor notification"
-                }
+                    "mandatory_fields_on_all_actions": [
+                        "program_id",
+                        "user_objective_refs",
+                        "constitution_refs (incl. this contract)",
+                    ],
+                    "escalation": "Adversary + explicit Conductor notification",
+                },
             },
             # Experience Layer Research Branching Swarm integration: each constitution now drives
             # native research-thread forks (first-class living-experience genome families) via
@@ -916,7 +953,12 @@ class GridEngine:
                 "healing_integration": {
                     "emit_healing_signal_on_major_lift": True,
                     "trigger_graph_densification": True,
-                    "recorder_surfaces": ["find_weak_across_recent_cycles", "propose_densification_edges", "record_densification_lift", "write_connection_densification_observation"],
+                    "recorder_surfaces": [
+                        "find_weak_across_recent_cycles",
+                        "propose_densification_edges",
+                        "record_densification_lift",
+                        "write_connection_densification_observation",
+                    ],
                 },
                 "fabric_briefing_ref": "ExperienceGraphRecorder + renderers + embed_graph_into_artifact (evolution/experience_graph.py)",
                 "lineage_fabric": "ResearchThreadLineage with densification_history + fabric_coherence",
@@ -936,7 +978,10 @@ class GridEngine:
                 "research_budget_per_iteration": budget,
                 "branch_policy": "optimization_densification_pressure",
                 "council_role": "PerfectionistOptimizer",
-                "high_signal_threshold": {"min_coherence_gain": 0.03, "min_densification_lift": 0.04},
+                "high_signal_threshold": {
+                    "min_coherence_gain": 0.03,
+                    "min_densification_lift": 0.04,
+                },
             },
             {
                 "id": "research-constitution-guardian-integrity@stabilization-wave-20260531",
@@ -1052,15 +1097,39 @@ class GridEngine:
                         # v3 GraphGardener Grid Integrator (minimal reuse of ResearchThreadLineage / harness / event / manifest patterns exactly)
                         # pass recorder surfaces (noted), set gardener=True flag, include fabric_briefing + densification_history
                         # in high-signal obs + return manifests. Target stabilization-wave-20260531 drive.
-                        is_gardener = bool(constitution_ref.get("gardener")) or "graphgardener" in str(constitution_ref.get("id", "")).lower()
+                        is_gardener = (
+                            bool(constitution_ref.get("gardener"))
+                            or "graphgardener" in str(constitution_ref.get("id", "")).lower()
+                        )
                         if is_gardener:
                             observation["gardener"] = True
                             observation["fabric_briefing"] = {
-                                "recorder_surfaces_passed": constitution_ref.get("healing_integration", {}).get("recorder_surfaces", ["find_weak_across_recent_cycles", "propose_densification_edges", "record_densification_lift"]),
+                                "recorder_surfaces_passed": constitution_ref.get(
+                                    "healing_integration", {}
+                                ).get(
+                                    "recorder_surfaces",
+                                    [
+                                        "find_weak_across_recent_cycles",
+                                        "propose_densification_edges",
+                                        "record_densification_lift",
+                                    ],
+                                ),
                                 "8_step_sequencing": "find_weak -> propose (3 canonical densif relations) -> enter_phase -> harness/measure (conn_density 0.28) -> record_lift -> write_obs (fabric_briefing+densif_history+fusion)",
-                                "densification_relations": ["DENSIFIED_VIA_GARDENER", "CONNECTION_STRENGTHENED_BY", "GRAPH_COHERENCE_LIFT"],
+                                "densification_relations": [
+                                    "DENSIFIED_VIA_GARDENER",
+                                    "CONNECTION_STRENGTHENED_BY",
+                                    "GRAPH_COHERENCE_LIFT",
+                                ],
                             }
-                            observation["densification_history"] = [{"lift": round(improvement, 4), "coherence_post": 0.79, "edges_added": 5, "cycle": "sim-from-grid-gardener-thread", "ts": "2026-05-31"}]
+                            observation["densification_history"] = [
+                                {
+                                    "lift": round(improvement, 4),
+                                    "coherence_post": 0.79,
+                                    "edges_added": 5,
+                                    "cycle": "sim-from-grid-gardener-thread",
+                                    "ts": "2026-05-31",
+                                }
+                            ]
                             # ResearchThreadLineage fabric carrying (exact reuse of create_ helper + to_lineage_entry)
                             try:
                                 from agentdrive.constants import (
@@ -1068,24 +1137,35 @@ class GridEngine:
                                     new_correlation_id,
                                 )
                                 from agentdrive.reconciliation import create_research_thread_fork
+
                                 lineage = create_research_thread_fork(
                                     parent_genome_id="experience-graph-v3-fabric@stabilization-wave-20260531",
                                     constitution_ref=constitution_ref["id"],
                                     budget=research_budget,
                                     correlation_id=get_correlation_id() or new_correlation_id(),
-                                    thread_id=f"gardener-fabric-{int(time.time())%10000}",
+                                    thread_id=f"gardener-fabric-{int(time.time()) % 10000}",
                                 )
                                 observation["research_thread_lineage"] = lineage.to_lineage_entry()
                                 observation["lineage_fabric_carried"] = True
                             except Exception:
-                                observation["research_thread_lineage"] = {"note": "fabric lineage via ResearchThreadLineage (stub in runner)"}
+                                observation["research_thread_lineage"] = {
+                                    "note": "fabric lineage via ResearchThreadLineage (stub in runner)"
+                                }
                             # Update Grid health gardener keys (surfacing)
                             try:
                                 lift_val = max(float(improvement), 0.08)
-                                self._grid_health["last_gardener_densification_lift"] = round(lift_val, 4)
-                                self._grid_health["fabric_coherence_last"] = round(0.48 + lift_val, 3)
+                                self._grid_health["last_gardener_densification_lift"] = round(
+                                    lift_val, 4
+                                )
+                                self._grid_health["fabric_coherence_last"] = round(
+                                    0.48 + lift_val, 3
+                                )
                                 self._grid_health["multi_cycle_edges"] += 3
-                                self._grid_health["densification_lifts_total"] = round(self._grid_health.get("densification_lifts_total", 0.0) + lift_val, 4)
+                                self._grid_health["densification_lifts_total"] = round(
+                                    self._grid_health.get("densification_lifts_total", 0.0)
+                                    + lift_val,
+                                    4,
+                                )
                                 self._emit_grid_health_if_attached()  # light MC on gardener health lift
                             except Exception:
                                 pass
@@ -1095,9 +1175,15 @@ class GridEngine:
                                     **(self._research_thread_manifests.get(cid, {})),
                                     "gardener": True,
                                     "fabric_briefing": observation.get("fabric_briefing"),
-                                    "densification_history": observation.get("densification_history"),
-                                    "research_thread_lineage": observation.get("research_thread_lineage"),
-                                    "status": "high_signal_gardener" if high_signal else "active_gardener",
+                                    "densification_history": observation.get(
+                                        "densification_history"
+                                    ),
+                                    "research_thread_lineage": observation.get(
+                                        "research_thread_lineage"
+                                    ),
+                                    "status": "high_signal_gardener"
+                                    if high_signal
+                                    else "active_gardener",
                                     "constitution_ref": cid,
                                     "last_updated": time.time(),
                                 }
@@ -1129,20 +1215,31 @@ class GridEngine:
                                         new_correlation_id,
                                     )
                                     from agentdrive.events import HealingSignalEvent, emit
-                                    lift_thresh = constitution_ref.get("high_signal_threshold", {}).get("min_densification_lift", 0.05)
+
+                                    lift_thresh = constitution_ref.get(
+                                        "high_signal_threshold", {}
+                                    ).get("min_densification_lift", 0.05)
                                     if improvement >= lift_thresh:
-                                        emit(HealingSignalEvent(
-                                            signal_type="graph_densification_major_lift",
-                                            source="grid_engine_gardener_research_thread",
-                                            details={
-                                                "constitution_id": cid,
-                                                "densification_lift": round(improvement, 4),
-                                                "fabric_coherence": self._grid_health.get("fabric_coherence_last"),
-                                                "drive": "stabilization-wave-20260531",
-                                            },
-                                            correlation_id=get_correlation_id() or new_correlation_id(),
-                                        ))
-                                        self._grid_health["gardener_threads_completed"] = self._grid_health.get("gardener_threads_completed", 0) + 1
+                                        emit(
+                                            HealingSignalEvent(
+                                                signal_type="graph_densification_major_lift",
+                                                source="grid_engine_gardener_research_thread",
+                                                details={
+                                                    "constitution_id": cid,
+                                                    "densification_lift": round(improvement, 4),
+                                                    "fabric_coherence": self._grid_health.get(
+                                                        "fabric_coherence_last"
+                                                    ),
+                                                    "drive": "stabilization-wave-20260531",
+                                                },
+                                                correlation_id=get_correlation_id()
+                                                or new_correlation_id(),
+                                            )
+                                        )
+                                        self._grid_health["gardener_threads_completed"] = (
+                                            self._grid_health.get("gardener_threads_completed", 0)
+                                            + 1
+                                        )
                                 except Exception:
                                     pass
                         return {
@@ -1234,7 +1331,11 @@ class GridEngine:
                 self._grid_health["active_research_threads"] = active
                 # v3 GraphGardener minimal heartbeat support (reuse pattern)
                 try:
-                    g_active = sum(1 for c in getattr(self, "_active_research_thread_jobs", {}) if "graphgardener" in c or "gardener" in c)
+                    g_active = sum(
+                        1
+                        for c in getattr(self, "_active_research_thread_jobs", {})
+                        if "graphgardener" in c or "gardener" in c
+                    )
                     self._grid_health["active_gardener_threads"] = g_active
                 except Exception:
                     pass
@@ -1525,8 +1626,14 @@ class GridEngine:
                                 "8_step": "find_weak_across -> propose_densif -> ... -> write with fabric_briefing + densification_history",
                                 "recorder": "ExperienceGraphRecorder surfaces for Grid native dispatch",
                             }
-                            obs["densification_history"] = [{"lift": round(scores.resilience_lift, 4), "edges": 5}]
-                            obs["research_thread_lineage"] = {"fabric": True, "constitution": cid, "via": "ResearchThreadLineage"}
+                            obs["densification_history"] = [
+                                {"lift": round(scores.resilience_lift, 4), "edges": 5}
+                            ]
+                            obs["research_thread_lineage"] = {
+                                "fabric": True,
+                                "constitution": cid,
+                                "via": "ResearchThreadLineage",
+                            }
                             obs["framework"]["gardener"] = True
                     except Exception:
                         pass
@@ -1591,12 +1698,15 @@ class GridEngine:
 
             from agentdrive.mission_control.events import GridHealthEvent
             from agentdrive.mission_control.server import publish_event_sync
+
             health = self.get_grid_health()
-            publish_event_sync(GridHealthEvent(
-                event_type="grid_health",
-                timestamp=_t.time(),
-                health=health,
-            ))
+            publish_event_sync(
+                GridHealthEvent(
+                    event_type="grid_health",
+                    timestamp=_t.time(),
+                    health=health,
+                )
+            )
         except Exception:
             pass
 
@@ -1635,7 +1745,9 @@ class GridEngine:
                 else None,
                 # v3 GraphGardener surfacing in get_active (from manifests populated by runner/dogfood)
                 "gardener": bool(manifest.get("gardener")),
-                "fabric_coherence": manifest.get("fabric_briefing", {}).get("coherence") if isinstance(manifest.get("fabric_briefing"), dict) else manifest.get("fabric_coherence_last"),
+                "fabric_coherence": manifest.get("fabric_briefing", {}).get("coherence")
+                if isinstance(manifest.get("fabric_briefing"), dict)
+                else manifest.get("fabric_coherence_last"),
             }
             out.append(entry)
         return out

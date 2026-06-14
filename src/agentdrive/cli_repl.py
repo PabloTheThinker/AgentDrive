@@ -121,8 +121,7 @@ def run_repl(*, parser: argparse.ArgumentParser | None = None) -> int:
         from prompt_toolkit.history import FileHistory
     except ImportError:
         console.print(
-            "[red]prompt_toolkit is required for the REPL.[/] "
-            "[dim]pip install prompt_toolkit[/]"
+            "[red]prompt_toolkit is required for the REPL.[/] [dim]pip install prompt_toolkit[/]"
         )
         return 1
 
@@ -143,7 +142,7 @@ def run_repl(*, parser: argparse.ArgumentParser | None = None) -> int:
     console.print()
     console.print("[bold]AgentDrive operator REPL[/]")
     console.print(
-        "[dim]Dispatch any subcommand (doctor, golden-path verify, think \"…\"). "
+        '[dim]Dispatch any subcommand (doctor, golden-path verify, think "…"). '
         "search <query> · help · exit[/]"
     )
     console.print()

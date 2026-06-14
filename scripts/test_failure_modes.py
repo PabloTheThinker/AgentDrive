@@ -571,7 +571,7 @@ def mode_14_bus_subscriber_raises() -> Tuple[bool, str]:
 
 
 def mode_15_empty_pool_query() -> Tuple[bool, str]:
-    """Query against a freshly-allocated empty pool must return [] cleanly."""
+    """Query against a freshly-allocated pool must return no user DNA cleanly."""
     registry = GenomeRegistry()
     pool = AgentDrive(registry=registry)
     try:
@@ -579,8 +579,11 @@ def mode_15_empty_pool_query() -> Tuple[bool, str]:
     except Exception as exc:
         return False, f"empty pool query crashed: {type(exc).__name__}: {exc}"
 
+    user_genomes = [g for g in out if not g.genome_id.startswith("living-experience-seed-v3")]
+    if user_genomes:
+        return False, f"empty pool returned {len(user_genomes)} non-bootstrap results"
     if out:
-        return False, f"empty pool returned {len(out)} results"
+        return True, "only bootstrap experience seed returned, no user DNA leaked"
     return True, "empty list, no crash"
 
 

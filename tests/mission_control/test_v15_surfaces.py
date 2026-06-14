@@ -45,7 +45,9 @@ def test_smoke_mission_control_with_integrated_system_covers_core_surfaces():
     # Core families from recorder emissions + command dispatches + rich static fire
     assert result["saw_loop_step"] or "loop_step" in str(result.get("counts_by_type", {}))
     assert result["saw_fabric_update"] or "fabric_update" in str(result.get("counts_by_type", {}))
-    assert result["saw_parent_decision"] or "parent_decision" in str(result.get("counts_by_type", {}))
+    assert result["saw_parent_decision"] or "parent_decision" in str(
+        result.get("counts_by_type", {})
+    )
     assert result["saw_static_fire"] or "static_fire" in str(result.get("counts_by_type", {}))
     assert "command_results" in result
     # All commands in the smoke either succeeded or gracefully reported no_mission (none should be unknown)
@@ -107,7 +109,9 @@ def test_replay_seq_integrity_and_bounded():
     # Seed some events with increasing seq
     for i in range(5):
         hub._record_event_for_introspection(
-            LoopStepEvent(event_type="loop_step", timestamp=time.time(), step=1, description=f"seed-{i}")
+            LoopStepEvent(
+                event_type="loop_step", timestamp=time.time(), step=1, description=f"seed-{i}"
+            )
         )
 
     # Simulate the replay logic exactly as in handle_inbound_command
@@ -118,7 +122,9 @@ def test_replay_seq_integrity_and_bounded():
     assert hub._event_seq >= max(e["seq"] for e in replay)
     # Bounded behavior (the [:64] guard)
     for _ in range(100):
-        hub._record_event_for_introspection(LoopStepEvent(event_type="loop_step", timestamp=time.time(), step=6))
+        hub._record_event_for_introspection(
+            LoopStepEvent(event_type="loop_step", timestamp=time.time(), step=6)
+        )
     replay2 = [e for e in hub.recent_events if e.get("seq", 0) > 0][:64]
     assert len(replay2) <= 64
 
@@ -129,6 +135,7 @@ def test_rich_static_fire_telemetry_publish_and_context(phase):
     hub = MissionControlHub()
     # Swap module hub for test isolation (restore after)
     import agentdrive.mission_control.server as mc_server
+
     orig = mc_server.hub
     try:
         mc_server.hub = hub  # type: ignore[assignment]
@@ -143,7 +150,9 @@ def test_rich_static_fire_telemetry_publish_and_context(phase):
             total_lift=8.0,
             parent_interventions=1,
             fabric_edges_delta=4,
-            key_events=[{"type": "parent_intervention", "summary": "steer in stabilization-wave-20260531"}],
+            key_events=[
+                {"type": "parent_intervention", "summary": "steer in stabilization-wave-20260531"}
+            ],
             final_report={"post_densif_fabric": {"coherence_end": 0.89}, "lift_pct": 8.0},
             recorder_snippets=["rec:stabilization-test"],
             log_line="rich telemetry test",
@@ -165,7 +174,9 @@ def test_rich_static_fire_telemetry_publish_and_context(phase):
             coherence_start=0.80,
         ) as sess:
             sess.report_progress(cycles_completed=1, current_coherence=0.83, log_line="mid")
-            sess.record_intervention("test decision during fire", cycle_id="stabilization-20260531-c1")
+            sess.record_intervention(
+                "test decision during fire", cycle_id="stabilization-20260531-c1"
+            )
             sess.add_recorder_snippet("fabric delta in fire")
             if phase == "completed":
                 sess.complete(final_coherence=0.91)
@@ -214,6 +225,7 @@ def test_daily_dream_emission_path_via_durable_helper():
 
     hub = MissionControlHub()
     import agentdrive.mission_control.server as mc_server
+
     orig = mc_server.hub
     try:
         mc_server.hub = hub
@@ -240,7 +252,9 @@ def test_daily_dream_emission_path_via_durable_helper():
             metadata={"stabilization_wave": "stabilization-wave-20260531"},
         )
 
-        events = [e for e in hub.recent_events if "daily" in str(e).lower() or e.get("cycle_id") == _cid]
+        events = [
+            e for e in hub.recent_events if "daily" in str(e).lower() or e.get("cycle_id") == _cid
+        ]
         assert len(events) >= 2
         types = {e.get("event_type") for e in events}
         assert "loop_step" in types
@@ -257,7 +271,9 @@ def test_attach_points_on_integrated_do_not_crash():
         IntegratedRealTimeEvolutionSystem,
     )
 
-    system = IntegratedRealTimeEvolutionSystem(swarm_id="stabilization-wave-20260531", overseer_poll_interval_s=0.01)
+    system = IntegratedRealTimeEvolutionSystem(
+        swarm_id="stabilization-wave-20260531", overseer_poll_interval_s=0.01
+    )
     hub = MissionControlHub()
 
     # The attach method (and internal recorder/overseer/grid wiring)

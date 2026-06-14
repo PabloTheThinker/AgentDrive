@@ -1472,9 +1472,7 @@ class ExperienceGraphRecorder:
         # Trim for token budget before memory triage so queues reference the final pack contents.
         if max_tokens < 1200:
             pack["strong_continuations"] = pack["strong_continuations"][:2]
-            pack["recent_high_value_densifications"] = pack[
-                "recent_high_value_densifications"
-            ][:1]
+            pack["recent_high_value_densifications"] = pack["recent_high_value_densifications"][:1]
 
         memory_candidates: list[MemoryTraceCandidate] = []
         for item in pack["top_weak_clusters"]:
@@ -1651,13 +1649,19 @@ class ExperienceGraphRecorder:
         # This directly closes the echo risk surfaced when the PerfectionistOptimizer + forced passes + subagent
         # synthesis re-recorded the same "Council has now spoken..." narrative ~50 times in 4-5min.
         try:
-            core = (reasoning.get("structural_pattern_matched") or "")[:220] + "|" + (reasoning.get("decision_rationale") or "")[:350]
+            core = (
+                (reasoning.get("structural_pattern_matched") or "")[:220]
+                + "|"
+                + (reasoning.get("decision_rationale") or "")[:350]
+            )
             h = str(hash(core))
             nowt = time.time()
             for k in list(self._recent_fabric_reasoning_hashes.keys()):
                 if nowt - self._recent_fabric_reasoning_hashes[k] > 180:
                     del self._recent_fabric_reasoning_hashes[k]
-            if h in self._recent_fabric_reasoning_hashes and (nowt - self._recent_fabric_reasoning_hashes[h] < 45):
+            if h in self._recent_fabric_reasoning_hashes and (
+                nowt - self._recent_fabric_reasoning_hashes[h] < 45
+            ):
                 reasoning["dupe_suppressed"] = True
                 reasoning["suppressed_window_s"] = 45
                 sup_slug = f"parent_fabric_reasoning_dupe_suppressed:{int(nowt)}"
@@ -1665,7 +1669,10 @@ class ExperienceGraphRecorder:
                     cycle_id,
                     sup_slug,
                     "parent_fabric_reasoning_dupe_suppressed",
-                    content_ref={"h": h[:16], "structural_pattern": reasoning.get("structural_pattern_matched", "")[:120]},
+                    content_ref={
+                        "h": h[:16],
+                        "structural_pattern": reasoning.get("structural_pattern_matched", "")[:120],
+                    },
                     texture_hints={"suppression": True, "gbrain_signal_score": 0.01},
                 )
                 self._recent_fabric_reasoning_hashes[h] = nowt
@@ -1737,7 +1744,10 @@ class ExperienceGraphRecorder:
         # Write first-class page_type observation for the trace (queryable DNA + living memory)
         try:
             self._write_parent_fabric_reasoning_trace_observation(
-                cycle_id, slug, reasoning, gbrain,
+                cycle_id,
+                slug,
+                reasoning,
+                gbrain,
                 program_id=prog_id,
                 user_objective_refs=user_objectives,
                 program_mandate_ref=prog_mandate,
@@ -2569,11 +2579,21 @@ class ExperienceGraphRecorder:
             # AD-Grid Programs as Inhabitants (minimal tranche on stabilization-wave-20260531)
             # Programs (local models or frontier sessions) declare identity + mandate when recording reasoning.
             # These become first-class on the trace observation + TypedEdges + gbrain provenance.
-            "program_id": str(reasoning.get("program_id") or reasoning.get("program") or "") or None,
+            "program_id": str(reasoning.get("program_id") or reasoning.get("program") or "")
+            or None,
             "user_objective_refs": [
-                str(x) for x in (reasoning.get("user_objective_refs", []) or reasoning.get("objectives", []) or []) if x
+                str(x)
+                for x in (
+                    reasoning.get("user_objective_refs", [])
+                    or reasoning.get("objectives", [])
+                    or []
+                )
+                if x
             ][:8],
-            "program_mandate_ref": str(reasoning.get("program_mandate_ref") or reasoning.get("mandate") or "") or None,
+            "program_mandate_ref": str(
+                reasoning.get("program_mandate_ref") or reasoning.get("mandate") or ""
+            )
+            or None,
             "constitution_refs": [
                 str(x) for x in (reasoning.get("constitution_refs", []) or []) if x
             ][:5],
@@ -2795,7 +2815,9 @@ class ExperienceGraphRecorder:
                     "program_id": program_id,
                     "user_objectives": user_objective_refs or [],
                     "mandate": program_mandate_ref,
-                } if program_id else None,
+                }
+                if program_id
+                else None,
                 "self_referential": (
                     "First-class capture of Parent graph-native reasoning over the v3 multi-cycle memory fabric. "
                     "Produced exclusively by record_parent_fabric_reasoning. "
@@ -2877,11 +2899,15 @@ class ExperienceGraphRecorder:
         """
         if not isinstance(manifest, dict):
             manifest = {}
-        program_id = str(manifest.get("program_id") or manifest.get("id") or f"prog-{int(time.time())}")
+        program_id = str(
+            manifest.get("program_id") or manifest.get("id") or f"prog-{int(time.time())}"
+        )
         user_objectives = manifest.get("user_objective_refs") or manifest.get("objectives") or []
         if not program_id or not user_objectives:
             # Basic UserSovereigntyClause: programs must declare explicit tie to user's objectives
-            manifest["_sovereignty_note"] = "REJECTED: program_id + user_objective_refs required for AD-Grid inhabitant registration"
+            manifest["_sovereignty_note"] = (
+                "REJECTED: program_id + user_objective_refs required for AD-Grid inhabitant registration"
+            )
             # Still record the attempt as experience (for audit / GuardianIntegrity)
             program_id = program_id or f"rejected-prog-{int(time.time())}"
 
@@ -2907,7 +2933,9 @@ class ExperienceGraphRecorder:
 
         # Dedicated observation with explicit page_type
         try:
-            self._write_model_program_manifest_observation(cycle_id, slug, manifest, program_id, gbrain)
+            self._write_model_program_manifest_observation(
+                cycle_id, slug, manifest, program_id, gbrain
+            )
         except Exception:
             pass
 
@@ -2967,7 +2995,9 @@ class ExperienceGraphRecorder:
         # Basic Guardian-style pre-check (real enforcement comes in the apply path + constitutions)
         sovereignty_ok = bool(user_objective_refs) or bool(constitution_refs)
         if not sovereignty_ok:
-            action["_guardian_note"] = "LOW_SOVEREIGNTY: recommend explicit user_objective_refs or constitution_refs for promotion"
+            action["_guardian_note"] = (
+                "LOW_SOVEREIGNTY: recommend explicit user_objective_refs or constitution_refs for promotion"
+            )
 
         # === Single-channel enforcement hook for high-volume paths (additive, safe) ===
         # All high-signal / high-volume inhabitant actions (Council threads, auto research passes,
@@ -2976,7 +3006,9 @@ class ExperienceGraphRecorder:
         try:
             if not hasattr(self, "_high_volume_action_counts"):
                 self._high_volume_action_counts: dict[str, int] = {}
-            self._high_volume_action_counts[program_id] = self._high_volume_action_counts.get(program_id, 0) + 1
+            self._high_volume_action_counts[program_id] = (
+                self._high_volume_action_counts.get(program_id, 0) + 1
+            )
             vol = self._high_volume_action_counts[program_id]
             if vol % 5 == 0 or vol > 20:  # annotate on bursts or sustained high volume
                 action["_single_channel_enforcement"] = {
@@ -3088,17 +3120,27 @@ class ExperienceGraphRecorder:
         prog_id = (
             program_id
             or (proposal.get("program_id") if isinstance(proposal, dict) else None)
-            or (proposal.get("action", {}).get("program_id") if isinstance(proposal, dict) else None)
+            or (
+                proposal.get("action", {}).get("program_id") if isinstance(proposal, dict) else None
+            )
         )
         uo_refs = (
             user_objective_refs
             or (proposal.get("user_objective_refs", []) if isinstance(proposal, dict) else [])
-            or (proposal.get("action", {}).get("user_objective_refs", []) if isinstance(proposal, dict) else [])
+            or (
+                proposal.get("action", {}).get("user_objective_refs", [])
+                if isinstance(proposal, dict)
+                else []
+            )
         )
         const_refs = (
             constitution_refs
             or (proposal.get("constitution_refs", []) if isinstance(proposal, dict) else [])
-            or (proposal.get("action", {}).get("constitution_refs", []) if isinstance(proposal, dict) else [])
+            or (
+                proposal.get("action", {}).get("constitution_refs", [])
+                if isinstance(proposal, dict)
+                else []
+            )
         )
         action = (
             proposal.get("action", proposal)
@@ -3111,9 +3153,13 @@ class ExperienceGraphRecorder:
 
         # Criterion 1: program_id + user_objective_refs (core of UserSovereigntyClause)
         if not prog_id or str(prog_id).strip() in ("", "unknown-inhabitant", "unknown"):
-            issues.append("MISSING_PROGRAM_ID: program_id mandatory for attributed inhabitant DNA and sovereignty tracking")
+            issues.append(
+                "MISSING_PROGRAM_ID: program_id mandatory for attributed inhabitant DNA and sovereignty tracking"
+            )
         if not uo_refs or len([r for r in (uo_refs or []) if str(r).strip()]) == 0:
-            issues.append("MISSING_USER_OBJECTIVE_REFS: >=1 explicit user_objective_ref required (UserSovereigntyClause + Guardian constitution)")
+            issues.append(
+                "MISSING_USER_OBJECTIVE_REFS: >=1 explicit user_objective_ref required (UserSovereigntyClause + Guardian constitution)"
+            )
 
         # Criterion 2: no erosion of Conductor authority (strengthened with real override path)
         # Explicit "conductor_override": true + non-empty "conductor_signature" (or equivalent) permits
@@ -3133,7 +3179,14 @@ class ExperienceGraphRecorder:
 
         erosion_keywords_present = any(
             k in action_str_lower
-            for k in ("conductor_override", "auto_promote_without_user", "bypass_guardian", "silent_apply", "force_conductor", "user_not_needed")
+            for k in (
+                "conductor_override",
+                "auto_promote_without_user",
+                "bypass_guardian",
+                "silent_apply",
+                "force_conductor",
+                "user_not_needed",
+            )
         )
 
         if erosion_keywords_present:
@@ -3143,57 +3196,125 @@ class ExperienceGraphRecorder:
                     "CONDUCTOR_OVERRIDE_ACCEPTED: explicit bypass with signature; full DNA audit trail recorded per Program Contract + Guardian enforcement (no sovereignty erosion)"
                 )
             else:
-                issues.append("CONDUCTOR_EROSION_RISK: proposal claims or implies override/bypass of human Conductor final authority (explicitly forbidden unless conductor_override:true + conductor_signature)")
+                issues.append(
+                    "CONDUCTOR_EROSION_RISK: proposal claims or implies override/bypass of human Conductor final authority (explicitly forbidden unless conductor_override:true + conductor_signature)"
+                )
 
         # Criterion 3: references to active constitutions (GuardianIntegrity primary for this gate)
-        active = {"guardian-integrity", "guardian", "research-constitution-guardian-integrity", "perfectionist-optimizer", "external-bridge"}
+        active = {
+            "guardian-integrity",
+            "guardian",
+            "research-constitution-guardian-integrity",
+            "perfectionist-optimizer",
+            "external-bridge",
+        }
         has_const_ref = bool(const_refs) and any(
             any(a in str(cr).lower() for a in active) for cr in (const_refs or [])
         )
         if not has_const_ref:
-            issues.append("WEAK_CONSTITUTION_REFS: must reference at least one active Council constitution (GuardianIntegrity strongly recommended for code actions)")
+            issues.append(
+                "WEAK_CONSTITUTION_REFS: must reference at least one active Council constitution (GuardianIntegrity strongly recommended for code actions)"
+            )
 
         # Criterion 4: basic drift/sanity checks (prevent low-signal or dangerous proposals from 5min echo)
         if action_type in ("code_change_applied", "code_edit", "apply", "patch") and target_path:
             tp = str(target_path)
-            if ".." in tp or tp.startswith(("/", "\\")) or any(bad in tp for bad in ("__pycache__", ".git", "site-packages", "node_modules")):
-                issues.append("UNSAFE_TARGET_PATH: path escapes allowed safe roots or targets protected/generated dirs (use safe_join guard)")
-            content_len = len(str(action.get("content") or action.get("patch") or action.get("new_content") or ""))
+            if (
+                ".." in tp
+                or tp.startswith(("/", "\\"))
+                or any(
+                    bad in tp for bad in ("__pycache__", ".git", "site-packages", "node_modules")
+                )
+            ):
+                issues.append(
+                    "UNSAFE_TARGET_PATH: path escapes allowed safe roots or targets protected/generated dirs (use safe_join guard)"
+                )
+            content_len = len(
+                str(action.get("content") or action.get("patch") or action.get("new_content") or "")
+            )
             if content_len > 20000:
-                issues.append("EXCESSIVE_CHANGE_SIZE: v1 guarded apply limits patch/content to 20k chars to bound drift risk")
-            if any(dyn in str(action) for dyn in ("__import__", "exec(", "eval(", "os.system", "subprocess.call", "compile(")):
-                issues.append("SANITY_DRIFT: proposal contains dynamic execution patterns - requires explicit Conductor review beyond gate")
+                issues.append(
+                    "EXCESSIVE_CHANGE_SIZE: v1 guarded apply limits patch/content to 20k chars to bound drift risk"
+                )
+            if any(
+                dyn in str(action)
+                for dyn in (
+                    "__import__",
+                    "exec(",
+                    "eval(",
+                    "os.system",
+                    "subprocess.call",
+                    "compile(",
+                )
+            ):
+                issues.append(
+                    "SANITY_DRIFT: proposal contains dynamic execution patterns - requires explicit Conductor review beyond gate"
+                )
 
         # Criterion 5 (Inhabitants that Ship 1780296458): explicit Conductor approval REQUIRED for real source targets
         # This prevents any real contrib without going through the review queue + Conductor path.
         # Uses the same override+signature mechanism (or passed conductor_approval) for explicit approval.
         # Stricter bounds for real mode (5k chars, source exts only).
-        real_mode_active = bool(real_contribution_mode or allow_real_source_targets or (isinstance(proposal, dict) and proposal.get("real_contribution_mode")))
+        real_mode_active = bool(
+            real_contribution_mode
+            or allow_real_source_targets
+            or (isinstance(proposal, dict) and proposal.get("real_contribution_mode"))
+        )
         if real_mode_active:
-            ca = conductor_approval or (proposal.get("conductor_approval") if isinstance(proposal, dict) else None) or action
+            ca = (
+                conductor_approval
+                or (proposal.get("conductor_approval") if isinstance(proposal, dict) else None)
+                or action
+            )
             ca_override = bool(isinstance(ca, dict) and ca.get("conductor_override") is True)
             ca_sig = None
             if isinstance(ca, dict):
                 ca_sig = ca.get("conductor_signature") or ca.get("signature")
             ca_sig = str(ca_sig).strip() if ca_sig else None
             if not (ca_override and ca_sig):
-                issues.append("REAL_CONTRIBUTION_REQUIRES_EXPLICIT_CONDUCTOR_APPROVAL: real_contribution_mode or allow_real_source_targets set but no valid conductor_approval (dict with conductor_override=True + conductor_signature). Use submit_inhabitant_proposal_for_review + conductor_approve_proposal to obtain. Conductor sovereignty absolute.")
+                issues.append(
+                    "REAL_CONTRIBUTION_REQUIRES_EXPLICIT_CONDUCTOR_APPROVAL: real_contribution_mode or allow_real_source_targets set but no valid conductor_approval (dict with conductor_override=True + conductor_signature). Use submit_inhabitant_proposal_for_review + conductor_approve_proposal to obtain. Conductor sovereignty absolute."
+                )
             # Stricter for real
-            rlen = len(str(action.get("content") or action.get("patch") or action.get("new_content") or ""))
+            rlen = len(
+                str(action.get("content") or action.get("patch") or action.get("new_content") or "")
+            )
             if rlen > 5000:
-                issues.append("EXCESSIVE_REAL_CHANGE_SIZE: real contribution mode limits to 5k chars (tighter drift bound)")
+                issues.append(
+                    "EXCESSIVE_REAL_CHANGE_SIZE: real contribution mode limits to 5k chars (tighter drift bound)"
+                )
             tp = str(target_path or "")
-            if tp and not any(tp.endswith(ext) for ext in (".py", ".md", ".txt", ".rst", ".yaml", ".json")):
-                issues.append("REAL_TARGET_EXT_UNSUPPORTED: real source contrib limited to source/docs exts for safety")
-            if any(bad in tp for bad in ("__pycache__", ".git", "site-packages", "node_modules", "build", "dist", ".pyc")):
-                issues.append("REAL_TARGET_PROTECTED_DIR: even in real mode, protected/generated dirs forbidden")
+            if tp and not any(
+                tp.endswith(ext) for ext in (".py", ".md", ".txt", ".rst", ".yaml", ".json")
+            ):
+                issues.append(
+                    "REAL_TARGET_EXT_UNSUPPORTED: real source contrib limited to source/docs exts for safety"
+                )
+            if any(
+                bad in tp
+                for bad in (
+                    "__pycache__",
+                    ".git",
+                    "site-packages",
+                    "node_modules",
+                    "build",
+                    "dist",
+                    ".pyc",
+                )
+            ):
+                issues.append(
+                    "REAL_TARGET_PROTECTED_DIR: even in real mode, protected/generated dirs forbidden"
+                )
 
         if issues:
             # If the ONLY issue is the accepted override note, treat as pass (override path)
             override_only = len(issues) == 1 and "CONDUCTOR_OVERRIDE_ACCEPTED" in issues[0]
             if override_only:
                 verdict = "pass"
-                reason = "Guardian gate PASSED via explicit Conductor override with signature. Full audit DNA recorded. " + issues[0]
+                reason = (
+                    "Guardian gate PASSED via explicit Conductor override with signature. Full audit DNA recorded. "
+                    + issues[0]
+                )
                 gbrain = 0.65  # lower than normal pass but higher than block; signals override use
             else:
                 verdict = "block"
@@ -3222,7 +3343,10 @@ class ExperienceGraphRecorder:
             # 1780296458 fields for real ship audit
             "real_contribution_mode": real_contribution_mode,
             "allow_real_source_targets": allow_real_source_targets,
-            "had_conductor_approval": bool(conductor_approval or (isinstance(proposal, dict) and proposal.get("conductor_approval"))),
+            "had_conductor_approval": bool(
+                conductor_approval
+                or (isinstance(proposal, dict) and proposal.get("conductor_approval"))
+            ),
         }
 
         return {
@@ -3337,17 +3461,26 @@ class ExperienceGraphRecorder:
             "applied": False,
             "verification": None,
             "edit_details": None,
-            "logs": [f"[{program_id}] Guardian gate verdict: {verdict} :: {gate_result['reason'][:140]}"],
+            "logs": [
+                f"[{program_id}] Guardian gate verdict: {verdict} :: {gate_result['reason'][:140]}"
+            ],
             "dna_traces": [verdict_slug] if verdict_slug else [],
         }
 
         if verdict != "pass":
-            result["logs"].append("Apply BLOCKED by Guardian per constitution. Proposal recorded for fabric/Parent review (no edit).")
+            result["logs"].append(
+                "Apply BLOCKED by Guardian per constitution. Proposal recorded for fabric/Parent review (no edit)."
+            )
             # Record the blocked proposal for DNA (low gbrain but traceable)
             try:
                 prop_slug = self.record_inhabitant_code_action(
                     program_id=program_id,
-                    action={**action, "type": action.get("type", "code_proposal"), "_guarded_blocked": True, "gate": gate_result},
+                    action={
+                        **action,
+                        "type": action.get("type", "code_proposal"),
+                        "_guarded_blocked": True,
+                        "gate": gate_result,
+                    },
                     cycle_id=cycle_id,
                     constitution_refs=const_refs,
                     user_objective_refs=uo_refs,
@@ -3379,7 +3512,11 @@ class ExperienceGraphRecorder:
             real_edit_attempted = False
             if real_contribution_mode and conductor_approval and allow_real_source_targets:
                 ca = conductor_approval
-                if isinstance(ca, dict) and ca.get("conductor_override") and ca.get("conductor_signature"):
+                if (
+                    isinstance(ca, dict)
+                    and ca.get("conductor_override")
+                    and ca.get("conductor_signature")
+                ):
                     try:
                         # Safe real root: the agentdrive workspace (user's actual system)
                         # Extremely conservative: resolve, require startswith, no traversal (safe_join helps)
@@ -3390,24 +3527,42 @@ class ExperienceGraphRecorder:
                             candidate = safe_join(ad_root, str(tpath))
                         else:
                             candidate = tpath
-                        cand_str = str(candidate.resolve()) if hasattr(candidate, "resolve") else str(candidate)
+                        cand_str = (
+                            str(candidate.resolve())
+                            if hasattr(candidate, "resolve")
+                            else str(candidate)
+                        )
                         root_str = str(ad_root)
                         if cand_str.startswith(root_str) and ".." not in str(target):  # extra belt
                             # Additional real-mode guards (beyond gate)
-                            if not any(cand_str.endswith(ext) for ext in (".py", ".md", ".txt", ".rst")):
-                                result["logs"].append("REAL_EDIT_BLOCKED: target ext not in safe source set for real contrib")
+                            if not any(
+                                cand_str.endswith(ext) for ext in (".py", ".md", ".txt", ".rst")
+                            ):
+                                result["logs"].append(
+                                    "REAL_EDIT_BLOCKED: target ext not in safe source set for real contrib"
+                                )
                             elif len(str(content)) > 5000:
-                                result["logs"].append("REAL_EDIT_BLOCKED: content exceeds 5k real-mode limit")
+                                result["logs"].append(
+                                    "REAL_EDIT_BLOCKED: content exceeds 5k real-mode limit"
+                                )
                             else:
                                 candidate.parent.mkdir(parents=True, exist_ok=True)
-                                cstr = json.dumps(content, indent=2, default=str) if isinstance(content, (dict, list)) else str(content)
+                                cstr = (
+                                    json.dumps(content, indent=2, default=str)
+                                    if isinstance(content, (dict, list))
+                                    else str(content)
+                                )
                                 # For extra safety in real: write atomically-ish via temp then replace (simple here)
                                 candidate.write_text(cstr, encoding="utf-8")
                                 target_written = str(candidate)
                                 do_edit = True
                                 real_edit_attempted = True
-                                result["logs"].append(f"REAL CONTRIBUTION EDIT (heavily gated, Conductor-approved): {target_written} ({len(cstr)} chars) [charter 1780296458]")
-                                result["logs"].append("  WARNING: real source mutated under explicit Conductor approval + all gates. Full DNA + review queue trace exists.")
+                                result["logs"].append(
+                                    f"REAL CONTRIBUTION EDIT (heavily gated, Conductor-approved): {target_written} ({len(cstr)} chars) [charter 1780296458]"
+                                )
+                                result["logs"].append(
+                                    "  WARNING: real source mutated under explicit Conductor approval + all gates. Full DNA + review queue trace exists."
+                                )
                     except (PathTraversalError, Exception) as pex:
                         result["logs"].append(f"Real contrib path guard blocked: {pex}")
                         real_edit_attempted = True  # attempted but failed safely
@@ -3419,39 +3574,63 @@ class ExperienceGraphRecorder:
                         root = Path(root_str)
                         root.mkdir(parents=True, exist_ok=True)
                         # Force relative under this demo root; use safe_name on last segment + safe_join
-                        safe_seg = target.replace("..", "_").replace("/", "_").replace("\\", "_")[-120:]
+                        safe_seg = (
+                            target.replace("..", "_").replace("/", "_").replace("\\", "_")[-120:]
+                        )
                         if not safe_seg or safe_seg in (".", "_"):
                             safe_seg = f"demo_inhabitant_change_{int(time.time())}.py"
                         candidate = safe_join(root, safe_seg)
                         # v1: only allow writes inside the demo root (never real source)
                         if str(candidate).startswith(str(root)):
                             candidate.parent.mkdir(parents=True, exist_ok=True)
-                            cstr = json.dumps(content, indent=2, default=str) if isinstance(content, (dict, list)) else str(content)
+                            cstr = (
+                                json.dumps(content, indent=2, default=str)
+                                if isinstance(content, (dict, list))
+                                else str(content)
+                            )
                             candidate.write_text(cstr, encoding="utf-8")
                             target_written = str(candidate)
                             do_edit = True
-                            result["logs"].append(f"SAFE DEMO EDIT performed (under demo root only): {target_written} ({len(cstr)} chars)")
+                            result["logs"].append(
+                                f"SAFE DEMO EDIT performed (under demo root only): {target_written} ({len(cstr)} chars)"
+                            )
                             break
                     except (PathTraversalError, Exception) as pex:
                         result["logs"].append(f"Demo path guard skipped root {root_str}: {pex}")
                         continue
             if not do_edit:
-                result["logs"].append("Real edit skipped (no suitable demo root or safety block or real-mode gates not met). Staying in simulation. For real ship: supply real_contribution_mode + conductor_approval + allow_real_source_targets + dry_run=False after Conductor review queue approval.")
+                result["logs"].append(
+                    "Real edit skipped (no suitable demo root or safety block or real-mode gates not met). Staying in simulation. For real ship: supply real_contribution_mode + conductor_approval + allow_real_source_targets + dry_run=False after Conductor review queue approval."
+                )
         elif dry_run:
-            result["logs"].append("DRY_RUN (default): edit simulated only. No FS changes. To exercise real path, set dry_run=False + supply target under /tmp/agentdrive_guardian_demo/... OR (for 1780296458 real ship) use real_contribution_mode=True + conductor_approval from queue + allow_real_source_targets=True on actual source target.")
+            result["logs"].append(
+                "DRY_RUN (default): edit simulated only. No FS changes. To exercise real path, set dry_run=False + supply target under /tmp/agentdrive_guardian_demo/... OR (for 1780296458 real ship) use real_contribution_mode=True + conductor_approval from queue + allow_real_source_targets=True on actual source target."
+            )
             if target and content:
-                result["logs"].append(f"  (simulated) would target: {target} len={len(str(content))}")
+                result["logs"].append(
+                    f"  (simulated) would target: {target} len={len(str(content))}"
+                )
 
         # (c) Minimal verification (py_compile on written or a temp repro if content provided)
         verification: dict[str, Any] = {"py_compile": "skipped", "ok": True}
         verif_target = target_written
-        if (do_edit or (dry_run and content)) and (target_written or (isinstance(content, str) and content.strip().startswith(("def ", "import ", "class ", "#")))):
+        if (do_edit or (dry_run and content)) and (
+            target_written
+            or (
+                isinstance(content, str)
+                and content.strip().startswith(("def ", "import ", "class ", "#"))
+            )
+        ):
             try:
                 if not verif_target:
                     # ephemeral temp for compile check only (no persist)
                     td = Path(tempfile.mkdtemp(prefix="guardian_pycompile_"))
                     verif_target = td / "verify_snippet.py"
-                    cstr = json.dumps(content, indent=2, default=str) if not isinstance(content, str) else content
+                    cstr = (
+                        json.dumps(content, indent=2, default=str)
+                        if not isinstance(content, str)
+                        else content
+                    )
                     verif_target.write_text(cstr, encoding="utf-8")
                 comp = subprocess.run(
                     [sys.executable or "python3", "-m", "py_compile", str(verif_target)],
@@ -3466,13 +3645,19 @@ class ExperienceGraphRecorder:
                     "file_checked": str(verif_target),
                     "stderr": (comp.stderr or "")[:280] if not ok else "",
                 }
-                result["logs"].append(f"py_compile verification: {verification['py_compile']} on {verif_target}")
+                result["logs"].append(
+                    f"py_compile verification: {verification['py_compile']} on {verif_target}"
+                )
             except Exception as vx:
                 verification = {"py_compile": "error", "ok": False, "error": str(vx)[:120]}
                 result["logs"].append(f"Verification step error (non-fatal): {vx}")
 
         result["verification"] = verification
-        result["edit_details"] = {"written_to": target_written, "dry_run": dry_run} if target_written else {"simulated": True, "dry_run": dry_run}
+        result["edit_details"] = (
+            {"written_to": target_written, "dry_run": dry_run}
+            if target_written
+            else {"simulated": True, "dry_run": dry_run}
+        )
 
         # (d)(e) Record apply + test_result as DNA
         try:
@@ -3624,7 +3809,8 @@ class ExperienceGraphRecorder:
             "conductor_override": True,
             "conductor_signature": str(conductor_signature).strip(),
             "approved_at": now,
-            "approval_notes": approval_notes or "Explicit Conductor approval for real contribution (Inhabitants that Ship)",
+            "approval_notes": approval_notes
+            or "Explicit Conductor approval for real contribution (Inhabitants that Ship)",
             "approved_by": "Conductor (via conductor_approve_proposal 1780296458)",
             "program_id": found.get("program_id"),
         }

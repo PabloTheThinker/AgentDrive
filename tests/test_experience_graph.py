@@ -7,7 +7,6 @@ No IntegratedRealTimeEvolutionSystem, no network, no Mission Control hub require
 from __future__ import annotations
 
 import json
-import time
 from pathlib import Path
 
 import pytest
@@ -16,17 +15,16 @@ from agentdrive.constants import get_default_drive_path, new_correlation_id
 from agentdrive.evolution.experience_graph import (
     CONNECTION_STRENGTHENED_BY,
     CROSS_CYCLE_CONTINUATION,
-    DENSIFIED_VIA_GARDENER,
     DENSIFICATION_INVERSE_MAP,
+    DENSIFIED_VIA_GARDENER,
     FABRIC_COHERENCE_CONTRIBUTED,
     FABRIC_LINK,
     GRAPH_COHERENCE_LIFT,
-    LoopEdge,
     PARENT_FABRIC_REASONING_TRACE,
     ExperienceGraphRecorder,
+    LoopEdge,
     get_recorder_for_drive,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -102,7 +100,9 @@ def test_record_artifact_adds_to_cycle(recorder: ExperienceGraphRecorder) -> Non
     assert graph["artifacts"][0]["type"] == "overseer_briefing"
 
 
-def test_record_connection_creates_loop_edge_and_persists(recorder: ExperienceGraphRecorder) -> None:
+def test_record_connection_creates_loop_edge_and_persists(
+    recorder: ExperienceGraphRecorder,
+) -> None:
     cycle_id = recorder.start_cycle("corr-conn-001")
     edge = recorder.record_connection(
         cycle_id,
@@ -118,9 +118,7 @@ def test_record_connection_creates_loop_edge_and_persists(recorder: ExperienceGr
     relations = {c["relation"] for c in data["connections"]}
     assert "overseer_briefing_informed_parent_decision" in relations
     # Bidirectional mirror (Obsidian-style)
-    assert any(
-        c["source"] == "node-b" and c["target"] == "node-a" for c in data["connections"]
-    )
+    assert any(c["source"] == "node-b" and c["target"] == "node-a" for c in data["connections"])
 
 
 def test_record_connection_unknown_cycle_creates_minimal_cycle(
@@ -221,8 +219,7 @@ def test_get_fabric_context_pack_returns_expected_keys(recorder: ExperienceGraph
         "archive",
     }
     assert (
-        pack["memory_systems_triage"]["control_plan"]["primary_context_order"][0]
-        == "working_set"
+        pack["memory_systems_triage"]["control_plan"]["primary_context_order"][0] == "working_set"
     )
 
 
@@ -246,7 +243,9 @@ def test_get_recent_parent_fabric_reasoning_traces_returns_list(
         )
 
 
-def test_suggest_fabric_reasoning_structure_returns_schema(recorder: ExperienceGraphRecorder) -> None:
+def test_suggest_fabric_reasoning_structure_returns_schema(
+    recorder: ExperienceGraphRecorder,
+) -> None:
     schema = recorder.suggest_fabric_reasoning_structure()
     assert "fabric_reasoning_prompt_template" in schema
     template = schema["fabric_reasoning_prompt_template"]
@@ -337,7 +336,9 @@ def test_record_densification_lift_updates_coherence(recorder: ExperienceGraphRe
     cycle_id = recorder.start_cycle("corr-lift-001")
     cycle = recorder._active_cycles[cycle_id]
     cycle.enter_densification_phase()
-    recorder.record_densification_lift(cycle_id, pre_coherence=0.55, post_coherence=0.72, new_edge_count=3)
+    recorder.record_densification_lift(
+        cycle_id, pre_coherence=0.55, post_coherence=0.72, new_edge_count=3
+    )
     data = _load_cycle_json(recorder, cycle_id)
     assert data["coherence_score"] >= 0.72
     assert data["status"] == "closed"
@@ -473,7 +474,9 @@ def test_find_weak_connections_on_sparse_cycle(recorder: ExperienceGraphRecorder
 def test_aggregate_graph_across_cycles_includes_both(recorder: ExperienceGraphRecorder) -> None:
     c1 = recorder.start_cycle(new_correlation_id())
     c2 = recorder.start_cycle(new_correlation_id())
-    recorder.record_fabric_contribution(c1, target_cycle=c2, contribution_type=CROSS_CYCLE_CONTINUATION)
+    recorder.record_fabric_contribution(
+        c1, target_cycle=c2, contribution_type=CROSS_CYCLE_CONTINUATION
+    )
     agg = recorder.aggregate_graph_across_cycles(lookback_days=7)
     assert agg.get("cycle_count", 0) >= 2
     participating = set(agg.get("participating_cycles", []))

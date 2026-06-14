@@ -166,9 +166,7 @@ def compose_skills_block(
 ) -> str:
     """Full skills section for build_system_prompt."""
     active = harness or active_harness()
-    matched = match_skills_for_turn(
-        user_message, top_k=top_k, role=role, harness=active
-    )
+    matched = match_skills_for_turn(user_message, top_k=top_k, role=role, harness=active)
     parts: list[str] = []
     if include_catalog:
         catalog = format_skills_catalog(harness=active)

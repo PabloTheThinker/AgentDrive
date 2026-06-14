@@ -93,16 +93,36 @@ CATALOG: tuple[CatalogEntry, ...] = (
     CatalogEntry("scan", "Scan runs/trajectories for candidate genomes", "setup"),
     # drive
     CatalogEntry("drive status", "Drive status and recent activity", "drive", "pool_status", True),
-    CatalogEntry("drive stats", "Detailed pool and registry statistics", "drive", "pool_stats", True),
+    CatalogEntry(
+        "drive stats", "Detailed pool and registry statistics", "drive", "pool_stats", True
+    ),
     CatalogEntry("drive query", "Semantic genome search for a task", "drive", "pool_query", True),
-    CatalogEntry("drive ingest", "Ingest a genome directory into the Drive", "drive", "ingest_genome", False),
+    CatalogEntry(
+        "drive ingest", "Ingest a genome directory into the Drive", "drive", "ingest_genome", False
+    ),
     CatalogEntry("pool", "Alias for drive (same subcommands)", "drive"),
     # synthesis
-    CatalogEntry("think", "Cited Drive.think synthesis with gap analysis", "synthesis", "think", True),
+    CatalogEntry(
+        "think", "Cited Drive.think synthesis with gap analysis", "synthesis", "think", True
+    ),
     # patterns
-    CatalogEntry("patterns list", "List Fabric-style pattern catalog", "patterns", "patterns_list", True),
-    CatalogEntry("patterns show", "Show one pattern metadata and system.md", "patterns", "patterns_show", True),
-    CatalogEntry("patterns apply", "Compose pattern prompt with {{input}}", "patterns", "patterns_apply", True),
+    CatalogEntry(
+        "patterns list", "List Fabric-style pattern catalog", "patterns", "patterns_list", True
+    ),
+    CatalogEntry(
+        "patterns show",
+        "Show one pattern metadata and system.md",
+        "patterns",
+        "patterns_show",
+        True,
+    ),
+    CatalogEntry(
+        "patterns apply",
+        "Compose pattern prompt with {{input}}",
+        "patterns",
+        "patterns_apply",
+        True,
+    ),
     CatalogEntry(
         "patterns import-fabric",
         "Import Fabric patterns into ~/.agentdrive/patterns",
@@ -111,11 +131,25 @@ CATALOG: tuple[CatalogEntry, ...] = (
         False,
     ),
     # learnings
-    CatalogEntry("learnings list", "Recent operational learnings for project slug", "learnings", "learnings_list", True),
+    CatalogEntry(
+        "learnings list",
+        "Recent operational learnings for project slug",
+        "learnings",
+        "learnings_list",
+        True,
+    ),
     CatalogEntry("learnings log", "Append one learning entry", "learnings", "learnings_log", False),
-    CatalogEntry("learnings search", "Token search over learnings key/insight", "learnings", None, True),
+    CatalogEntry(
+        "learnings search", "Token search over learnings key/insight", "learnings", None, True
+    ),
     # harness
-    CatalogEntry("harness compose", "Compose harness prompt (DNA + learnings + Fabric)", "harness", "harness_compose", True),
+    CatalogEntry(
+        "harness compose",
+        "Compose harness prompt (DNA + learnings + Fabric)",
+        "harness",
+        "harness_compose",
+        True,
+    ),
     # experience
     CatalogEntry(
         "graph context-pack",
@@ -140,8 +174,16 @@ CATALOG: tuple[CatalogEntry, ...] = (
     ),
     CatalogEntry("experience", "Alias for graph (Experience Graph commands)", "experience"),
     # reconcile
-    CatalogEntry("reconcile run", "Single reconciliation pass over local Drive", "reconcile", "reconcile_scan", False),
-    CatalogEntry("reconcile status", "Persisted reconciliation state", "reconcile", "reconcile_status", True),
+    CatalogEntry(
+        "reconcile run",
+        "Single reconciliation pass over local Drive",
+        "reconcile",
+        "reconcile_scan",
+        False,
+    ),
+    CatalogEntry(
+        "reconcile status", "Persisted reconciliation state", "reconcile", "reconcile_status", True
+    ),
     CatalogEntry(
         "reconcile seed-experience-v3",
         "First-run recovery: experience layer v3 seed + KG bootstrap",
@@ -150,7 +192,9 @@ CATALOG: tuple[CatalogEntry, ...] = (
         False,
     ),
     # sprint
-    CatalogEntry("sprint ship", "Reconcile → test → think_gaps ship chain", "sprint", "sprint_ship", False),
+    CatalogEntry(
+        "sprint ship", "Reconcile → test → think_gaps ship chain", "sprint", "sprint_ship", False
+    ),
     CatalogEntry("sprint status", "Pending sprint checkpoints", "sprint", "sprint_status", True),
     CatalogEntry("sprint ack", "Acknowledge a sprint checkpoint", "sprint"),
     # dream
@@ -166,7 +210,13 @@ CATALOG: tuple[CatalogEntry, ...] = (
     CatalogEntry("mcp doctor", "Verify MCP package, launcher, tools", "mcp"),
     CatalogEntry("mcp tools", "List MCP tools exposed by server", "mcp"),
     # mission_control
-    CatalogEntry("cap mint-mission", "Mint Mission Control mutating-command cap", "mission_control", "cap_mint_mission", False),
+    CatalogEntry(
+        "cap mint-mission",
+        "Mint Mission Control mutating-command cap",
+        "mission_control",
+        "cap_mint_mission",
+        False,
+    ),
     # genomes
     CatalogEntry("genomes list", "List registered genomes", "genomes"),
     CatalogEntry("genomes info", "Show one genome by ID", "genomes"),
@@ -262,10 +312,10 @@ def format_epilog() -> str:
         "  agentdrive doctor                   Health check",
         "",
         "Core workflows:",
-        "  agentdrive think \"question\"         Cited synthesis + gaps",
-        "  agentdrive drive query \"task\"       Semantic genome search",
-        "  agentdrive learnings log --key K --insight \"...\"",
-        "  agentdrive harness compose --task \"...\"",
+        '  agentdrive think "question"         Cited synthesis + gaps',
+        '  agentdrive drive query "task"       Semantic genome search',
+        '  agentdrive learnings log --key K --insight "..."',
+        '  agentdrive harness compose --task "..."',
         "  agentdrive graph context-pack       Experience Graph briefing pack",
         "  agentdrive sprint ship              gstack-style ship chain",
         "  agentdrive dream run                Phased maintenance cycle",

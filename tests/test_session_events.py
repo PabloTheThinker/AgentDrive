@@ -39,12 +39,7 @@ def clean_bus() -> Iterator[None]:
 def test_session_events_path(isolated_agentdrive_home: Path) -> None:
     path = session_events_path("my-agent", "sess-123")
     assert path == (
-        isolated_agentdrive_home
-        / "agents"
-        / "my-agent"
-        / "sessions"
-        / "sess-123"
-        / "events.jsonl"
+        isolated_agentdrive_home / "agents" / "my-agent" / "sessions" / "sess-123" / "events.jsonl"
     )
 
 
@@ -110,9 +105,7 @@ def test_format_event_summary_covers_common_types() -> None:
     assert "user" in format_event_summary({"type": "MessageStart", "role": "user"})
     assert "hello" in format_event_summary({"type": "MessageDelta", "text": "hello"})
     assert "bash" in format_event_summary({"type": "ToolStart", "tool": "bash"})
-    assert "g1" in format_event_summary(
-        {"type": "PoolMatch", "genomes": ["g1"], "scores": [0.87]}
-    )
+    assert "g1" in format_event_summary({"type": "PoolMatch", "genomes": ["g1"], "scores": [0.87]})
     assert "no DNA" in format_event_summary({"type": "PoolMatch", "genomes": [], "scores": []})
 
 
@@ -157,9 +150,7 @@ def test_cli_session_events_and_replay(isolated_agentdrive_home: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as fh:
         fh.write(json.dumps({"type": "MessageDelta", "text": "cli event"}) + "\n")
-        fh.write(
-            json.dumps({"type": "PoolMatch", "genomes": ["g-cli"], "scores": [0.5]}) + "\n"
-        )
+        fh.write(json.dumps({"type": "PoolMatch", "genomes": ["g-cli"], "scores": [0.5]}) + "\n")
 
     listed = _run_cli("session", "events", session_id, home=isolated_agentdrive_home)
     assert listed.returncode == 0

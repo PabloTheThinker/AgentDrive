@@ -49,8 +49,7 @@ class PoolActivityLane:
             extra = len(ev.genomes) - 3
             tail = f" +{extra}" if extra > 0 else ""
             _set(
-                f"[{p.genome}]▸ matched {len(ev.genomes)} genomes[/] "
-                f"[{p.muted}]({scores}{tail})[/]"
+                f"[{p.genome}]▸ matched {len(ev.genomes)} genomes[/] [{p.muted}]({scores}{tail})[/]"
             )
 
         def _on_ingest(ev: PoolIngest) -> None:

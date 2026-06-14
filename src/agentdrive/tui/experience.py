@@ -13,7 +13,16 @@ from rich.text import Text
 
 from agentdrive.golden_path import GOLDEN_STEPS, run_walkthrough, verify_all
 from agentdrive.operations import run_operation
-from agentdrive.tui.chrome import Group, Palette, Section, Tree, TreeRow, ok_line, section_panel, warn_line
+from agentdrive.tui.chrome import (
+    Group,
+    Palette,
+    Section,
+    Tree,
+    TreeRow,
+    ok_line,
+    section_panel,
+    warn_line,
+)
 
 
 def _golden_path_config() -> dict[str, Any]:
@@ -111,9 +120,7 @@ def render_golden_path_gate(console: Console, *, palette: Palette | None = None)
                     f"[{p.muted}]In chat:[/] [{p.accent}]/golden-path run[/]  "
                     f"[{p.muted}]· shell:[/] [{p.accent}]agentdrive golden-path run[/]"
                 ),
-                Text.from_markup(
-                    f"[{p.muted}]Docs:[/] docs/GOLDEN_PATH.md"
-                ),
+                Text.from_markup(f"[{p.muted}]Docs:[/] docs/GOLDEN_PATH.md"),
             ],
         )
     )
@@ -182,9 +189,7 @@ def handle_ops_slash(
         if sub in ("steps", "list"):
             for i, step in enumerate(GOLDEN_STEPS, 1):
                 opt = " [dim](optional)[/]" if step.optional else ""
-                console.print(
-                    f"  [dim]{i}.[/] [{p.accent}]{step.title}[/]{opt} — {step.command}"
-                )
+                console.print(f"  [dim]{i}.[/] [{p.accent}]{step.title}[/]{opt} — {step.command}")
         elif sub == "verify":
             summary = golden_path_verify_summary()
             for item in summary.get("steps", []):
@@ -243,9 +248,7 @@ def handle_ops_slash(
             # /learnings log my-key insight text here
             log_parts = rest.split(maxsplit=1)
             if len(log_parts) < 2:
-                console.print(
-                    warn_line("Usage: /learnings log <key> <insight>", palette=p)
-                )
+                console.print(warn_line("Usage: /learnings log <key> <insight>", palette=p))
                 return
             key, insight = log_parts[0], log_parts[1]
             result = run_operation(
@@ -266,13 +269,9 @@ def handle_ops_slash(
 
             hits = LearningsStore().search(rest, limit=10)
             for entry in hits:
-                console.print(
-                    f"  [{p.genome}]{entry.get('key')}[/] {entry.get('insight', '')}"
-                )
+                console.print(f"  [{p.genome}]{entry.get('key')}[/] {entry.get('insight', '')}")
         else:
-            console.print(
-                warn_line("Usage: /learnings list|log|search ...", palette=p)
-            )
+            console.print(warn_line("Usage: /learnings list|log|search ...", palette=p))
         return
 
     if cmd == "/session":
@@ -344,14 +343,15 @@ def handle_ops_slash(
 
         filtered = filter_events_by_type(events, type_filter)
         counts = summarize_event_types(events)
-        filter_note = f"  [dim]· filter {type_filter} ({len(filtered)}/{len(events)})[/]" if type_filter else ""
+        filter_note = (
+            f"  [dim]· filter {type_filter} ({len(filtered)}/{len(events)})[/]"
+            if type_filter
+            else ""
+        )
 
         if sub == "panel":
             type_rows = [(ev_type, str(n)) for ev_type, n in counts.items()]
-            timeline_rows = [
-                TreeRow(label=format_event_summary(ev))
-                for ev in filtered[-60:]
-            ]
+            timeline_rows = [TreeRow(label=format_event_summary(ev)) for ev in filtered[-60:]]
             if len(filtered) > 60:
                 timeline_rows.insert(
                     0,
@@ -361,7 +361,9 @@ def handle_ops_slash(
                 )
             console.print(
                 section_panel(
-                    Section("Session", [(resolved, path.name), ("events", str(len(events)))], palette=p),
+                    Section(
+                        "Session", [(resolved, path.name), ("events", str(len(events)))], palette=p
+                    ),
                     Section(
                         "Event types",
                         type_rows or [("(none)", "0")],
@@ -415,13 +417,14 @@ def handle_ops_slash(
             if sub == "list":
                 entries = list_skills()
                 if not entries:
-                    console.print(warn_line("No skills found under ~/.agentdrive/skills", palette=p))
+                    console.print(
+                        warn_line("No skills found under ~/.agentdrive/skills", palette=p)
+                    )
                     return
                 for entry in entries:
                     op = f" [dim]→ {entry.operation}[/]" if entry.operation else ""
                     console.print(
-                        f"  [{p.accent}]{entry.name}[/]{op}  "
-                        f"[dim]{entry.description[:60]}[/]"
+                        f"  [{p.accent}]{entry.name}[/]{op}  [dim]{entry.description[:60]}[/]"
                     )
                 console.print()
                 console.print(

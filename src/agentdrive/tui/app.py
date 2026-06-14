@@ -904,7 +904,10 @@ class AgentDriveTUI:
             Section(
                 "Board",
                 [
-                    ("board / b / kanban", "AgentDrive Mission Board (terminal) — web Kanban at http://127.0.0.1:8421/ (run `agentdrive board`)"),
+                    (
+                        "board / b / kanban",
+                        "AgentDrive Mission Board (terminal) — web Kanban at http://127.0.0.1:8421/ (run `agentdrive board`)",
+                    ),
                     ("board recent", "compact recent-missions view"),
                     ("board create <t>", "stage a Pending mission"),
                     ("board stats", "lane counts + avg duration"),

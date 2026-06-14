@@ -281,7 +281,14 @@ class DurableDreamRunner:
                 extra={"correlation_id": _cid, "job_id": job_id},
             )
             # Wave2: dream/durable phases (incl. daily_consolidation) emit for free via mission publish
-            if job.phase in ("daily_consolidation", "consol-deep", "consol-light", "consol-rem", "role-calibration", "healing"):
+            if job.phase in (
+                "daily_consolidation",
+                "consol-deep",
+                "consol-light",
+                "consol-rem",
+                "role-calibration",
+                "healing",
+            ):
                 _publish_mission_event(
                     "loop_step",
                     cycle_id=job.metadata.get("correlation_id") or _cid,
@@ -289,7 +296,10 @@ class DurableDreamRunner:
                     step=5 if "consol" in job.phase or job.phase == "daily_consolidation" else 6,
                     description=f"Durable dream phase completed: {job.phase}",
                     data={"job_id": job_id, "swarm": self.swarm_id, "has_result": bool(result)},
-                    metadata={"job_phase": job.phase, "stabilization_wave": "stabilization-wave-20260531"},
+                    metadata={
+                        "job_phase": job.phase,
+                        "stabilization_wave": "stabilization-wave-20260531",
+                    },
                 )
             return result
         except Exception as e:
@@ -1261,7 +1271,10 @@ The "while you sleep you get smarter" loop is productionized: Durable jobs produ
         cycle_id=f"consol-deep-{now[:10]}",
         correlation_id=get_correlation_id(),
         summary="role-family deep consolidation (graph + salience + dream_jobs) feeding daily_consolidation",
-        graph_delta={"top_salience": top_salience[:3] if "top_salience" in locals() else [], "total_edges": total_edges if "total_edges" in locals() else 0},
+        graph_delta={
+            "top_salience": top_salience[:3] if "top_salience" in locals() else [],
+            "total_edges": total_edges if "total_edges" in locals() else 0,
+        },
     )
 
     return {
@@ -1665,7 +1678,11 @@ def run_daily_consolidation_job() -> dict[str, Any]:
         correlation_id=_cid,
         step=6,
         description="Daily consolidation Drive.think(prefer_experience_layer) + family synthesis complete",
-        data={"gaps": len(gaps), "contradictions": len(contradictions), "citations": len(citations)},
+        data={
+            "gaps": len(gaps),
+            "contradictions": len(contradictions),
+            "citations": len(citations),
+        },
     )
 
     # 2. Graph signals + calibration snapshot for fusion_checkpoint (hybrid fusion + graph signals)
@@ -1714,10 +1731,16 @@ def run_daily_consolidation_job() -> dict[str, Any]:
     try:
         if get_recorder_for_drive is not None:
             # Instantiate recorder for the swarm drive (explicit stabilization-wave-20260531 target)
-            stab_drive_path = Path.home() / ".agentdrive" / "swarms" / "stabilization-wave-20260531" / "drive"
-            recorder = get_recorder_for_drive(stab_drive_path, swarm_id="stabilization-wave-20260531")
+            stab_drive_path = (
+                Path.home() / ".agentdrive" / "swarms" / "stabilization-wave-20260531" / "drive"
+            )
+            recorder = get_recorder_for_drive(
+                stab_drive_path, swarm_id="stabilization-wave-20260531"
+            )
             # Call the live v2 method (and new fabric briefing once implemented)
-            recent_densified = recorder.get_recent_densified_loop_graphs_for_diary(n=3, min_lift=0.005) or []
+            recent_densified = (
+                recorder.get_recent_densified_loop_graphs_for_diary(n=3, min_lift=0.005) or []
+            )
             get_fabric_brief = getattr(recorder, "get_parent_facing_memory_fabric_briefing", None)
             if callable(get_fabric_brief):
                 try:
@@ -1732,8 +1755,12 @@ def run_daily_consolidation_job() -> dict[str, Any]:
                     "cycles_analyzed": n,
                     "multi_cycle_coherence": round(
                         sum(float(d.get("coherence", 0.0)) for d in recent_densified) / max(1, n), 4
-                    ) if n else 0.0,
-                    "total_densification_lift": round(sum(float(d.get("lift", 0.0)) for d in recent_densified), 4),
+                    )
+                    if n
+                    else 0.0,
+                    "total_densification_lift": round(
+                        sum(float(d.get("lift", 0.0)) for d in recent_densified), 4
+                    ),
                     "cycles": [d.get("cycle_id") for d in recent_densified],
                     "note": "Fabric briefing synthesized from get_recent_densified_loop_graphs_for_diary + densif history",
                 }
@@ -1746,7 +1773,9 @@ def run_daily_consolidation_job() -> dict[str, Any]:
                         "coherence_score": first.get("coherence"),
                         "coherence": first.get("coherence"),
                         "lift": first.get("lift"),
-                        "densification_history": [{"lift": first.get("lift", 0)}] if first.get("lift") else [],
+                        "densification_history": [{"lift": first.get("lift", 0)}]
+                        if first.get("lift")
+                        else [],
                     }
                     _ = embed_graph_into_artifact(
                         cycle_graph_dict=gdict,
@@ -1770,12 +1799,18 @@ def run_daily_consolidation_job() -> dict[str, Any]:
                 for d in recent_densified:
                     cid = d.get("cycle_id", "unknown")
                     sec_lines.append(f"### Cycle {cid}")
-                    sec_lines.append(f"coherence={d.get('coherence')} | lift={d.get('lift')} | new_edges={d.get('new_edges')}")
-                    sec_lines.append("Mermaid (from live recorder.render_cycle_graph_mermaid via get_recent...):")
+                    sec_lines.append(
+                        f"coherence={d.get('coherence')} | lift={d.get('lift')} | new_edges={d.get('new_edges')}"
+                    )
+                    sec_lines.append(
+                        "Mermaid (from live recorder.render_cycle_graph_mermaid via get_recent...):"
+                    )
                     sec_lines.append("```mermaid")
                     sec_lines.append(d.get("mermaid_snippet") or "(no mermaid snippet)")
                     sec_lines.append("```")
-                    sec_lines.append("Hierarchical Text (from live recorder.render_cycle_graph_text):")
+                    sec_lines.append(
+                        "Hierarchical Text (from live recorder.render_cycle_graph_text):"
+                    )
                     sec_lines.append("```")
                     sec_lines.append(d.get("text_snippet") or "(no text snippet)")
                     sec_lines.append("```")
@@ -1792,17 +1827,32 @@ def run_daily_consolidation_job() -> dict[str, Any]:
             # Wave2: emit FabricUpdateEvent with before/after coherence + deltas from v3 daily fusion
             # (targeting stabilization-wave-20260531 drive + recorder surfaces; carries cycle_ids)
             try:
-                pre_coh = round(
-                    sum(float(d.get("coherence", 0.0)) for d in recent_densified) / max(1, len(recent_densified)), 4
-                ) if recent_densified else 0.0
-                post_coh = float(fabric_briefing.get("fabric_coherence", fabric_briefing.get("multi_cycle_coherence", pre_coh + 0.01)))
+                pre_coh = (
+                    round(
+                        sum(float(d.get("coherence", 0.0)) for d in recent_densified)
+                        / max(1, len(recent_densified)),
+                        4,
+                    )
+                    if recent_densified
+                    else 0.0
+                )
+                post_coh = float(
+                    fabric_briefing.get(
+                        "fabric_coherence",
+                        fabric_briefing.get("multi_cycle_coherence", pre_coh + 0.01),
+                    )
+                )
                 _publish_mission_event(
                     "fabric_update",
                     cycle_id=_daily_cycle,
                     correlation_id=_cid,
                     fabric_coherence=post_coh,
-                    delta_edges=int(densified_graph_fusion.get("total_lift", 0) * 10) if "densified_graph_fusion" in locals() else len(recent_densified) * 2,
-                    affected_cycles=[d.get("cycle_id") for d in recent_densified if d.get("cycle_id")],
+                    delta_edges=int(densified_graph_fusion.get("total_lift", 0) * 10)
+                    if "densified_graph_fusion" in locals()
+                    else len(recent_densified) * 2,
+                    affected_cycles=[
+                        d.get("cycle_id") for d in recent_densified if d.get("cycle_id")
+                    ],
                     summary="v3 daily_consolidation fabric fusion (GraphGardener densified + briefing injected into daily-present)",
                     graph_delta={
                         "coherence_before": pre_coh,
@@ -1821,16 +1871,23 @@ def run_daily_consolidation_job() -> dict[str, Any]:
                 "cycles": [d.get("cycle_id") for d in recent_densified],
                 "lifts": [d.get("lift") for d in recent_densified],
                 "total_lift": round(sum(float(d.get("lift", 0.0)) for d in recent_densified), 4),
-                "renders_embedded_via_embed_graph_into_artifact": bool(recent_densified and embed_graph_into_artifact),
+                "renders_embedded_via_embed_graph_into_artifact": bool(
+                    recent_densified and embed_graph_into_artifact
+                ),
                 "recorder_target": "stabilization-wave-20260531/drive/meta_evolution/loops",
                 "fabric_briefing": fabric_briefing,
                 "graphgardener_v3": True,
                 "fusion_method": "daily_consolidation + recorder.get_recent_densified... + embed + fabric_briefing",
             }
         else:
-            densified_graph_fusion = {"note": "recorder import unavailable; v3 fusion skipped (graceful)"}
+            densified_graph_fusion = {
+                "note": "recorder import unavailable; v3 fusion skipped (graceful)"
+            }
     except Exception as _e:
-        densified_graph_fusion = {"note": "v3 densified graph fusion graceful skip", "error": str(_e)[:140]}
+        densified_graph_fusion = {
+            "note": "v3 densified graph fusion graceful skip",
+            "error": str(_e)[:140],
+        }
         recent_densified = []
         fabric_briefing = {}
         graph_section_for_diary = ""
@@ -1851,7 +1908,9 @@ def run_daily_consolidation_job() -> dict[str, Any]:
         # v3 GraphGardener densified + fabric enrichment (daily_consolidation automatic fusion)
         "densified_graph_fusion": densified_graph_fusion,
         "fabric_briefing": fabric_briefing,
-        "experience_graph_v3_injected": bool(densified_graph_fusion.get("renders_embedded_via_embed_graph_into_artifact")),
+        "experience_graph_v3_injected": bool(
+            densified_graph_fusion.get("renders_embedded_via_embed_graph_into_artifact")
+        ),
     }
 
     daily_present_payload = {
@@ -2005,7 +2064,10 @@ This daily-present artifact ensures all parallel stabilization swarms (dream, gr
             delta_edges=8,
             affected_cycles=[_daily_cycle],
             summary="post daily_consolidation (stabilization-wave-20260531): daily-present fused to experience layer v3",
-            graph_delta={"post_consolidation_coherence": final_coh, "harness_decision": str(getattr(daily_scores, "decision", ""))},
+            graph_delta={
+                "post_consolidation_coherence": final_coh,
+                "harness_decision": str(getattr(daily_scores, "decision", "")),
+            },
         )
     except Exception:
         pass

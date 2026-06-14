@@ -60,7 +60,9 @@ def get_tailscale_ipv4() -> str | None:
 
     try:
         # Fallback: parse `ip addr`
-        out = subprocess.check_output(["ip", "-4", "addr", "show", "tailscale0"], text=True, timeout=2.0)
+        out = subprocess.check_output(
+            ["ip", "-4", "addr", "show", "tailscale0"], text=True, timeout=2.0
+        )
         for line in out.splitlines():
             line = line.strip()
             if line.startswith("inet "):
@@ -95,10 +97,6 @@ from agentdrive import (
     set_config_value,
     setup_logging,
 )
-from agentdrive.drive.drive import DriveQuery, get_default_drive
-
-# Genome for direct loading during ingest (pool will persist via registry)
-from agentdrive.genome.models import Genome
 from agentdrive.cli_repl import cmd_repl
 from agentdrive.cli_surface import (
     build_help_epilog,
@@ -112,6 +110,10 @@ from agentdrive.cli_surface import (
     cmd_skills,
     cmd_think,
 )
+from agentdrive.drive.drive import DriveQuery, get_default_drive
+
+# Genome for direct loading during ingest (pool will persist via registry)
+from agentdrive.genome.models import Genome
 from agentdrive.setup import cmd_setup
 from agentdrive.workers import get_default_adapter
 
@@ -158,7 +160,7 @@ def cmd_cap(args: argparse.Namespace) -> int:
         console.print(
             "[dim]Use this cap for mutating Mission Control commands:[/]\n"
             f"  [cyan]Authorization: Bearer {cap_id}[/]\n"
-            f"  or include [cyan]\"cap_id\": \"{cap_id}\"[/] in WS command JSON"
+            f'  or include [cyan]"cap_id": "{cap_id}"[/] in WS command JSON'
         )
         return 0
 
@@ -194,9 +196,15 @@ def cmd_mission(args: argparse.Namespace) -> int:
     else:
         console.print("[yellow]No Tailscale IP detected — running on localhost only[/]")
 
-    console.print("This is the new unified real-time view of the entire system (loop + fabric + static fire).")
-    console.print(f"[green]Mission Kanban Board also available at:[/] [bold]http://{bind_host}:{port}/[/]  (or use [cyan]agentdrive board[/])")
-    console.print("[yellow]Local operator control surface[/] (commands like start_static_fire / parent_decision are trusted localhost only; see server.py SECURITY note + AGENTS.md).")
+    console.print(
+        "This is the new unified real-time view of the entire system (loop + fabric + static fire)."
+    )
+    console.print(
+        f"[green]Mission Kanban Board also available at:[/] [bold]http://{bind_host}:{port}/[/]  (or use [cyan]agentdrive board[/])"
+    )
+    console.print(
+        "[yellow]Local operator control surface[/] (commands like start_static_fire / parent_decision are trusted localhost only; see server.py SECURITY note + AGENTS.md)."
+    )
 
     uvicorn.run(
         create_mission_control_app,
@@ -269,7 +277,10 @@ def cmd_tui(args: argparse.Namespace) -> int:
     mission_url = getattr(args, "mission_url", None) or getattr(args, "mission", None)
     if not mission_url:
         import os as _os
-        mission_url = _os.environ.get("AGENTDRIVE_MISSION_URL") or _os.environ.get("AGENTDRIVE_MC_URL")
+
+        mission_url = _os.environ.get("AGENTDRIVE_MISSION_URL") or _os.environ.get(
+            "AGENTDRIVE_MC_URL"
+        )
     try:
         from agentdrive.tui.app import launch_tui
 
@@ -464,11 +475,7 @@ def cmd_patterns(args: argparse.Namespace) -> int:
             if len(system_preview) > 1200:
                 system_preview = system_preview[:1200] + "\n…"
 
-        body = (
-            f"[bold]{title}[/]  v{version}\n"
-            f"Source: {record.source}\n"
-            f"Path: {record.path}\n"
-        )
+        body = f"[bold]{title}[/]  v{version}\nSource: {record.source}\nPath: {record.path}\n"
         if description:
             body += f"\n{description}\n"
         if system_preview:
@@ -539,9 +546,7 @@ def cmd_patterns(args: argparse.Namespace) -> int:
             )
             return 0
 
-        console.print(
-            f"[green]Imported {len(imported)} Fabric pattern(s) from[/] {fabric_root}"
-        )
+        console.print(f"[green]Imported {len(imported)} Fabric pattern(s) from[/] {fabric_root}")
         for path in imported:
             console.print(f"  [cyan]{path.name}[/] → {path}")
         return 0
@@ -747,7 +752,9 @@ def _print_doctor_verbose_diagnostics(palette: Any) -> None:
     try:
         edges_path = get_default_drive_path() / "knowledge" / "edges.jsonl"
         if edges_path.is_file():
-            kg_lines = sum(1 for line in edges_path.read_text(encoding="utf-8").splitlines() if line.strip())
+            kg_lines = sum(
+                1 for line in edges_path.read_text(encoding="utf-8").splitlines() if line.strip()
+            )
         else:
             kg_lines = 0
         rows.append(("Knowledge graph", f"{kg_lines} edges.jsonl lines"))
@@ -1163,7 +1170,6 @@ def _run_doctor(verbose: bool = False) -> int:
             try:
                 from rich.text import Text as _Text
 
-
                 sec_lines = [
                     f"Quarantine: {posture.quarantined_items} items, {posture.recent_quarantine_releases} recent releases",
                     f"Key rotation: {posture.key_rotation_signal or 'n/a'}",
@@ -1385,8 +1391,6 @@ def cmd_pool(args: argparse.Namespace) -> int:
     if sub in (None, "status"):
         from datetime import datetime
 
-
-
         stats = pool.get_pool_stats()
         reg = pool.registry
         try:
@@ -1506,7 +1510,6 @@ def cmd_pool(args: argparse.Namespace) -> int:
 
         # Legacy TUI chrome removed — basic output only.
 
-
         stats = pool.get_pool_stats()
         reg_stats = stats.get("registry_stats", {}) or {}
         sources = stats.get("sources", {}) or {}
@@ -1527,9 +1530,19 @@ def cmd_pool(args: argparse.Namespace) -> int:
         console.print(f"  ingest events: {stats.get('ingest_events', 0)}")
         console.print(f"  domains: {domains}")
         if sources:
-            console.print("  top sources: " + ", ".join(f"{k}:{v}" for k, v in sorted(sources.items(), key=lambda kv: -kv[1])[:5]))
+            console.print(
+                "  top sources: "
+                + ", ".join(
+                    f"{k}:{v}" for k, v in sorted(sources.items(), key=lambda kv: -kv[1])[:5]
+                )
+            )
         if top_actors:
-            console.print("  top actors: " + ", ".join(f"{k}:{v}" for k, v in sorted(top_actors.items(), key=lambda kv: -kv[1])[:5]))
+            console.print(
+                "  top actors: "
+                + ", ".join(
+                    f"{k}:{v}" for k, v in sorted(top_actors.items(), key=lambda kv: -kv[1])[:5]
+                )
+            )
         console.print("[dim]Use MC Tower/TUI for rich fabric + loop views.[/]")
         return 0
 
@@ -2021,6 +2034,7 @@ def cmd_grid(args: argparse.Namespace) -> int:
 
         def _run_tower():
             import uvicorn
+
             uvicorn.run(
                 create_mission_control_app,
                 host=bind_host,
@@ -2033,11 +2047,15 @@ def cmd_grid(args: argparse.Namespace) -> int:
         tower_thread.start()
 
         if ts_ip:
-            console.print(f"[green]Tower live at http://{ts_ip}:8421[/]  ← open this from any Tailscale machine")
+            console.print(
+                f"[green]Tower live at http://{ts_ip}:8421[/]  ← open this from any Tailscale machine"
+            )
         else:
             console.print("[green]Tower live at http://127.0.0.1:8421 (localhost only)[/]")
 
-        console.print("[dim]First page load can take 15-30s if there has been heavy recent activity on the drive.[/]")
+        console.print(
+            "[dim]First page load can take 15-30s if there has been heavy recent activity on the drive.[/]"
+        )
 
         # Wire the persistent GridEngine to the MissionControlHub so /api/grid/* and WS
         # serve live AD-Grid state (programs, health, fabric) even with zero active missions.
@@ -2045,8 +2063,11 @@ def cmd_grid(args: argparse.Namespace) -> int:
         # Tower becomes the stable always-on window into the living AD-Grid on stabilization-wave-20260531.
         try:
             from agentdrive.mission_control.server import hub as mc_hub
+
             mc_hub.attach_grid(engine)
-            console.print("[dim]Grid attached to Mission Control for persistent observability (quiet mode supported).[/]")
+            console.print(
+                "[dim]Grid attached to Mission Control for persistent observability (quiet mode supported).[/]"
+            )
         except Exception as _e:
             console.print(f"[yellow]Grid attach to Tower skipped (non-fatal): {_e}[/]")
 
@@ -2142,8 +2163,7 @@ def cmd_dream(args: argparse.Namespace) -> int:
             console.print()
             console.print(
                 Panel(
-                    f"{rich_escape(str(exc))}\n\n"
-                    f"Lock: [agentdrive.genome]{dream_lock_path()}[/]",
+                    f"{rich_escape(str(exc))}\n\nLock: [agentdrive.genome]{dream_lock_path()}[/]",
                     title="Dream cycle busy",
                     border_style="red",
                 )
@@ -2624,18 +2644,24 @@ def cmd_mcp_config(args: argparse.Namespace) -> int:
             console.print(f"\n[dim]Config path:[/] {paths[0]}")
         return 0
 
-    console.print(Panel.fit(
-        "[bold cyan]AgentDrive MCP — connect any AI model[/]\n\n"
-        f"Resolved launcher: [green]{launcher.method}[/] → {launcher.command}\n"
-        f"[dim]{launcher.notes}[/]",
-        title="agentdrive mcp config",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel.fit(
+            "[bold cyan]AgentDrive MCP — connect any AI model[/]\n\n"
+            f"Resolved launcher: [green]{launcher.method}[/] → {launcher.command}\n"
+            f"[dim]{launcher.notes}[/]",
+            title="agentdrive mcp config",
+            border_style="cyan",
+        )
+    )
 
     console.print("\n[bold]Quick connect[/]\n")
-    console.print("  [green]agentdrive mcp install[/]           # pip install [mcp] + write client configs")
+    console.print(
+        "  [green]agentdrive mcp install[/]           # pip install [mcp] + write client configs"
+    )
     console.print("  [green]agentdrive mcp doctor[/]           # verify tools + launcher")
-    console.print("  [green]agentdrive mcp config --write[/]   # merge into Grok/Cursor/Claude/Continue configs")
+    console.print(
+        "  [green]agentdrive mcp config --write[/]   # merge into Grok/Cursor/Claude/Continue configs"
+    )
     console.print("  [green]agentdrive mcp config --json[/]     # machine-readable bundle")
 
     console.print("\n[bold]1. Grok[/]\n")
@@ -2644,15 +2670,18 @@ def cmd_mcp_config(args: argparse.Namespace) -> int:
 
     console.print("\n[bold]2. Claude / Continue / Cursor[/]\n")
     console.print(_json.dumps({"mcpServers": bundle["mcpServers"]}, indent=2), highlight=False)
-    console.print("\n[dim]Cursor path: ~/.cursor/mcp.json · Claude: ~/.config/claude/claude_desktop_config.json[/]")
+    console.print(
+        "\n[dim]Cursor path: ~/.cursor/mcp.json · Claude: ~/.config/claude/claude_desktop_config.json[/]"
+    )
 
     console.print("\n[bold]3. Clone / editable install fallback[/]\n")
     console.print(
-        f"  command: [green]{launcher.command}[/]\n"
-        f"  args: [green]{' '.join(launcher.args)}[/]"
+        f"  command: [green]{launcher.command}[/]\n  args: [green]{' '.join(launcher.args)}[/]"
     )
 
-    console.print("\n[dim]Onboarding for models: docs/FOR_AI_MODELS.md · Full guide: docs/MCP.md[/]\n")
+    console.print(
+        "\n[dim]Onboarding for models: docs/FOR_AI_MODELS.md · Full guide: docs/MCP.md[/]\n"
+    )
     return 0
 
 
@@ -2671,7 +2700,9 @@ def cmd_mcp_doctor(args: argparse.Namespace) -> int:
         f"{' '.join(launcher.get('args') or [])}"
     )
     if report.get("ok"):
-        console.print(f"\n[green]MCP ready[/] — {report.get('tool_count', 0)} tools for your AI client")
+        console.print(
+            f"\n[green]MCP ready[/] — {report.get('tool_count', 0)} tools for your AI client"
+        )
         return 0
     console.print("\n[red]MCP not ready[/] — run: [green]agentdrive mcp install[/]")
     return 1
@@ -3132,7 +3163,9 @@ def cmd_ops(args: argparse.Namespace) -> int:
     if sub == "run":
         name = getattr(args, "operation_name", None)
         if not name:
-            console.print("[red]Usage: agentdrive ops run <name> [--dry-run] [--json] [key=value ...][/]")
+            console.print(
+                "[red]Usage: agentdrive ops run <name> [--dry-run] [--json] [key=value ...][/]"
+            )
             return 1
         if get_operation(name) is None:
             console.print(f"[red]Unknown operation:[/] {name}")
@@ -3334,8 +3367,12 @@ def _register_drive_parsers(
             "task",
             help='Natural language task description (e.g. "security incident postmortem")',
         )
-        pq.add_argument("--limit", type=int, default=5, help="Maximum number of results (default 5)")
-        pq.add_argument("--min-score", type=float, default=0.0, help="Minimum evaluation score filter")
+        pq.add_argument(
+            "--limit", type=int, default=5, help="Maximum number of results (default 5)"
+        )
+        pq.add_argument(
+            "--min-score", type=float, default=0.0, help="Minimum evaluation score filter"
+        )
         pq.set_defaults(func=cmd_pool)
         pst = pool_subs.add_parser(
             "stats", help="Full pool statistics (ingest counts, sources, actors, registry metrics)"
@@ -3549,7 +3586,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_config.set_defaults(func=cmd_mcp_config)
 
-    p_doctor = mcp_subs.add_parser("doctor", help="Verify MCP package, launcher, and tool registration")
+    p_doctor = mcp_subs.add_parser(
+        "doctor", help="Verify MCP package, launcher, and tool registration"
+    )
     p_doctor.add_argument("--uvx", action="store_true", help="Test uvx launcher resolution")
     p_doctor.set_defaults(func=cmd_mcp_doctor)
 
@@ -3652,12 +3691,22 @@ def build_parser() -> argparse.ArgumentParser:
     lr_list.set_defaults(func=cmd_learnings)
 
     lr_log = learn_subs.add_parser("log", help="Append one learning entry")
-    lr_log.add_argument("--key", required=True, help="Stable key (alphanumeric, hyphens, underscores)")
+    lr_log.add_argument(
+        "--key", required=True, help="Stable key (alphanumeric, hyphens, underscores)"
+    )
     lr_log.add_argument("--insight", required=True, help="Learning insight text")
     lr_log.add_argument(
         "--type",
         default="pattern",
-        choices=["pattern", "pitfall", "preference", "architecture", "tool", "operational", "investigation"],
+        choices=[
+            "pattern",
+            "pitfall",
+            "preference",
+            "architecture",
+            "tool",
+            "operational",
+            "investigation",
+        ],
     )
     lr_log.add_argument("--confidence", type=int, default=5, help="1-10 confidence (default 5)")
     lr_log.add_argument(
@@ -3926,7 +3975,9 @@ def build_parser() -> argparse.ArgumentParser:
             gr.add_argument("--swarm-id", dest="swarm_id")
             gr.add_argument("--cycle-id", dest="cycle_id")
             gr.add_argument("--summary", help="Short reasoning summary")
-            gr.add_argument("--reasoning-file", dest="reasoning_file", help="JSON reasoning object file")
+            gr.add_argument(
+                "--reasoning-file", dest="reasoning_file", help="JSON reasoning object file"
+            )
             gr.add_argument("--dry-run", action="store_true")
             gr.add_argument("--json", dest="json_output", action="store_true")
             gr.set_defaults(func=cmd_graph)
@@ -3964,7 +4015,9 @@ def build_parser() -> argparse.ArgumentParser:
     gp_steps.set_defaults(func=cmd_golden_path)
 
     gp_verify = gp_subs.add_parser("verify", help="Verify golden-path step completion")
-    gp_verify.add_argument("--step", help="Verify one step (install, doctor, mcp, seed, think, learnings, query)")
+    gp_verify.add_argument(
+        "--step", help="Verify one step (install, doctor, mcp, seed, think, learnings, query)"
+    )
     gp_verify.add_argument("--skip-optional", action="store_true", help="Skip optional seed check")
     gp_verify.add_argument("--json", dest="json_output", action="store_true")
     gp_verify.set_defaults(func=cmd_golden_path)
@@ -3976,7 +4029,9 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Fail think step when no AI provider is configured (default: skip with hint)",
     )
-    gp_run.add_argument("--continue-on-fail", action="store_true", help="Keep going after a failed step")
+    gp_run.add_argument(
+        "--continue-on-fail", action="store_true", help="Keep going after a failed step"
+    )
     gp_run.add_argument("--json", dest="json_output", action="store_true")
     gp_run.set_defaults(func=cmd_golden_path)
 
