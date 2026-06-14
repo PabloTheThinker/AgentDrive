@@ -64,6 +64,9 @@ def _parse_skill_file(path: Path, *, skills_root: Path | None = None) -> SkillEn
     if not isinstance(meta, dict):
         return None
 
+    if bool(meta.get("disabled")):
+        return None
+
     name = str(meta.get("name") or path.parent.name).strip()
     if not name:
         return None

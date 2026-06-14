@@ -138,6 +138,10 @@ tie-breaker: successful inherited skills rise above equally relevant unproven
 ones, while failing inherited skills are penalized. This is the first lightweight
 form of Hermes-style candidate selection; later GEPA/DSPy optimization can use
 the same ledger as evaluation data instead of starting from blank history.
+Operators can inspect and curate this pool with `agentdrive skills review`,
+`agentdrive skills promote <name>`, and `agentdrive skills prune <name>`.
+Promotion marks a candidate as stable parent bench knowledge; pruning disables
+the file without deleting the audit trail.
 
 ### 3.6 Federated peer registry
 Opt-in directory of trusted peer AgentDrive instances (other operators, external

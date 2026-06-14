@@ -538,6 +538,11 @@ def cmd_session(args: argparse.Namespace) -> int:
 def cmd_skills(args: argparse.Namespace) -> int:
     """SKILL.md registry — list, show, run (Pattern 5)."""
     from agentdrive.skills import get_skill, list_skills, run_skill
+    from agentdrive.skills.curation import (
+        promote_inherited_skill,
+        prune_inherited_skill,
+        review_inherited_skills,
+    )
     from agentdrive.skills.runner import format_skill_result
 
     sub = getattr(args, "skills_subcommand", None) or "list"
@@ -655,6 +660,72 @@ def cmd_skills(args: argparse.Namespace) -> int:
             console.print(f"[red]{result.get('error', 'skill failed')}[/]")
             return 1
         console.print(format_skill_result(result))
+        return 0
+
+    if sub == "review":
+        include_promoted = bool(getattr(args, "include_promoted", False))
+        reviews = review_inherited_skills(include_promoted=include_promoted)
+        if json_output:
+            emit_json([r.to_dict() for r in reviews])
+            return 0
+        if not reviews:
+            console.print("[dim]No inherited skills to review.[/]")
+            return 0
+        table = Table(title="Inherited skill review", show_header=True, expand=True)
+        table.add_column("Skill", style="cyan", no_wrap=True)
+        table.add_column("Decision", no_wrap=True)
+        table.add_column("Runs", justify="right")
+        table.add_column("OK", justify="right")
+        table.add_column("Fail", justify="right")
+        table.add_column("Matches", justify="right")
+        table.add_column("Reason", overflow="fold")
+        for item in reviews:
+            table.add_row(
+                item.name,
+                item.recommendation,
+                str(item.runs),
+                str(item.successes),
+                str(item.failures),
+                str(item.matches),
+                item.reason,
+            )
+        console.print(table)
+        return 0
+
+    if sub == "promote":
+        name = getattr(args, "skill_name", None) or ""
+        if not name.strip():
+            console.print("[red]Usage: agentdrive skills promote <name>[/]")
+            return 1
+        try:
+            review = promote_inherited_skill(name.strip())
+        except ValueError as exc:
+            console.print(f"[red]{exc}[/]")
+            return 1
+        if json_output:
+            emit_json(review.to_dict())
+            return 0
+        console.print(
+            f"[green]Promoted[/] {review.name} "
+            f"({review.successes}/{review.runs} successful runs, {review.matches} matches)"
+        )
+        return 0
+
+    if sub == "prune":
+        name = getattr(args, "skill_name", None) or ""
+        reason = getattr(args, "reason", None) or ""
+        if not name.strip():
+            console.print("[red]Usage: agentdrive skills prune <name>[/]")
+            return 1
+        try:
+            path = prune_inherited_skill(name.strip(), reason=reason)
+        except ValueError as exc:
+            console.print(f"[red]{exc}[/]")
+            return 1
+        if json_output:
+            emit_json({"success": True, "name": name.strip(), "path": str(path)})
+            return 0
+        console.print(f"[yellow]Pruned[/] {name.strip()} (disabled in {path})")
         return 0
 
     if sub == "init":

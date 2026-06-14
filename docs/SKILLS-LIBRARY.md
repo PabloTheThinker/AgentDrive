@@ -68,7 +68,7 @@ Set `AGENTDRIVE_HARNESS=grok|claude|codex` to inject tier-5 skills into the syst
 
 | Surface | Command |
 |---------|---------|
-| CLI | `agentdrive skills list [--harness grok]` · `show` · `run` · `init` |
+| CLI | `agentdrive skills list [--harness grok]` · `show` · `run` · `review` · `promote` · `prune` · `init` |
 | Chat | `/skills list`, `/skill <name>` |
 | System prompt | Auto catalog (tiers 1–4 always; tier 5 when `AGENTDRIVE_HARNESS` set) + matched skills per turn |
 
@@ -90,3 +90,21 @@ agentdrive skills init my-skill --description "What it does"
 ```
 
 See also: [ASSESSMENT.md](ASSESSMENT.md), [SKILLS-SPEC.md](SKILLS-SPEC.md).
+
+---
+
+## Inherited skill curation
+
+Sub-agent handoff skills land under `~/.agentdrive/skills/inherited/...`.
+AgentDrive records matches and explicit run outcomes in
+`~/.agentdrive/skills/usage.json`, then uses that evidence to curate the parent
+bench:
+
+```bash
+agentdrive skills review
+agentdrive skills promote <inherited-skill-name>
+agentdrive skills prune <inherited-skill-name> --reason "superseded"
+```
+
+`promote` marks the skill frontmatter as `category: promoted`; `prune` marks it
+`disabled: true` so it leaves discovery without deleting the file.

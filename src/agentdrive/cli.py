@@ -3782,6 +3782,39 @@ def build_parser() -> argparse.ArgumentParser:
     sk_run.add_argument("--json", dest="json_output", action="store_true")
     sk_run.set_defaults(func=cmd_skills)
 
+    sk_review = skills_subs.add_parser(
+        "review",
+        help="Review inherited skills using match/run evidence",
+    )
+    sk_review.add_argument(
+        "--include-promoted",
+        action="store_true",
+        help="Include already-promoted inherited skills",
+    )
+    sk_review.add_argument("--json", dest="json_output", action="store_true")
+    sk_review.set_defaults(func=cmd_skills)
+
+    sk_promote = skills_subs.add_parser(
+        "promote",
+        help="Promote an inherited skill into the parent bench",
+    )
+    sk_promote.add_argument("skill_name", help="Inherited skill name")
+    sk_promote.add_argument("--json", dest="json_output", action="store_true")
+    sk_promote.set_defaults(func=cmd_skills)
+
+    sk_prune = skills_subs.add_parser(
+        "prune",
+        help="Disable a weak inherited skill without deleting its file",
+    )
+    sk_prune.add_argument("skill_name", help="Inherited skill name")
+    sk_prune.add_argument(
+        "--reason",
+        default="",
+        help="Reason stored in the skill frontmatter",
+    )
+    sk_prune.add_argument("--json", dest="json_output", action="store_true")
+    sk_prune.set_defaults(func=cmd_skills)
+
     sk_init = skills_subs.add_parser(
         "init",
         help="Scaffold ~/.agentdrive/skills/<name>/SKILL.md",

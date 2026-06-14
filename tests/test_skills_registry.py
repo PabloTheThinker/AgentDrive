@@ -5,8 +5,13 @@ from __future__ import annotations
 from pathlib import Path
 
 from agentdrive.skills import get_skill, init_skill, list_skills, run_skill
-from agentdrive.skills.registry import list_skills_by_tier
-from agentdrive.skills.usage import get_skill_usage
+from agentdrive.skills.curation import (
+    promote_inherited_skill,
+    prune_inherited_skill,
+    review_inherited_skills,
+)
+from agentdrive.skills.registry import install_inherited_skill, list_skills_by_tier
+from agentdrive.skills.usage import get_skill_usage, record_skill_run
 
 
 def test_list_skills_includes_bundled_and_vendor_tiers():
@@ -73,6 +78,34 @@ def test_run_skill_records_usage_outcome(isolated_agentdrive_home):
     assert usage.runs == 1
     assert usage.successes == 1
     assert usage.failures == 0
+
+
+def test_review_promote_and_prune_inherited_skill(isolated_agentdrive_home):
+    install_inherited_skill(
+        name="reviewable-worker-playbook",
+        description="Reusable worker playbook with enough evidence to promote",
+        body="# Reviewable Worker Playbook\n\n1. Reuse the worker evidence.",
+        source_subagent_id="worker-review",
+        swarm_id="swarm-review",
+        tags=["worker", "review"],
+    )
+    record_skill_run("reviewable-worker-playbook", success=True)
+    record_skill_run("reviewable-worker-playbook", success=True)
+
+    reviews = review_inherited_skills(include_promoted=False)
+    review = next(r for r in reviews if r.name == "reviewable-worker-playbook")
+    assert review.recommendation == "promote"
+
+    promoted = promote_inherited_skill("reviewable-worker-playbook")
+    assert promoted.promoted is True
+    entry = get_skill("reviewable-worker-playbook")
+    assert entry is not None
+    assert entry.category == "promoted"
+
+    path = prune_inherited_skill("reviewable-worker-playbook", reason="superseded")
+    assert path.exists()
+    assert get_skill("reviewable-worker-playbook") is None
+    assert "disabled: true" in path.read_text(encoding="utf-8")
 
 
 def test_init_skill_refuses_overwrite(isolated_agentdrive_home):

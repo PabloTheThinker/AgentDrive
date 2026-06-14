@@ -1,6 +1,12 @@
 """AgentDrive skills — SKILL.md registry (Pattern 5)."""
 
 from agentdrive.skills.compose import compose_skills_block, match_skills_for_turn
+from agentdrive.skills.curation import (
+    SkillReview,
+    promote_inherited_skill,
+    prune_inherited_skill,
+    review_inherited_skills,
+)
 from agentdrive.skills.registry import (
     SkillEntry,
     discover_skills,
@@ -21,6 +27,7 @@ from agentdrive.skills.usage import (
 
 __all__ = [
     "SkillEntry",
+    "SkillReview",
     "compose_skills_block",
     "discover_skills",
     "get_skill",
@@ -35,4 +42,7 @@ __all__ = [
     "list_skill_usage",
     "record_skill_match",
     "record_skill_run",
+    "promote_inherited_skill",
+    "prune_inherited_skill",
+    "review_inherited_skills",
 ]
