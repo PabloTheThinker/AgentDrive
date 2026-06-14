@@ -148,6 +148,7 @@ def test_ingest_promoted_skill_as_dna(registry, isolated_agentdrive_home):
 
     genome = skill_to_genome(entry)
     assert genome.manifest.id == "skill-dna-worker-playbook"
+    assert genome.manifest.version == "1.0.1"
     assert genome.framework is not None
     assert genome.framework["skill_name"] == "dna-worker-playbook"
     assert genome.framework["inheritance"]["revision_count"] == 2
@@ -174,11 +175,13 @@ def test_ingest_promoted_skill_as_dna(registry, isolated_agentdrive_home):
     export = ingest_skill_as_dna("dna-worker-playbook", target_drive=drive)
 
     assert export.accepted is True
-    assert export.genome_id == "skill-dna-worker-playbook@1.0.0"
+    assert export.genome_id == "skill-dna-worker-playbook@1.0.1"
     details = registry.list_genome_details()
-    assert any(d.get("id") == "skill-dna-worker-playbook" for d in details)
+    assert any(
+        d.get("id") == "skill-dna-worker-playbook" and d.get("version") == "1.0.1" for d in details
+    )
     skill_text = entry.path.read_text(encoding="utf-8")
-    assert "genome_id: skill-dna-worker-playbook@1.0.0" in skill_text
+    assert "genome_id: skill-dna-worker-playbook@1.0.1" in skill_text
 
 
 def test_assimilate_promotes_and_ingests_proven_inherited_skills(
@@ -219,6 +222,51 @@ def test_assimilate_promotes_and_ingests_proven_inherited_skills(
     assert watched.category == "inherited"
     details = registry.list_genome_details()
     assert any(d.get("id") == "skill-assimilate-worker-playbook" for d in details)
+
+
+def test_revised_skill_ingest_creates_new_dna_version(registry, isolated_agentdrive_home):
+    install_inherited_skill(
+        name="versioned-worker-playbook",
+        description="First reusable worker playbook",
+        body="# Versioned Worker Playbook\n\n1. Gather initial evidence.",
+        source_subagent_id="worker-v1",
+        swarm_id="swarm-versioned",
+        tags=["worker", "versioned"],
+    )
+    record_skill_run("versioned-worker-playbook", success=True)
+    record_skill_run("versioned-worker-playbook", success=True)
+    promote_inherited_skill("versioned-worker-playbook")
+
+    drive = AgentDrive(registry=registry)
+    first_export = ingest_skill_as_dna("versioned-worker-playbook", target_drive=drive)
+    assert first_export.genome_id == "skill-versioned-worker-playbook@1.0.0"
+
+    install_inherited_skill(
+        name="versioned-worker-playbook",
+        description="Improved reusable worker playbook",
+        body=(
+            "# Versioned Worker Playbook\n\n"
+            "1. Gather initial evidence.\n"
+            "2. Add contradiction checks from a later worker."
+        ),
+        source_subagent_id="worker-v2",
+        swarm_id="swarm-versioned",
+        tags=["worker", "versioned", "contradiction"],
+        update_existing=True,
+    )
+    second_export = ingest_skill_as_dna("versioned-worker-playbook", target_drive=drive)
+    assert second_export.genome_id == "skill-versioned-worker-playbook@1.0.1"
+    assert registry.get_versions("skill-versioned-worker-playbook") == ["1.0.0", "1.0.1"]
+
+    first = registry.load("skill-versioned-worker-playbook@1.0.0")
+    latest = registry.load("skill-versioned-worker-playbook")
+    assert first is not None
+    assert latest is not None
+    assert latest.genome_id == "skill-versioned-worker-playbook@1.0.1"
+    assert first.manifest.content_hash in latest.manifest.supersedes
+    assert latest.framework is not None
+    assert latest.framework["inheritance"]["revision_count"] == 2
+    assert "later worker" in latest.framework["body"]
 
 
 def test_init_skill_refuses_overwrite(isolated_agentdrive_home):

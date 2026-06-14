@@ -271,6 +271,7 @@ def skill_to_genome(entry: SkillEntry) -> Genome:
         }
     )
     genome_id = _skill_genome_id(entry.name)
+    genome_version = _skill_genome_version(inheritance["revision_count"])
     tags = list(entry.tags)
     source_parts = [p for p in entry.source.split(":") if p]
     swarm_id = source_parts[1] if len(source_parts) >= 3 else ""
@@ -349,7 +350,7 @@ def skill_to_genome(entry: SkillEntry) -> Genome:
         authors.append({"type": "agent", "id": f"sub:{sid}", "name": sid})
     return Genome.create(
         id=genome_id,
-        version="1.0.0",
+        version=genome_version,
         framework=framework,
         authors=authors,
         applicability=applicability,
@@ -375,6 +376,16 @@ def ingest_skill_as_dna(
         target_drive = get_default_drive()
 
     genome = skill_to_genome(entry)
+    try:
+        latest = target_drive.registry.load(genome.manifest.id)
+    except Exception:
+        latest = None
+    if latest is not None and latest.manifest.content_hash:
+        if latest.manifest.content_hash not in genome.manifest.supersedes:
+            genome.manifest.supersedes.append(latest.manifest.content_hash)
+            genome.manifest.content_hash = "sha256:pending"
+            genome.finalize()
+
     result: DriveIngestResult = target_drive.ingest(
         genome,
         source="skill-promotion",
@@ -435,6 +446,11 @@ def _skill_genome_id(name: str) -> str:
     if not cleaned:
         cleaned = "skill"
     return f"skill-{cleaned}"[:120].strip("-._")
+
+
+def _skill_genome_version(revision_count: int) -> str:
+    patch = max(0, int(revision_count) - 1)
+    return f"1.0.{patch}"
 
 
 def _body_steps(body: str) -> list[dict[str, str]]:
