@@ -56,6 +56,28 @@ class SkillDNAExport:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class SkillAssimilationReport:
+    """Result of a gated inherited-skill assimilation pass."""
+
+    reviewed: int
+    promoted: list[SkillReview]
+    dna_exports: list[SkillDNAExport]
+    pruned: list[dict[str, str]]
+    watched: list[SkillReview]
+    errors: list[dict[str, str]]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "reviewed": self.reviewed,
+            "promoted": [item.to_dict() for item in self.promoted],
+            "dna_exports": [item.to_dict() for item in self.dna_exports],
+            "pruned": list(self.pruned),
+            "watched": [item.to_dict() for item in self.watched],
+            "errors": list(self.errors),
+        }
+
+
 def review_inherited_skills(*, include_promoted: bool = True) -> list[SkillReview]:
     """Review inherited skill candidates and return promote/watch/prune advice."""
     reviews: list[SkillReview] = []
@@ -91,6 +113,68 @@ def review_inherited_skills(*, include_promoted: bool = True) -> list[SkillRevie
             item.failures,
             item.name,
         ),
+    )
+
+
+def assimilate_inherited_skills(
+    *,
+    target_drive: AgentDrive | None = None,
+    ingest_dna: bool = True,
+    prune: bool = False,
+    include_promoted: bool = False,
+) -> SkillAssimilationReport:
+    """Apply gated curation recommendations to inherited sub-agent skills.
+
+    This is the parent-bench assimilation pass: promote candidates that already
+    meet the evidence threshold, optionally ingest promoted skills into DNA, and
+    only prune weak candidates when explicitly requested.
+    """
+    reviews = review_inherited_skills(include_promoted=include_promoted)
+    promoted: list[SkillReview] = []
+    dna_exports: list[SkillDNAExport] = []
+    pruned: list[dict[str, str]] = []
+    watched: list[SkillReview] = []
+    errors: list[dict[str, str]] = []
+
+    for review in reviews:
+        if review.recommendation == "promote" and not review.promoted:
+            try:
+                promoted_review = promote_inherited_skill(review.name)
+                promoted.append(promoted_review)
+                if ingest_dna:
+                    dna_exports.append(
+                        ingest_skill_as_dna(promoted_review.name, target_drive=target_drive)
+                    )
+            except Exception as exc:
+                errors.append({"skill_name": review.name, "action": "promote", "error": str(exc)})
+            continue
+
+        if review.recommendation == "promoted":
+            if ingest_dna and include_promoted:
+                try:
+                    dna_exports.append(ingest_skill_as_dna(review.name, target_drive=target_drive))
+                except Exception as exc:
+                    errors.append({"skill_name": review.name, "action": "dna", "error": str(exc)})
+            watched.append(review)
+            continue
+
+        if review.recommendation == "prune" and prune:
+            try:
+                path = prune_inherited_skill(review.name, reason=review.reason)
+                pruned.append({"skill_name": review.name, "path": str(path), "reason": review.reason})
+            except Exception as exc:
+                errors.append({"skill_name": review.name, "action": "prune", "error": str(exc)})
+            continue
+
+        watched.append(review)
+
+    return SkillAssimilationReport(
+        reviewed=len(reviews),
+        promoted=promoted,
+        dna_exports=dna_exports,
+        pruned=pruned,
+        watched=watched,
+        errors=errors,
     )
 
 

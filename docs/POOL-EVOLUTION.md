@@ -143,16 +143,19 @@ success outcome for that inherited skill with an `inheritance:<swarm>:<subagent>
 source, so the parent bench can distinguish skills learned from completed child
 work from neutral/manual imports.
 Operators can inspect and curate this pool with `agentdrive skills review`,
-`agentdrive skills promote <name>`, and `agentdrive skills prune <name>`.
+apply gated recommendations with `agentdrive skills assimilate`, or manually
+curate with `agentdrive skills promote <name>` and
+`agentdrive skills prune <name>`.
 Promotion marks a candidate as stable parent bench knowledge; pruning disables
 the file without deleting the audit trail.
 `agentdrive skills dna <name>` then converts a curated skill into a normal
 AgentDrive Genome and ingests it into the current DNA pool, making the learned
 playbook available through standard genome retrieval as well as skill matching.
 MCP clients use the same loop through `agentdrive_review_inherited_skills`,
-`agentdrive_promote_inherited_skill`, `agentdrive_prune_inherited_skill`, and
-`agentdrive_ingest_skill_dna`, so a connected model can review, curate, and
-ingest sub-agent lessons without shell access.
+`agentdrive_assimilate_inherited_skills`, `agentdrive_promote_inherited_skill`,
+`agentdrive_prune_inherited_skill`, and `agentdrive_ingest_skill_dna`, so a
+connected model can review, curate, and ingest sub-agent lessons without shell
+access.
 
 ### 3.6 Federated peer registry
 Opt-in directory of trusted peer AgentDrive instances (other operators, external

@@ -176,6 +176,7 @@ def create_mcp_server() -> FastMCP:
             "Sub-agent skill learning loop:\n"
             "- Sub-agents can return explicit ```agentdrive-skill``` handoff blocks. AgentDrive absorbs them as inherited skills.\n"
             "- Use agentdrive_review_inherited_skills to inspect candidates with match/run evidence.\n"
+            "- Use agentdrive_assimilate_inherited_skills to promote proven inherited skills and optionally ingest them into DNA in one gated pass.\n"
             "- Use agentdrive_promote_inherited_skill or agentdrive_prune_inherited_skill to curate the parent skill bench.\n"
             "- Use agentdrive_ingest_skill_dna to convert a curated inherited/promoted skill into durable Genome DNA in the active Drive.\n\n"
             "Best single document for models: docs/FOR_AI_MODELS.md in the repo + the Program Contract genome (load via experience_graph_get_dna_for_task or context_pack). Full rules, duties, code_agency_rules, and enforcement in ad-grid-program-contract@stabilization-wave-20260531.\n\n"
@@ -386,6 +387,37 @@ def create_mcp_server() -> FastMCP:
             indent=2,
             default=str,
         )
+
+    @mcp.tool()
+    def agentdrive_assimilate_inherited_skills(
+        ingest_dna: bool = True,
+        prune: bool = False,
+        include_promoted: bool = False,
+        swarm_id: str | None = None,
+        subagent_id: str | None = None,
+    ) -> str:
+        """Promote proven inherited skills and optionally ingest them as DNA.
+
+        This runs the gated parent-bench assimilation pass. Pruning is opt-in
+        because it disables skill discovery, while promotion/DNA ingestion are
+        additive and evidence-gated.
+        """
+        from agentdrive.skills.curation import assimilate_inherited_skills
+
+        try:
+            target = _get_pool(swarm_id, subagent_id) if swarm_id or subagent_id else None
+            report = assimilate_inherited_skills(
+                target_drive=target,
+                ingest_dna=ingest_dna,
+                prune=prune,
+                include_promoted=include_promoted,
+            )
+            return json.dumps(
+                {"success": not report.errors, "report": report.to_dict()},
+                indent=2,
+            )
+        except Exception as exc:
+            return json.dumps({"success": False, "error": str(exc)}, indent=2)
 
     @mcp.tool()
     def agentdrive_promote_inherited_skill(skill_name: str) -> str:

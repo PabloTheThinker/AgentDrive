@@ -106,16 +106,20 @@ but bounded evidence from the child task that produced them.
 
 ```bash
 agentdrive skills review
+agentdrive skills assimilate
 agentdrive skills promote <inherited-skill-name>
 agentdrive skills prune <inherited-skill-name> --reason "superseded"
 agentdrive skills dna <inherited-skill-name>
 ```
 
 The same loop is available over MCP for models and local clients:
-`agentdrive_review_inherited_skills`, `agentdrive_promote_inherited_skill`,
-`agentdrive_prune_inherited_skill`, and `agentdrive_ingest_skill_dna`.
+`agentdrive_review_inherited_skills`, `agentdrive_assimilate_inherited_skills`,
+`agentdrive_promote_inherited_skill`, `agentdrive_prune_inherited_skill`, and
+`agentdrive_ingest_skill_dna`.
 
-`promote` marks the skill frontmatter as `category: promoted`; `prune` marks it
-`disabled: true` so it leaves discovery without deleting the file. `dna` turns a
-promoted or inherited skill into a normal AgentDrive Genome and ingests it into
-the current Drive so future DNA retrieval can use the learned playbook.
+`assimilate` promotes only candidates that already meet the review threshold and
+ingests them as DNA by default; pruning is opt-in with `--prune`. `promote`
+marks the skill frontmatter as `category: promoted`; `prune` marks it
+`disabled: true` so it leaves discovery without deleting the file. `dna` turns
+a promoted or inherited skill into a normal AgentDrive Genome and ingests it
+into the current Drive so future DNA retrieval can use the learned playbook.

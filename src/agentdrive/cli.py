@@ -3794,6 +3794,28 @@ def build_parser() -> argparse.ArgumentParser:
     sk_review.add_argument("--json", dest="json_output", action="store_true")
     sk_review.set_defaults(func=cmd_skills)
 
+    sk_assimilate = skills_subs.add_parser(
+        "assimilate",
+        help="Promote and optionally DNA-ingest proven inherited skills",
+    )
+    sk_assimilate.add_argument(
+        "--no-dna",
+        action="store_true",
+        help="Promote proven skills without ingesting them into the DNA pool",
+    )
+    sk_assimilate.add_argument(
+        "--prune",
+        action="store_true",
+        help="Also disable skills with prune recommendations",
+    )
+    sk_assimilate.add_argument(
+        "--include-promoted",
+        action="store_true",
+        help="Also DNA-ingest already-promoted inherited skills",
+    )
+    sk_assimilate.add_argument("--json", dest="json_output", action="store_true")
+    sk_assimilate.set_defaults(func=cmd_skills)
+
     sk_promote = skills_subs.add_parser(
         "promote",
         help="Promote an inherited skill into the parent bench",

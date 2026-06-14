@@ -111,7 +111,7 @@ You will have access to:
 - Core DNA / pool / operations tools (via the registry)
 - The full Experience Graph v3 suite (`experience_graph_*`)
 - Inhabitant code agency + AD-Grid registration tools
-- Inherited sub-agent skill review, promotion, pruning, and skill-to-DNA ingestion tools
+- Inherited sub-agent skill review, assimilation, promotion, pruning, and skill-to-DNA ingestion tools
 - Dream, reconcile, learnings, patterns, etc.
 
 See [docs/MCP.md](docs/MCP.md) for detailed client setup (including clone-specific) and [docs/AD_GRID_JOIN.md](docs/AD_GRID_JOIN.md) for becoming a long-lived governed inhabitant.

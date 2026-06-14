@@ -7,6 +7,7 @@ from pathlib import Path
 from agentdrive.drive.drive import AgentDrive
 from agentdrive.skills import get_skill, init_skill, list_skills, run_skill
 from agentdrive.skills.curation import (
+    assimilate_inherited_skills,
     ingest_skill_as_dna,
     promote_inherited_skill,
     prune_inherited_skill,
@@ -144,6 +145,46 @@ def test_ingest_promoted_skill_as_dna(registry, isolated_agentdrive_home):
     assert any(d.get("id") == "skill-dna-worker-playbook" for d in details)
     skill_text = entry.path.read_text(encoding="utf-8")
     assert "genome_id: skill-dna-worker-playbook@1.0.0" in skill_text
+
+
+def test_assimilate_promotes_and_ingests_proven_inherited_skills(
+    registry,
+    isolated_agentdrive_home,
+):
+    install_inherited_skill(
+        name="assimilate-worker-playbook",
+        description="Reusable worker playbook that should be assimilated",
+        body="# Assimilate Worker Playbook\n\n1. Preserve the useful child-agent procedure.",
+        source_subagent_id="worker-assimilate",
+        swarm_id="swarm-assimilate",
+        tags=["worker", "assimilation"],
+    )
+    install_inherited_skill(
+        name="watch-worker-playbook",
+        description="Reusable worker playbook without enough evidence yet",
+        body="# Watch Worker Playbook\n\n1. Wait for more evidence.",
+        source_subagent_id="worker-watch",
+        swarm_id="swarm-assimilate",
+        tags=["worker", "watch"],
+    )
+    record_skill_run("assimilate-worker-playbook", success=True)
+    record_skill_run("assimilate-worker-playbook", success=True)
+
+    drive = AgentDrive(registry=registry)
+    report = assimilate_inherited_skills(target_drive=drive)
+
+    assert report.reviewed >= 2
+    assert [item.name for item in report.promoted] == ["assimilate-worker-playbook"]
+    assert [item.skill_name for item in report.dna_exports] == ["assimilate-worker-playbook"]
+    assert report.errors == []
+    assimilated = get_skill("assimilate-worker-playbook")
+    watched = get_skill("watch-worker-playbook")
+    assert assimilated is not None
+    assert watched is not None
+    assert assimilated.category == "promoted"
+    assert watched.category == "inherited"
+    details = registry.list_genome_details()
+    assert any(d.get("id") == "skill-assimilate-worker-playbook" for d in details)
 
 
 def test_init_skill_refuses_overwrite(isolated_agentdrive_home):

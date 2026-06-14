@@ -176,6 +176,11 @@ CATALOG: tuple[CatalogEntry, ...] = (
     CatalogEntry("skills show", "Show one skill metadata and body", "discovery"),
     CatalogEntry("skills run", "Run a skill (same path as /skill in chat)", "discovery"),
     CatalogEntry("skills review", "Review inherited skills using usage evidence", "discovery"),
+    CatalogEntry(
+        "skills assimilate",
+        "Promote and optionally DNA-ingest proven inherited skills",
+        "discovery",
+    ),
     CatalogEntry("skills promote", "Promote a proven inherited skill", "discovery"),
     CatalogEntry("skills prune", "Disable a weak inherited skill without deleting it", "discovery"),
     CatalogEntry("skills dna", "Ingest an inherited/promoted skill into the DNA pool", "discovery"),

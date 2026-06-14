@@ -539,6 +539,7 @@ def cmd_skills(args: argparse.Namespace) -> int:
     """SKILL.md registry — list, show, run (Pattern 5)."""
     from agentdrive.skills import get_skill, list_skills, run_skill
     from agentdrive.skills.curation import (
+        assimilate_inherited_skills,
         ingest_skill_as_dna,
         promote_inherited_skill,
         prune_inherited_skill,
@@ -692,6 +693,37 @@ def cmd_skills(args: argparse.Namespace) -> int:
             )
         console.print(table)
         return 0
+
+    if sub == "assimilate":
+        ingest_dna = not bool(getattr(args, "no_dna", False))
+        prune = bool(getattr(args, "prune", False))
+        include_promoted = bool(getattr(args, "include_promoted", False))
+        report = assimilate_inherited_skills(
+            ingest_dna=ingest_dna,
+            prune=prune,
+            include_promoted=include_promoted,
+        )
+        if json_output:
+            emit_json(report.to_dict())
+            return 0 if not report.errors else 1
+        console.print(
+            "[green]Assimilated inherited skills[/] "
+            f"reviewed={report.reviewed} "
+            f"promoted={len(report.promoted)} "
+            f"dna={len(report.dna_exports)} "
+            f"pruned={len(report.pruned)} "
+            f"errors={len(report.errors)}"
+        )
+        for item in report.promoted:
+            console.print(f"  [cyan]promoted[/] {item.name} ({item.reason})")
+        for export in report.dna_exports:
+            status = "accepted" if export.accepted else "not accepted"
+            console.print(f"  [magenta]dna[/] {export.skill_name} -> {export.genome_id} ({status})")
+        for item in report.pruned:
+            console.print(f"  [yellow]pruned[/] {item['skill_name']} ({item['reason']})")
+        for item in report.errors:
+            console.print(f"  [red]error[/] {item['skill_name']} {item['action']}: {item['error']}")
+        return 0 if not report.errors else 1
 
     if sub == "promote":
         name = getattr(args, "skill_name", None) or ""

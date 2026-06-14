@@ -85,6 +85,7 @@ def test_stdio_mcp_client_initializes_and_lists_tools(tmp_path):
                 assert "agentdrive_mcp_catalog" in names
                 assert "experience_graph_get_context_pack" in names
                 assert "agentdrive_review_inherited_skills" in names
+                assert "agentdrive_assimilate_inherited_skills" in names
                 assert "agentdrive_promote_inherited_skill" in names
                 assert "agentdrive_prune_inherited_skill" in names
                 assert "agentdrive_ingest_skill_dna" in names

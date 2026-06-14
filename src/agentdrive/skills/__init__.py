@@ -2,8 +2,10 @@
 
 from agentdrive.skills.compose import compose_skills_block, match_skills_for_turn
 from agentdrive.skills.curation import (
+    SkillAssimilationReport,
     SkillReview,
     SkillDNAExport,
+    assimilate_inherited_skills,
     ingest_skill_as_dna,
     promote_inherited_skill,
     prune_inherited_skill,
@@ -30,6 +32,7 @@ from agentdrive.skills.usage import (
 
 __all__ = [
     "SkillEntry",
+    "SkillAssimilationReport",
     "SkillDNAExport",
     "SkillReview",
     "compose_skills_block",
@@ -47,6 +50,7 @@ __all__ = [
     "record_skill_match",
     "record_skill_run",
     "ingest_skill_as_dna",
+    "assimilate_inherited_skills",
     "promote_inherited_skill",
     "prune_inherited_skill",
     "review_inherited_skills",
