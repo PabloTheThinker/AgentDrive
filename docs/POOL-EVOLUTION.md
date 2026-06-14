@@ -142,6 +142,11 @@ When a successful `SubagentDone` absorbs a handoff skill, AgentDrive records a
 success outcome for that inherited skill with an `inheritance:<swarm>:<subagent>`
 source, so the parent bench can distinguish skills learned from completed child
 work from neutral/manual imports.
+After that successful child outcome, AgentDrive runs a scoped, gated
+assimilation pass for the skills named in that manifest. Only skills that
+already meet the review threshold are promoted and ingested as DNA; pruning is
+never automatic. Set `AGENTDRIVE_AUTO_ASSIMILATE_SKILLS=0` to keep this as a
+manual MCP/CLI review step.
 Operators can inspect and curate this pool with `agentdrive skills review`,
 apply gated recommendations with `agentdrive skills assimilate`, or manually
 curate with `agentdrive skills promote <name>` and

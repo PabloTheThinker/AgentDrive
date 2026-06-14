@@ -145,6 +145,16 @@ class InheritanceAbsorbed(Event):
 
 
 @dataclass
+class SkillAssimilated(Event):
+    """A gated inherited-skill assimilation pass promoted parent knowledge."""
+
+    promoted_skills: list[str] = field(default_factory=list)
+    dna_genomes: list[str] = field(default_factory=list)
+    pruned_skills: list[str] = field(default_factory=list)
+    errors: list[dict[str, str]] = field(default_factory=list)
+
+
+@dataclass
 class SubagentSpawn(Event):
     parent_id: str = ""
     # subagent_id is inherited from Event; spec asks for it as a field, so
@@ -476,6 +486,7 @@ __all__ = [
     "ConfidenceUpdated",
     "InheritanceReceived",
     "InheritanceAbsorbed",
+    "SkillAssimilated",
     "SubagentSpawn",
     "SubagentTool",
     "SubagentTokens",

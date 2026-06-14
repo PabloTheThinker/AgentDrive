@@ -22,6 +22,7 @@ from agentdrive.events import (
     InheritanceAbsorbed,
     InheritanceReceived,
     PoolIngest,
+    SkillAssimilated,
     SubagentDone,
     default_bus,
     emit,
@@ -501,6 +502,107 @@ def test_inheritance_received_event_fires_on_subagent_done(
 
     assert len(received) == 1
     assert "ferried-home" in received[0].genomes_absorbed
+
+
+def test_subagent_done_auto_assimilates_proven_inherited_skill(
+    registry: GenomeRegistry,
+    clean_bus: None,
+    inheritance_bus_subscribed: None,
+    isolated_agentdrive_home: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    parent_pool = AgentDrive(registry=registry)
+
+    import agentdrive.drive.drive as pool_module
+
+    monkeypatch.setattr(pool_module, "get_default_drive", lambda: parent_pool)
+
+    first = _build_manifest("swarm-A", "teacher-1", [])
+    first.skills_created.append(_skill_candidate("auto-assimilate-playbook"))
+    record_manifest(
+        first,
+        target_pool=parent_pool,
+        auto_absorb=True,
+        skill_outcome_success=True,
+    )
+
+    second = _build_manifest("swarm-A", "teacher-2", [])
+    improved = _skill_candidate("auto-assimilate-playbook")
+    improved.body = (
+        "# Auto Assimilate Playbook\n\n"
+        "1. Gather initial evidence.\n"
+        "2. Add second-worker contradiction checks.\n"
+        "3. Record reusable prevention DNA."
+    )
+    second.skills_created.append(improved)
+    p = manifest_path("swarm-A", "teacher-2")
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(second.to_json(), encoding="utf-8")
+
+    assimilated: list[SkillAssimilated] = []
+    token = subscribe(assimilated.append, [SkillAssimilated])
+    try:
+        emit(SubagentDone(subagent_id="teacher-2", swarm_id="swarm-A", ok=True, duration_s=4.0))
+    finally:
+        unsubscribe(token)
+
+    installed = get_skill("auto-assimilate-playbook")
+    assert installed is not None
+    assert installed.category == "promoted"
+    assert "second-worker contradiction checks" in installed.body
+
+    assert len(assimilated) == 1
+    assert assimilated[0].promoted_skills == ["auto-assimilate-playbook"]
+    assert assimilated[0].dna_genomes == ["skill-auto-assimilate-playbook@1.0.1"]
+
+    genome = registry.load("skill-auto-assimilate-playbook")
+    assert genome is not None
+    assert genome.genome_id == "skill-auto-assimilate-playbook@1.0.1"
+    assert genome.framework is not None
+    assert genome.framework["inheritance"]["revision_count"] == 2
+
+
+def test_subagent_done_auto_assimilation_can_be_disabled(
+    registry: GenomeRegistry,
+    clean_bus: None,
+    inheritance_bus_subscribed: None,
+    isolated_agentdrive_home: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    parent_pool = AgentDrive(registry=registry)
+
+    import agentdrive.drive.drive as pool_module
+
+    monkeypatch.setattr(pool_module, "get_default_drive", lambda: parent_pool)
+    monkeypatch.setenv("AGENTDRIVE_AUTO_ASSIMILATE_SKILLS", "0")
+
+    first = _build_manifest("swarm-A", "teacher-1", [])
+    first.skills_created.append(_skill_candidate("manual-assimilate-playbook"))
+    record_manifest(
+        first,
+        target_pool=parent_pool,
+        auto_absorb=True,
+        skill_outcome_success=True,
+    )
+
+    second = _build_manifest("swarm-A", "teacher-2", [])
+    second.skills_created.append(_skill_candidate("manual-assimilate-playbook"))
+    p = manifest_path("swarm-A", "teacher-2")
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(second.to_json(), encoding="utf-8")
+
+    assimilated: list[SkillAssimilated] = []
+    token = subscribe(assimilated.append, [SkillAssimilated])
+    try:
+        emit(SubagentDone(subagent_id="teacher-2", swarm_id="swarm-A", ok=True, duration_s=4.0))
+    finally:
+        unsubscribe(token)
+
+    installed = get_skill("manual-assimilate-playbook")
+    assert installed is not None
+    assert installed.category == "inherited"
+    assert assimilated == []
+    assert registry.load("skill-manual-assimilate-playbook") is None
 
 
 def test_pool_ingest_source_marks_inheritance_origin(

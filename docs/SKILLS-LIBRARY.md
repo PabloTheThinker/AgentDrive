@@ -103,6 +103,10 @@ bench:
 Successful `SubagentDone` auto-absorption also records a success outcome with
 an `inheritance:<swarm>:<subagent>` source, giving inherited skills immediate
 but bounded evidence from the child task that produced them.
+If the skill now satisfies the review threshold, the successful child outcome
+also triggers a scoped auto-assimilation pass: the skill is promoted and
+ingested as DNA, while weak candidates remain in watch mode and pruning stays
+manual. Disable this with `AGENTDRIVE_AUTO_ASSIMILATE_SKILLS=0`.
 
 ```bash
 agentdrive skills review

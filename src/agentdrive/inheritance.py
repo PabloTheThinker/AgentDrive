@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
@@ -32,6 +33,7 @@ from agentdrive.constants import get_agentdrive_home
 from agentdrive.events import (
     InheritanceAbsorbed,
     InheritanceReceived,
+    SkillAssimilated,
     SubagentDone,
     emit,
     subscribe,
@@ -699,6 +701,59 @@ def _on_subagent_done(event: SubagentDone) -> None:
             manifest.subagent_id,
             exc_info=True,
         )
+        return
+
+    _auto_assimilate_completed_skills(manifest, target_pool=target)
+
+
+def _auto_assimilate_completed_skills(
+    manifest: InheritanceManifest,
+    *,
+    target_pool: AgentDrive,
+) -> None:
+    """Run the gated parent-bench assimilation pass for completed child skills."""
+    if not manifest.skills_created:
+        return
+    flag = os.environ.get("AGENTDRIVE_AUTO_ASSIMILATE_SKILLS", "1").strip().lower()
+    if flag in {"0", "false", "no", "off"}:
+        return
+    try:
+        from agentdrive.skills.curation import assimilate_inherited_skills
+
+        report = assimilate_inherited_skills(
+            target_drive=target_pool,
+            ingest_dna=True,
+            prune=False,
+            include_promoted=False,
+            skill_names=[skill.name for skill in manifest.skills_created],
+        )
+    except Exception:
+        logger.debug(
+            "auto skill assimilation failed for %s/%s",
+            manifest.swarm_id,
+            manifest.subagent_id,
+            exc_info=True,
+        )
+        return
+
+    promoted = [item.name for item in report.promoted]
+    dna_genomes = [item.genome_id for item in report.dna_exports]
+    pruned = [item.get("skill_name", "") for item in report.pruned if item.get("skill_name")]
+    if not (promoted or dna_genomes or pruned or report.errors):
+        return
+    try:
+        emit(
+            SkillAssimilated(
+                promoted_skills=promoted,
+                dna_genomes=dna_genomes,
+                pruned_skills=pruned,
+                errors=list(report.errors),
+                swarm_id=manifest.swarm_id or None,
+                subagent_id=manifest.subagent_id or None,
+            )
+        )
+    except Exception:
+        logger.debug("Failed to emit SkillAssimilated", exc_info=True)
 
 
 # Subscribe once at import time. Using try/except so an import-order quirk

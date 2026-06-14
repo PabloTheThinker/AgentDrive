@@ -122,6 +122,7 @@ def assimilate_inherited_skills(
     ingest_dna: bool = True,
     prune: bool = False,
     include_promoted: bool = False,
+    skill_names: list[str] | tuple[str, ...] | set[str] | None = None,
 ) -> SkillAssimilationReport:
     """Apply gated curation recommendations to inherited sub-agent skills.
 
@@ -130,6 +131,9 @@ def assimilate_inherited_skills(
     only prune weak candidates when explicitly requested.
     """
     reviews = review_inherited_skills(include_promoted=include_promoted)
+    if skill_names:
+        wanted = {name.strip().lower() for name in skill_names if name.strip()}
+        reviews = [review for review in reviews if review.name.lower() in wanted]
     promoted: list[SkillReview] = []
     dna_exports: list[SkillDNAExport] = []
     pruned: list[dict[str, str]] = []
