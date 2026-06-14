@@ -539,6 +539,7 @@ def cmd_skills(args: argparse.Namespace) -> int:
     """SKILL.md registry — list, show, run (Pattern 5)."""
     from agentdrive.skills import get_skill, list_skills, run_skill
     from agentdrive.skills.curation import (
+        ingest_skill_as_dna,
         promote_inherited_skill,
         prune_inherited_skill,
         review_inherited_skills,
@@ -727,6 +728,23 @@ def cmd_skills(args: argparse.Namespace) -> int:
             return 0
         console.print(f"[yellow]Pruned[/] {name.strip()} (disabled in {path})")
         return 0
+
+    if sub == "dna":
+        name = getattr(args, "skill_name", None) or ""
+        if not name.strip():
+            console.print("[red]Usage: agentdrive skills dna <name>[/]")
+            return 1
+        try:
+            export = ingest_skill_as_dna(name.strip())
+        except ValueError as exc:
+            console.print(f"[red]{exc}[/]")
+            return 1
+        if json_output:
+            emit_json(export.to_dict())
+            return 0 if export.accepted else 1
+        status = "[green]Ingested[/]" if export.accepted else "[yellow]Not accepted[/]"
+        console.print(f"{status} {export.skill_name} -> {export.genome_id} ({export.reason})")
+        return 0 if export.accepted else 1
 
     if sub == "init":
         from agentdrive.skills.registry import init_skill

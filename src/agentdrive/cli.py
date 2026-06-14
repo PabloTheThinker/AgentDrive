@@ -3815,6 +3815,14 @@ def build_parser() -> argparse.ArgumentParser:
     sk_prune.add_argument("--json", dest="json_output", action="store_true")
     sk_prune.set_defaults(func=cmd_skills)
 
+    sk_dna = skills_subs.add_parser(
+        "dna",
+        help="Ingest an inherited/promoted skill into the DNA pool",
+    )
+    sk_dna.add_argument("skill_name", help="Inherited or promoted skill name")
+    sk_dna.add_argument("--json", dest="json_output", action="store_true")
+    sk_dna.set_defaults(func=cmd_skills)
+
     sk_init = skills_subs.add_parser(
         "init",
         help="Scaffold ~/.agentdrive/skills/<name>/SKILL.md",

@@ -4,11 +4,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from agentdrive.drive.drive import AgentDrive
 from agentdrive.skills import get_skill, init_skill, list_skills, run_skill
 from agentdrive.skills.curation import (
+    ingest_skill_as_dna,
     promote_inherited_skill,
     prune_inherited_skill,
     review_inherited_skills,
+    skill_to_genome,
 )
 from agentdrive.skills.registry import install_inherited_skill, list_skills_by_tier
 from agentdrive.skills.usage import get_skill_usage, record_skill_run
@@ -106,6 +109,41 @@ def test_review_promote_and_prune_inherited_skill(isolated_agentdrive_home):
     assert path.exists()
     assert get_skill("reviewable-worker-playbook") is None
     assert "disabled: true" in path.read_text(encoding="utf-8")
+
+
+def test_ingest_promoted_skill_as_dna(registry, isolated_agentdrive_home):
+    install_inherited_skill(
+        name="dna-worker-playbook",
+        description="Reusable worker playbook that should become DNA",
+        body=(
+            "# DNA Worker Playbook\n\n"
+            "1. Gather the worker evidence.\n"
+            "2. Summarize the reusable decision rule."
+        ),
+        source_subagent_id="worker-dna",
+        swarm_id="swarm-dna",
+        tags=["worker", "decision"],
+    )
+    record_skill_run("dna-worker-playbook", success=True)
+    promote_inherited_skill("dna-worker-playbook")
+    entry = get_skill("dna-worker-playbook")
+    assert entry is not None
+
+    genome = skill_to_genome(entry)
+    assert genome.manifest.id == "skill-dna-worker-playbook"
+    assert genome.framework is not None
+    assert genome.framework["skill_name"] == "dna-worker-playbook"
+    assert genome.manifest.evaluation_score["skill_successes"] == 1.0
+
+    drive = AgentDrive(registry=registry)
+    export = ingest_skill_as_dna("dna-worker-playbook", target_drive=drive)
+
+    assert export.accepted is True
+    assert export.genome_id == "skill-dna-worker-playbook@1.0.0"
+    details = registry.list_genome_details()
+    assert any(d.get("id") == "skill-dna-worker-playbook" for d in details)
+    skill_text = entry.path.read_text(encoding="utf-8")
+    assert "genome_id: skill-dna-worker-playbook@1.0.0" in skill_text
 
 
 def test_init_skill_refuses_overwrite(isolated_agentdrive_home):

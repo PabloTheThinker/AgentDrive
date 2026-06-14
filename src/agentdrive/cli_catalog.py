@@ -178,6 +178,7 @@ CATALOG: tuple[CatalogEntry, ...] = (
     CatalogEntry("skills review", "Review inherited skills using usage evidence", "discovery"),
     CatalogEntry("skills promote", "Promote a proven inherited skill", "discovery"),
     CatalogEntry("skills prune", "Disable a weak inherited skill without deleting it", "discovery"),
+    CatalogEntry("skills dna", "Ingest an inherited/promoted skill into the DNA pool", "discovery"),
     CatalogEntry("skills init", "Scaffold a new SKILL.md under ~/.agentdrive/skills", "discovery"),
     # config
     CatalogEntry("config show", "Show configuration", "config"),

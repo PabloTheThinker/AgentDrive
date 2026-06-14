@@ -4,15 +4,21 @@ from __future__ import annotations
 
 import re
 from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import yaml
 
+from agentdrive.genome.models import Genome
 from agentdrive.skills.registry import SkillEntry, discover_skills, get_skill
 from agentdrive.skills.usage import SkillUsage, get_skill_usage
 
+if TYPE_CHECKING:
+    from agentdrive.drive.drive import AgentDrive, DriveIngestResult
+
 _FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n(.*)", re.DOTALL)
+_GENOME_ID_RE = re.compile(r"[^a-z0-9._-]+")
 
 
 @dataclass(frozen=True)
@@ -31,6 +37,20 @@ class SkillReview:
     failures: int = 0
     success_rate: float = 0.0
     promoted: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class SkillDNAExport:
+    """Result of turning a curated skill into pool DNA."""
+
+    skill_name: str
+    genome_id: str
+    accepted: bool
+    reason: str
+    path: str
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -146,6 +166,120 @@ def prune_inherited_skill(name: str, *, reason: str = "") -> Path:
     return entry.path
 
 
+def skill_to_genome(entry: SkillEntry) -> Genome:
+    """Convert a promoted/inherited skill into a durable Genome."""
+    if entry.category not in ("inherited", "promoted"):
+        raise ValueError(f"Skill is not inherited/promoted: {entry.name}")
+    usage = get_skill_usage(entry.name)
+    genome_id = _skill_genome_id(entry.name)
+    tags = list(entry.tags)
+    source_parts = [p for p in entry.source.split(":") if p]
+    swarm_id = source_parts[1] if len(source_parts) >= 3 else ""
+    subagent_id = source_parts[2] if len(source_parts) >= 3 else ""
+    body_steps = _body_steps(entry.body)
+    framework = {
+        "type": "inherited_skill",
+        "skill_name": entry.name,
+        "description": entry.description,
+        "source": entry.source,
+        "body": entry.body,
+        "steps": body_steps,
+        "usage": _usage_payload(entry.name),
+    }
+    applicability = {
+        "domains": sorted(set(["agent-skills", "inherited-skills", *tags])),
+        "problem_signatures": [
+            entry.name,
+            entry.description,
+            entry.when_to_call,
+            *tags,
+        ],
+        "source_skill": entry.name,
+        "source_subagent_id": subagent_id,
+        "swarm_id": swarm_id,
+    }
+    evaluation_score = {
+        "skill_success_rate": usage.success_rate,
+        "skill_successes": float(usage.successes),
+        "skill_matches": float(usage.matches),
+    }
+    reasoning_patterns = {
+        "skill_body": entry.body,
+        "when_to_call": entry.when_to_call,
+        "patterns_recognized": [
+            {
+                "framework_id": entry.name,
+                "intents": [entry.name, *tags],
+                "fields": ["skill", "subagent", "inheritance", "promotion"],
+            }
+        ],
+    }
+    provenance = {
+        "lineage": [
+            {
+                "parent": entry.source or str(entry.path),
+                "relation": "skill-to-dna",
+                "timestamp": datetime.now(UTC).isoformat(),
+                "notes": f"Promoted inherited skill {entry.name} into AgentDrive DNA",
+            }
+        ]
+    }
+    authors: list[dict[str, str]] = [
+        {"type": "agent", "id": "agentdrive-skills", "name": "AgentDrive skills"}
+    ]
+    if subagent_id:
+        authors.append({"type": "agent", "id": f"sub:{subagent_id}", "name": subagent_id})
+    return Genome.create(
+        id=genome_id,
+        version="1.0.0",
+        framework=framework,
+        authors=authors,
+        applicability=applicability,
+        dependencies={"genomes": [], "agent_capabilities": ["skill-reuse", "inheritance"]},
+        evaluation_score=evaluation_score,
+        reasoning_patterns=reasoning_patterns,
+        provenance=provenance,
+    )
+
+
+def ingest_skill_as_dna(
+    name: str,
+    *,
+    target_drive: AgentDrive | None = None,
+) -> SkillDNAExport:
+    """Ingest a promoted/inherited skill into the AgentDrive DNA pool."""
+    entry = _require_skill(name)
+    if entry.category not in ("inherited", "promoted"):
+        raise ValueError(f"Skill is not inherited/promoted: {name}")
+    if target_drive is None:
+        from agentdrive.drive.drive import get_default_drive
+
+        target_drive = get_default_drive()
+
+    genome = skill_to_genome(entry)
+    result: DriveIngestResult = target_drive.ingest(
+        genome,
+        source="skill-promotion",
+        actor="agentdrive-skills",
+    )
+    meta, body = _read_skill_doc(entry.path)
+    meta["dna"] = {
+        "status": "ingested",
+        "genome_id": result.genome_id,
+        "accepted": result.accepted,
+        "reason": result.reason,
+        "source": "agentdrive skills dna",
+    }
+    _write_skill_doc(entry.path, meta, body)
+    return SkillDNAExport(
+        skill_name=entry.name,
+        genome_id=result.genome_id,
+        accepted=result.accepted,
+        reason=result.reason,
+        path=str(entry.path),
+    )
+
+
 def _recommend(entry: SkillEntry, usage: SkillUsage) -> tuple[str, str]:
     if entry.category == "promoted":
         return "promoted", "already promoted into the parent skill bench"
@@ -176,6 +310,37 @@ def _usage_payload(name: str) -> dict[str, Any]:
         "last_matched_at": usage.last_matched_at,
         "last_run_at": usage.last_run_at,
     }
+
+
+def _skill_genome_id(name: str) -> str:
+    cleaned = _GENOME_ID_RE.sub("-", name.strip().lower()).strip("-._")
+    if not cleaned:
+        cleaned = "skill"
+    return f"skill-{cleaned}"[:120].strip("-._")
+
+
+def _body_steps(body: str) -> list[dict[str, str]]:
+    steps: list[dict[str, str]] = []
+    for line in body.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        stripped = re.sub(r"^#{1,6}\s*", "", stripped)
+        stripped = re.sub(r"^(?:[-*]|\d+[.)])\s*", "", stripped)
+        if not stripped:
+            continue
+        steps.append(
+            {
+                "id": str(len(steps) + 1),
+                "name": stripped[:90],
+                "description": stripped,
+            }
+        )
+        if len(steps) >= 12:
+            break
+    if not steps:
+        steps.append({"id": "1", "name": "Apply skill", "description": body[:500]})
+    return steps
 
 
 def _require_skill(name: str) -> SkillEntry:

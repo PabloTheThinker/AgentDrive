@@ -142,6 +142,9 @@ Operators can inspect and curate this pool with `agentdrive skills review`,
 `agentdrive skills promote <name>`, and `agentdrive skills prune <name>`.
 Promotion marks a candidate as stable parent bench knowledge; pruning disables
 the file without deleting the audit trail.
+`agentdrive skills dna <name>` then converts a curated skill into a normal
+AgentDrive Genome and ingests it into the current DNA pool, making the learned
+playbook available through standard genome retrieval as well as skill matching.
 
 ### 3.6 Federated peer registry
 Opt-in directory of trusted peer AgentDrive instances (other operators, external

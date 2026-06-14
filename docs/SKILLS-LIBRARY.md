@@ -68,7 +68,7 @@ Set `AGENTDRIVE_HARNESS=grok|claude|codex` to inject tier-5 skills into the syst
 
 | Surface | Command |
 |---------|---------|
-| CLI | `agentdrive skills list [--harness grok]` · `show` · `run` · `review` · `promote` · `prune` · `init` |
+| CLI | `agentdrive skills list [--harness grok]` · `show` · `run` · `review` · `promote` · `prune` · `dna` · `init` |
 | Chat | `/skills list`, `/skill <name>` |
 | System prompt | Auto catalog (tiers 1–4 always; tier 5 when `AGENTDRIVE_HARNESS` set) + matched skills per turn |
 
@@ -104,7 +104,10 @@ bench:
 agentdrive skills review
 agentdrive skills promote <inherited-skill-name>
 agentdrive skills prune <inherited-skill-name> --reason "superseded"
+agentdrive skills dna <inherited-skill-name>
 ```
 
 `promote` marks the skill frontmatter as `category: promoted`; `prune` marks it
-`disabled: true` so it leaves discovery without deleting the file.
+`disabled: true` so it leaves discovery without deleting the file. `dna` turns a
+promoted or inherited skill into a normal AgentDrive Genome and ingests it into
+the current Drive so future DNA retrieval can use the learned playbook.
