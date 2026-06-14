@@ -138,6 +138,10 @@ tie-breaker: successful inherited skills rise above equally relevant unproven
 ones, while failing inherited skills are penalized. This is the first lightweight
 form of Hermes-style candidate selection; later GEPA/DSPy optimization can use
 the same ledger as evaluation data instead of starting from blank history.
+When a successful `SubagentDone` absorbs a handoff skill, AgentDrive records a
+success outcome for that inherited skill with an `inheritance:<swarm>:<subagent>`
+source, so the parent bench can distinguish skills learned from completed child
+work from neutral/manual imports.
 Operators can inspect and curate this pool with `agentdrive skills review`,
 `agentdrive skills promote <name>`, and `agentdrive skills prune <name>`.
 Promotion marks a candidate as stable parent bench knowledge; pruning disables

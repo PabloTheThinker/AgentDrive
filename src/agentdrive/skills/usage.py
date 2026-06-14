@@ -148,7 +148,7 @@ def record_skill_match(name: str, *, score: float = 0.0, source: str = "compose"
 
 
 def record_skill_run(name: str, *, success: bool, source: str = "run") -> SkillUsage:
-    """Record an explicit skill run outcome."""
+    """Record a skill execution or task-outcome evidence point."""
     key = name.strip()
     if not key:
         return SkillUsage(name="")

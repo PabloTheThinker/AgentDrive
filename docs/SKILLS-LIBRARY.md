@@ -100,6 +100,10 @@ AgentDrive records matches and explicit run outcomes in
 `~/.agentdrive/skills/usage.json`, then uses that evidence to curate the parent
 bench:
 
+Successful `SubagentDone` auto-absorption also records a success outcome with
+an `inheritance:<swarm>:<subagent>` source, giving inherited skills immediate
+but bounded evidence from the child task that produced them.
+
 ```bash
 agentdrive skills review
 agentdrive skills promote <inherited-skill-name>

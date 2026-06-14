@@ -420,6 +420,7 @@ def record_manifest(
     auto_absorb: bool = True,
     source_pool: AgentDrive | None = None,
     quarantine_external: bool = False,
+    skill_outcome_success: bool | None = None,
 ) -> InheritanceResult:
     """Persist a manifest and optionally absorb its new genomes into a pool.
 
@@ -434,6 +435,12 @@ def record_manifest(
         ``agentdrive quarantine approve``. Set this in peer-federation adapters
         and any other code path that receives DNA from outside the local
         instance.
+
+    If ``skill_outcome_success`` is supplied, every installed inherited skill
+    also records one usage outcome. The successful ``SubagentDone`` hook passes
+    ``True`` here, giving the curation loop evidence that the playbook came from
+    a completed child task. Manual manifest imports leave it unset unless the
+    caller has its own outcome signal.
 
     Each absorbed genome triggers the existing ``PoolIngest`` event with
     ``source="inheritance:<subagent_id>"`` so subscribers can render it on
@@ -529,6 +536,24 @@ def record_manifest(
                     source_subagent_id=manifest.subagent_id,
                 )
                 skills_absorbed.append(skill.name)
+                if skill_outcome_success is not None:
+                    try:
+                        from agentdrive.skills.usage import record_skill_run
+
+                        record_skill_run(
+                            skill.name,
+                            success=bool(skill_outcome_success),
+                            source=(
+                                f"inheritance:{manifest.swarm_id or 'default'}:"
+                                f"{manifest.subagent_id or 'subagent'}"
+                            ),
+                        )
+                    except Exception:
+                        logger.debug(
+                            "Failed to record inherited skill outcome for %s",
+                            skill.name,
+                            exc_info=True,
+                        )
                 try:
                     emit(
                         InheritanceAbsorbed(
@@ -668,6 +693,7 @@ def _on_subagent_done(event: SubagentDone) -> None:
             target_pool=target,
             auto_absorb=True,
             source_pool=source_pool,
+            skill_outcome_success=True,
         )
     except Exception:
         logger.debug(

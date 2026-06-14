@@ -284,13 +284,13 @@ def _recommend(entry: SkillEntry, usage: SkillUsage) -> tuple[str, str]:
     if entry.category == "promoted":
         return "promoted", "already promoted into the parent skill bench"
     if usage.failures >= 2 and usage.failures > usage.successes:
-        return "prune", "failures outnumber successful runs"
+        return "prune", "failures outnumber successful outcomes"
     if usage.runs >= 2 and usage.success_rate >= 0.75:
-        return "promote", "explicit runs show reliable success"
+        return "promote", "outcome evidence shows reliable success"
     if usage.successes >= 1 and usage.matches >= 3 and usage.failures == 0:
-        return "promote", "matched repeatedly and has successful run evidence"
+        return "promote", "matched repeatedly and has successful outcome evidence"
     if usage.matches >= 3 and usage.failures == 0:
-        return "watch", "retrieved repeatedly; needs explicit success evidence"
+        return "watch", "retrieved repeatedly; needs success outcome evidence"
     return "watch", "not enough outcome evidence yet"
 
 

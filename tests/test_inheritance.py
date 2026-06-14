@@ -42,6 +42,7 @@ from agentdrive.inheritance import (
 from agentdrive.registry import GenomeRegistry
 from agentdrive.skills.compose import match_skills_for_turn
 from agentdrive.skills.registry import get_skill
+from agentdrive.skills.usage import get_skill_usage
 
 # ─────────────────────────────────────────────────────────────────────
 # fixtures
@@ -179,6 +180,10 @@ def test_record_manifest_installs_subagent_skill_into_parent_bench(
     assert installed.source == "inheritance:swarm-A:analyst-7"
     assert "Pull the recent failure timeline" in installed.body
 
+    usage_before_match = get_skill_usage("incident-retrospective-playbook")
+    assert usage_before_match.runs == 0
+    assert usage_before_match.successes == 0
+
     matched = match_skills_for_turn("run an incident retrospective after this outage")
     assert any(skill.name == "incident-retrospective-playbook" for skill in matched)
     assert any(e.skill_name == "incident-retrospective-playbook" for e in absorbed_events)
@@ -272,6 +277,12 @@ tags: [handoff, synthesis]
     assert installed.source == "inheritance:swarm-A:worker-9"
     assert "parent-ready decision" in installed.body
     assert received[0].skills_absorbed == ["worker-synthesis-handoff"]
+
+    usage = get_skill_usage("worker-synthesis-handoff")
+    assert usage.runs == 1
+    assert usage.successes == 1
+    assert usage.failures == 0
+    assert usage.sources["inheritance:swarm-A:worker-9"] == 1
 
 
 def test_external_inherited_skills_are_not_installed_without_review(
