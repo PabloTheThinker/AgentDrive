@@ -127,6 +127,20 @@ def test_ingest_promoted_skill_as_dna(registry, isolated_agentdrive_home):
         swarm_id="swarm-dna",
         tags=["worker", "decision"],
     )
+    install_inherited_skill(
+        name="dna-worker-playbook",
+        description="Improved worker playbook that should become DNA",
+        body=(
+            "# DNA Worker Playbook\n\n"
+            "1. Gather the worker evidence.\n"
+            "2. Add contradiction checks from a second worker.\n"
+            "3. Summarize the reusable decision rule."
+        ),
+        source_subagent_id="worker-dna-2",
+        swarm_id="swarm-dna",
+        tags=["worker", "decision", "contradiction"],
+        update_existing=True,
+    )
     record_skill_run("dna-worker-playbook", success=True)
     promote_inherited_skill("dna-worker-playbook")
     entry = get_skill("dna-worker-playbook")
@@ -136,7 +150,25 @@ def test_ingest_promoted_skill_as_dna(registry, isolated_agentdrive_home):
     assert genome.manifest.id == "skill-dna-worker-playbook"
     assert genome.framework is not None
     assert genome.framework["skill_name"] == "dna-worker-playbook"
+    assert genome.framework["inheritance"]["revision_count"] == 2
+    assert genome.framework["inheritance"]["revisions"][0]["subagent_id"] == "worker-dna"
+    assert genome.framework["inheritance"]["revisions"][1]["subagent_id"] == "worker-dna-2"
+    assert "Add contradiction checks" in genome.framework["body"]
+    assert genome.manifest.applicability["source_subagent_ids"] == [
+        "worker-dna",
+        "worker-dna-2",
+    ]
     assert genome.manifest.evaluation_score["skill_successes"] == 1.0
+    assert genome.manifest.evaluation_score["skill_revision_count"] == 2.0
+    revision_lineage = [
+        item for item in genome.provenance.lineage if item.get("relation") == "skill-revision"
+    ]
+    assert [item.get("subagent_id") for item in revision_lineage] == [
+        "worker-dna",
+        "worker-dna-2",
+    ]
+    author_ids = {author.id for author in genome.manifest.authors}
+    assert {"sub:worker-dna", "sub:worker-dna-2"}.issubset(author_ids)
 
     drive = AgentDrive(registry=registry)
     export = ingest_skill_as_dna("dna-worker-playbook", target_drive=drive)

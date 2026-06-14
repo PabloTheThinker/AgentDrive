@@ -257,6 +257,19 @@ def skill_to_genome(entry: SkillEntry) -> Genome:
     if entry.category not in ("inherited", "promoted"):
         raise ValueError(f"Skill is not inherited/promoted: {entry.name}")
     usage = get_skill_usage(entry.name)
+    meta, _body = _read_skill_doc(entry.path)
+    inheritance = _inheritance_payload(meta, entry=entry)
+    revision_sources = [
+        revision["source"] for revision in inheritance["revisions"] if revision.get("source")
+    ]
+    revision_subagents = sorted(
+        {
+            part
+            for source in revision_sources
+            for part in [_subagent_from_inheritance_source(str(source))]
+            if part
+        }
+    )
     genome_id = _skill_genome_id(entry.name)
     tags = list(entry.tags)
     source_parts = [p for p in entry.source.split(":") if p]
@@ -271,6 +284,7 @@ def skill_to_genome(entry: SkillEntry) -> Genome:
         "body": entry.body,
         "steps": body_steps,
         "usage": _usage_payload(entry.name),
+        "inheritance": inheritance,
     }
     applicability = {
         "domains": sorted(set(["agent-skills", "inherited-skills", *tags])),
@@ -282,21 +296,25 @@ def skill_to_genome(entry: SkillEntry) -> Genome:
         ],
         "source_skill": entry.name,
         "source_subagent_id": subagent_id,
+        "source_subagent_ids": revision_subagents or ([subagent_id] if subagent_id else []),
         "swarm_id": swarm_id,
+        "revision_count": inheritance["revision_count"],
     }
     evaluation_score = {
         "skill_success_rate": usage.success_rate,
         "skill_successes": float(usage.successes),
         "skill_matches": float(usage.matches),
+        "skill_revision_count": float(inheritance["revision_count"]),
     }
     reasoning_patterns = {
         "skill_body": entry.body,
         "when_to_call": entry.when_to_call,
+        "inheritance_revisions": inheritance["revisions"],
         "patterns_recognized": [
             {
                 "framework_id": entry.name,
                 "intents": [entry.name, *tags],
-                "fields": ["skill", "subagent", "inheritance", "promotion"],
+                "fields": ["skill", "subagent", "inheritance", "promotion", "revision"],
             }
         ],
     }
@@ -310,11 +328,25 @@ def skill_to_genome(entry: SkillEntry) -> Genome:
             }
         ]
     }
+    for revision in inheritance["revisions"]:
+        provenance["lineage"].append(
+            {
+                "parent": revision.get("source") or entry.source or str(entry.path),
+                "relation": "skill-revision",
+                "timestamp": revision.get("recorded_at") or datetime.now(UTC).isoformat(),
+                "notes": (
+                    f"Inherited skill revision for {entry.name} from "
+                    f"{revision.get('subagent_id') or 'subagent'}"
+                ),
+                "swarm_id": revision.get("swarm_id") or "",
+                "subagent_id": revision.get("subagent_id") or "",
+            }
+        )
     authors: list[dict[str, str]] = [
         {"type": "agent", "id": "agentdrive-skills", "name": "AgentDrive skills"}
     ]
-    if subagent_id:
-        authors.append({"type": "agent", "id": f"sub:{subagent_id}", "name": subagent_id})
+    for sid in revision_subagents or ([subagent_id] if subagent_id else []):
+        authors.append({"type": "agent", "id": f"sub:{sid}", "name": sid})
     return Genome.create(
         id=genome_id,
         version="1.0.0",
@@ -427,6 +459,76 @@ def _body_steps(body: str) -> list[dict[str, str]]:
     if not steps:
         steps.append({"id": "1", "name": "Apply skill", "description": body[:500]})
     return steps
+
+
+def _subagent_from_inheritance_source(source: str) -> str:
+    parts = [part for part in source.split(":") if part]
+    if len(parts) >= 3 and parts[0] == "inheritance":
+        return parts[2]
+    return ""
+
+
+def _inheritance_payload(meta: dict[str, Any], *, entry: SkillEntry) -> dict[str, Any]:
+    raw = meta.get("inheritance") or {}
+    if not isinstance(raw, dict):
+        raw = {}
+    revisions = raw.get("revisions") or []
+    if not isinstance(revisions, list):
+        revisions = []
+
+    normalized: list[dict[str, Any]] = []
+    for revision in revisions:
+        if not isinstance(revision, dict):
+            continue
+        source = str(revision.get("source") or "").strip()
+        normalized.append(
+            {
+                "source": source,
+                "swarm_id": _swarm_from_inheritance_source(source),
+                "subagent_id": _subagent_from_inheritance_source(source),
+                "recorded_at": str(revision.get("recorded_at") or ""),
+                "description": str(revision.get("description") or ""),
+                "body_chars": _safe_int(revision.get("body_chars")),
+                "tags": _normalize_tags(revision.get("tags")),
+            }
+        )
+
+    if not normalized:
+        source = entry.source or "unknown"
+        normalized.append(
+            {
+                "source": source,
+                "swarm_id": _swarm_from_inheritance_source(source),
+                "subagent_id": _subagent_from_inheritance_source(source),
+                "recorded_at": str(raw.get("latest_recorded_at") or ""),
+                "description": entry.description,
+                "body_chars": len(entry.body),
+                "tags": list(entry.tags),
+            }
+        )
+
+    latest = normalized[-1]
+    return {
+        "status": str(raw.get("status") or "active"),
+        "revision_count": len(normalized),
+        "latest_source": str(raw.get("latest_source") or latest["source"]),
+        "latest_recorded_at": str(raw.get("latest_recorded_at") or latest["recorded_at"]),
+        "revisions": normalized,
+    }
+
+
+def _swarm_from_inheritance_source(source: str) -> str:
+    parts = [part for part in source.split(":") if part]
+    if len(parts) >= 3 and parts[0] == "inheritance":
+        return parts[1]
+    return ""
+
+
+def _safe_int(value: Any) -> int:
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
 
 
 def _require_skill(name: str) -> SkillEntry:
