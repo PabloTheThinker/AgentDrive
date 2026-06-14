@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -235,6 +236,7 @@ def install_inherited_skill(
     tags: list[str] | tuple[str, ...] | None = None,
     operation: str | None = None,
     force: bool = False,
+    update_existing: bool = False,
 ) -> Path:
     """Install a sub-agent playbook as a parent-visible SKILL.md.
 
@@ -252,7 +254,16 @@ def install_inherited_skill(
     swarm = safe_name(swarm_id or "default")
     skill_dir = get_agentdrive_home() / "skills" / "inherited" / swarm / source / slug
     skill_md = skill_dir / "SKILL.md"
-    if skill_md.exists() and not force:
+    if update_existing:
+        existing = get_skill(slug)
+        if existing is not None and existing.category in ("inherited", "promoted"):
+            try:
+                existing.path.relative_to(get_agentdrive_home() / "skills")
+                skill_md = existing.path
+                skill_dir = existing.path.parent
+            except ValueError:
+                pass
+    if skill_md.exists() and not force and not update_existing:
         raise FileExistsError(f"Inherited skill already exists: {skill_md}")
 
     tag_values = [str(tag).strip() for tag in (tags or []) if str(tag).strip()]
@@ -260,6 +271,14 @@ def install_inherited_skill(
         tag_values.append("inherited")
     if source_subagent_id and source_subagent_id not in tag_values:
         tag_values.append(source_subagent_id)
+
+    revision = {
+        "source": f"inheritance:{swarm_id or 'default'}:{source_subagent_id or 'subagent'}",
+        "recorded_at": datetime.now(UTC).isoformat(),
+        "description": desc,
+        "body_chars": len(skill_body),
+        "tags": list(tag_values),
+    }
 
     meta: dict[str, Any] = {
         "name": slug,
@@ -270,16 +289,104 @@ def install_inherited_skill(
         "tags": tag_values,
         "source": f"inheritance:{swarm_id or 'default'}:{source_subagent_id or 'subagent'}",
         "when_to_call": "Use when a task matches the sub-agent playbook captured in this inherited skill.",
+        "inheritance": {
+            "status": "active",
+            "revision_count": 1,
+            "latest_source": revision["source"],
+            "latest_recorded_at": revision["recorded_at"],
+            "revisions": [revision],
+        },
     }
     if operation:
         meta["agentdrive_operation"] = operation
 
+    if skill_md.exists() and (force or update_existing):
+        existing_meta, existing_body = _read_skill_doc(skill_md)
+        if not force and existing_body.strip() == skill_body:
+            return skill_md
+
+        existing_tags = _normalize_tags(existing_meta.get("tags"))
+        for tag in tag_values:
+            if tag not in existing_tags:
+                existing_tags.append(tag)
+
+        inheritance = existing_meta.get("inheritance") or {}
+        if not isinstance(inheritance, dict):
+            inheritance = {}
+        revisions = inheritance.get("revisions") or []
+        if not isinstance(revisions, list):
+            revisions = []
+        if revisions == []:
+            revisions.append(
+                {
+                    "source": existing_meta.get("source") or "unknown",
+                    "recorded_at": inheritance.get("latest_recorded_at") or "",
+                    "description": existing_meta.get("description") or "",
+                    "body_chars": len(existing_body),
+                    "tags": existing_tags,
+                }
+            )
+        revisions.append(revision)
+
+        existing_meta.update(
+            {
+                "description": desc or existing_meta.get("description") or "",
+                "harness": existing_meta.get("harness") or "agentdrive",
+                "category": existing_meta.get("category") or "inherited",
+                "role": existing_meta.get("role") or "shared",
+                "tags": existing_tags,
+                "source": meta["source"],
+                "when_to_call": existing_meta.get("when_to_call") or meta["when_to_call"],
+                "inheritance": {
+                    "status": "active",
+                    "revision_count": len(revisions),
+                    "latest_source": revision["source"],
+                    "latest_recorded_at": revision["recorded_at"],
+                    "revisions": revisions,
+                },
+            }
+        )
+        if operation:
+            existing_meta["agentdrive_operation"] = operation
+
+        _write_skill_doc(skill_md, existing_meta, skill_body)
+        return skill_md
+
     skill_dir.mkdir(parents=True, exist_ok=True)
-    skill_md.write_text(
-        "---\n" + yaml.safe_dump(meta, sort_keys=False).strip() + "\n---\n\n" + skill_body + "\n",
+    _write_skill_doc(skill_md, meta, skill_body)
+    return skill_md
+
+
+def _read_skill_doc(path: Path) -> tuple[dict[str, Any], str]:
+    text = path.read_text(encoding="utf-8")
+    match = _FRONTMATTER_RE.match(text)
+    if not match:
+        return {}, text
+    try:
+        meta = yaml.safe_load(match.group(1)) or {}
+    except yaml.YAMLError:
+        meta = {}
+    if not isinstance(meta, dict):
+        meta = {}
+    return meta, match.group(2).strip()
+
+
+def _write_skill_doc(path: Path, meta: dict[str, Any], body: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        "---\n" + yaml.safe_dump(meta, sort_keys=False).strip() + "\n---\n\n" + body.strip() + "\n",
         encoding="utf-8",
     )
-    return skill_md
+
+
+def _normalize_tags(raw: Any) -> list[str]:
+    if isinstance(raw, str):
+        return [tag.strip() for tag in raw.split(",") if tag.strip()]
+    if isinstance(raw, list):
+        return [str(tag).strip() for tag in raw if str(tag).strip()]
+    if isinstance(raw, tuple):
+        return [str(tag).strip() for tag in raw if str(tag).strip()]
+    return []
 
 
 def init_skill(name: str, *, description: str = "", force: bool = False) -> Path:

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import yaml
+
 from agentdrive.drive.drive import AgentDrive
 from agentdrive.skills import get_skill, init_skill, list_skills, run_skill
 from agentdrive.skills.curation import (
@@ -194,6 +196,41 @@ def test_init_skill_refuses_overwrite(isolated_agentdrive_home):
         assert False, "expected FileExistsError"
     except FileExistsError:
         pass
+
+
+def test_inherited_skill_update_existing_records_revision(isolated_agentdrive_home):
+    first_path = install_inherited_skill(
+        name="self-improving-worker",
+        description="First worker version",
+        body="# First Worker\n\n1. Gather initial evidence.",
+        source_subagent_id="worker-a",
+        swarm_id="swarm-self",
+        tags=["worker"],
+    )
+    second_path = install_inherited_skill(
+        name="self-improving-worker",
+        description="Second worker version",
+        body="# Second Worker\n\n1. Gather initial evidence.\n2. Add contradiction checks.",
+        source_subagent_id="worker-b",
+        swarm_id="swarm-self",
+        tags=["worker", "contradiction"],
+        update_existing=True,
+    )
+
+    assert second_path == first_path
+    entry = get_skill("self-improving-worker")
+    assert entry is not None
+    assert "Add contradiction checks" in entry.body
+    assert "contradiction" in entry.tags
+
+    text = first_path.read_text(encoding="utf-8")
+    raw_meta = text.split("---", 2)[1]
+    meta = yaml.safe_load(raw_meta)
+    inheritance = meta["inheritance"]
+    assert inheritance["revision_count"] == 2
+    assert inheritance["latest_source"] == "inheritance:swarm-self:worker-b"
+    assert inheritance["revisions"][0]["source"] == "inheritance:swarm-self:worker-a"
+    assert inheritance["revisions"][1]["source"] == "inheritance:swarm-self:worker-b"
 
 
 def test_user_skill_overlay(isolated_agentdrive_home):

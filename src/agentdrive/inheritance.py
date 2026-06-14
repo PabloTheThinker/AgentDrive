@@ -530,6 +530,7 @@ def record_manifest(
                     operation=skill.operation,
                     swarm_id=manifest.swarm_id,
                     source_subagent_id=manifest.subagent_id,
+                    update_existing=True,
                 )
                 skills_absorbed.append(skill.name)
                 if skill_outcome_success is not None:

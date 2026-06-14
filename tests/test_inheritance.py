@@ -15,6 +15,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
+import yaml
 
 from agentdrive.drive.drive import AgentDrive
 from agentdrive.events import (
@@ -188,6 +189,48 @@ def test_record_manifest_installs_subagent_skill_into_parent_bench(
     assert any(skill.name == "incident-retrospective-playbook" for skill in matched)
     assert any(e.skill_name == "incident-retrospective-playbook" for e in absorbed_events)
     assert summary[0].skills_absorbed == ["incident-retrospective-playbook"]
+
+
+def test_record_manifest_updates_existing_inherited_skill_revision(
+    registry: GenomeRegistry,
+    clean_bus: None,
+    isolated_agentdrive_home: Path,
+) -> None:
+    parent_pool = AgentDrive(registry=registry)
+    first = _build_manifest("swarm-A", "analyst-7", [])
+    first.skills_created.append(_skill_candidate("incident-retrospective-playbook"))
+    second = _build_manifest("swarm-A", "analyst-8", [])
+    improved = _skill_candidate("incident-retrospective-playbook")
+    improved.description = "Improved playbook learned by another sub-agent"
+    improved.body = (
+        "# Incident Retrospective Playbook\n\n"
+        "1. Pull the recent failure timeline.\n"
+        "2. Compare the parent hypothesis against sub-agent findings.\n"
+        "3. Add contradiction checks from each worker.\n"
+        "4. Record reusable prevention DNA and follow-up owners."
+    )
+    improved.tags.append("contradiction")
+    second.skills_created.append(improved)
+
+    first_result = record_manifest(first, target_pool=parent_pool, auto_absorb=True)
+    second_result = record_manifest(second, target_pool=parent_pool, auto_absorb=True)
+
+    assert first_result.skills_absorbed == ["incident-retrospective-playbook"]
+    assert second_result.skills_absorbed == ["incident-retrospective-playbook"]
+    assert second_result.skills_rejected == []
+
+    installed = get_skill("incident-retrospective-playbook")
+    assert installed is not None
+    assert "Add contradiction checks" in installed.body
+    assert "contradiction" in installed.tags
+    assert installed.source == "inheritance:swarm-A:analyst-8"
+
+    raw_meta = installed.path.read_text(encoding="utf-8").split("---", 2)[1]
+    meta = yaml.safe_load(raw_meta)
+    revisions = meta["inheritance"]["revisions"]
+    assert meta["inheritance"]["revision_count"] == 2
+    assert revisions[0]["source"] == "inheritance:swarm-A:analyst-7"
+    assert revisions[1]["source"] == "inheritance:swarm-A:analyst-8"
 
 
 def test_extract_skill_candidates_from_subagent_handoff_block() -> None:
