@@ -111,6 +111,27 @@ installation: bounded name/description/body size, non-empty body, no overwrite
 without force, and external peer skills rejected for review by default. They
 must not bypass the same trust boundary as foreign DNA.
 
+Sub-agent runtimes can create those candidates by returning an explicit
+handoff block in their final result:
+
+````markdown
+```agentdrive-skill
+name: short-reusable-skill-name
+description: One sentence describing when to use this playbook
+tags: [subagent, relevant-domain]
+---
+# Skill Title
+
+1. Concrete step learned from the successful sub-agent run.
+2. Verification or decision rule that should be reused.
+```
+````
+
+The Grok adapter reads these blocks from the returned sub-agent result, merges
+them into that child's inheritance manifest, and writes the manifest before
+`SubagentDone` fires so the parent absorption hook can install the skill through
+the same audited path as hand-authored manifests.
+
 ### 3.6 Federated peer registry
 Opt-in directory of trusted peer AgentDrive instances (other operators, external
 agent frameworks that speak the pool protocol) the reconciler may poll.

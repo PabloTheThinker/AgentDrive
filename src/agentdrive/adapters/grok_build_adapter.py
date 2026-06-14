@@ -114,6 +114,20 @@ do:
 All DNA pulled and all high-quality outcomes recorded will live in the
 user-owned, persistent, per-subagent pools under ~/.agentdrive/swarms/{swarm_id}/...
 
+When a sub-agent discovers a reusable workflow, have it include an explicit
+handoff block in its final result so the parent can absorb it as a skill:
+
+```agentdrive-skill
+name: short-reusable-skill-name
+description: One sentence describing when to use this playbook
+tags: [subagent, relevant-domain]
+---
+# Skill Title
+
+1. Concrete step learned from the successful sub-agent run.
+2. Verification or decision rule that should be reused.
+```
+
 This gives the entire swarm collective memory and evolutionary improvement
 while keeping isolation exactly as the user configured in their Agent Drive settings.
 """.strip()
@@ -286,6 +300,7 @@ class GrokBuildAgentDriveAdapter(AgentDriveAdapterBase):
             label = spawn_label_from_kwargs(kwargs, args, subagent_id)
             spawned_at = _time.monotonic()
             spawn_ok = True
+            result: Any = None
 
             try:
                 emit_external_subagent_spawn(
@@ -298,16 +313,31 @@ class GrokBuildAgentDriveAdapter(AgentDriveAdapterBase):
                 logger.debug("subagent spawn telemetry failed", exc_info=True)
 
             try:
-                return original(*args, **kwargs)
+                result = original(*args, **kwargs)
+                return result
             except Exception:
                 spawn_ok = False
                 raise
             finally:
+                duration_s = _time.monotonic() - spawned_at
+                if spawn_ok:
+                    try:
+                        from agentdrive.inheritance import write_subagent_result_manifest
+
+                        write_subagent_result_manifest(
+                            swarm_id=swarm_id,
+                            subagent_id=subagent_id,
+                            task=label,
+                            result=result,
+                            duration_s=duration_s,
+                        )
+                    except Exception:
+                        logger.debug("subagent skill handoff failed", exc_info=True)
                 try:
                     emit_external_subagent_done(
                         subagent_id=subagent_id,
                         ok=spawn_ok,
-                        duration_s=_time.monotonic() - spawned_at,
+                        duration_s=duration_s,
                         swarm_id=swarm_id,
                     )
                 except Exception:

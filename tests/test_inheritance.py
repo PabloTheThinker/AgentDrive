@@ -32,10 +32,12 @@ from agentdrive.inheritance import (
     InheritedSkillCandidate,
     InheritanceManifest,
     InheritanceResult,
+    extract_skill_candidates_from_result,
     list_manifests,
     load_manifest,
     manifest_path,
     record_manifest,
+    write_subagent_result_manifest,
 )
 from agentdrive.registry import GenomeRegistry
 from agentdrive.skills.compose import match_skills_for_turn
@@ -181,6 +183,95 @@ def test_record_manifest_installs_subagent_skill_into_parent_bench(
     assert any(skill.name == "incident-retrospective-playbook" for skill in matched)
     assert any(e.skill_name == "incident-retrospective-playbook" for e in absorbed_events)
     assert summary[0].skills_absorbed == ["incident-retrospective-playbook"]
+
+
+def test_extract_skill_candidates_from_subagent_handoff_block() -> None:
+    result = """
+Sub-agent complete.
+
+```agentdrive-skill
+name: outage-command-center
+description: Use after an outage to coordinate findings into one command review.
+tags: [incident, command, subagent]
+---
+# Outage Command Center
+
+1. Gather each worker's timeline and confidence.
+2. Collapse duplicate hypotheses before assigning owners.
+3. Record the reusable prevention pattern.
+```
+"""
+
+    candidates = extract_skill_candidates_from_result(
+        result,
+        task="coordinate outage review",
+    )
+
+    assert len(candidates) == 1
+    skill = candidates[0]
+    assert skill.name == "outage-command-center"
+    assert "coordinate findings" in skill.description
+    assert skill.tags == ["incident", "command", "subagent"]
+    assert "Collapse duplicate hypotheses" in skill.body
+    assert skill.evidence["source_task"] == "coordinate outage review"
+
+
+def test_subagent_done_absorbs_skill_handoff_manifest(
+    registry: GenomeRegistry,
+    clean_bus: None,
+    inheritance_bus_subscribed: None,
+    isolated_agentdrive_home: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    parent_pool = AgentDrive(registry=registry)
+
+    import agentdrive.drive.drive as pool_module
+
+    monkeypatch.setattr(pool_module, "get_default_drive", lambda: parent_pool)
+
+    result = """
+```agentdrive-skill
+name: worker-synthesis-handoff
+description: Synthesize multiple worker reports into one parent-ready decision.
+tags: [handoff, synthesis]
+---
+# Worker Synthesis Handoff
+
+1. List each worker's strongest claim.
+2. Mark contradictions and missing evidence.
+3. Return one parent-ready decision with follow-up owners.
+```
+"""
+
+    manifest = write_subagent_result_manifest(
+        swarm_id="swarm-A",
+        subagent_id="worker-9",
+        task="summarize parallel worker findings",
+        result=result,
+        duration_s=3.5,
+    )
+    assert manifest is not None
+    assert manifest.skills_created[0].name == "worker-synthesis-handoff"
+
+    received: list[InheritanceReceived] = []
+    token = subscribe(received.append, [InheritanceReceived])
+    try:
+        emit(
+            SubagentDone(
+                subagent_id="worker-9",
+                swarm_id="swarm-A",
+                ok=True,
+                duration_s=3.5,
+            )
+        )
+    finally:
+        unsubscribe(token)
+
+    installed = get_skill("worker-synthesis-handoff")
+    assert installed is not None
+    assert installed.source == "inheritance:swarm-A:worker-9"
+    assert "parent-ready decision" in installed.body
+    assert received[0].skills_absorbed == ["worker-synthesis-handoff"]
 
 
 def test_external_inherited_skills_are_not_installed_without_review(

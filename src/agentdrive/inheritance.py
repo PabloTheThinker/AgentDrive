@@ -20,10 +20,13 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+
+import yaml
 
 from agentdrive.constants import get_agentdrive_home
 from agentdrive.events import (
@@ -38,6 +41,22 @@ if TYPE_CHECKING:
     from agentdrive.drive.drive import AgentDrive
 
 logger = logging.getLogger(__name__)
+
+_SKILL_BLOCK_RE = re.compile(
+    r"```(?:agentdrive-skill|agentdrive_skill)\s*\n(.*?)\n```",
+    re.DOTALL | re.IGNORECASE,
+)
+_SKILL_BLOCK_SPLIT_RE = re.compile(r"\n---\s*\n", re.DOTALL)
+_MAX_RESULT_EVIDENCE_CHARS = 240
+
+
+def _extend_raw_skill_candidates(target: list[Any], value: Any) -> None:
+    if not value:
+        return
+    if isinstance(value, (list, tuple)):
+        target.extend(value)
+    else:
+        target.append(value)
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -134,6 +153,146 @@ class InheritanceManifest:
             duration_s=float(raw.get("duration_s", 0.0) or 0.0),
             created_at=str(raw.get("created_at", "") or _utc_now_iso()),
         )
+
+
+def extract_skill_candidates_from_result(
+    result: Any,
+    *,
+    task: str = "",
+) -> list[InheritedSkillCandidate]:
+    """Extract explicit AgentDrive skill proposals from a sub-agent result.
+
+    Sub-agents can return fenced blocks shaped like::
+
+        ```agentdrive-skill
+        name: incident-retrospective-playbook
+        description: Reusable incident review handoff
+        tags: [incident, retrospective]
+        ---
+        # Incident Retrospective Playbook
+        ...
+        ```
+
+    The parser is intentionally opt-in. We do not turn every long sub-agent
+    response into a skill, because that would pollute the parent bench with
+    low-signal transcript fragments.
+    """
+    raw_candidates: list[Any] = []
+    text_parts: list[str] = []
+    if isinstance(result, dict):
+        _extend_raw_skill_candidates(raw_candidates, result.get("skills_created"))
+        _extend_raw_skill_candidates(raw_candidates, result.get("agentdrive_skills"))
+        for key in ("result", "summary", "text", "content", "output"):
+            value = result.get(key)
+            if isinstance(value, str) and value.strip():
+                text_parts.append(value)
+    elif isinstance(result, (list, tuple)):
+        for item in result:
+            if isinstance(item, dict):
+                raw_candidates.append(item)
+            elif isinstance(item, str):
+                text_parts.append(item)
+    elif isinstance(result, str):
+        text_parts.append(result)
+    elif result is not None:
+        text_parts.append(str(result))
+
+    candidates: list[InheritedSkillCandidate] = []
+    for raw in raw_candidates:
+        candidate = InheritedSkillCandidate.from_raw(raw)
+        if candidate is not None:
+            candidates.append(candidate)
+
+    for text in text_parts:
+        candidates.extend(_extract_skill_blocks(text, task=task))
+
+    deduped: dict[str, InheritedSkillCandidate] = {}
+    for candidate in candidates:
+        key = candidate.name.strip().lower()
+        if key and key not in deduped:
+            deduped[key] = candidate
+    return list(deduped.values())
+
+
+def _extract_skill_blocks(text: str, *, task: str = "") -> list[InheritedSkillCandidate]:
+    candidates: list[InheritedSkillCandidate] = []
+    for match in _SKILL_BLOCK_RE.finditer(text):
+        block = match.group(1).strip()
+        header_text = ""
+        body = block
+        parts = _SKILL_BLOCK_SPLIT_RE.split(block, maxsplit=1)
+        if len(parts) == 2:
+            header_text, body = parts[0].strip(), parts[1].strip()
+        meta: dict[str, Any] = {}
+        if header_text:
+            try:
+                loaded = yaml.safe_load(header_text) or {}
+                if isinstance(loaded, dict):
+                    meta = loaded
+            except yaml.YAMLError:
+                logger.debug("Failed to parse inherited skill block header", exc_info=True)
+
+        evidence = dict(meta.get("evidence") or {})
+        if task and "source_task" not in evidence:
+            evidence["source_task"] = task[:_MAX_RESULT_EVIDENCE_CHARS]
+        evidence.setdefault("source", "subagent_result")
+        raw = {
+            "name": meta.get("name") or meta.get("skill"),
+            "description": meta.get("description") or "",
+            "tags": meta.get("tags") or [],
+            "operation": meta.get("operation") or meta.get("agentdrive_operation"),
+            "body": body,
+            "evidence": evidence,
+        }
+        candidate = InheritedSkillCandidate.from_raw(raw)
+        if candidate is not None:
+            candidates.append(candidate)
+    return candidates
+
+
+def write_subagent_result_manifest(
+    *,
+    swarm_id: str,
+    subagent_id: str,
+    task: str,
+    result: Any,
+    duration_s: float = 0.0,
+) -> InheritanceManifest | None:
+    """Merge explicit skill proposals from a sub-agent result into its manifest.
+
+    This is the runtime ferry between Hermes-style sub-agent handoffs and the
+    parent AgentDrive skill pool. It writes before ``SubagentDone`` so the
+    existing inheritance subscriber can absorb the manifest normally.
+    """
+    skills = extract_skill_candidates_from_result(result, task=task)
+    if not skills:
+        return None
+
+    path = manifest_path(swarm_id, subagent_id)
+    manifest: InheritanceManifest
+    if path.is_file():
+        try:
+            manifest = InheritanceManifest.from_json(path.read_text(encoding="utf-8"))
+        except Exception:
+            logger.debug("Failed to merge existing inheritance manifest %s", path, exc_info=True)
+            manifest = InheritanceManifest(subagent_id=subagent_id, swarm_id=swarm_id)
+    else:
+        manifest = InheritanceManifest(subagent_id=subagent_id, swarm_id=swarm_id)
+
+    manifest.subagent_id = manifest.subagent_id or subagent_id
+    manifest.swarm_id = manifest.swarm_id or swarm_id
+    if duration_s:
+        manifest.duration_s = max(float(manifest.duration_s or 0.0), float(duration_s))
+
+    existing = {skill.name.strip().lower() for skill in manifest.skills_created}
+    for skill in skills:
+        key = skill.name.strip().lower()
+        if key and key not in existing:
+            manifest.skills_created.append(skill)
+            existing.add(key)
+
+    _write_manifest(manifest)
+    return manifest
 
 
 @dataclass
@@ -532,6 +691,8 @@ __all__ = [
     "InheritedSkillCandidate",
     "InheritanceManifest",
     "InheritanceResult",
+    "extract_skill_candidates_from_result",
+    "write_subagent_result_manifest",
     "record_manifest",
     "list_manifests",
     "load_manifest",
