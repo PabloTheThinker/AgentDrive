@@ -11,6 +11,13 @@ from agentdrive.skills.registry import (
     list_skills_by_tier,
 )
 from agentdrive.skills.runner import run_skill
+from agentdrive.skills.usage import (
+    SkillUsage,
+    get_skill_usage,
+    list_skill_usage,
+    record_skill_match,
+    record_skill_run,
+)
 
 __all__ = [
     "SkillEntry",
@@ -23,4 +30,9 @@ __all__ = [
     "list_skills_by_tier",
     "match_skills_for_turn",
     "run_skill",
+    "SkillUsage",
+    "get_skill_usage",
+    "list_skill_usage",
+    "record_skill_match",
+    "record_skill_run",
 ]

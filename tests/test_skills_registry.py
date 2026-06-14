@@ -6,6 +6,7 @@ from pathlib import Path
 
 from agentdrive.skills import get_skill, init_skill, list_skills, run_skill
 from agentdrive.skills.registry import list_skills_by_tier
+from agentdrive.skills.usage import get_skill_usage
 
 
 def test_list_skills_includes_bundled_and_vendor_tiers():
@@ -60,6 +61,18 @@ def test_init_skill_scaffold(isolated_agentdrive_home):
     assert "name: my-custom-skill" in text
     entry = get_skill("my-custom-skill")
     assert entry is not None
+
+
+def test_run_skill_records_usage_outcome(isolated_agentdrive_home):
+    init_skill("usage-demo")
+
+    result = run_skill("usage-demo")
+
+    assert result["success"] is True
+    usage = get_skill_usage("usage-demo")
+    assert usage.runs == 1
+    assert usage.successes == 1
+    assert usage.failures == 0
 
 
 def test_init_skill_refuses_overwrite(isolated_agentdrive_home):

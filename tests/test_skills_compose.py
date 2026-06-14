@@ -8,7 +8,13 @@ from agentdrive.skills.compose import (
     format_skills_catalog,
     match_skills_for_turn,
 )
-from agentdrive.skills.registry import discover_skills, get_skill, list_skills_by_tier
+from agentdrive.skills.registry import (
+    discover_skills,
+    get_skill,
+    install_inherited_skill,
+    list_skills_by_tier,
+)
+from agentdrive.skills.usage import get_skill_usage, record_skill_run
 
 
 def test_discover_skills_includes_nested_categories():
@@ -84,3 +90,53 @@ def test_vendor_skills_included_when_harness_set(monkeypatch):
     )
     names = {e.name for e in matched}
     assert any(n.startswith("grok-") for n in names)
+
+
+def test_matched_inherited_skill_updates_usage_ledger(isolated_agentdrive_home):
+    install_inherited_skill(
+        name="zebra-incident-response",
+        description="Use for quantum-zebra incident response learned by a worker",
+        body="# Zebra Incident Response\n\n1. Check the quantum-zebra signal.",
+        source_subagent_id="worker-a",
+        swarm_id="swarm-usage",
+        tags=["quantum-zebra", "incident"],
+    )
+
+    matched = match_skills_for_turn(
+        "please run the quantum-zebra incident response",
+        top_k=1,
+    )
+
+    assert matched[0].name == "zebra-incident-response"
+    usage = get_skill_usage("zebra-incident-response")
+    assert usage.matches == 1
+    assert usage.last_score > 0
+
+
+def test_successful_inherited_skill_gets_ranking_boost(isolated_agentdrive_home):
+    shared = {
+        "description": "Use for aurora-synthesis worker handoff decisions",
+        "body": "# Aurora Synthesis\n\n1. Merge worker evidence.",
+        "swarm_id": "swarm-rank",
+        "tags": ["aurora-synthesis", "handoff"],
+    }
+    install_inherited_skill(
+        name="aaa-unproven-aurora",
+        source_subagent_id="worker-a",
+        **shared,
+    )
+    install_inherited_skill(
+        name="zzz-proven-aurora",
+        source_subagent_id="worker-b",
+        **shared,
+    )
+    record_skill_run("zzz-proven-aurora", success=True)
+    record_skill_run("zzz-proven-aurora", success=True)
+
+    matched = match_skills_for_turn(
+        "aurora-synthesis worker handoff",
+        top_k=1,
+        record_matches=False,
+    )
+
+    assert matched[0].name == "zzz-proven-aurora"

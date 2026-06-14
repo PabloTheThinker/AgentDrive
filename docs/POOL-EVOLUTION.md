@@ -132,6 +132,13 @@ them into that child's inheritance manifest, and writes the manifest before
 `SubagentDone` fires so the parent absorption hook can install the skill through
 the same audited path as hand-authored manifests.
 
+**Usage feedback loop.** Matched and explicitly-run skills write a local ledger
+at `~/.agentdrive/skills/usage.json`. The matcher uses that bounded signal as a
+tie-breaker: successful inherited skills rise above equally relevant unproven
+ones, while failing inherited skills are penalized. This is the first lightweight
+form of Hermes-style candidate selection; later GEPA/DSPy optimization can use
+the same ledger as evaluation data instead of starting from blank history.
+
 ### 3.6 Federated peer registry
 Opt-in directory of trusted peer AgentDrive instances (other operators, external
 agent frameworks that speak the pool protocol) the reconciler may poll.

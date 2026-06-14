@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 
 from agentdrive.skills.registry import SkillEntry, discover_skills, list_skills_by_tier
+from agentdrive.skills.usage import record_skill_match, skill_usage_boost
+
+logger = logging.getLogger(__name__)
 
 _TOKEN_RE = re.compile(r"[a-z0-9][a-z0-9_-]{1,}")
 
@@ -72,6 +76,7 @@ def _score_skill(entry: SkillEntry, message: str, *, role: str | None) -> float:
         elif entry.role and entry.role != role:
             score -= 2.0
 
+    score += skill_usage_boost(entry.name, inherited=entry.category == "inherited")
     return score
 
 
@@ -81,6 +86,7 @@ def match_skills_for_turn(
     top_k: int = 3,
     role: str | None = None,
     harness: str | None = None,
+    record_matches: bool = True,
 ) -> list[SkillEntry]:
     """Rank skills by keyword/tag overlap with the user message."""
     active = harness or active_harness()
@@ -92,7 +98,14 @@ def match_skills_for_turn(
         if score > 0:
             ranked.append((score, entry))
     ranked.sort(key=lambda item: (-item[0], item[1].name))
-    return [entry for _, entry in ranked[:top_k]]
+    selected = ranked[:top_k]
+    if record_matches:
+        for score, entry in selected:
+            try:
+                record_skill_match(entry.name, score=score)
+            except Exception:
+                logger.debug("Failed to record skill match for %s", entry.name, exc_info=True)
+    return [entry for _, entry in selected]
 
 
 def format_skills_catalog(*, per_tier: int = 8, harness: str | None = None) -> str:
