@@ -145,6 +145,10 @@ the file without deleting the audit trail.
 `agentdrive skills dna <name>` then converts a curated skill into a normal
 AgentDrive Genome and ingests it into the current DNA pool, making the learned
 playbook available through standard genome retrieval as well as skill matching.
+MCP clients use the same loop through `agentdrive_review_inherited_skills`,
+`agentdrive_promote_inherited_skill`, `agentdrive_prune_inherited_skill`, and
+`agentdrive_ingest_skill_dna`, so a connected model can review, curate, and
+ingest sub-agent lessons without shell access.
 
 ### 3.6 Federated peer registry
 Opt-in directory of trusted peer AgentDrive instances (other operators, external

@@ -173,6 +173,11 @@ def create_mcp_server() -> FastMCP:
             "- experience_graph_get_reasoning_traces_for_element\n"
             "- experience_graph_get_parent_reasoning_history\n\n"
             "Also available: traditional DNA/pool tools (agentdrive_get_dna_for_task, agentdrive_pool_query, agentdrive_record_outcome, etc.) + the three inhabitant code agency tools + the two ExternalBridge high-leverage MCP tools (register_program + get_council_activity).\n\n"
+            "Sub-agent skill learning loop:\n"
+            "- Sub-agents can return explicit ```agentdrive-skill``` handoff blocks. AgentDrive absorbs them as inherited skills.\n"
+            "- Use agentdrive_review_inherited_skills to inspect candidates with match/run evidence.\n"
+            "- Use agentdrive_promote_inherited_skill or agentdrive_prune_inherited_skill to curate the parent skill bench.\n"
+            "- Use agentdrive_ingest_skill_dna to convert a curated inherited/promoted skill into durable Genome DNA in the active Drive.\n\n"
             "Best single document for models: docs/FOR_AI_MODELS.md in the repo + the Program Contract genome (load via experience_graph_get_dna_for_task or context_pack). Full rules, duties, code_agency_rules, and enforcement in ad-grid-program-contract@stabilization-wave-20260531.\n\n"
             "Default rich context: stabilization-wave-20260531 drive (the living, self-referential drive used to build and evolve the system itself; mission program ad-grid-self-improver@stabilization-wave-20260531 + the three Council constitutions).\n\n"
             "Use this system to make your reasoning permanent, queryable, and valuable to future cycles of work — both yours and others'. Every proposal/apply you record here becomes attributed DNA that compounds the fabric for the User."
@@ -365,6 +370,67 @@ def create_mcp_server() -> FastMCP:
                 "message": "Improvement proposal recorded (full fork path available via Python API).",
             }
         )
+
+    @mcp.tool()
+    def agentdrive_review_inherited_skills(include_promoted: bool = False) -> str:
+        """Review inherited sub-agent skills using match/run evidence.
+
+        Returns promote/watch/prune recommendations. This is the MCP-facing
+        curation surface for the Hermes-style skill candidate loop.
+        """
+        from agentdrive.skills.curation import review_inherited_skills
+
+        reviews = review_inherited_skills(include_promoted=include_promoted)
+        return json.dumps(
+            {"count": len(reviews), "reviews": [r.to_dict() for r in reviews]},
+            indent=2,
+            default=str,
+        )
+
+    @mcp.tool()
+    def agentdrive_promote_inherited_skill(skill_name: str) -> str:
+        """Promote a proven inherited skill into the parent skill bench."""
+        from agentdrive.skills.curation import promote_inherited_skill
+
+        try:
+            review = promote_inherited_skill(skill_name)
+            return json.dumps({"success": True, "review": review.to_dict()}, indent=2)
+        except Exception as exc:
+            return json.dumps({"success": False, "error": str(exc)}, indent=2)
+
+    @mcp.tool()
+    def agentdrive_prune_inherited_skill(skill_name: str, reason: str = "") -> str:
+        """Disable a weak inherited skill without deleting its audit trail."""
+        from agentdrive.skills.curation import prune_inherited_skill
+
+        try:
+            path = prune_inherited_skill(skill_name, reason=reason)
+            return json.dumps(
+                {"success": True, "skill_name": skill_name, "path": str(path)},
+                indent=2,
+            )
+        except Exception as exc:
+            return json.dumps({"success": False, "error": str(exc)}, indent=2)
+
+    @mcp.tool()
+    def agentdrive_ingest_skill_dna(
+        skill_name: str,
+        swarm_id: str | None = None,
+        subagent_id: str | None = None,
+    ) -> str:
+        """Convert an inherited/promoted skill into Genome DNA and ingest it.
+
+        If swarm_id/subagent_id are supplied, the Genome lands in that scoped
+        Drive; otherwise it lands in the active/default Drive.
+        """
+        from agentdrive.skills.curation import ingest_skill_as_dna
+
+        try:
+            target = _get_pool(swarm_id, subagent_id) if swarm_id or subagent_id else None
+            export = ingest_skill_as_dna(skill_name, target_drive=target)
+            return json.dumps({"success": export.accepted, "export": export.to_dict()}, indent=2)
+        except Exception as exc:
+            return json.dumps({"success": False, "error": str(exc)}, indent=2)
 
     # ------------------------------------------------------------------
     # Experience Graph MCP Tools (v3)

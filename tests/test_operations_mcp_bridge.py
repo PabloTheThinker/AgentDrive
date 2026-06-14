@@ -34,6 +34,10 @@ def test_mcp_server_registers_auto_ops(mcp_server) -> None:
     assert "agentdrive_doctor" in tools
     assert "agentdrive_dream_run" in tools
     assert "agentdrive_harness_compose" in tools
+    assert "agentdrive_review_inherited_skills" in tools
+    assert "agentdrive_promote_inherited_skill" in tools
+    assert "agentdrive_prune_inherited_skill" in tools
+    assert "agentdrive_ingest_skill_dna" in tools
 
 
 def test_auto_registered_doctor_dry_run_via_run_operation(isolated_agentdrive_home) -> None:
