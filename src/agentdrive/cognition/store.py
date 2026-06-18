@@ -40,9 +40,7 @@ def session_to_dict(session: MultiverseSession) -> dict[str, Any]:
     """JSON-serializable dict for persistence."""
     data = asdict(session)
     data["status"] = session.status.value
-    data["collapse_policy"] = (
-        session.collapse_policy.value if session.collapse_policy else None
-    )
+    data["collapse_policy"] = session.collapse_policy.value if session.collapse_policy else None
     for inv in data.get("invariants", []):
         if isinstance(inv.get("kind"), InvariantKind):
             inv["kind"] = inv["kind"].value
@@ -54,8 +52,7 @@ def session_from_dict(data: dict[str, Any]) -> MultiverseSession:
     branches: list[Branch] = []
     for raw in data.get("branches", []):
         steps = [
-            ForwardStep(**s) if isinstance(s, dict) else s
-            for s in raw.get("forward_steps", [])
+            ForwardStep(**s) if isinstance(s, dict) else s for s in raw.get("forward_steps", [])
         ]
         st = raw.get("stress_test")
         stress = AdversaryVerdict(**st) if isinstance(st, dict) else None
@@ -144,7 +141,11 @@ class MultiverseSessionStore:
 
     def list_recent(self, *, limit: int = 10) -> list[MultiverseSession]:
         sessions_dir = _sessions_dir(self.drive_path)
-        paths = sorted(sessions_dir.glob("multiverse-session:*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+        paths = sorted(
+            sessions_dir.glob("multiverse-session:*.json"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
         out: list[MultiverseSession] = []
         for path in paths[:limit]:
             try:
@@ -180,7 +181,11 @@ class MultiverseSessionStore:
                 for s in collapsed[:3]
             ],
             "open_superposition": [
-                {"session_id": s.session_id, "trigger": s.trigger[:120], "branch_count": len(s.branches)}
+                {
+                    "session_id": s.session_id,
+                    "trigger": s.trigger[:120],
+                    "branch_count": len(s.branches),
+                }
                 for s in open_sessions[:2]
             ],
             "top_invariants_from_recent_sessions": top_invariants[:5],

@@ -22,11 +22,11 @@ import uuid
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from agentdrive.evolution.experience_graph import ExperienceGraphRecorder
     from agentdrive.cognition.store import MultiverseSessionStore
+    from agentdrive.evolution.experience_graph import ExperienceGraphRecorder
 
 # ------------------------------------------------------------------
 # TypedEdge relations (dual-written via recorder.record_connection)
@@ -422,7 +422,9 @@ class MultiverseEngine:
         verdict = AdversaryVerdict(
             passed=passed,
             fatal_flaws=fatal if not passed else [],
-            mitigations=["Add reversible gate", "Run probe before full commit"] if not passed else [],
+            mitigations=["Add reversible gate", "Run probe before full commit"]
+            if not passed
+            else [],
             rationale=adversary_rationale or f"Adversary stress-test on {branch_id}",
         )
         branch.stress_test = verdict
@@ -551,7 +553,9 @@ class MultiverseEngine:
         if user_objective_refs:
             self.user_objective_refs = list(user_objective_refs)
 
-        parsed_branches = [self._branch_from_external_dict(b, index=i) for i, b in enumerate(branches)]
+        parsed_branches = [
+            self._branch_from_external_dict(b, index=i) for i, b in enumerate(branches)
+        ]
         branch_ids = {b.branch_id for b in parsed_branches}
         if collapsed_branch_id not in branch_ids:
             raise ValueError(
@@ -578,7 +582,8 @@ class MultiverseEngine:
             divergence_points=list(divergence_points or []),
             status=SessionStatus.COLLAPSED,
             collapsed_branch_id=collapsed_branch_id,
-            collapse_reason=collapse_reason or f"External parent ({reasoning_provider}) collapsed path",
+            collapse_reason=collapse_reason
+            or f"External parent ({reasoning_provider}) collapsed path",
             collapse_policy=policy,
             program_id=self.program_id,
             constitution_refs=list(self.constitution_refs),
@@ -700,9 +705,7 @@ class MultiverseEngine:
             "expected_lift_signal": round(0.03 + coverage * 0.05, 3),
             "multiverse_session_id": session.session_id,
             "invariants": robust_invariants,
-            "collapse_policy": (
-                session.collapse_policy.value if session.collapse_policy else None
-            ),
+            "collapse_policy": (session.collapse_policy.value if session.collapse_policy else None),
             "program_id": self.program_id,
             "constitution_refs": self.constitution_refs,
             "user_objective_refs": self.user_objective_refs,
@@ -756,9 +759,7 @@ class MultiverseEngine:
             "directive": collapsed.path_summary if collapsed else session.trigger,
             "multiverse_session_id": session.session_id,
             "collapsed_branch_id": session.collapsed_branch_id,
-            "collapse_policy": (
-                session.collapse_policy.value if session.collapse_policy else None
-            ),
+            "collapse_policy": (session.collapse_policy.value if session.collapse_policy else None),
         }
 
         result: dict[str, Any] = {
@@ -807,9 +808,7 @@ class MultiverseEngine:
                     "path_summary": b.path_summary,
                     "robustness_score": b.robustness_score,
                     "forward_steps": [asdict(s) for s in b.forward_steps],
-                    "stress_test_passed": (
-                        b.stress_test.passed if b.stress_test else None
-                    ),
+                    "stress_test_passed": (b.stress_test.passed if b.stress_test else None),
                 }
                 for b in session.branches
             ],
@@ -817,9 +816,7 @@ class MultiverseEngine:
             "convergence_points": session.convergence_points,
             "divergence_points": session.divergence_points,
             "collapsed_branch_id": session.collapsed_branch_id,
-            "collapse_policy": (
-                session.collapse_policy.value if session.collapse_policy else None
-            ),
+            "collapse_policy": (session.collapse_policy.value if session.collapse_policy else None),
             "collapse_reason": session.collapse_reason,
             "fabric_reasoning": self.to_fabric_reasoning(session),
             "reasoning_provider": session.reasoning_provider,
@@ -985,7 +982,9 @@ class MultiverseEngine:
 
         for axis, count in axis_counts.items():
             coverage = count / n
-            kind = InvariantKind.ROBUST if coverage >= self.robust_threshold else InvariantKind.FRAGILE
+            kind = (
+                InvariantKind.ROBUST if coverage >= self.robust_threshold else InvariantKind.FRAGILE
+            )
             invariants.append(
                 Invariant(
                     statement=f"Divergence axis '{axis}' shapes distinct outcome class",
@@ -997,7 +996,8 @@ class MultiverseEngine:
 
         for branch in branches:
             branch.robustness_score = round(
-                sum(1 for inv in invariants if inv.kind == InvariantKind.ROBUST) / max(len(invariants), 1),
+                sum(1 for inv in invariants if inv.kind == InvariantKind.ROBUST)
+                / max(len(invariants), 1),
                 3,
             )
 
@@ -1065,7 +1065,9 @@ class MultiverseEngine:
             },
         )
 
-    def _record_branch_edge(self, session: MultiverseSession, branch: Branch, relation: str) -> None:
+    def _record_branch_edge(
+        self, session: MultiverseSession, branch: Branch, relation: str
+    ) -> None:
         self.recorder.record_connection(
             session.cycle_id,
             session.session_id,

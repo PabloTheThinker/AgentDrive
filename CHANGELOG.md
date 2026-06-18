@@ -6,131 +6,148 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
-### Added — Framework skill playbook (use learned skills on any task)
+### Fixed — CI ruff lint + format (2026-06-18)
 
-- **`learning/framework_skills.py`** — route `learned-*` / `fused-*` skills to tasks; unified session pack.
-- **Ops:** `framework_session_start`, `framework_skill_route`, `framework_skill_run`.
-- **`when_to_call`** on auto-installed skills (from trigger/intent).
-- **`run_skill`** accepts optional `swarm_id` for framework invocations.
-- **Docs:** `FOR_AI_MODELS.md`, `SKILLS-LIBRARY.md`, `CAPABILITY_FUNNEL.md`.
-- **Tests:** `tests/test_framework_skills.py`.
+- **ruff check** — removed unused imports (`json`, `list_projects`, `ingest_from_operation`, `ingest_observation_mirror`, `PathTraversalError`); fixed import ordering across cognition, memory, learning, and test modules.
+- **ruff format** — reformatted 43 files to pass `ruff format --check`.
+- **`codebase/framework.py`** — removed unused `category` variable in `match_against_framework`.
 
-### Changed — Descriptive learned skill names
+### Added — README hero wallpaper (2026-06-18)
 
-- **`learning/skill_naming.py`** — human-readable slugs for auto-distilled and born skills.
-- **Learned:** `learned-{project}-{verb}-{focus}` (e.g. `learned-openmangos-mimic-growth-merge-briefing`).
-- **Fused:** `fused-{project}-{axes}` (e.g. `fused-openmangos-experience-patterns-skills`).
-- Replaces opaque `auto-*` / hash-suffixed `fused-session-*` names from MCP auto-learning.
-- **Tests:** `tests/test_skill_naming.py`.
+- **`assets/agentdrive-readme-hero-1920x1080.jpg`** — new 16:9 README banner: Experience Graph network + compounding funnel layers (cyan → teal → blue → violet → amber).
+- **README.md** — hero image updated to the new asset.
 
-### Added — Growth merge (experience + pattern recognition + memory)
+### Memory Systems Sprint — 2026-06-18
 
-- **`learning/growth_merge.py`** — recognizes cross-surface patterns (memory overlap, structural similarities, codebase frameworks) and merges session growth into compound memories (`vault=growth`, `topic=merge`) + relations.
+**Branch:** `codex/memory-systems-whole-update`  
+**Theme:** Turn AgentDrive from a structural memory substrate into a **full compounding intelligence platform** — memory, patterns, skills, and framework routing that grow automatically on every MCP session.
+
+This sprint completes the capability funnel:
+
+```
+Observe / Decide
+       ↓
+Experience Graph (structural memory + reasoning traces)
+       ↓
+Growth Merge (cross-surface pattern compounding)
+       ↓
+Memory Bank (deep personal knowledge databank)
+       ↓
+Skills (learned + born fused playbooks)
+       ↓
+Genomes / DNA (versioned, promotable packages)
+```
+
+#### Added — Memory Bank (deep AI knowledge databank)
+
+- **`agentdrive.memory`** — per-swarm append-only `memory_bank/memories.jsonl` with kinds: `fact`, `insight`, `decision`, `pattern`, `born_skill`, `learning`, `episode`, and more.
+- **AgentDrive-native scoping:** `vault` / `topic` / `origin_path` / `shard_index` / `preserves_source` on `MemoryEntry` — no ported metaphors, no legacy aliases.
+- **Modules:** `scope.py`, `ranking.py`, `anchor.py`, `relations.py`, `dialogue_import.py` (BM25 search, session anchor, time-bounded relations, dialogue import).
+- **Auto-ingest** from `auto_absorb`, skill fusion, and `learnings_log` (`AGENTDRIVE_AUTO_MEMORY_BANK=1` default).
+- **Ops:** `memory_bank_store`, `memory_bank_recall`, `memory_bank_search`, `memory_bank_list`, `memory_bank_briefing`, `memory_bank_deep_briefing`, `memory_bank_stats`, `memory_bank_anchor`, `memory_bank_import_dialogue`, `memory_relation_record`, `memory_relation_query`, `memory_relation_expire`.
+- **`memory_bank_deep_briefing`** — Experience Graph fabric pack + Memory Bank in one call.
+- **Docs:** `docs/MEMORY_BANK.md` (rewritten).
+- **Tests:** `tests/test_memory_bank.py`, `tests/test_memory_vault.py`.
+
+#### Added — Growth merge (experience + patterns + memory)
+
+- **`learning/growth_merge.py`** — recognizes cross-surface patterns (memory token overlap, structural similarities, codebase frameworks) and merges session growth into compound memories (`vault=growth`, `topic=merge`) plus relations.
 - **Auto-hook** in `auto_absorb` — `auto_learning.growth_merge` when ≥2 axes present (`AGENTDRIVE_AUTO_GROWTH_MERGE=1` default).
 - **Op:** `growth_merge_briefing` — unified experience + patterns + memory briefing.
-- **Docs:** `CAPABILITY_FUNNEL.md`, `FOR_AI_MODELS.md` — growth merge tier documented.
 - **Tests:** `tests/test_growth_merge.py`.
 
-### Removed — Memory Bank legacy field aliases
+#### Added — Born skills (experience + skills + patterns fusion)
 
-- **`MemoryEntry.from_dict`** — no longer reads `wing`/`room`/`source_file`/`chunk_index`/`verbatim`; canonical fields only.
-- **Ops** — `memory_bank_search` / `memory_bank_anchor` / `memory_bank_import_dialogue` accept `vault`/`topic` only (not `wing`/`room`).
-
-### Changed — Memory Bank native naming (AgentDrive-native, not ported metaphors)
-
-- **Renamed modules:** `scope.py`, `ranking.py`, `anchor.py`, `relations.py`, `dialogue_import.py` replace palace/layers/hybrid_search/temporal_kg/transcript_miner.
-- **Renamed fields:** `vault` / `topic` / `origin_path` / `shard_index` / `preserves_source` on `MemoryEntry` (canonical only — no legacy field aliases).
-- **Renamed ops:** `memory_bank_anchor`, `memory_bank_import_dialogue`, `memory_relation_record`, `memory_relation_query`, `memory_relation_expire`.
-- **Removed:** `docs/MEMPALACE_INTEGRATION.md`, `tests/test_mempalace_integration.py`.
-- **Docs/tests:** `docs/MEMORY_BANK.md` rewritten; **tests:** `tests/test_memory_vault.py`.
-
-### Added — Memory Bank (deep AI knowledge databank)
-
-- **`agentdrive.memory`** — per-swarm append-only `memory_bank/memories.jsonl`; kinds: fact, insight, decision, pattern, born_skill, learning, episode, etc.
-- **Auto-ingest** from `auto_absorb`, skill fusion, `learnings_log` (`AGENTDRIVE_AUTO_MEMORY_BANK=1` default).
-- **MCP/CLI ops:** `memory_bank_store`, `memory_bank_recall`, `memory_bank_search`, `memory_bank_list`, `memory_bank_briefing`, `memory_bank_deep_briefing`, `memory_bank_stats`.
-- **`memory_bank_deep_briefing`** — unified Experience Graph fabric pack + Memory Bank in one call.
-- **Docs:** `docs/MEMORY_BANK.md`; funnel + `FOR_AI_MODELS.md` updated.
-- **Tests:** `tests/test_memory_bank.py`.
-
-### Added — Born skills (experience + skills + patterns fusion)
-
-- **`learning/skill_fusion.py`** — merges Experience Graph traces, distilled/inherited skills, and codebase pattern signals into a completely new `fused-*` skill (not a copy of any parent).
+- **`learning/skill_fusion.py`** — merges Experience Graph traces, distilled/inherited skills, and codebase pattern signals into a **new** `fused-*` skill (not a copy of any parent).
 - **Auto-fuse** in `auto_absorb` when a session spans ≥2 axes (`AGENTDRIVE_AUTO_FUSE_SKILLS=1` default); `auto_learning.fused_skill` on results.
-- **MCP/CLI op:** `synthesize_fused_skill(trigger, source_skills, pattern_projects, experience_traces, ...)`.
-- **Docs:** `CAPABILITY_FUNNEL.md`, `SKILLS-LIBRARY.md`, `FOR_AI_MODELS.md` — born-skill tier documented.
+- **Op:** `synthesize_fused_skill(trigger, source_skills, pattern_projects, experience_traces, ...)`.
 - **Tests:** `tests/test_skill_fusion.py`.
 
-### Changed — Consolidation sprint (architectural audit)
+#### Added — Framework skill playbook (AgentDrive-as-framework)
+
+- **`learning/framework_skills.py`** — route `learned-*` / `fused-*` skills to tasks; unified session pack for any model using AgentDrive as its substrate.
+- **Ops:** `framework_session_start`, `framework_skill_route`, `framework_skill_run`.
+- **`when_to_call`** on auto-installed skills (from trigger/intent) so models know when to invoke each playbook.
+- **`run_skill`** accepts optional `swarm_id` for framework invocations.
+- **Docs:** `FOR_AI_MODELS.md` (Golden Rules 3–4), `SKILLS-LIBRARY.md`, `CAPABILITY_FUNNEL.md`.
+- **Tests:** `tests/test_framework_skills.py`.
+
+#### Changed — Descriptive learned skill names
+
+- **`learning/skill_naming.py`** — human-readable slugs replace opaque `auto-*` and hash-suffixed `fused-session-*` names.
+- **Learned:** `learned-{project}-{verb}-{focus}` (e.g. `learned-openmangos-mimic-growth-merge-briefing`).
+- **Fused:** `fused-{project}-{axes}` (e.g. `fused-openmangos-experience-patterns-skills`).
+- **Tests:** `tests/test_skill_naming.py`.
+
+#### Removed — Legacy memory field aliases
+
+- **`MemoryEntry.from_dict`** — no longer reads `wing` / `room` / `source_file` / `chunk_index` / `verbatim`; canonical fields only.
+- **Ops** — `memory_bank_search` / `memory_bank_anchor` / `memory_bank_import_dialogue` accept `vault` / `topic` only.
+- **Deleted:** `docs/MEMPALACE_INTEGRATION.md`, `tests/test_mempalace_integration.py`.
+
+#### Changed — Consolidation sprint (architectural audit)
 
 - **Archived** 8× `STABILIZATION_SUBAGENT_REPORT-*.md` + stale `BUILD_STATUS.md` / `MISSION_PLAN.md` → `archive/development-history/`.
-- **`docs/CAPABILITY_FUNNEL.md`** — single funnel: Observe/Decide → Experience Graph → Skills → Genomes/DNA.
-- **`docs/ARCHITECTURE.md`** — overview + subsystem map + pointers to funnel doc.
-- **Docs reframed** Pool→Drive terminology in `POOL.md`, `SWARM.md`, `SETTINGS.md`, `ASSESSMENT.md`; `FOR_AI_MODELS.md` links funnel.
-- **`pyproject.toml`** — `asyncio` pytest marker + `asyncio_mode = auto` (fixes `test_chat_loop.py` collection).
-- **Tests:** `tests/test_multiverse_engine.py` — engine pipeline + ops registry smoke.
+- **`docs/CAPABILITY_FUNNEL.md`** — single funnel doc with Growth Merge + Memory Bank tiers.
+- **`docs/ARCHITECTURE.md`** — subsystem map + data layout.
+- **Docs reframed** Pool→Drive terminology in `POOL.md`, `SWARM.md`, `SETTINGS.md`, `ASSESSMENT.md`.
+- **`pyproject.toml`** — `asyncio` pytest marker + `asyncio_mode = auto`.
+- **Tests:** `tests/test_multiverse_engine.py`.
 
-### Added — Mirror-neuron codebase mimicry
+#### Added — Mirror-neuron codebase mimicry
 
-- **`codebase/mirrors.py`** — observation activates motor programs (exemplar functions/classes/imports); cross-project `mirror_resonance.json` universal priors; Experience Graph traces on each fire.
+- **`codebase/mirrors.py`** — observation activates motor programs; cross-project `mirror_resonance.json` universal priors; Experience Graph traces on each fire.
 - **`codebase/exemplars.py`** — extract concrete motor templates from observed source.
-- **MCP ops:** `codebase_mimic`, `codebase_transform_style`, `codebase_mirror_resonance`.
+- **Ops:** `codebase_mimic`, `codebase_transform_style`, `codebase_mirror_resonance`.
 - **Tests:** `tests/test_mirror_neurons.py`.
 
-### Added — Codebase pattern recognition framework
+#### Added — Codebase pattern recognition
 
-- **`agentdrive.codebase`** — per-project writing-style learning: register roots, observe files, crystallize pattern frameworks (naming, imports, frameworks, conventions), match snippets before patching.
-- **MCP/CLI ops:** `codebase_register_project`, `codebase_observe_file`, `codebase_patterns_profile`, `codebase_patterns_match`, `codebase_list_projects`.
+- **`agentdrive.codebase`** — register roots, observe files, crystallize pattern frameworks, match snippets before patching.
+- **Ops:** `codebase_register_project`, `codebase_observe_file`, `codebase_patterns_profile`, `codebase_patterns_match`, `codebase_list_projects`.
 - **`agentdrive_inhabitant_read_source`** auto-observes into project `agentdrive`.
-- **Auto-learning** distills codebase writing-guide skills + DNA on observe/profile ops.
-- **Storage:** `~/.agentdrive/codebase-patterns/<project>/` (`observations.jsonl`, `framework.json`).
+- **Storage:** `~/.agentdrive/codebase-patterns/<project>/`.
 - **Tests:** `tests/test_codebase_patterns.py`.
 
-### Added — End-to-end automatic learning (MCP + CLI)
+#### Added — End-to-end automatic learning
 
-- **`agentdrive.learning.auto_absorb`** — post-`run_operation` hook (on by default via `AGENTDRIVE_AUTO_LEARN=1`): session tracking, auto `experience_graph_record_reasoning` when models skip it, Hermes-style skill distillation for parent MCP sessions (`mcp-auto-learning` source), promote + DNA ingest on high-signal ops.
-- **Results** include `auto_learning` summarizing absorbed traces/skills/genomes.
-- **Docs:** `docs/SKILLS-LIBRARY.md`, `docs/FOR_AI_MODELS.md` Golden Rule 4 updated; MCP server instructions mention automatic learning.
-- **Tests:** `tests/test_auto_learning.py` (5 passed).
+- **`agentdrive.learning.auto_absorb`** — post-`run_operation` hook (`AGENTDRIVE_AUTO_LEARN=1` default): session tracking, auto reasoning traces, Hermes-style skill distillation, promote + DNA ingest on high-signal ops.
+- **Results** include `auto_learning` summarizing absorbed traces, skills, genomes, growth merge, and fused skills.
+- **Tests:** `tests/test_auto_learning.py`.
 
-### Added — External MCP Parent (`external_parent_decision`)
+#### Added — Multiverse cognition + external MCP Parent
 
-- **`MultiverseEngine.ingest_external_parent_decision()`** — frontier/chat MCP clients (Grok, Claude, Codex, Cursor) submit branch reasoning; AgentDrive persists collapse with `llm_mode=external` and `CollapsePolicy.EXTERNAL_PARENT`.
-- **`IntegratedRealTimeEvolutionSystem.run_external_parent_decision()`** — canonical 6-step hook for external models.
-- **MCP tool + op:** `external_parent_decision(trigger, branches, collapsed_branch_id, fabric_reasoning=...)`.
-- **`experience_graph_suggest_reasoning_structure`** — documents `external_mcp_parent_flow` and `reasoning_provider_modes` (local_llm | heuristic | external_mcp).
-- **`docs/FOR_AI_MODELS.md`** — Golden Rule 3b updated: connected MCP models should use `external_parent_decision` when no local LLM is configured.
-- **Example:** `examples/14_external_mcp_parent_loop.py`; **tests:** `tests/test_external_parent_decision.py` (5 passed).
-
-### Added — Multiverse Cognition M2–M5 (LLM spawner, densify, durable threads, Tower panel)
-
-- **`cognition/roles.py`** + **`cognition/llm_spawner.py`** — Cognitive Agent Team role prompts; local LLM branch spawn/simulate/stress-test via `~/.agentdrive/local_models.yaml` with heuristic fallback.
-- **`cognition/research_thread.py`** — durable `research-thread-manifest` observations for long-running superposition.
-- **`densify_invariant_clusters()`** — GraphGardener `densified_via_gardener` edges on robust invariants (M3).
-- **`reopen_stale_sessions()`** + op `multiverse_reopen_stale` (M4).
-- **Mission Control** — `MultiverseUpdateEvent`, `derive_multiverse_snapshot()`, Tower panel (branches + invariants + LLM mode).
-- **Ops:** `multiverse_densify`, `multiverse_reopen_stale`; `multiverse_parent_decision` gains `durable`, `heuristic_only`, `skip_densify`.
-
-### Added — Multiverse Cognition merged into AgentDrive (M0 + M1)
-
-- **`docs/MULTIVERSE_COGNITION.md`** — full architecture: 7-phase pipeline, TypedEdge relations, Council hooks, MCP/CLI surface.
-- **`src/agentdrive/cognition/`** — `MultiverseEngine`, `MultiverseSessionStore` (disk persistence under `drive/meta_evolution/multiverse/sessions/`).
-- **`IntegratedRealTimeEvolutionSystem.run_multiverse_parent_decision()`** — canonical Parent hook: spawn → simulate → invariants → stress-test → collapse → `record_parent_decision`.
-- **`get_parent_actionable_briefing()`** — now includes `multiverse_context` (recent collapses, open superposition, top invariants).
+- **`src/agentdrive/cognition/`** — `MultiverseEngine`, `MultiverseSessionStore`, 7-phase pipeline (spawn → simulate → invariants → stress-test → collapse → record).
+- **External Parent** — connected MCP models (Grok, Claude, Cursor) submit branch reasoning via `external_parent_decision`; persisted as `llm_mode=external`.
+- **Local LLM spawner** — `~/.agentdrive/local_models.yaml` for branch simulation; heuristic fallback.
+- **Ops:** `multiverse_parent_decision`, `multiverse_run_full`, `multiverse_list_sessions`, `multiverse_get_session`, `multiverse_densify`, `multiverse_reopen_stale`, `external_parent_decision`.
 - **CLI:** `agentdrive multiverse run|list|status`
-- **MCP:** `multiverse_parent_decision`, `multiverse_run_full`, `multiverse_list_sessions`, `multiverse_get_session` (+ operations registry auto-registration).
-- **`docs/FOR_AI_MODELS.md`** — Golden Rule 3b for competing-path decisions.
-- **`genomes/examples/research-constitution-multiverse-cognition@stabilization-wave-20260531.json`**
-- **`examples/12_multiverse_cognition_loop.py`** — smoke via Integrated loop.
+- **Docs:** `docs/MULTIVERSE_COGNITION.md`; **example:** `examples/12_multiverse_cognition_loop.py`, `examples/14_external_mcp_parent_loop.py`.
+- **Tests:** `tests/test_external_parent_decision.py`, `tests/test_multiverse_engine.py`.
 
-### Verify
+#### Fixed — Handler `swarm_id` duplicate kwarg
+
+- `memory_bank_anchor`, `growth_merge_briefing`, `framework_session_start` — pop `swarm_id` from pack before `_success()` to avoid duplicate keyword argument.
+
+#### Verified — OpenMangos integration (post-restart)
+
+- **Swarm:** `mangos-pablothethinker-openmangos` · **Project:** `openmangos`
+- **11/11 ops passed** including framework ops (`framework_session_start`, `framework_skill_route`, `framework_skill_run`) plus memory/growth ops.
+- **18 learned skills** on bench; top route matches: `learned-openmangos-mimic-wire-agentdrive-growth-merge-a`, `fused-openmangos-experience-patterns-skills`.
+
+#### Verify (local)
 
 ```bash
 cd "Vektra Industries/Software/AgentDrive"
+PYTHONPATH=src python -m pytest tests/test_memory_bank.py tests/test_memory_vault.py \
+  tests/test_growth_merge.py tests/test_skill_fusion.py tests/test_skill_naming.py \
+  tests/test_framework_skills.py tests/test_auto_learning.py tests/test_mirror_neurons.py \
+  tests/test_codebase_patterns.py tests/test_external_parent_decision.py tests/test_multiverse_engine.py -q
 PYTHONPATH=src python examples/12_multiverse_cognition_loop.py --trigger "Ship multiverse MVP"
 PYTHONPATH=src python -m agentdrive.cli multiverse run --trigger "CLI test" --branches 5
-PYTHONPATH=src python -m agentdrive.cli multiverse list --limit 5
 ```
+
+**Env toggles (all default on):** `AGENTDRIVE_AUTO_LEARN=1`, `AGENTDRIVE_AUTO_MEMORY_BANK=1`, `AGENTDRIVE_AUTO_GROWTH_MERGE=1`, `AGENTDRIVE_AUTO_FUSE_SKILLS=1`
 
 ---
 

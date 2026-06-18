@@ -393,7 +393,9 @@ def cmd_multiverse(args: argparse.Namespace) -> int:
     if sub == "status":
         session_id = getattr(args, "session_id", None)
         if not session_id:
-            console.print("[red]Usage: agentdrive multiverse status --session-id multiverse-session:...[/]")
+            console.print(
+                "[red]Usage: agentdrive multiverse status --session-id multiverse-session:...[/]"
+            )
             return 1
         kwargs = {"session_id": session_id}
         if getattr(args, "swarm_id", None):

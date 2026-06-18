@@ -6,7 +6,6 @@ import pytest
 
 from agentdrive.learning.auto_absorb import reset_sessions
 from agentdrive.memory import MemoryBankStore, build_deep_briefing, build_memory_briefing
-from agentdrive.memory.ingest import ingest_from_operation
 from agentdrive.operations.registry import run_operation
 
 
@@ -49,7 +48,9 @@ def test_memory_bank_search(swarm_id) -> None:
 
 def test_memory_bank_briefing(swarm_id) -> None:
     store = MemoryBankStore(swarm_id)
-    store.store(kind="insight", title="Test insight", content="Memory bank grows with every session.")
+    store.store(
+        kind="insight", title="Test insight", content="Memory bank grows with every session."
+    )
     pack = build_memory_briefing(swarm_id, limit=5)
     assert pack["memory_count"] >= 1
     assert "Memory Bank" in pack["briefing"]

@@ -590,7 +590,11 @@ def _multiverse_engine(swarm_id: str | None, **engine_kwargs: Any):
 def _handler_multiverse_run_full(**kwargs: Any) -> dict[str, Any]:
     trigger = str(kwargs.get("trigger") or kwargs.get("text") or kwargs.get("question") or "")
     if not trigger:
-        return {"success": False, "error": "trigger is required", "operation": "multiverse_run_full"}
+        return {
+            "success": False,
+            "error": "trigger is required",
+            "operation": "multiverse_run_full",
+        }
 
     n_branches = int(kwargs.get("n_branches", kwargs.get("branches", 7)))
     forward_steps = kwargs.get("forward_steps")
@@ -634,7 +638,11 @@ def _handler_multiverse_run_full(**kwargs: Any) -> dict[str, Any]:
 def _handler_multiverse_get_session(**kwargs: Any) -> dict[str, Any]:
     session_id = str(kwargs.get("session_id") or "")
     if not session_id:
-        return {"success": False, "error": "session_id is required", "operation": "multiverse_get_session"}
+        return {
+            "success": False,
+            "error": "session_id is required",
+            "operation": "multiverse_get_session",
+        }
 
     dry_run = bool(kwargs.get("dry_run", False))
     effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
@@ -702,7 +710,9 @@ def _handler_multiverse_parent_decision(**kwargs: Any) -> dict[str, Any]:
     payload = system.run_multiverse_parent_decision(
         trigger,
         n_branches=int(kwargs.get("n_branches", kwargs.get("branches", 7))),
-        forward_steps=int(kwargs["forward_steps"]) if kwargs.get("forward_steps") is not None else None,
+        forward_steps=int(kwargs["forward_steps"])
+        if kwargs.get("forward_steps") is not None
+        else None,
         program_id=kwargs.get("program_id"),
         user_objective_refs=list(kwargs["user_objective_refs"])
         if kwargs.get("user_objective_refs")
@@ -805,9 +815,9 @@ def _handler_multiverse_reopen_stale(**kwargs: Any) -> dict[str, Any]:
         IntegratedRealTimeEvolutionSystem,
     )
 
-    reopened = IntegratedRealTimeEvolutionSystem(swarm_id=effective).reopen_stale_multiverse_sessions(
-        max_age_hours=max_age
-    )
+    reopened = IntegratedRealTimeEvolutionSystem(
+        swarm_id=effective
+    ).reopen_stale_multiverse_sessions(max_age_hours=max_age)
     return _success(
         operation="multiverse_reopen_stale",
         swarm_id=effective,
@@ -819,7 +829,11 @@ def _handler_multiverse_reopen_stale(**kwargs: Any) -> dict[str, Any]:
 def _handler_multiverse_densify(**kwargs: Any) -> dict[str, Any]:
     session_id = str(kwargs.get("session_id") or "")
     if not session_id:
-        return {"success": False, "error": "session_id is required", "operation": "multiverse_densify"}
+        return {
+            "success": False,
+            "error": "session_id is required",
+            "operation": "multiverse_densify",
+        }
     dry_run = bool(kwargs.get("dry_run", False))
     effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
     if dry_run:
@@ -1412,7 +1426,9 @@ OPERATIONS: list[OperationSpec] = [
         category="learning",
         read_only=True,
         when_to_use="Start of any task when AgentDrive is your framework — routes learned/fused skills for the work ahead.",
-        examples=['framework_session_start(task="wire growth merge into OpenMango", project_id="openmangos")'],
+        examples=[
+            'framework_session_start(task="wire growth merge into OpenMango", project_id="openmangos")'
+        ],
         mcp_tool="framework_session_start",
     ),
     OperationSpec(
@@ -1433,6 +1449,7 @@ OPERATIONS: list[OperationSpec] = [
         mcp_tool="framework_skill_run",
     ),
 ]
+
 
 def _handler_codebase_register_project(**kwargs: Any) -> dict[str, Any]:
     from agentdrive.codebase.registry import register_project

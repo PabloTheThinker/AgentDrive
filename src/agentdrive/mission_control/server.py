@@ -968,7 +968,9 @@ class MissionControlHub:
                 active_id = latest.session_id
                 status = latest.status.value
                 collapsed = latest.collapsed_branch_id
-                invariants = [i.statement for i in latest.invariants if i.kind.value == "robust"][:5]
+                invariants = [i.statement for i in latest.invariants if i.kind.value == "robust"][
+                    :5
+                ]
                 branches = [
                     {
                         "id": b.branch_id,

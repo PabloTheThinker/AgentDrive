@@ -85,7 +85,9 @@ def rank_memory_candidates(
     documents = [str(item.get("text") or "") for item in candidates]
     bm25_raw = lexical_bm25_scores(query, documents)
     bm25_peak = max(bm25_raw) if bm25_raw else 0.0
-    bm25_scaled = [value / bm25_peak for value in bm25_raw] if bm25_peak > 0 else [0.0] * len(bm25_raw)
+    bm25_scaled = (
+        [value / bm25_peak for value in bm25_raw] if bm25_peak > 0 else [0.0] * len(bm25_raw)
+    )
 
     ranked: list[tuple[float, dict[str, Any]]] = []
     for candidate, bm25_value in zip(candidates, bm25_scaled):

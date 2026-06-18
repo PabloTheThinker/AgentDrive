@@ -738,9 +738,7 @@ class IntegratedRealTimeEvolutionSystem:
             "session_id": session.session_id,
             "status": session.status.value,
             "collapsed_branch_id": session.collapsed_branch_id,
-            "collapse_policy": (
-                session.collapse_policy.value if session.collapse_policy else None
-            ),
+            "collapse_policy": (session.collapse_policy.value if session.collapse_policy else None),
             "collapse_reason": session.collapse_reason,
             "invariant_count": len(session.invariants),
             "llm_mode": engine.resolve_llm_mode(trigger),
@@ -809,9 +807,7 @@ class IntegratedRealTimeEvolutionSystem:
             "session_id": session.session_id,
             "status": session.status.value,
             "collapsed_branch_id": session.collapsed_branch_id,
-            "collapse_policy": (
-                session.collapse_policy.value if session.collapse_policy else None
-            ),
+            "collapse_policy": (session.collapse_policy.value if session.collapse_policy else None),
             "collapse_reason": session.collapse_reason,
             "invariant_count": len(session.invariants),
             "llm_mode": "external",

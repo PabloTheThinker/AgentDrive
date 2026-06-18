@@ -10,7 +10,6 @@ from agentdrive.codebase.exemplars import extract_exemplars
 from agentdrive.codebase.mirrors import (
     fire_mirrors_for_intent,
     global_mirror_field,
-    ingest_observation_mirror,
     transform_toward_style,
 )
 from agentdrive.codebase.observe import observe_file
@@ -80,7 +79,9 @@ def test_codebase_mimic_operation(py_project: str, isolated_agentdrive_home: Pat
     assert result.get("auto_learning")
 
 
-def test_global_resonance_after_two_projects(tmp_path: Path, isolated_agentdrive_home: Path) -> None:
+def test_global_resonance_after_two_projects(
+    tmp_path: Path, isolated_agentdrive_home: Path
+) -> None:
     for name in ("proj-a", "proj-b"):
         root = tmp_path / name
         root.mkdir()

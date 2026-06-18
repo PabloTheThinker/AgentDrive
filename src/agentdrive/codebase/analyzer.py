@@ -142,9 +142,7 @@ def analyze_content(*, path: str, content: str) -> FileSignals:
         signals["class_naming"] = _naming_style(identifiers["classes"])
 
     elif language in ("typescript", "javascript"):
-        identifiers["functions"] = (
-            _TS_FUNC.findall(content)[:40] + _TS_ARROW.findall(content)[:20]
-        )
+        identifiers["functions"] = _TS_FUNC.findall(content)[:40] + _TS_ARROW.findall(content)[:20]
         identifiers["types"] = _TS_INTERFACE.findall(content)[:20] + _TS_TYPE.findall(content)[:20]
         signals["function_naming"] = _naming_style(identifiers["functions"])
         signals["uses_react_hooks"] = bool(_TS_HOOK.search(content))
@@ -157,9 +155,7 @@ def analyze_content(*, path: str, content: str) -> FileSignals:
             signals["import_style"] = "path_alias"
 
     comment_lines = sum(
-        1
-        for line in content.splitlines()
-        if line.strip().startswith(("#", "//", "/*", "*"))
+        1 for line in content.splitlines() if line.strip().startswith(("#", "//", "/*", "*"))
     )
     signals["comment_density"] = round(comment_lines / max(1, lines), 3)
     signals["test_file"] = (

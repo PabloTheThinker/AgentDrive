@@ -10,9 +10,8 @@ from __future__ import annotations
 from typing import Any
 
 from .llm_spawner import LLMBranchSpawner, resolve_available_local_model
-from .roles import AXIS_GUIDANCE, ROLE_PROMPTS, role_system_prompt
-from .store import MultiverseSessionStore, session_from_dict, session_to_dict
 from .multiverse import (
+    COGNITIVE_ROLES,
     MULTIVERSE_RELATIONS,
     AdversaryVerdict,
     Branch,
@@ -22,8 +21,9 @@ from .multiverse import (
     InvariantKind,
     MultiverseEngine,
     MultiverseSession,
-    COGNITIVE_ROLES,
 )
+from .roles import AXIS_GUIDANCE, ROLE_PROMPTS, role_system_prompt
+from .store import MultiverseSessionStore, session_from_dict, session_to_dict
 
 COGNITION_VERSION = "agentdrive-cognition-0.2.0"
 

@@ -200,7 +200,10 @@ def build_fused_skill_body(lineage: FusionLineage) -> tuple[str, str]:
         lines.append("1. Call `experience_graph_get_context_pack` — inherit structural memory.")
         if lineage.experience_traces:
             lines.append(f"2. Ground in traces: `{lineage.experience_traces[0]}`.")
-        if any(op.startswith("multiverse") or op == "external_parent_decision" for op in lineage.operations):
+        if any(
+            op.startswith("multiverse") or op == "external_parent_decision"
+            for op in lineage.operations
+        ):
             lines.append(
                 "3. For competing paths, use `external_parent_decision` or `multiverse_parent_decision`."
             )
@@ -225,7 +228,9 @@ def build_fused_skill_body(lineage: FusionLineage) -> tuple[str, str]:
             lines.append(f"**Project `{ex['project_id']}`**")
             for pat in ex.get("patterns") or []:
                 lines.append(f"- [{pat.get('category')}] {pat.get('rule')}")
-        lines.append("- Use `codebase_mimic` before writing; `codebase_transform_style` after drafting.")
+        lines.append(
+            "- Use `codebase_mimic` before writing; `codebase_transform_style` after drafting."
+        )
 
     lines.extend(
         [

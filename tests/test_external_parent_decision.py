@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import json
-
 import pytest
 
 from agentdrive.operations.registry import run_operation
@@ -93,7 +91,7 @@ def test_external_parent_decision_records_external_session(swarm_id) -> None:
         swarm_id=swarm_id,
     )
     assert loaded.get("success") is True
-    loaded_session = (loaded.get("session") or {})
+    loaded_session = loaded.get("session") or {}
     assert loaded_session.get("llm_mode") == "external"
 
 
@@ -122,7 +120,7 @@ def test_suggest_reasoning_documents_external_flow(swarm_id) -> None:
         "experience_graph_suggest_reasoning",
         swarm_id=swarm_id,
     )
-    structure = (result.get("structure") or {})
+    structure = result.get("structure") or {}
     assert "external_mcp_parent_flow" in structure
     modes = structure.get("reasoning_provider_modes") or {}
     assert "external_mcp" in modes

@@ -11,7 +11,6 @@ scoped vault/topic storage, and queryable briefings — not a port of external m
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import re
@@ -145,8 +144,7 @@ class GrowthMergeRecord:
 def axes_from_session(session: LearningSession) -> GrowthAxes:
     ops = [op for op, _ in session.ops]
     return GrowthAxes(
-        experience=bool(session.experience_traces)
-        or any(op in _EXPERIENCE_OPS for op in ops),
+        experience=bool(session.experience_traces) or any(op in _EXPERIENCE_OPS for op in ops),
         patterns=bool(session.pattern_projects) or any(op in _PATTERN_OPS for op in ops),
         skills=bool(session.distilled_skills or session.referenced_skills),
         memory=bool(session.fused_skill_name),
@@ -448,10 +446,11 @@ def build_growth_briefing(
     )
 
     pattern_lines = [
-        f"- [{p.source}] {p.label} ({p.score:.0%}): {p.evidence[:100]}"
-        for p in recognized[:6]
+        f"- [{p.source}] {p.label} ({p.score:.0%}): {p.evidence[:100]}" for p in recognized[:6]
     ]
-    growth_section = "\n".join(pattern_lines) if pattern_lines else "No cross-surface patterns detected yet."
+    growth_section = (
+        "\n".join(pattern_lines) if pattern_lines else "No cross-surface patterns detected yet."
+    )
 
     return {
         "swarm_id": swarm_id,

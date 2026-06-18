@@ -102,7 +102,9 @@ def list_projects() -> list[CodebaseProject]:
     projects: list[CodebaseProject] = []
     for raw in (data.get("projects") or {}).values():
         if isinstance(raw, dict):
-            projects.append(CodebaseProject(**{k: raw.get(k, "") for k in CodebaseProject.__dataclass_fields__}))
+            projects.append(
+                CodebaseProject(**{k: raw.get(k, "") for k in CodebaseProject.__dataclass_fields__})
+            )
     return sorted(projects, key=lambda p: p.project_id)
 
 

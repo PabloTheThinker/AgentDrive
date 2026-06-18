@@ -110,8 +110,8 @@ def test_synthesize_fused_skill_operation(swarm_id) -> None:
 
 def test_auto_fusion_after_rich_session(swarm_id, isolated_agentdrive_home, tmp_path) -> None:
     """Session with think + codebase + external parent should birth a fused skill."""
-    from agentdrive.codebase.registry import register_project
     from agentdrive.codebase.observe import observe_file
+    from agentdrive.codebase.registry import register_project
 
     project_root = tmp_path / "fusion-repo"
     project_root.mkdir()

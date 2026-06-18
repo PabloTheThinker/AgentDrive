@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from agentdrive.learning.auto_absorb import LearningSession, maybe_absorb_operation_outcome, reset_sessions
+from agentdrive.learning.auto_absorb import (
+    LearningSession,
+    maybe_absorb_operation_outcome,
+    reset_sessions,
+)
 from agentdrive.learning.growth_merge import (
     GrowthAxes,
     merge_session_growth,
@@ -47,7 +51,9 @@ def test_recognize_growth_patterns_from_memory(swarm_id) -> None:
     assert any(p.source == "memory_bank" for p in patterns)
 
 
-def test_merge_session_growth_writes_compound_memory(swarm_id, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_merge_session_growth_writes_compound_memory(
+    swarm_id, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setenv("AGENTDRIVE_AUTO_GROWTH_MERGE", "1")
     session = LearningSession(swarm_id=swarm_id, program_id="test-program")
     session.ops = [

@@ -106,7 +106,9 @@ def _framework_boost(
         boost += 2.0
 
     skill_project = _project_from_skill(entry)
-    if project_id and (project_id in entry.name or project_id in entry.tags or skill_project == project_id):
+    if project_id and (
+        project_id in entry.name or project_id in entry.tags or skill_project == project_id
+    ):
         boost += 6.0
     if swarm_id and swarm_id in str(entry.path):
         boost += 3.0
@@ -118,7 +120,9 @@ def _framework_boost(
 def _invoke_hint(entry: SkillEntry) -> str:
     if entry.operation:
         arg = f' arg="{entry.argument}"' if entry.argument else ""
-        return f"framework_skill_run(name={entry.name!r}{arg}) or run_operation({entry.operation!r})"
+        return (
+            f"framework_skill_run(name={entry.name!r}{arg}) or run_operation({entry.operation!r})"
+        )
     return f"Read SKILL.md body for `{entry.name}` and follow the playbook steps."
 
 
@@ -253,7 +257,11 @@ def build_framework_session_pack(
         "matched_skills": [m.to_dict() for m in matches],
         "learned_skill_count": len(learned_bench),
         "learned_skills": [
-            {"name": e.name, "description": e.description[:120], "kind": _skill_kind(e.name, e.tags)}
+            {
+                "name": e.name,
+                "description": e.description[:120],
+                "kind": _skill_kind(e.name, e.tags),
+            }
             for e in learned_bench[:20]
         ],
         "framework_briefing": framework_briefing,
@@ -269,7 +277,11 @@ def run_framework_skill(
     """Run a matched skill and attach swarm context to bound operations."""
     entry = get_skill(name)
     if entry is None:
-        return {"success": False, "error": f"Unknown skill: {name}", "operation": "framework_skill_run"}
+        return {
+            "success": False,
+            "error": f"Unknown skill: {name}",
+            "operation": "framework_skill_run",
+        }
 
     result = run_skill(name, arg, swarm_id=swarm_id)
     payload = {

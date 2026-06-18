@@ -289,7 +289,6 @@ def match_against_framework(
 
     for pat in patterns:
         pid = pat.get("id", "")
-        category = pat.get("category", "")
         rule = pat.get("rule", "")
         conf = float(pat.get("confidence") or 0)
 

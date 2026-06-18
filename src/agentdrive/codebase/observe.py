@@ -15,7 +15,7 @@ from agentdrive.codebase.registry import (
     get_project,
     register_project,
 )
-from agentdrive.utils.safe_paths import PathTraversalError, safe_join
+from agentdrive.utils.safe_paths import safe_join
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +49,7 @@ def _record_mirror_trace(project_id: str, path: str, mirror_result: dict[str, An
         )
     except Exception:
         logger.debug("mirror trace record failed", exc_info=True)
+
 
 _ALLOWED_EXT = {
     ".py",

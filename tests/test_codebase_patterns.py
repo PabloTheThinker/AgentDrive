@@ -9,7 +9,7 @@ import pytest
 from agentdrive.codebase.analyzer import analyze_content
 from agentdrive.codebase.framework import crystallize_framework, match_against_framework
 from agentdrive.codebase.observe import observe_file
-from agentdrive.codebase.registry import list_projects, register_project
+from agentdrive.codebase.registry import register_project
 from agentdrive.learning.auto_absorb import reset_sessions
 from agentdrive.operations.registry import run_operation
 
@@ -44,9 +44,7 @@ def sample_project(tmp_path: Path) -> tuple[str, Path]:
         encoding="utf-8",
     )
     (root / "test_service.py").write_text(
-        "import pytest\n\n"
-        "def test_fetch():\n"
-        "    assert True\n",
+        "import pytest\n\ndef test_fetch():\n    assert True\n",
         encoding="utf-8",
     )
     register_project(project_id="demo-app", root=str(root), primary_language="python")

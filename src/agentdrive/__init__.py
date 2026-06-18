@@ -170,6 +170,12 @@ from agentdrive.agent import (
     Turn,
     TurnResult,
 )
+from agentdrive.cognition import (
+    MultiverseEngine,
+    MultiverseSession,
+    MultiverseSessionStore,
+    get_multiverse_engine,
+)
 from agentdrive.config import (
     ensure_agentdrive_home,
     get_config_value,
@@ -345,12 +351,6 @@ from agentdrive.synthesis import (
 # get_experience_graph_for_cycle, embed helpers, etc. Re-exported for the public surfaces smoke.
 from agentdrive.system.integrated_real_time_evolution_system import (
     IntegratedRealTimeEvolutionSystem,
-)
-from agentdrive.cognition import (
-    MultiverseEngine,
-    MultiverseSession,
-    MultiverseSessionStore,
-    get_multiverse_engine,
 )
 from agentdrive.workers import (
     ExternalAgentAdapter,

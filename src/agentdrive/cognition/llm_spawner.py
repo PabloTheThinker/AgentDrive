@@ -12,12 +12,12 @@ import logging
 import re
 from typing import Any
 
-from agentdrive.cognition.roles import role_system_prompt
 from agentdrive.cognition.multiverse import (
     AdversaryVerdict,
     Branch,
     ForwardStep,
 )
+from agentdrive.cognition.roles import role_system_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +102,11 @@ class LLMBranchSpawner:
                 "divergence_axis": axis,
                 "fabric_context_snippet": {
                     k: self.fabric_context.get(k)
-                    for k in ("top_weak_clusters", "strong_continuations", "actionable_recommendations")
+                    for k in (
+                        "top_weak_clusters",
+                        "strong_continuations",
+                        "actionable_recommendations",
+                    )
                     if k in self.fabric_context
                 },
                 "required_json_schema": {
@@ -138,7 +142,9 @@ class LLMBranchSpawner:
         if not self.model_spec:
             return None
 
-        system = role_system_prompt(branch.role, branch.divergence_axes[0] if branch.divergence_axes else "risk")
+        system = role_system_prompt(
+            branch.role, branch.divergence_axes[0] if branch.divergence_axes else "risk"
+        )
         user = json.dumps(
             {
                 "trigger": trigger,

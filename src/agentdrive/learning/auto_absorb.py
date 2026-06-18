@@ -136,11 +136,7 @@ def _get_session(swarm_id: str, program_id: str | None) -> LearningSession:
 
 
 def _effective_swarm(kwargs: dict[str, Any], result: dict[str, Any]) -> str:
-    return str(
-        result.get("swarm_id")
-        or kwargs.get("swarm_id")
-        or "stabilization-wave-20260531"
-    )
+    return str(result.get("swarm_id") or kwargs.get("swarm_id") or "stabilization-wave-20260531")
 
 
 def _program_id(kwargs: dict[str, Any]) -> str:
@@ -293,7 +289,9 @@ def _build_skill_body(
         "Auto-learned playbook from a successful AgentDrive MCP/CLI session.",
         "",
         "## When to use",
-        f"- Task resembles: {trigger[:200]}" if trigger else f"- Running `{operation}` with similar inputs",
+        f"- Task resembles: {trigger[:200]}"
+        if trigger
+        else f"- Running `{operation}` with similar inputs",
         f"- Operation: `{operation}`",
         "",
         "## Steps",
@@ -339,7 +337,9 @@ def _build_skill_body(
         motors = result.get("motor_programs") or []
         mirror = result.get("mirror_neurons") or {}
         if project_id:
-            lines.append(f"2. Project `{project_id}` — mirror-neuron mimicry (observe → fire → write).")
+            lines.append(
+                f"2. Project `{project_id}` — mirror-neuron mimicry (observe → fire → write)."
+            )
         if mimic:
             lines.append(f"3. Mimicry brief:\n{mimic[:500]}")
         elif motors:
@@ -350,7 +350,9 @@ def _build_skill_body(
         if isinstance(patterns, list) and patterns:
             for pat in patterns[:3]:
                 lines.append(f"   - {pat.get('rule', '')}")
-        lines.append("4. Use `codebase_mimic` before writing; `codebase_transform_style` after drafting.")
+        lines.append(
+            "4. Use `codebase_mimic` before writing; `codebase_transform_style` after drafting."
+        )
     else:
         lines.append(f"2. Run `{operation}` with the same swarm/program attribution.")
         lines.append("3. Call `experience_graph_record_reasoning` for non-trivial forks.")
@@ -363,10 +365,7 @@ def _build_skill_body(
             "- Check Experience Graph context pack for contradictions.",
         ]
     )
-    description = (
-        f"Auto-learned from {operation}"
-        + (f": {trigger[:120]}" if trigger else "")
-    )
+    description = f"Auto-learned from {operation}" + (f": {trigger[:120]}" if trigger else "")
     return description[:1024], "\n".join(lines)
 
 
@@ -447,8 +446,8 @@ def _promote_and_ingest(skill_name: str, swarm_id: str) -> tuple[bool, str | Non
     except Exception:
         logger.debug("auto promote/ingest failed for %s", skill_name, exc_info=True)
         try:
-            from agentdrive.skills.curation import assimilate_inherited_skills
             from agentdrive.drive.drive import get_default_drive
+            from agentdrive.skills.curation import assimilate_inherited_skills
 
             report = assimilate_inherited_skills(
                 target_drive=get_default_drive(),

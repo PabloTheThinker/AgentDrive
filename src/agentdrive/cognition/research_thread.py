@@ -21,7 +21,9 @@ def write_durable_research_thread_manifest(
     reopen_after_hours: float = 24.0,
 ) -> Path:
     """Write research-thread-manifest observation linked to a multiverse session."""
-    obs_dir = Path(drive_path) / "observations" / "meta-evolution" / "multiverse" / "research-threads"
+    obs_dir = (
+        Path(drive_path) / "observations" / "meta-evolution" / "multiverse" / "research-threads"
+    )
     obs_dir.mkdir(parents=True, exist_ok=True)
     slug = f"multiverse-research-thread-{session.session_id}"
     path = obs_dir / f"{slug}.json"

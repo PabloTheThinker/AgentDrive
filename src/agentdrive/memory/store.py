@@ -296,11 +296,7 @@ class MemoryBankStore:
             ((self._signal_score(entry, tokens), entry) for entry in candidates),
             key=lambda item: (-item[0], item[1].created_at),
         )
-        return [
-            entry
-            for score, entry in ordered[:limit]
-            if score > 0 or not query.strip()
-        ]
+        return [entry for score, entry in ordered[:limit] if score > 0 or not query.strip()]
 
     def list_recent(self, *, limit: int = 20, kind: str | None = None) -> list[MemoryEntry]:
         entries = self._dedupe_by_title(self._active_entries())

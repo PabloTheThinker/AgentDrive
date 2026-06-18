@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from agentdrive.learning.skill_naming import fused_skill_name, learned_skill_name, learned_skill_title
+from agentdrive.learning.skill_naming import (
+    fused_skill_name,
+    learned_skill_name,
+    learned_skill_title,
+)
 
 
 def test_learned_skill_name_with_project_and_intent() -> None:
