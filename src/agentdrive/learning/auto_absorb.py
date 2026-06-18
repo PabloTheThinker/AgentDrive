@@ -117,6 +117,7 @@ class LearningSession:
     referenced_skills: list[str] = field(default_factory=list)
     pattern_projects: list[str] = field(default_factory=list)
     fused_skill_name: str | None = None
+    growth_merged: bool = False
 
 
 _SESSIONS: dict[tuple[str, str], LearningSession] = {}
@@ -535,6 +536,22 @@ def maybe_absorb_operation_outcome(
             absorbed["memory"] = mem
     except Exception:
         logger.debug("memory bank ingest failed for %s", operation, exc_info=True)
+
+    if not session.growth_merged:
+        try:
+            from agentdrive.learning.growth_merge import maybe_merge_growth
+
+            growth = maybe_merge_growth(
+                session,
+                trigger=trigger,
+                fused_skill=absorbed.get("fused_skill"),
+                last_operation=operation,
+            )
+            if growth:
+                absorbed["growth_merge"] = growth
+                session.growth_merged = True
+        except Exception:
+            logger.debug("growth merge hook failed for %s", operation, exc_info=True)
 
     if len(absorbed) <= 2:
         return None

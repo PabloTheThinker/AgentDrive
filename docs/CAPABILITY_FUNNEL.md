@@ -13,6 +13,8 @@ Observe / Decide
        ↓
 Experience Graph (structural memory + reasoning traces)
        ↓
+Growth Merge (pattern recognition + cross-surface compounding)
+       ↓
 Memory Bank (deep AI databank — always growing, always recallable)
        ↓
 Skills (distilled + born fused playbooks)
@@ -20,7 +22,9 @@ Skills (distilled + born fused playbooks)
 Genomes / DNA (versioned, promotable capability packages)
 ```
 
-**Memory Bank** (`docs/MEMORY_BANK.md`) is the unified personal knowledge layer — every graph trace, learning, pattern, born skill, and explicit store flows into `memory_bank/memories.jsonl` per swarm. Recall via `memory_bank_briefing` / `memory_bank_deep_briefing`.
+**Growth Merge** (`learning/growth_merge.py`) is the compounding layer — when a session spans experience traces, codebase patterns, and distilled skills, AgentDrive **recognizes recurring shapes** (memory overlap, structural similarities, writing frameworks) and merges them into compound growth artifacts (`vault=growth`, `topic=merge`) plus relations. Automatic via `auto_absorb` (`auto_learning.growth_merge`); query via `growth_merge_briefing`.
+
+**Memory Bank** (`docs/MEMORY_BANK.md`) is the unified personal knowledge layer — every graph trace, learning, pattern, born skill, growth merge, and explicit store flows into `memory_bank/memories.jsonl` per swarm. Recall via `memory_bank_briefing` / `memory_bank_deep_briefing`.
 
 Everything that matters should eventually flow **down** this funnel. Retrieval can jump levels (e.g. `agentdrive_think` pulls DNA + graph), but **writes** should land at the right tier so future cycles inherit structure, not noise.
 
@@ -59,6 +63,23 @@ Everything that matters should eventually flow **down** this funnel. Retrieval c
 **Automatic path:** `AGENTDRIVE_AUTO_LEARN=1` (default) absorbs lightweight reasoning + high-signal ops via `auto_absorb` — check `auto_learning` on results.
 
 **Quality bar:** Traces should cite fabric elements considered, expected lift, and attribution (`program_id`, constitution refs).
+
+---
+
+## Tier 2b — Growth Merge
+
+**What it is:** Cross-surface compounding — experience graph signals, codebase pattern recognition, and memory recall merged into one growth artifact.
+
+| Mechanism | Role |
+|-----------|------|
+| `recognize_growth_patterns` | Memory token overlap + structural similarities + codebase frameworks |
+| `merge_session_growth` | Compound memory + relations when ≥2 axes present |
+| `growth_merge_briefing` | Unified briefing: fabric + patterns + memory bank |
+| `auto_absorb` hook | Emits `auto_learning.growth_merge` on terminal high-signal ops |
+
+**Axes:** `experience` (graph traces, decisions), `patterns` (codebase observe/mimic), `skills` (distilled/inherited), `memory` (bank hits, born skills).
+
+**Disable:** `AGENTDRIVE_AUTO_GROWTH_MERGE=0`
 
 ---
 

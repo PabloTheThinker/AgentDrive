@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Added — Growth merge (experience + pattern recognition + memory)
+
+- **`learning/growth_merge.py`** — recognizes cross-surface patterns (memory overlap, structural similarities, codebase frameworks) and merges session growth into compound memories (`vault=growth`, `topic=merge`) + relations.
+- **Auto-hook** in `auto_absorb` — `auto_learning.growth_merge` when ≥2 axes present (`AGENTDRIVE_AUTO_GROWTH_MERGE=1` default).
+- **Op:** `growth_merge_briefing` — unified experience + patterns + memory briefing.
+- **Docs:** `CAPABILITY_FUNNEL.md`, `FOR_AI_MODELS.md` — growth merge tier documented.
+- **Tests:** `tests/test_growth_merge.py`.
+
 ### Removed — Memory Bank legacy field aliases
 
 - **`MemoryEntry.from_dict`** — no longer reads `wing`/`room`/`source_file`/`chunk_index`/`verbatim`; canonical fields only.

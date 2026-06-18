@@ -1395,6 +1395,17 @@ OPERATIONS: list[OperationSpec] = [
         read_only=False,
         mcp_tool="memory_relation_expire",
     ),
+    OperationSpec(
+        name="growth_merge_briefing",
+        description="Unified growth briefing: experience graph + pattern recognition + memory bank",
+        category="learning",
+        read_only=True,
+        when_to_use=(
+            "When you need compounding context — structural experience, recognized codebase "
+            "patterns, and merged personal memories in one call."
+        ),
+        mcp_tool="growth_merge_briefing",
+    ),
 ]
 
 def _handler_codebase_register_project(**kwargs: Any) -> dict[str, Any]:
@@ -1800,6 +1811,20 @@ def _memory_relation_query_handler(**kwargs: Any) -> dict[str, Any]:
     )
 
 
+def _growth_merge_briefing_handler(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.learning.growth_merge import build_growth_briefing
+
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    pack = build_growth_briefing(
+        effective,
+        query=str(kwargs.get("query") or kwargs.get("text") or kwargs.get("trigger") or ""),
+        limit=int(kwargs.get("limit", 8)),
+    )
+    payload = dict(pack)
+    payload.pop("swarm_id", None)
+    return _success(operation="growth_merge_briefing", swarm_id=effective, **payload)
+
+
 def _memory_relation_expire_handler(**kwargs: Any) -> dict[str, Any]:
     from agentdrive.memory.relations import MemoryRelationGraph
 
@@ -1917,6 +1942,7 @@ _HANDLERS: dict[str, OperationHandler] = {
     "memory_relation_record": _memory_relation_record_handler,
     "memory_relation_query": _memory_relation_query_handler,
     "memory_relation_expire": _memory_relation_expire_handler,
+    "growth_merge_briefing": _growth_merge_briefing_handler,
 }
 
 _OPERATIONS_BY_NAME: dict[str, OperationSpec] = {op.name: op for op in OPERATIONS}
