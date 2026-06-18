@@ -131,7 +131,9 @@ addopts = "-ra -q --strict-markers"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: integration tests that may require external agents",
+    "asyncio: marks tests as asyncio coroutines (pytest-asyncio)",
 ]
+asyncio_mode = "auto"
 
 [tool.mypy]
 python_version = "3.11"

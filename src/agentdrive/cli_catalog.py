@@ -173,6 +173,35 @@ CATALOG: tuple[CatalogEntry, ...] = (
         True,
     ),
     CatalogEntry("experience", "Alias for graph (Experience Graph commands)", "experience"),
+    # multiverse
+    CatalogEntry(
+        "multiverse run",
+        "Full multiverse pipeline + Parent decision record",
+        "multiverse",
+        "multiverse_parent_decision",
+        False,
+    ),
+    CatalogEntry(
+        "multiverse external",
+        "Submit MCP model multiverse branches (Grok/Claude/Codex)",
+        "multiverse",
+        "external_parent_decision",
+        False,
+    ),
+    CatalogEntry(
+        "multiverse list",
+        "List recent multiverse sessions",
+        "multiverse",
+        "multiverse_list_sessions",
+        True,
+    ),
+    CatalogEntry(
+        "multiverse status",
+        "Show one multiverse session",
+        "multiverse",
+        "multiverse_get_session",
+        True,
+    ),
     # reconcile
     CatalogEntry(
         "reconcile run",
@@ -317,6 +346,8 @@ def format_epilog() -> str:
         '  agentdrive learnings log --key K --insight "..."',
         '  agentdrive harness compose --task "..."',
         "  agentdrive graph context-pack       Experience Graph briefing pack",
+        "  agentdrive multiverse run           Multiverse Cognition → Parent decision",
+        "  agentdrive multiverse list          Recent superposition sessions",
         "  agentdrive sprint ship              gstack-style ship chain",
         "  agentdrive dream run                Phased maintenance cycle",
         "  agentdrive mcp install              Wire MCP into Grok/Cursor/Claude",

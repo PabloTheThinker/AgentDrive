@@ -346,6 +346,12 @@ from agentdrive.synthesis import (
 from agentdrive.system.integrated_real_time_evolution_system import (
     IntegratedRealTimeEvolutionSystem,
 )
+from agentdrive.cognition import (
+    MultiverseEngine,
+    MultiverseSession,
+    MultiverseSessionStore,
+    get_multiverse_engine,
+)
 from agentdrive.workers import (
     ExternalAgentAdapter,
     ExternalWorkerAdapter,
@@ -569,6 +575,11 @@ __all__ = [
     # Integrated system (v2/v3 wiring owner for Experience Graph Recorder + GraphGardener (v2 densif + v3 fabric) surfaces)
     "IntegratedRealTimeEvolutionSystem",
     "RealTimeEvolutionOverseer",
+    # Multiverse Cognition (parallel timeline superposition for Parent decisions)
+    "MultiverseEngine",
+    "MultiverseSession",
+    "MultiverseSessionStore",
+    "get_multiverse_engine",
     "FireSession",
     "run_static_fire_with_mission_telemetry",
     "publish_static_fire_telemetry",

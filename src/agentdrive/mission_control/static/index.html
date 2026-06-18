@@ -112,7 +112,9 @@
     .event-overseer_state { border-left-color: #14b8a6; }
     .event-static_fire { border-left-color: #f97316; }
     .event-grid_health { border-left-color: #4ade80; }
+    .event-multiverse_update { border-left-color: #f472b6; }
     .event-system { border-left-color: #64748b; }
+    .mv-branch-collapsed { border-color: #f472b6 !important; background: rgba(244,114,182,0.12) !important; }
 
     /* AgentDrive-native Kanban (reworked for 6-step + fabric) */
     .kanban-lane {
@@ -588,6 +590,30 @@
               <span class="text-emerald-400/70">UTIL / THROUGHPUT</span>
             </div>
             <div class="font-mono text-xs text-emerald-300/90" id="grid-util">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MULTIVERSE COGNITION (parallel timeline superposition) -->
+      <div class="lg:col-span-12 mission-panel rounded-2xl p-4 border-pink-900/40 bg-[#140f14]">
+        <div class="flex flex-col md:flex-row gap-4">
+          <div class="flex-1">
+            <div class="section-title text-pink-400 mb-2 flex items-center justify-between">
+              <span>MULTIVERSE COGNITION</span>
+              <span id="mv-llm-mode" class="text-[10px] font-normal px-1.5 py-0.5 rounded border border-pink-800/50 text-pink-300/80">HEURISTIC</span>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs mb-2">
+              <div><span class="text-slate-500">SESSION</span><div id="mv-session" class="font-mono text-pink-200 truncate">—</div></div>
+              <div><span class="text-slate-500">STATUS</span><div id="mv-status" class="font-mono text-pink-200">idle</div></div>
+              <div><span class="text-slate-500">BRANCHES</span><div id="mv-branch-count" class="font-mono text-pink-200">0</div></div>
+              <div><span class="text-slate-500">COLLAPSED</span><div id="mv-collapsed" class="font-mono text-pink-200 truncate">—</div></div>
+            </div>
+            <div class="terminal-label mb-1">ROBUST INVARIANTS</div>
+            <ul id="mv-invariants" class="text-[10px] text-pink-200/80 space-y-0.5 min-h-[28px] list-disc pl-4"></ul>
+          </div>
+          <div class="md:w-[340px]">
+            <div class="terminal-label mb-1">PARALLEL BRANCHES</div>
+            <div id="mv-branches" class="space-y-1 max-h-[120px] overflow-auto text-[10px] font-mono"></div>
           </div>
         </div>
       </div>
@@ -1077,7 +1103,7 @@
     let reconnectTimer = null;
     let reconnectDelay = 800;
     const MAX_EVENTS = 260;
-    let filterTypes = new Set(["loop_step", "fabric_update", "parent_decision", "overseer_state", "static_fire", "grid_health", "dream_phase"]);
+    let filterTypes = new Set(["loop_step", "fabric_update", "parent_decision", "overseer_state", "static_fire", "grid_health", "dream_phase", "multiverse_update"]);
 
     const STEP_DEFS = [
       { num: 1, label: "EXPERIENCE", short: "1. SIG GEN", desc: "Experience Layer + Runtime generating signals" },
@@ -1966,6 +1992,36 @@
       while (container.children.length > 7) container.removeChild(container.lastChild);
     }
 
+    // === MULTIVERSE COGNITION PANEL (M5) ===
+    function updateMultiverseFromState(mv) {
+      if (!mv || typeof mv !== "object") return;
+      const sid = mv.active_session_id || mv.session_id || "—";
+      const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? "—"; };
+      set("mv-session", sid.length > 28 ? sid.slice(0, 28) + "…" : sid);
+      set("mv-status", (mv.session_status || mv.status || "idle").toString());
+      set("mv-branch-count", String(mv.branch_count ?? (mv.branches || []).length ?? 0));
+      set("mv-collapsed", mv.collapsed_branch_id || "—");
+      const modeEl = document.getElementById("mv-llm-mode");
+      if (modeEl) modeEl.textContent = (mv.llm_mode || "heuristic").toUpperCase();
+      const invUl = document.getElementById("mv-invariants");
+      if (invUl) {
+        const invs = mv.top_invariants || mv.invariants || [];
+        invUl.innerHTML = invs.length
+          ? invs.slice(0, 5).map(i => `<li>${String(i).slice(0, 90)}</li>`).join("")
+          : "<li class='list-none text-slate-500'>—</li>";
+      }
+      const brDiv = document.getElementById("mv-branches");
+      if (brDiv) {
+        const branches = mv.branches || mv.branches_summary || [];
+        brDiv.innerHTML = branches.length
+          ? branches.map(b => {
+              const collapsed = b.collapsed || b.id === mv.collapsed_branch_id;
+              return `<div class="px-2 py-1 rounded border border-slate-800 ${collapsed ? "mv-branch-collapsed" : ""}">${b.role || "?"} • ${(b.id || b.branch_id || "").slice(0, 22)} <span class="text-slate-500">r=${fmtNum(b.robustness ?? b.robustness_score ?? 0)}</span></div>`;
+            }).join("")
+          : "<div class='text-slate-500'>No branches yet</div>";
+      }
+    }
+
     // === GRID TELEMETRY ===
     function updateGrid(health) {
       const deck = document.getElementById("grid-deck");
@@ -2498,6 +2554,7 @@
         }
         
         if (data.fabric) updateFabricFromEvent({data: data.fabric}); // v1.5
+        if (data.multiverse) updateMultiverseFromState(data.multiverse);
         if (data.grid_health) updateGrid(data.grid_health);
         
         updateHeader();
@@ -2589,6 +2646,9 @@
         }
         // Tight Experience Layer: FabricUpdate (from densif, daily, recorder, Gardener) now visibly drives the structural briefing panel
         setTimeout(() => { try { refreshExperienceFabric(); } catch(_) {} }, 140);
+      }
+      else if (et.includes("multiverse")) {
+        updateMultiverseFromState(evt.data || evt);
       }
       else if (et.includes("parent_decision")) {
         addDecisionToTimeline(evt);

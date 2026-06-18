@@ -1,7 +1,8 @@
 # AgentDrive Pool — The Living DNA Repository for AI Agents
 
-> Public product: AgentDrive. "Agent Drive Pool" remains historical/internal engine
-> wording in some code and older design notes.
+> **Terminology:** Public product = **AgentDrive** / **Drive**. **Pool** is the
+> historical engine module name (`pool/`, `AgentDrivePool`) for ingest + query.
+> Same capability tier — see `docs/CAPABILITY_FUNNEL.md` (Tier 4: Genomes / DNA).
 
 **The AgentDrive Pool is the persistent, user-owned evolutionary memory system for agent intelligence.** It stores, retrieves, and evolves structured "DNA" (Genomes) — portable packages of frameworks, reasoning patterns, tool strategies, and proven outcomes that agents can pull, adapt, and improve.
 

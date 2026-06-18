@@ -21,6 +21,8 @@ from agentdrive.adapters.mcp_config import (
 
 
 def test_mcp_package_available_when_installed():
+    if not mcp_package_available():
+        pytest.skip("mcp not installed (pip install -e '.[test]')")
     assert mcp_package_available() is True
 
 
@@ -47,6 +49,8 @@ def test_get_mcp_server_block_matches_launcher():
 
 
 def test_run_mcp_doctor_passes_in_dev_env():
+    if not mcp_package_available():
+        pytest.skip("mcp not installed (pip install -e '.[test]')")
     report = run_mcp_doctor()
     assert report.get("tool_count", 0) >= 25
     assert any(c["name"] == "mcp package" and c["ok"] for c in report.get("checks", []))

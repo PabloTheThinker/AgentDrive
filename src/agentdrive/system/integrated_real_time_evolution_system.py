@@ -683,7 +683,173 @@ class IntegratedRealTimeEvolutionSystem:
                 )
         except Exception:
             pass
+
+        # Multiverse Cognition: recent collapses + open superposition for Parent
+        try:
+            from agentdrive.cognition import MultiverseEngine
+
+            mv_engine = MultiverseEngine(self.recorder)
+            briefing["multiverse_context"] = mv_engine.briefing_context(limit=5)
+            briefing["multiverse_usage"] = (
+                "On non-trivial decisions: multiverse_run_full(trigger=...) or "
+                "IntegratedRealTimeEvolutionSystem.run_multiverse_parent_decision(trigger=...)"
+            )
+        except Exception:
+            pass
+
         return briefing
+
+    def run_multiverse_parent_decision(
+        self,
+        trigger: str,
+        *,
+        n_branches: int = 7,
+        forward_steps: int | None = None,
+        program_id: str | None = None,
+        user_objective_refs: list[str] | None = None,
+        record_decision: bool = True,
+        durable: bool = False,
+        densify_invariants: bool = True,
+        use_llm: bool = True,
+    ) -> dict[str, Any]:
+        """
+        Canonical Parent hook: full multiverse pipeline → collapse → record_parent_decision.
+
+        Spawns Cognitive Agent Team role branches, extracts invariants, stress-tests,
+        collapses, and writes fabric DNA + parent_decision into the active evolution cycle.
+        """
+        from agentdrive.cognition import MultiverseEngine
+
+        engine = MultiverseEngine(
+            self.recorder,
+            program_id=program_id,
+            user_objective_refs=user_objective_refs,
+            use_llm=use_llm,
+        )
+        session = engine.run_full(
+            trigger,
+            n_branches=n_branches,
+            forward_steps=forward_steps,
+            durable=durable,
+            densify_invariants=densify_invariants,
+        )
+
+        result: dict[str, Any] = {
+            "session_id": session.session_id,
+            "status": session.status.value,
+            "collapsed_branch_id": session.collapsed_branch_id,
+            "collapse_policy": (
+                session.collapse_policy.value if session.collapse_policy else None
+            ),
+            "collapse_reason": session.collapse_reason,
+            "invariant_count": len(session.invariants),
+            "llm_mode": engine.resolve_llm_mode(trigger),
+            "session": engine.to_mcp_dict(session),
+        }
+
+        if record_decision:
+            decision_result = engine.record_parent_decision(
+                session,
+                integrated=self,
+                actions_taken=[f"multiverse_run_full:{session.session_id}"],
+            )
+            result.update(decision_result)
+
+        return result
+
+    def run_external_parent_decision(
+        self,
+        trigger: str,
+        branches: list[dict[str, Any]],
+        *,
+        collapsed_branch_id: str,
+        invariants: list[dict[str, Any]] | None = None,
+        collapse_reason: str = "",
+        collapse_policy: str | None = None,
+        reasoning_provider: str = "mcp-external",
+        convergence_points: list[str] | None = None,
+        divergence_points: list[str] | None = None,
+        fabric_reasoning: dict[str, Any] | None = None,
+        program_id: str | None = None,
+        user_objective_refs: list[str] | None = None,
+        record_decision: bool = True,
+        densify_invariants: bool = True,
+    ) -> dict[str, Any]:
+        """
+        External MCP Parent path: Grok / Claude / Codex / Continue supply branch reasoning;
+        AgentDrive persists the collapse and records Parent DNA.
+        """
+        from agentdrive.cognition import MultiverseEngine
+
+        engine = MultiverseEngine(
+            self.recorder,
+            program_id=program_id,
+            user_objective_refs=user_objective_refs,
+            use_llm=False,
+        )
+        session = engine.ingest_external_parent_decision(
+            trigger,
+            branches,
+            collapsed_branch_id=collapsed_branch_id,
+            invariants=invariants,
+            collapse_reason=collapse_reason,
+            collapse_policy=collapse_policy,
+            reasoning_provider=reasoning_provider,
+            convergence_points=convergence_points,
+            divergence_points=divergence_points,
+            fabric_reasoning=fabric_reasoning,
+            densify_invariants=densify_invariants,
+        )
+
+        collapsed = next(
+            (b for b in session.branches if b.branch_id == session.collapsed_branch_id),
+            None,
+        )
+        result: dict[str, Any] = {
+            "session_id": session.session_id,
+            "status": session.status.value,
+            "collapsed_branch_id": session.collapsed_branch_id,
+            "collapse_policy": (
+                session.collapse_policy.value if session.collapse_policy else None
+            ),
+            "collapse_reason": session.collapse_reason,
+            "invariant_count": len(session.invariants),
+            "llm_mode": "external",
+            "reasoning_provider": reasoning_provider,
+            "session": engine.to_mcp_dict(session),
+        }
+
+        if record_decision:
+            decision_result = engine.record_parent_decision(
+                session,
+                integrated=self,
+                actions_taken=[f"external_parent_decision:{session.session_id}"],
+            )
+            result.update(decision_result)
+
+        if collapsed:
+            result["decision"] = {
+                "directive": collapsed.path_summary,
+                "multiverse_session_id": session.session_id,
+                "collapsed_branch_id": session.collapsed_branch_id,
+                "collapse_policy": result.get("collapse_policy"),
+            }
+
+        return result
+
+    def reopen_stale_multiverse_sessions(self, *, max_age_hours: float = 24.0) -> list[str]:
+        """M4: reopen stale open superposition sessions (Grid background hook)."""
+        from agentdrive.cognition import MultiverseEngine
+
+        engine = MultiverseEngine(self.recorder)
+        return engine.reopen_stale_sessions(max_age_hours=max_age_hours)
+
+    def densify_multiverse_invariants(self, session_id: str) -> dict[str, Any]:
+        """M3: GraphGardener densification on multiverse invariant clusters."""
+        from agentdrive.cognition import MultiverseEngine
+
+        engine = MultiverseEngine(self.recorder)
+        return engine.densify_invariant_clusters(session_id)
 
     def record_parent_decision(
         self,

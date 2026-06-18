@@ -93,6 +93,19 @@ See also: [ASSESSMENT.md](ASSESSMENT.md), [SKILLS-SPEC.md](SKILLS-SPEC.md).
 
 ---
 
+## Automatic learning (MCP / CLI)
+
+Every successful `run_operation` call (MCP tools + CLI) runs the auto-learning hook when `AGENTDRIVE_AUTO_LEARN=1` (default):
+
+1. **Session tracking** — context pack / think ops mark the session grounded.
+2. **Auto reasoning** — high-signal mutating ops get a lightweight fabric trace if you did not call `experience_graph_record_reasoning`.
+3. **Skill distillation** — playbooks install under `~/.agentdrive/skills/inherited/<swarm>/mcp-auto-learning/`.
+4. **DNA ingest** — high-signal skills (external/multiverse parent, think, record_outcome) promote + ingest when `AGENTDRIVE_AUTO_ASSIMILATE_SKILLS=1`.
+
+Results include `auto_learning` when something was absorbed. Sub-agent `agentdrive-skill` handoffs still merge through the same inherited path.
+
+Disable: `AGENTDRIVE_AUTO_LEARN=0`, or finer `AGENTDRIVE_AUTO_RECORD_REASONING` / `AGENTDRIVE_AUTO_DISTILL_SKILLS`.
+
 ## Inherited skill curation
 
 Sub-agent handoff skills land under `~/.agentdrive/skills/inherited/...`.

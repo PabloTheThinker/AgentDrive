@@ -21,11 +21,12 @@ from .events import (
     GridHealthEvent,
     LoopStepEvent,
     MissionEvent,
+    MultiverseUpdateEvent,
     OverseerStateEvent,
     ParentDecisionEvent,
     StaticFireEvent,
 )
-from .loop_views import FabricView, LoopStateView, StaticFireTelemetry
+from .loop_views import FabricView, LoopStateView, MultiverseView, StaticFireTelemetry
 from .server import (
     # Rich Static Fire helpers for first-class controlled evolution runs
     FireSession,
@@ -55,6 +56,8 @@ __all__ = [
     "GridHealthEvent",
     "LoopStateView",
     "FabricView",
+    "MultiverseView",
+    "MultiverseUpdateEvent",
     "StaticFireTelemetry",
     # Rich static fire surfaces + integration helpers (use in 2min harnesses for full Bay telemetry)
     "FireSession",

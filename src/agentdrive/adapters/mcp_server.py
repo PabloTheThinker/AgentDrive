@@ -137,7 +137,7 @@ def create_mcp_server() -> FastMCP:
             "**For ANY model (Grok, Claude, Cursor, local LLMs, custom agents, Continue, Windsurf, Codex-style...):**\n"
             "1. Call `agentdrive_mcp_catalog()` as your absolute first action (this is the live source of truth + dev/clone guidance).\n"
             "2. If the user has a local git clone, look for the `clone_dev_setup_for_claude_cursor_codex_and_others` section in the catalog and/or call `agentdrive_get_mcp_config_snippet(client=...)` to give the human the exact config for their client.\n"
-            "3. On non-trivial work: `experience_graph_get_context_pack` → reason → `experience_graph_record_reasoning` (use `suggest_reasoning_structure` first for high-signal traces).\n"
+            "3. On non-trivial work: `experience_graph_get_context_pack` → reason → `experience_graph_record_reasoning` (use `suggest_reasoning_structure` first for high-signal traces). For competing paths / decisions: `multiverse_parent_decision(trigger=...)` spawns parallel timelines, extracts invariants, collapses, and records Parent DNA.\n"
             "4. Follow the sacred 6-step loop. The Overseer serves the Parent. The Parent is accountable. The graph is the witness.\n\n"
             "Canonical operation contracts live in agentdrive.operations (``agentdrive ops list`` / "
             "``agentdrive ops export``); MCP tool names map to that registry.\n\n"
@@ -172,13 +172,20 @@ def create_mcp_server() -> FastMCP:
             "- experience_graph_suggest_reasoning_structure\n"
             "- experience_graph_get_reasoning_traces_for_element\n"
             "- experience_graph_get_parent_reasoning_history\n\n"
+            "Multiverse Cognition (parallel timeline superposition for Parent decisions):\n"
+            "- multiverse_parent_decision — preferred: full pipeline + record_parent_decision in one call\n"
+            "- multiverse_run_full — spawn/simulate/invariants/stress-test/collapse + fabric reasoning trace\n"
+            "- multiverse_list_sessions / multiverse_get_session — inspect persisted superposition sessions\n\n"
             "Also available: traditional DNA/pool tools (agentdrive_get_dna_for_task, agentdrive_pool_query, agentdrive_record_outcome, etc.) + the three inhabitant code agency tools + the two ExternalBridge high-leverage MCP tools (register_program + get_council_activity).\n\n"
-            "Sub-agent skill learning loop:\n"
-            "- Sub-agents can return explicit ```agentdrive-skill``` handoff blocks. AgentDrive absorbs them as inherited skills.\n"
-            "- Use agentdrive_review_inherited_skills to inspect candidates with match/run evidence.\n"
-            "- Use agentdrive_assimilate_inherited_skills to promote proven inherited skills and optionally ingest them into DNA in one gated pass.\n"
-            "- Use agentdrive_promote_inherited_skill or agentdrive_prune_inherited_skill to curate the parent skill bench.\n"
-            "- Use agentdrive_ingest_skill_dna to convert a curated inherited/promoted skill into durable Genome DNA in the active Drive.\n\n"
+            "Automatic learning (on by default — AGENTDRIVE_AUTO_LEARN=1):\n"
+            "- Every successful MCP/CLI operation via run_operation auto-absorbs experience: lightweight fabric reasoning when you skip record_reasoning, plus inherited skill distillation + DNA ingest on high-signal ops.\n"
+            "- Results may include an `auto_learning` field describing what was recorded/promoted.\n\n"
+            "Codebase mirror-neuron mimicry (learn how projects are written):\n"
+            "- Observe: codebase_register_project → codebase_observe_file (every file read fires mirror neurons).\n"
+            "- Mimic: codebase_mimic(project_id, intent) returns motor programs + mimicry prompt — write like the repo.\n"
+            "- Align: codebase_transform_style / codebase_patterns_match reshape drafts toward observed style.\n"
+            "- Resonate: codebase_mirror_resonance shows cross-project universal priors (patterns shared across repos).\n"
+            "- inhabitant_read_source auto-observes + fires mirrors for project `agentdrive`.\n\n"
             "Best single document for models: docs/FOR_AI_MODELS.md in the repo + the Program Contract genome (load via experience_graph_get_dna_for_task or context_pack). Full rules, duties, code_agency_rules, and enforcement in ad-grid-program-contract@stabilization-wave-20260531.\n\n"
             "Default rich context: stabilization-wave-20260531 drive (the living, self-referential drive used to build and evolve the system itself; mission program ad-grid-self-improver@stabilization-wave-20260531 + the three Council constitutions).\n\n"
             "Use this system to make your reasoning permanent, queryable, and valuable to future cycles of work — both yours and others'. Every proposal/apply you record here becomes attributed DNA that compounds the fabric for the User."
@@ -676,6 +683,145 @@ def create_mcp_server() -> FastMCP:
         except Exception as exc:
             return json.dumps({"error": str(exc)})
 
+    @mcp.tool()
+    def multiverse_parent_decision(
+        trigger: str,
+        n_branches: int = 7,
+        forward_steps: int | None = None,
+        program_id: str | None = None,
+        swarm_id: str | None = None,
+    ) -> str:
+        """
+        Canonical Parent hook for non-trivial decisions: spawn parallel Cognitive Agent Team
+        branches, simulate forward, extract invariants, Adversary stress-test, collapse to one
+        path, and record_parent_decision with full fabric_reasoning DNA.
+
+        Uses local LLM branches when ~/.agentdrive/local_models.yaml has a reachable backend;
+        otherwise falls back to heuristic branches. If YOU are the reasoning model (Grok, Claude,
+        Codex via MCP), prefer external_parent_decision after you reason over branches yourself.
+        """
+        effective_swarm = swarm_id or "stabilization-wave-20260531"
+        try:
+            system = _get_integrated_system(effective_swarm)
+            payload = system.run_multiverse_parent_decision(
+                trigger,
+                n_branches=n_branches,
+                forward_steps=forward_steps,
+                program_id=program_id,
+            )
+            return json.dumps(
+                {"swarm_id": effective_swarm, "result": payload},
+                indent=2,
+                default=str,
+            )
+        except Exception as exc:
+            return json.dumps({"error": str(exc), "swarm_id": effective_swarm})
+
+    @mcp.tool()
+    def external_parent_decision(
+        trigger: str,
+        branches: list[dict[str, Any]],
+        collapsed_branch_id: str,
+        invariants: list[dict[str, Any]] | None = None,
+        collapse_reason: str = "",
+        reasoning_provider: str = "mcp-external",
+        fabric_reasoning: dict[str, Any] | None = None,
+        program_id: str | None = None,
+        swarm_id: str | None = None,
+    ) -> str:
+        """
+        External MCP Parent path — YOU (Grok, Claude, Codex, Continue, etc.) supply multiverse
+        branch reasoning; AgentDrive persists the collapse and records Parent DNA (llm_mode=external).
+
+        Workflow:
+        1. experience_graph_get_context_pack
+        2. experience_graph_suggest_reasoning_structure
+        3. Reason across architect/adversary/scout/operator/surgeon lenses in your own context
+        4. Call this tool with branches + collapsed_branch_id + optional fabric_reasoning
+        """
+        from agentdrive.operations.registry import run_operation
+
+        effective_swarm = swarm_id or "stabilization-wave-20260531"
+        try:
+            payload = run_operation(
+                "external_parent_decision",
+                trigger=trigger,
+                branches=branches,
+                collapsed_branch_id=collapsed_branch_id,
+                invariants=invariants,
+                collapse_reason=collapse_reason,
+                reasoning_provider=reasoning_provider,
+                fabric_reasoning=fabric_reasoning,
+                program_id=program_id,
+                swarm_id=effective_swarm,
+            )
+            return json.dumps(payload, indent=2, default=str)
+        except Exception as exc:
+            return json.dumps({"error": str(exc), "swarm_id": effective_swarm})
+
+    @mcp.tool()
+    def multiverse_run_full(
+        trigger: str,
+        n_branches: int = 7,
+        forward_steps: int | None = None,
+        program_id: str | None = None,
+        swarm_id: str | None = None,
+    ) -> str:
+        """
+        Run multiverse pipeline without Integrated record_parent_decision (fabric trace only).
+        Prefer multiverse_parent_decision for canonical 6-step Parent decisions.
+        """
+        from agentdrive.operations.registry import run_operation
+
+        try:
+            payload = run_operation(
+                "multiverse_run_full",
+                trigger=trigger,
+                n_branches=n_branches,
+                forward_steps=forward_steps,
+                program_id=program_id,
+                swarm_id=swarm_id,
+            )
+            return json.dumps(payload, indent=2, default=str)
+        except Exception as exc:
+            return json.dumps({"error": str(exc)})
+
+    @mcp.tool()
+    def multiverse_list_sessions(
+        limit: int = 10,
+        swarm_id: str | None = None,
+    ) -> str:
+        """List recent persisted multiverse sessions + briefing context for Parent."""
+        from agentdrive.operations.registry import run_operation
+
+        try:
+            payload = run_operation(
+                "multiverse_list_sessions",
+                limit=limit,
+                swarm_id=swarm_id,
+            )
+            return json.dumps(payload, indent=2, default=str)
+        except Exception as exc:
+            return json.dumps({"error": str(exc)})
+
+    @mcp.tool()
+    def multiverse_get_session(
+        session_id: str,
+        swarm_id: str | None = None,
+    ) -> str:
+        """Fetch one persisted multiverse session by id (disk-backed)."""
+        from agentdrive.operations.registry import run_operation
+
+        try:
+            payload = run_operation(
+                "multiverse_get_session",
+                session_id=session_id,
+                swarm_id=swarm_id,
+            )
+            return json.dumps(payload, indent=2, default=str)
+        except Exception as exc:
+            return json.dumps({"error": str(exc)})
+
     # ------------------------------------------------------------------
     # AD-Grid Inhabitant Code Agency Tools
     # First-class primitives for MCP-connected inhabitants (Grok, Claude, Cursor,
@@ -761,18 +907,35 @@ def create_mcp_server() -> FastMCP:
             with open(full_path, "r", encoding="utf-8", errors="replace") as f:
                 lines = f.readlines()[:max_lines]
             content = "".join(lines)
-            return json.dumps(
-                {
-                    "path": rel,
-                    "full_path": str(full_path),
-                    "lines_returned": len(lines),
-                    "content": content,
-                    "swarm_id": effective_swarm,
-                    "note": "Inhabitant read complete. Record this inspection via experience_graph_record_reasoning (element: the file path). Then propose via agentdrive_inhabitant_propose_code_change. All attributed per Program Contract.",
-                },
-                indent=2,
-                default=str,
-            )
+
+            pattern_learning: dict[str, Any] | None = None
+            try:
+                from agentdrive.codebase.observe import auto_observe_inhabitant_read
+
+                pattern_learning = auto_observe_inhabitant_read(
+                    rel_path=rel,
+                    content=content,
+                    project_id="agentdrive",
+                    package_root=str(root),
+                )
+            except Exception:
+                logger.debug("codebase pattern observe on inhabitant read failed", exc_info=True)
+
+            payload: dict[str, Any] = {
+                "path": rel,
+                "full_path": str(full_path),
+                "lines_returned": len(lines),
+                "content": content,
+                "swarm_id": effective_swarm,
+                "note": "Inhabitant read complete. Codebase patterns auto-observed when enabled. Use codebase_patterns_profile(project_id='agentdrive') for the learned writing framework.",
+            }
+            if pattern_learning:
+                payload["codebase_patterns"] = {
+                    "project_id": pattern_learning.get("project_id"),
+                    "patterns_count": pattern_learning.get("patterns_count"),
+                    "language": pattern_learning.get("language"),
+                }
+            return json.dumps(payload, indent=2, default=str)
         except PathTraversalError as pte:
             return json.dumps(
                 {"error": f"Path safety violation: {pte}", "swarm_id": effective_swarm}
@@ -1156,7 +1319,7 @@ def create_mcp_server() -> FastMCP:
             "version": "mcp",
             "total_core_ops": len(OPERATIONS),
             "note": "Core ops are auto-registered via the operations registry. Additional high-value tools (experience_graph_*, inhabitant_*, register_program, get_council_activity, the catalog itself, etc.) are defined directly in this MCP server. All tools return JSON strings for easy parsing by any model.",
-            "recommendation_for_models": "1. Call agentdrive_mcp_catalog() very early. 2. Call experience_graph_get_context_pack() (or agentdrive_get_dna_for_task) for grounding. 3. Use experience_graph_record_reasoning() on all important decisions. 4. For code changes use the three inhabitant_* tools + register_program for attribution.",
+            "recommendation_for_models": "1. Call agentdrive_mcp_catalog() very early. 2. Call experience_graph_get_context_pack() (or agentdrive_get_dna_for_task) for grounding. 3. Use experience_graph_record_reasoning() on all important decisions. 4. For non-trivial competing paths use multiverse_parent_decision(trigger=...). 5. For code changes use the three inhabitant_* tools + register_program for attribution.",
             "categories": {},
         }
 
@@ -1191,6 +1354,9 @@ def create_mcp_server() -> FastMCP:
             "agentdrive_register_program — declare any external model/CLI as a first-class attributed inhabitant",
             "agentdrive_get_council_activity — observe live Council (Perfectionist / Guardian / ExternalBridge) work",
             "agentdrive_think + agentdrive_pool_query + agentdrive_record_outcome — core synthesis / retrieval / learning loop",
+            "multiverse_parent_decision — local LLM or heuristic multiverse (when no MCP model reasoning)",
+            "external_parent_decision — YOU (Grok/Claude/Codex MCP) submit branches; llm_mode=external",
+            "multiverse_list_sessions / multiverse_get_session — inspect persisted superposition history",
         ]
 
         # Dev/clone + Claude/Cursor/Codex/other models support.

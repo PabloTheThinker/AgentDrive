@@ -76,6 +76,42 @@ def print_operation_result(
         console.print(text)
         return
 
+    if name in ("multiverse_parent_decision", "multiverse_run_full") and result.get("result"):
+        payload = result["result"]
+        session = payload.get("session") or {}
+        console.print()
+        console.print(f"[cyan]session[/] {payload.get('session_id') or session.get('session_id')}")
+        console.print(f"[cyan]collapsed[/] {payload.get('collapsed_branch_id')}")
+        console.print(f"[cyan]policy[/] {payload.get('collapse_policy')}")
+        if payload.get("collapse_reason"):
+            console.print(f"[cyan]reason[/] {payload['collapse_reason']}")
+        invs = (session.get("invariants") or []) if isinstance(session, dict) else []
+        if invs:
+            console.print()
+            console.print("[yellow]Invariants:[/]")
+            for inv in invs[:5]:
+                if isinstance(inv, dict):
+                    console.print(f"  • [{inv.get('kind')}] {inv.get('statement')}")
+        return
+
+    if name == "multiverse_list_sessions" and result.get("sessions") is not None:
+        sessions = result["sessions"]
+        console.print()
+        console.print(f"[cyan]Recent sessions[/] ({result.get('count', len(sessions))})")
+        for s in sessions[:8]:
+            if isinstance(s, dict):
+                console.print(
+                    f"  • {s.get('session_id')} [{s.get('status')}] "
+                    f"branches={s.get('branch_count')} collapsed={s.get('collapsed_branch_id')}"
+                )
+        return
+
+    if name == "multiverse_get_session" and result.get("session"):
+        s = result["session"]
+        console.print()
+        console.print(json.dumps(s, indent=2, default=str)[:preview_limit])
+        return
+
     if name == "experience_graph_context_pack" and result.get("context_pack"):
         pack = result["context_pack"]
         if isinstance(pack, dict):
@@ -310,6 +346,67 @@ def cmd_graph(args: argparse.Namespace) -> int:
         )
 
     console.print("[red]Unknown graph subcommand[/]")
+    return 1
+
+
+def cmd_multiverse(args: argparse.Namespace) -> int:
+    """Multiverse Cognition: parallel timeline superposition for Parent decisions."""
+    sub = getattr(args, "multiverse_subcommand", None) or "run"
+
+    if sub == "run":
+        trigger = getattr(args, "trigger", None)
+        if not trigger and not sys.stdin.isatty():
+            trigger = sys.stdin.read().strip()
+        if not trigger:
+            console.print('[red]Usage: agentdrive multiverse run --trigger "decision question"[/]')
+            return 1
+        kwargs: dict[str, Any] = {
+            "trigger": trigger,
+            "n_branches": getattr(args, "branches", 7),
+        }
+        if getattr(args, "forward_steps", None) is not None:
+            kwargs["forward_steps"] = args.forward_steps
+        if getattr(args, "swarm_id", None):
+            kwargs["swarm_id"] = args.swarm_id
+        if getattr(args, "program_id", None):
+            kwargs["program_id"] = args.program_id
+        if getattr(args, "dry_run", False):
+            kwargs["dry_run"] = True
+        return _run_op(
+            "multiverse_parent_decision",
+            kwargs,
+            json_output=getattr(args, "json_output", False),
+        )
+
+    if sub == "list":
+        kwargs = {"limit": getattr(args, "limit", 10)}
+        if getattr(args, "swarm_id", None):
+            kwargs["swarm_id"] = args.swarm_id
+        if getattr(args, "dry_run", False):
+            kwargs["dry_run"] = True
+        return _run_op(
+            "multiverse_list_sessions",
+            kwargs,
+            json_output=getattr(args, "json_output", False),
+        )
+
+    if sub == "status":
+        session_id = getattr(args, "session_id", None)
+        if not session_id:
+            console.print("[red]Usage: agentdrive multiverse status --session-id multiverse-session:...[/]")
+            return 1
+        kwargs = {"session_id": session_id}
+        if getattr(args, "swarm_id", None):
+            kwargs["swarm_id"] = args.swarm_id
+        if getattr(args, "dry_run", False):
+            kwargs["dry_run"] = True
+        return _run_op(
+            "multiverse_get_session",
+            kwargs,
+            json_output=getattr(args, "json_output", False),
+        )
+
+    console.print("[red]Unknown multiverse subcommand[/]")
     return 1
 
 

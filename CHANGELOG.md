@@ -6,6 +6,79 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Changed — Consolidation sprint (architectural audit)
+
+- **Archived** 8× `STABILIZATION_SUBAGENT_REPORT-*.md` + stale `BUILD_STATUS.md` / `MISSION_PLAN.md` → `archive/development-history/`.
+- **`docs/CAPABILITY_FUNNEL.md`** — single funnel: Observe/Decide → Experience Graph → Skills → Genomes/DNA.
+- **`docs/ARCHITECTURE.md`** — overview + subsystem map + pointers to funnel doc.
+- **Docs reframed** Pool→Drive terminology in `POOL.md`, `SWARM.md`, `SETTINGS.md`, `ASSESSMENT.md`; `FOR_AI_MODELS.md` links funnel.
+- **`pyproject.toml`** — `asyncio` pytest marker + `asyncio_mode = auto` (fixes `test_chat_loop.py` collection).
+- **Tests:** `tests/test_multiverse_engine.py` — engine pipeline + ops registry smoke.
+
+### Added — Mirror-neuron codebase mimicry
+
+- **`codebase/mirrors.py`** — observation activates motor programs (exemplar functions/classes/imports); cross-project `mirror_resonance.json` universal priors; Experience Graph traces on each fire.
+- **`codebase/exemplars.py`** — extract concrete motor templates from observed source.
+- **MCP ops:** `codebase_mimic`, `codebase_transform_style`, `codebase_mirror_resonance`.
+- **Tests:** `tests/test_mirror_neurons.py`.
+
+### Added — Codebase pattern recognition framework
+
+- **`agentdrive.codebase`** — per-project writing-style learning: register roots, observe files, crystallize pattern frameworks (naming, imports, frameworks, conventions), match snippets before patching.
+- **MCP/CLI ops:** `codebase_register_project`, `codebase_observe_file`, `codebase_patterns_profile`, `codebase_patterns_match`, `codebase_list_projects`.
+- **`agentdrive_inhabitant_read_source`** auto-observes into project `agentdrive`.
+- **Auto-learning** distills codebase writing-guide skills + DNA on observe/profile ops.
+- **Storage:** `~/.agentdrive/codebase-patterns/<project>/` (`observations.jsonl`, `framework.json`).
+- **Tests:** `tests/test_codebase_patterns.py`.
+
+### Added — End-to-end automatic learning (MCP + CLI)
+
+- **`agentdrive.learning.auto_absorb`** — post-`run_operation` hook (on by default via `AGENTDRIVE_AUTO_LEARN=1`): session tracking, auto `experience_graph_record_reasoning` when models skip it, Hermes-style skill distillation for parent MCP sessions (`mcp-auto-learning` source), promote + DNA ingest on high-signal ops.
+- **Results** include `auto_learning` summarizing absorbed traces/skills/genomes.
+- **Docs:** `docs/SKILLS-LIBRARY.md`, `docs/FOR_AI_MODELS.md` Golden Rule 4 updated; MCP server instructions mention automatic learning.
+- **Tests:** `tests/test_auto_learning.py` (5 passed).
+
+### Added — External MCP Parent (`external_parent_decision`)
+
+- **`MultiverseEngine.ingest_external_parent_decision()`** — frontier/chat MCP clients (Grok, Claude, Codex, Cursor) submit branch reasoning; AgentDrive persists collapse with `llm_mode=external` and `CollapsePolicy.EXTERNAL_PARENT`.
+- **`IntegratedRealTimeEvolutionSystem.run_external_parent_decision()`** — canonical 6-step hook for external models.
+- **MCP tool + op:** `external_parent_decision(trigger, branches, collapsed_branch_id, fabric_reasoning=...)`.
+- **`experience_graph_suggest_reasoning_structure`** — documents `external_mcp_parent_flow` and `reasoning_provider_modes` (local_llm | heuristic | external_mcp).
+- **`docs/FOR_AI_MODELS.md`** — Golden Rule 3b updated: connected MCP models should use `external_parent_decision` when no local LLM is configured.
+- **Example:** `examples/14_external_mcp_parent_loop.py`; **tests:** `tests/test_external_parent_decision.py` (5 passed).
+
+### Added — Multiverse Cognition M2–M5 (LLM spawner, densify, durable threads, Tower panel)
+
+- **`cognition/roles.py`** + **`cognition/llm_spawner.py`** — Cognitive Agent Team role prompts; local LLM branch spawn/simulate/stress-test via `~/.agentdrive/local_models.yaml` with heuristic fallback.
+- **`cognition/research_thread.py`** — durable `research-thread-manifest` observations for long-running superposition.
+- **`densify_invariant_clusters()`** — GraphGardener `densified_via_gardener` edges on robust invariants (M3).
+- **`reopen_stale_sessions()`** + op `multiverse_reopen_stale` (M4).
+- **Mission Control** — `MultiverseUpdateEvent`, `derive_multiverse_snapshot()`, Tower panel (branches + invariants + LLM mode).
+- **Ops:** `multiverse_densify`, `multiverse_reopen_stale`; `multiverse_parent_decision` gains `durable`, `heuristic_only`, `skip_densify`.
+
+### Added — Multiverse Cognition merged into AgentDrive (M0 + M1)
+
+- **`docs/MULTIVERSE_COGNITION.md`** — full architecture: 7-phase pipeline, TypedEdge relations, Council hooks, MCP/CLI surface.
+- **`src/agentdrive/cognition/`** — `MultiverseEngine`, `MultiverseSessionStore` (disk persistence under `drive/meta_evolution/multiverse/sessions/`).
+- **`IntegratedRealTimeEvolutionSystem.run_multiverse_parent_decision()`** — canonical Parent hook: spawn → simulate → invariants → stress-test → collapse → `record_parent_decision`.
+- **`get_parent_actionable_briefing()`** — now includes `multiverse_context` (recent collapses, open superposition, top invariants).
+- **CLI:** `agentdrive multiverse run|list|status`
+- **MCP:** `multiverse_parent_decision`, `multiverse_run_full`, `multiverse_list_sessions`, `multiverse_get_session` (+ operations registry auto-registration).
+- **`docs/FOR_AI_MODELS.md`** — Golden Rule 3b for competing-path decisions.
+- **`genomes/examples/research-constitution-multiverse-cognition@stabilization-wave-20260531.json`**
+- **`examples/12_multiverse_cognition_loop.py`** — smoke via Integrated loop.
+
+### Verify
+
+```bash
+cd "Vektra Industries/Software/AgentDrive"
+PYTHONPATH=src python examples/12_multiverse_cognition_loop.py --trigger "Ship multiverse MVP"
+PYTHONPATH=src python -m agentdrive.cli multiverse run --trigger "CLI test" --branches 5
+PYTHONPATH=src python -m agentdrive.cli multiverse list --limit 5
+```
+
+---
+
 ### Fixed — `scripts/install.sh` piped install (`curl | bash`)
 
 - **`scripts/install.sh`** — when piped (no `BASH_SOURCE`), fetches canonical `install.sh` from GitHub instead of failing with `BASH_SOURCE[0]: unbound variable` and `//install.sh` path error.

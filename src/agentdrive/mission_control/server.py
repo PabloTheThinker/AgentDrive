@@ -941,6 +941,59 @@ class MissionControlHub:
             pass
         return {}
 
+    def derive_multiverse_snapshot(self) -> dict[str, Any]:
+        """Multiverse Cognition panel data for Mission Control Tower (M5)."""
+        mission = self._current_mission
+        if mission is None or not hasattr(mission, "recorder"):
+            return {"status": "no_mission_attached"}
+        try:
+            from agentdrive.cognition import MultiverseEngine
+
+            engine = MultiverseEngine(mission.recorder)
+            ctx = engine.briefing_context(limit=5)
+            sessions = engine.list_sessions(limit=3)
+            latest = sessions[0] if sessions else None
+            llm_mode = "heuristic"
+            if engine.use_llm:
+                spawner = engine._get_llm_spawner(latest.trigger if latest else "probe")
+                if spawner and spawner.llm_available:
+                    llm_mode = "llm"
+
+            branches = []
+            active_id = None
+            status = "idle"
+            collapsed = None
+            invariants: list[str] = []
+            if latest:
+                active_id = latest.session_id
+                status = latest.status.value
+                collapsed = latest.collapsed_branch_id
+                invariants = [i.statement for i in latest.invariants if i.kind.value == "robust"][:5]
+                branches = [
+                    {
+                        "id": b.branch_id,
+                        "role": b.role,
+                        "robustness": b.robustness_score,
+                        "collapsed": b.branch_id == collapsed,
+                    }
+                    for b in latest.branches
+                ]
+
+            return {
+                "status": "ok",
+                "llm_mode": llm_mode,
+                "active_session_id": active_id,
+                "session_status": status,
+                "branch_count": len(branches),
+                "collapsed_branch_id": collapsed,
+                "top_invariants": invariants,
+                "branches": branches,
+                "recent_collapses": ctx.get("recent_collapses", []),
+                "open_superposition": ctx.get("open_superposition", []),
+            }
+        except Exception:
+            return {"status": "multiverse_snapshot_error"}
+
 
 # Global hub instance
 hub = MissionControlHub()
@@ -1025,6 +1078,9 @@ def create_mission_control_app() -> FastAPI:
             "timestamp": time.time(),
             "loop_state": loop_snap,
             "fabric": fabric_snap,
+            "multiverse": hub.derive_multiverse_snapshot()
+            if hasattr(hub, "derive_multiverse_snapshot")
+            else {},
             "grid_health": grid_health,
             "recent_event_count": len(hub.recent_events),
             # Tight experience layer snapshot for the UI on initial load (reuses the rich derive that already calls recorder briefing when attached)

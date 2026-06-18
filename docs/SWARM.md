@@ -1,7 +1,8 @@
 # AgentDrive Swarms — Per-Sub-Agent DNA Pools & Collective Growth
 
-> AgentDrive is the product; the swarm primitives below are exposed by the
-> underlying Agent Drive engine. See [README](../README.md).
+> **Terminology:** AgentDrive is the product; **Drive** is the swarm-scoped store
+> (`get_swarm_drive_path`). **Pool** is the per-sub-agent DNA engine under
+> `swarms/<id>/<subagent>/pool/`. See `docs/CAPABILITY_FUNNEL.md`.
 
 When any AI system — Grok’s build tools, Claude Code, Codex, custom orchestrators, or your own agent code — spawns sub-agents, each child can (and should) receive its own **isolated Agent Drive Pool**.
 
@@ -54,7 +55,7 @@ The pool directory is created on first use: `~/.agentdrive/swarms/<swarm_id>/<su
 - `AgentDrivePool` accepts custom `pool_dir`.
 - `PoolSettingsManager` supports global + per-swarm overrides.
 - TUI and CLI recognize swarms (`pool_view.py`, `agentdrive pool swarms` planned).
-- Full auto-wiring of `get_default_pool()` + harness to read env vars and select the correct directory is the next integration step (see `MISSION_PLAN.md`).
+- Full auto-wiring of `get_default_drive()` / `get_default_pool()` + harness to read env vars and select the correct directory remains an integration step (see `docs/INTEGRATION.md`).
 
 Until the final wiring, external integrators explicitly pass the scoped `AgentDrivePool` or `pool_dir` when creating harnesses/adapters for sub-agents.
 

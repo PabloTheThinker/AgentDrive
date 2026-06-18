@@ -1,7 +1,8 @@
 # AgentDrive Pool & Swarm Settings — Complete User Reference
 
-> AgentDrive is the product; the Pool primitive below is exposed by the
-> underlying Agent Drive engine. See [README](../README.md).
+> **Terminology:** Settings under `pool:` govern the Drive DNA engine (ingest,
+> isolation, sharing). Product-facing name: **AgentDrive** / **Drive**.
+> See `docs/CAPABILITY_FUNNEL.md` and [README](../README.md).
 
 All user-controllable behavior for the Pool lives under the `pool:` section of your AgentDrive configuration (`~/.agentdrive/config.yaml` or `$AGENTDRIVE_HOME/config.yaml`).
 

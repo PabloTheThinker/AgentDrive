@@ -53,6 +53,20 @@ class FabricView:
 
 
 @dataclass
+class MultiverseView:
+    """Live multiverse superposition snapshot for Mission Control."""
+
+    active_session_id: str | None = None
+    status: str = "idle"
+    branch_count: int = 0
+    collapsed_branch_id: str | None = None
+    top_invariants: list[str] = field(default_factory=list)
+    branches: list[dict[str, Any]] = field(default_factory=list)
+    recent_collapses: list[dict[str, Any]] = field(default_factory=list)
+    llm_mode: str = "heuristic"  # llm | heuristic
+
+
+@dataclass
 class StaticFireTelemetry:
     """
     Real-time and historical view of a Static Fire run.

@@ -8,10 +8,13 @@ Single source of truth for CLI surfaces, MCP tool mapping, and tools-json export
 from __future__ import annotations
 
 import json
+import logging
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Types
@@ -577,15 +580,278 @@ def _handler_experience_graph_suggest_reasoning(**kwargs: Any) -> dict[str, Any]
     )
 
 
+def _multiverse_engine(swarm_id: str | None, **engine_kwargs: Any):
+    from agentdrive.cognition import MultiverseEngine
+
+    effective, recorder = _integrated_recorder(swarm_id)
+    return effective, MultiverseEngine(recorder, **engine_kwargs)
+
+
+def _handler_multiverse_run_full(**kwargs: Any) -> dict[str, Any]:
+    trigger = str(kwargs.get("trigger") or kwargs.get("text") or kwargs.get("question") or "")
+    if not trigger:
+        return {"success": False, "error": "trigger is required", "operation": "multiverse_run_full"}
+
+    n_branches = int(kwargs.get("n_branches", kwargs.get("branches", 7)))
+    forward_steps = kwargs.get("forward_steps")
+    program_id = kwargs.get("program_id")
+    dry_run = bool(kwargs.get("dry_run", False))
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+
+    if dry_run:
+        return _dry_plan(
+            "multiverse_run_full",
+            swarm_id=effective,
+            trigger=trigger[:200],
+            n_branches=n_branches,
+            forward_steps=forward_steps,
+        )
+
+    engine_kwargs: dict[str, Any] = {}
+    if program_id:
+        engine_kwargs["program_id"] = str(program_id)
+    if kwargs.get("user_objective_refs"):
+        engine_kwargs["user_objective_refs"] = list(kwargs["user_objective_refs"])
+
+    _, engine = _multiverse_engine(kwargs.get("swarm_id"), **engine_kwargs)
+    session = engine.run_full(
+        trigger,
+        n_branches=n_branches,
+        forward_steps=int(forward_steps) if forward_steps is not None else None,
+    )
+    fabric_reasoning = engine.to_fabric_reasoning(session)
+    _, recorder = _integrated_recorder(kwargs.get("swarm_id"))
+    trace_slug = recorder.record_parent_fabric_reasoning(session.cycle_id, fabric_reasoning)
+
+    return _success(
+        operation="multiverse_run_full",
+        swarm_id=effective,
+        session=engine.to_mcp_dict(session),
+        fabric_reasoning_trace_slug=trace_slug,
+    )
+
+
+def _handler_multiverse_get_session(**kwargs: Any) -> dict[str, Any]:
+    session_id = str(kwargs.get("session_id") or "")
+    if not session_id:
+        return {"success": False, "error": "session_id is required", "operation": "multiverse_get_session"}
+
+    dry_run = bool(kwargs.get("dry_run", False))
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    if dry_run:
+        return _dry_plan("multiverse_get_session", swarm_id=effective, session_id=session_id)
+
+    _, engine = _multiverse_engine(kwargs.get("swarm_id"))
+    session = engine.get_session(session_id)
+    if session is None:
+        return {
+            "success": False,
+            "error": f"session not found: {session_id}",
+            "operation": "multiverse_get_session",
+        }
+    return _success(
+        operation="multiverse_get_session",
+        swarm_id=effective,
+        session=engine.to_mcp_dict(session),
+    )
+
+
+def _handler_multiverse_list_sessions(**kwargs: Any) -> dict[str, Any]:
+    limit = int(kwargs.get("limit", 10))
+    dry_run = bool(kwargs.get("dry_run", False))
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    if dry_run:
+        return _dry_plan("multiverse_list_sessions", swarm_id=effective, limit=limit)
+
+    _, engine = _multiverse_engine(kwargs.get("swarm_id"))
+    sessions = engine.list_sessions(limit=limit)
+    return _success(
+        operation="multiverse_list_sessions",
+        swarm_id=effective,
+        count=len(sessions),
+        sessions=[engine.to_mcp_dict(s) for s in sessions],
+        briefing_context=engine.briefing_context(limit=min(limit, 5)),
+    )
+
+
+def _handler_multiverse_parent_decision(**kwargs: Any) -> dict[str, Any]:
+    """Integrated loop hook: multiverse pipeline + record_parent_decision."""
+    trigger = str(kwargs.get("trigger") or kwargs.get("text") or kwargs.get("question") or "")
+    if not trigger:
+        return {
+            "success": False,
+            "error": "trigger is required",
+            "operation": "multiverse_parent_decision",
+        }
+
+    dry_run = bool(kwargs.get("dry_run", False))
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    if dry_run:
+        return _dry_plan(
+            "multiverse_parent_decision",
+            swarm_id=effective,
+            trigger=trigger[:200],
+            n_branches=int(kwargs.get("n_branches", kwargs.get("branches", 7))),
+        )
+
+    from agentdrive.system.integrated_real_time_evolution_system import (
+        IntegratedRealTimeEvolutionSystem,
+    )
+
+    system = IntegratedRealTimeEvolutionSystem(swarm_id=effective)
+    payload = system.run_multiverse_parent_decision(
+        trigger,
+        n_branches=int(kwargs.get("n_branches", kwargs.get("branches", 7))),
+        forward_steps=int(kwargs["forward_steps"]) if kwargs.get("forward_steps") is not None else None,
+        program_id=kwargs.get("program_id"),
+        user_objective_refs=list(kwargs["user_objective_refs"])
+        if kwargs.get("user_objective_refs")
+        else None,
+        record_decision=not bool(kwargs.get("skip_record", False)),
+        durable=bool(kwargs.get("durable", False)),
+        densify_invariants=not bool(kwargs.get("skip_densify", False)),
+        use_llm=not bool(kwargs.get("heuristic_only", False)),
+    )
+    return _success(operation="multiverse_parent_decision", swarm_id=effective, result=payload)
+
+
+def _unwrap_mcp_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
+    """Flatten nested ``arguments`` dicts from auto-registered MCP tool calls."""
+    nested = kwargs.get("arguments")
+    if isinstance(nested, dict):
+        merged = dict(nested)
+        merged.update({k: v for k, v in kwargs.items() if k != "arguments"})
+        return merged
+    return kwargs
+
+
+def _handler_external_parent_decision(**kwargs: Any) -> dict[str, Any]:
+    """MCP frontier/local chat models submit multiverse branches; AgentDrive records collapse."""
+    kwargs = _unwrap_mcp_kwargs(dict(kwargs))
+    trigger = str(kwargs.get("trigger") or kwargs.get("text") or kwargs.get("question") or "")
+    branches = kwargs.get("branches")
+    collapsed_branch_id = str(kwargs.get("collapsed_branch_id") or "")
+    if not trigger:
+        return {
+            "success": False,
+            "error": "trigger is required",
+            "operation": "external_parent_decision",
+        }
+    if not isinstance(branches, list) or not branches:
+        return {
+            "success": False,
+            "error": "branches must be a non-empty list",
+            "operation": "external_parent_decision",
+        }
+    if not collapsed_branch_id:
+        return {
+            "success": False,
+            "error": "collapsed_branch_id is required",
+            "operation": "external_parent_decision",
+        }
+
+    dry_run = bool(kwargs.get("dry_run", False))
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    if dry_run:
+        return _dry_plan(
+            "external_parent_decision",
+            swarm_id=effective,
+            trigger=trigger[:200],
+            branch_count=len(branches),
+            collapsed_branch_id=collapsed_branch_id,
+            reasoning_provider=kwargs.get("reasoning_provider", "mcp-external"),
+        )
+
+    from agentdrive.system.integrated_real_time_evolution_system import (
+        IntegratedRealTimeEvolutionSystem,
+    )
+
+    system = IntegratedRealTimeEvolutionSystem(swarm_id=effective)
+    payload = system.run_external_parent_decision(
+        trigger,
+        branches,
+        collapsed_branch_id=collapsed_branch_id,
+        invariants=list(kwargs["invariants"]) if kwargs.get("invariants") else None,
+        collapse_reason=str(kwargs.get("collapse_reason") or ""),
+        collapse_policy=str(kwargs["collapse_policy"]) if kwargs.get("collapse_policy") else None,
+        reasoning_provider=str(kwargs.get("reasoning_provider") or "mcp-external"),
+        convergence_points=list(kwargs["convergence_points"])
+        if kwargs.get("convergence_points")
+        else None,
+        divergence_points=list(kwargs["divergence_points"])
+        if kwargs.get("divergence_points")
+        else None,
+        fabric_reasoning=dict(kwargs["fabric_reasoning"])
+        if isinstance(kwargs.get("fabric_reasoning"), dict)
+        else None,
+        program_id=kwargs.get("program_id"),
+        user_objective_refs=list(kwargs["user_objective_refs"])
+        if kwargs.get("user_objective_refs")
+        else None,
+        record_decision=not bool(kwargs.get("skip_record", False)),
+        densify_invariants=not bool(kwargs.get("skip_densify", False)),
+    )
+    return _success(operation="external_parent_decision", swarm_id=effective, result=payload)
+
+
+def _handler_multiverse_reopen_stale(**kwargs: Any) -> dict[str, Any]:
+    max_age = float(kwargs.get("max_age_hours", 24.0))
+    dry_run = bool(kwargs.get("dry_run", False))
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    if dry_run:
+        return _dry_plan("multiverse_reopen_stale", swarm_id=effective, max_age_hours=max_age)
+
+    from agentdrive.system.integrated_real_time_evolution_system import (
+        IntegratedRealTimeEvolutionSystem,
+    )
+
+    reopened = IntegratedRealTimeEvolutionSystem(swarm_id=effective).reopen_stale_multiverse_sessions(
+        max_age_hours=max_age
+    )
+    return _success(
+        operation="multiverse_reopen_stale",
+        swarm_id=effective,
+        reopened_count=len(reopened),
+        reopened_session_ids=reopened,
+    )
+
+
+def _handler_multiverse_densify(**kwargs: Any) -> dict[str, Any]:
+    session_id = str(kwargs.get("session_id") or "")
+    if not session_id:
+        return {"success": False, "error": "session_id is required", "operation": "multiverse_densify"}
+    dry_run = bool(kwargs.get("dry_run", False))
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    if dry_run:
+        return _dry_plan("multiverse_densify", swarm_id=effective, session_id=session_id)
+
+    from agentdrive.system.integrated_real_time_evolution_system import (
+        IntegratedRealTimeEvolutionSystem,
+    )
+
+    result = IntegratedRealTimeEvolutionSystem(swarm_id=effective).densify_multiverse_invariants(
+        session_id
+    )
+    return _success(operation="multiverse_densify", swarm_id=effective, result=result)
+
+
 def _handler_learnings_log(**kwargs: Any) -> dict[str, Any]:
     from agentdrive.learnings import LearningsStore
 
+    kwargs = _unwrap_mcp_kwargs(dict(kwargs))
     dry_run = bool(kwargs.get("dry_run", False))
+    outcome = kwargs.get("outcome")
+    if isinstance(outcome, dict):
+        kwargs.setdefault("insight", outcome.get("key_observation") or outcome.get("insight"))
+        kwargs.setdefault("confidence", outcome.get("confidence", 5))
     entry = {
         "type": str(kwargs.get("type", "pattern")),
-        "key": str(kwargs.get("key") or "ops-registry-entry"),
+        "key": str(kwargs.get("key") or kwargs.get("task") or "ops-registry-entry"),
         "insight": str(
-            kwargs.get("insight") or kwargs.get("text") or "ops registry learning entry"
+            kwargs.get("insight")
+            or kwargs.get("text")
+            or (isinstance(outcome, dict) and outcome.get("key_observation"))
+            or "ops registry learning entry"
         ),
         "confidence": int(kwargs.get("confidence", 5)),
         "source": str(kwargs.get("source", "observed")),
@@ -844,6 +1110,74 @@ OPERATIONS: list[OperationSpec] = [
         mcp_tool="experience_graph_suggest_reasoning_structure",
     ),
     OperationSpec(
+        name="multiverse_run_full",
+        description="Run full multiverse cognition: spawn branches, simulate, extract invariants, stress-test, collapse, record fabric reasoning",
+        category="multiverse",
+        read_only=False,
+        when_to_use="Call on any non-trivial Parent decision where multiple competing paths exist. Spawns Cognitive Agent Team role branches, holds superposition, collapses to one governed path, and writes Experience Graph DNA.",
+        examples=[
+            'multiverse_run_full(trigger="How should we ship feature X?", n_branches=7)',
+        ],
+        mcp_tool="multiverse_run_full",
+    ),
+    OperationSpec(
+        name="multiverse_get_session",
+        description="Return a persisted multiverse session by id",
+        category="multiverse",
+        read_only=True,
+        cli_command="agentdrive multiverse status",
+        mcp_tool="multiverse_get_session",
+    ),
+    OperationSpec(
+        name="multiverse_list_sessions",
+        description="List recent multiverse sessions and briefing context",
+        category="multiverse",
+        read_only=True,
+        cli_command="agentdrive multiverse list",
+        mcp_tool="multiverse_list_sessions",
+    ),
+    OperationSpec(
+        name="multiverse_parent_decision",
+        description="Full multiverse pipeline wired into record_parent_decision (canonical Parent hook)",
+        category="multiverse",
+        read_only=False,
+        when_to_use="Preferred entry for non-trivial Parent decisions inside the 6-step loop. Runs spawn→simulate→invariants→stress-test→collapse→record_parent_decision in one call.",
+        examples=[
+            'multiverse_parent_decision(trigger="How should we ship feature X?", n_branches=7)',
+        ],
+        cli_command="agentdrive multiverse run",
+        mcp_tool="multiverse_parent_decision",
+    ),
+    OperationSpec(
+        name="external_parent_decision",
+        description="Submit externally-reasoned multiverse branches (Grok/Claude/Codex MCP) and record Parent DNA",
+        category="multiverse",
+        read_only=False,
+        when_to_use=(
+            "Use when YOU (the connected MCP model) perform multiverse branch reasoning in your own "
+            "context and need AgentDrive to persist the collapse. Call after experience_graph_get_context_pack "
+            "and experience_graph_suggest_reasoning_structure. Sets llm_mode=external."
+        ),
+        examples=[
+            'external_parent_decision(trigger="...", branches=[{role, path_summary, ...}], collapsed_branch_id="branch:operator-0", reasoning_provider="grok")',
+        ],
+        mcp_tool="external_parent_decision",
+    ),
+    OperationSpec(
+        name="multiverse_reopen_stale",
+        description="Reopen stale open multiverse superposition sessions (M4 durable threads)",
+        category="multiverse",
+        read_only=False,
+        mcp_tool="multiverse_reopen_stale",
+    ),
+    OperationSpec(
+        name="multiverse_densify",
+        description="GraphGardener densification on multiverse robust invariant clusters (M3)",
+        category="multiverse",
+        read_only=False,
+        mcp_tool="multiverse_densify",
+    ),
+    OperationSpec(
         name="learnings_log",
         description="Append one gstack-style operational learning entry",
         category="learnings",
@@ -871,7 +1205,240 @@ OPERATIONS: list[OperationSpec] = [
         cli_command="agentdrive harness compose",
         mcp_tool="agentdrive_harness_compose",
     ),
+    OperationSpec(
+        name="codebase_register_project",
+        description="Register a codebase root for pattern recognition learning",
+        category="codebase",
+        read_only=False,
+        when_to_use="Call once per repo before observing files. Enables safe path-scoped pattern learning.",
+        examples=[
+            'codebase_register_project(project_id="interegy-web", root="/path/to/app")',
+        ],
+        mcp_tool="codebase_register_project",
+    ),
+    OperationSpec(
+        name="codebase_observe_file",
+        description="Read a file under a registered project and learn its writing patterns",
+        category="codebase",
+        read_only=False,
+        when_to_use="Call whenever you inspect project source — builds the project's pattern recognition framework automatically.",
+        examples=[
+            'codebase_observe_file(project_id="interegy-web", path="lib/gateway.ts")',
+        ],
+        mcp_tool="codebase_observe_file",
+    ),
+    OperationSpec(
+        name="codebase_patterns_profile",
+        description="Return the auto-learned writing-style framework for a project",
+        category="codebase",
+        read_only=True,
+        when_to_use="Before writing or reviewing code in a project AD has observed — get naming, imports, framework, and convention patterns.",
+        mcp_tool="codebase_patterns_profile",
+    ),
+    OperationSpec(
+        name="codebase_patterns_match",
+        description="Check a code snippet against the learned project writing framework",
+        category="codebase",
+        read_only=True,
+        when_to_use="Before proposing a patch — verify alignment with how the codebase is actually written.",
+        mcp_tool="codebase_patterns_match",
+    ),
+    OperationSpec(
+        name="codebase_list_projects",
+        description="List registered codebases and observation stats",
+        category="codebase",
+        read_only=True,
+        mcp_tool="codebase_list_projects",
+    ),
+    OperationSpec(
+        name="codebase_mimic",
+        description="Fire mirror neurons — return motor programs + mimicry prompt to write like the project",
+        category="codebase",
+        read_only=True,
+        when_to_use="Before writing new code in an observed project. Observation activates the same writing circuits (mirror-neuron mimicry).",
+        examples=['codebase_mimic(project_id="interegy-web", intent="gateway fetch helper")'],
+        mcp_tool="codebase_mimic",
+    ),
+    OperationSpec(
+        name="codebase_transform_style",
+        description="Transform a code snippet toward the learned project writing style",
+        category="codebase",
+        read_only=True,
+        when_to_use="When you drafted generic code and need it to match how the repo is actually written.",
+        mcp_tool="codebase_transform_style",
+    ),
+    OperationSpec(
+        name="codebase_mirror_resonance",
+        description="Cross-project mirror field — universal priors shared across observed repos",
+        category="codebase",
+        read_only=True,
+        when_to_use="See which writing patterns resonate across all projects AD has observed (like shared mirror-neuron firing).",
+        mcp_tool="codebase_mirror_resonance",
+    ),
 ]
+
+def _handler_codebase_register_project(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.codebase.registry import register_project
+
+    project_id = str(kwargs.get("project_id") or kwargs.get("id") or "")
+    root = str(kwargs.get("root") or kwargs.get("path") or "")
+    if not project_id or not root:
+        return {
+            "success": False,
+            "error": "project_id and root are required",
+            "operation": "codebase_register_project",
+        }
+    dry_run = bool(kwargs.get("dry_run", False))
+    if dry_run:
+        return _dry_plan(
+            "codebase_register_project",
+            project_id=project_id,
+            root=root,
+        )
+    project = register_project(
+        project_id=project_id,
+        root=root,
+        display_name=str(kwargs.get("display_name") or ""),
+        primary_language=str(kwargs.get("primary_language") or ""),
+    )
+    return _success(
+        operation="codebase_register_project",
+        project=project.to_dict(),
+    )
+
+
+def _handler_codebase_observe_file(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.codebase.observe import observe_file
+
+    project_id = str(kwargs.get("project_id") or "")
+    path = str(kwargs.get("path") or kwargs.get("file") or "")
+    if not project_id or not path:
+        return {
+            "success": False,
+            "error": "project_id and path are required",
+            "operation": "codebase_observe_file",
+        }
+    dry_run = bool(kwargs.get("dry_run", False))
+    if dry_run:
+        return _dry_plan("codebase_observe_file", project_id=project_id, path=path)
+    payload = observe_file(
+        project_id=project_id,
+        path=path,
+        max_lines=int(kwargs.get("max_lines", 400)),
+        auto_register_root=kwargs.get("auto_register_root"),
+    )
+    if not payload.get("success"):
+        return {**payload, "operation": "codebase_observe_file", "success": False}
+    return _success(operation="codebase_observe_file", **payload)
+
+
+def _handler_codebase_patterns_profile(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.codebase.framework import get_writing_guide
+
+    project_id = str(kwargs.get("project_id") or "")
+    if not project_id:
+        return {
+            "success": False,
+            "error": "project_id is required",
+            "operation": "codebase_patterns_profile",
+        }
+    dry_run = bool(kwargs.get("dry_run", False))
+    if dry_run:
+        return _dry_plan("codebase_patterns_profile", project_id=project_id)
+    framework = get_writing_guide(project_id)
+    return _success(
+        operation="codebase_patterns_profile",
+        project_id=project_id,
+        framework=framework,
+    )
+
+
+def _handler_codebase_patterns_match(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.codebase.framework import match_against_framework
+
+    project_id = str(kwargs.get("project_id") or "")
+    code = str(kwargs.get("code") or kwargs.get("snippet") or "")
+    if not project_id or not code:
+        return {
+            "success": False,
+            "error": "project_id and code are required",
+            "operation": "codebase_patterns_match",
+        }
+    dry_run = bool(kwargs.get("dry_run", False))
+    if dry_run:
+        return _dry_plan("codebase_patterns_match", project_id=project_id)
+    match = match_against_framework(
+        project_id,
+        code=code,
+        path=str(kwargs.get("path") or "snippet.py"),
+    )
+    return _success(operation="codebase_patterns_match", **match)
+
+
+def _handler_codebase_mimic(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.codebase.mirrors import fire_mirrors_for_intent
+
+    project_id = str(kwargs.get("project_id") or "")
+    intent = str(kwargs.get("intent") or kwargs.get("task") or kwargs.get("text") or "")
+    if not project_id or not intent:
+        return {
+            "success": False,
+            "error": "project_id and intent are required",
+            "operation": "codebase_mimic",
+        }
+    dry_run = bool(kwargs.get("dry_run", False))
+    if dry_run:
+        return _dry_plan("codebase_mimic", project_id=project_id, intent=intent[:120])
+    payload = fire_mirrors_for_intent(
+        project_id,
+        intent=intent,
+        language=kwargs.get("language"),
+        limit=int(kwargs.get("limit", 5)),
+    )
+    return _success(operation="codebase_mimic", **payload)
+
+
+def _handler_codebase_transform_style(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.codebase.mirrors import transform_toward_style
+
+    project_id = str(kwargs.get("project_id") or "")
+    code = str(kwargs.get("code") or kwargs.get("snippet") or "")
+    if not project_id or not code:
+        return {
+            "success": False,
+            "error": "project_id and code are required",
+            "operation": "codebase_transform_style",
+        }
+    dry_run = bool(kwargs.get("dry_run", False))
+    if dry_run:
+        return _dry_plan("codebase_transform_style", project_id=project_id)
+    payload = transform_toward_style(
+        project_id,
+        code=code,
+        path=str(kwargs.get("path") or "snippet.py"),
+    )
+    return _success(operation="codebase_transform_style", **payload)
+
+
+def _handler_codebase_mirror_resonance(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.codebase.mirrors import global_mirror_field
+
+    dry_run = bool(kwargs.get("dry_run", False))
+    if dry_run:
+        return _dry_plan("codebase_mirror_resonance")
+    payload = global_mirror_field(limit=int(kwargs.get("limit", 12)))
+    return _success(operation="codebase_mirror_resonance", **payload)
+
+
+def _handler_codebase_list_projects(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.codebase.registry import list_projects
+
+    dry_run = bool(kwargs.get("dry_run", False))
+    if dry_run:
+        return _dry_plan("codebase_list_projects")
+    projects = [p.to_dict() for p in list_projects()]
+    return _success(operation="codebase_list_projects", projects=projects, count=len(projects))
+
 
 _HANDLERS: dict[str, OperationHandler] = {
     "think": _handler_think,
@@ -896,9 +1463,24 @@ _HANDLERS: dict[str, OperationHandler] = {
     "experience_graph_context_pack": _handler_experience_graph_context_pack,
     "experience_graph_record_reasoning": _handler_experience_graph_record_reasoning,
     "experience_graph_suggest_reasoning": _handler_experience_graph_suggest_reasoning,
+    "multiverse_run_full": _handler_multiverse_run_full,
+    "multiverse_get_session": _handler_multiverse_get_session,
+    "multiverse_list_sessions": _handler_multiverse_list_sessions,
+    "multiverse_parent_decision": _handler_multiverse_parent_decision,
+    "external_parent_decision": _handler_external_parent_decision,
+    "multiverse_reopen_stale": _handler_multiverse_reopen_stale,
+    "multiverse_densify": _handler_multiverse_densify,
     "learnings_log": _handler_learnings_log,
     "learnings_list": _handler_learnings_list,
     "harness_compose": _handler_harness_compose,
+    "codebase_register_project": _handler_codebase_register_project,
+    "codebase_observe_file": _handler_codebase_observe_file,
+    "codebase_patterns_profile": _handler_codebase_patterns_profile,
+    "codebase_patterns_match": _handler_codebase_patterns_match,
+    "codebase_list_projects": _handler_codebase_list_projects,
+    "codebase_mimic": _handler_codebase_mimic,
+    "codebase_transform_style": _handler_codebase_transform_style,
+    "codebase_mirror_resonance": _handler_codebase_mirror_resonance,
 }
 
 _OPERATIONS_BY_NAME: dict[str, OperationSpec] = {op.name: op for op in OPERATIONS}
@@ -934,7 +1516,7 @@ def run_operation(name: str, **kwargs: Any) -> dict[str, Any]:
     if name not in _HANDLERS:
         raise KeyError(f"unknown operation: {name}")
     try:
-        return _HANDLERS[name](**kwargs)
+        result = _HANDLERS[name](**kwargs)
     except Exception as exc:
         return {
             "success": False,
@@ -942,6 +1524,17 @@ def run_operation(name: str, **kwargs: Any) -> dict[str, Any]:
             "error": str(exc),
             "error_type": type(exc).__name__,
         }
+    if isinstance(result, dict) and result.get("success") and not result.get("dry_run"):
+        try:
+            from agentdrive.learning.auto_absorb import maybe_absorb_operation_outcome
+
+            absorbed = maybe_absorb_operation_outcome(name, kwargs, result)
+            if absorbed:
+                result = dict(result)
+                result["auto_learning"] = absorbed
+        except Exception:
+            logger.debug("auto_learning hook failed for %s", name, exc_info=True)
+    return result
 
 
 def export_operations_json(*, indent: int = 2) -> str:

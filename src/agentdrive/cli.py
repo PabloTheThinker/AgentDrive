@@ -21,6 +21,7 @@ Subcommand structure:
   agentdrive learnings log|list|search
   agentdrive harness compose
   agentdrive graph context-pack|record|suggest
+  agentdrive multiverse run|list|status
   agentdrive eval replay <artifact.json>
   agentdrive commands list|tree|search
 
@@ -104,6 +105,7 @@ from agentdrive.cli_surface import (
     cmd_eval,
     cmd_golden_path,
     cmd_graph,
+    cmd_multiverse,
     cmd_harness,
     cmd_learnings,
     cmd_session,
@@ -3992,6 +3994,42 @@ def build_parser() -> argparse.ArgumentParser:
         ("experience",),
         "Alias for graph (Experience Graph commands)",
     )
+
+    # multiverse — parallel timeline superposition for Parent decisions
+    mv = subparsers.add_parser(
+        "multiverse",
+        help="Multiverse Cognition: spawn branches, collapse path, record Parent decision",
+    )
+    mv_subs = mv.add_subparsers(dest="multiverse_subcommand")
+
+    mvr = mv_subs.add_parser(
+        "run",
+        help="Full multiverse pipeline + record_parent_decision (canonical Parent hook)",
+    )
+    mvr.add_argument("--trigger", "-t", help="Decision question / problem statement")
+    mvr.add_argument("--branches", type=int, default=7, help="Parallel branch count")
+    mvr.add_argument("--forward-steps", dest="forward_steps", type=int, help="Simulation depth")
+    mvr.add_argument("--swarm-id", dest="swarm_id")
+    mvr.add_argument("--program-id", dest="program_id", help="AD-Grid program attribution")
+    mvr.add_argument("--dry-run", action="store_true")
+    mvr.add_argument("--json", dest="json_output", action="store_true")
+    mvr.set_defaults(func=cmd_multiverse)
+
+    mvl = mv_subs.add_parser("list", help="List recent multiverse sessions")
+    mvl.add_argument("--limit", type=int, default=10)
+    mvl.add_argument("--swarm-id", dest="swarm_id")
+    mvl.add_argument("--dry-run", action="store_true")
+    mvl.add_argument("--json", dest="json_output", action="store_true")
+    mvl.set_defaults(func=cmd_multiverse)
+
+    mvs = mv_subs.add_parser("status", help="Show one multiverse session by id")
+    mvs.add_argument("--session-id", dest="session_id", required=True)
+    mvs.add_argument("--swarm-id", dest="swarm_id")
+    mvs.add_argument("--dry-run", action="store_true")
+    mvs.add_argument("--json", dest="json_output", action="store_true")
+    mvs.set_defaults(func=cmd_multiverse)
+
+    mv.set_defaults(func=cmd_multiverse, multiverse_subcommand="run")
 
     # eval — artifact replay
     p = subparsers.add_parser("eval", help="Evaluation utilities (harness replay)")

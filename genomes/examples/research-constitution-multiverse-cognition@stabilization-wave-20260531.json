@@ -1,0 +1,95 @@
+{
+  "schema_version": 3,
+  "page_type": "research-constitution",
+  "type": "multiverse_cognition_constitution",
+  "id": "research-constitution-multiverse-cognition@stabilization-wave-20260531",
+  "version": "0.1.0-initial",
+  "created": "2026-06-18T00:00:00+00:00",
+  "manifest": {
+    "id": "research-constitution-multiverse-cognition@stabilization-wave-20260531",
+    "description": "Governs Multiverse Cognition sessions inside AgentDrive: parallel timeline superposition, invariant extraction, Council stress-test, and governed collapse into Parent decisions. Implements Cognitive Agent Team multiverse engine as first-class AD-Grid fabric DNA.",
+    "binding": "Recommended for all non-trivial Parent decisions. Mandatory when program manifest declares multiverse_cognition: true.",
+    "core_loop": [
+      "gather_fabric_context",
+      "spawn_orthogonal_branches",
+      "simulate_forward",
+      "extract_invariants",
+      "adversary_stress_test",
+      "collapse_with_policy",
+      "record_parent_fabric_reasoning"
+    ],
+    "cognitive_roles": [
+      "architect",
+      "adversary",
+      "scout",
+      "operator",
+      "surgeon",
+      "beacon",
+      "watchdog"
+    ],
+    "divergence_axes": [
+      "risk",
+      "speed",
+      "reversibility",
+      "cost",
+      "dependency_order"
+    ],
+    "collapse_policies": [
+      "pattern_crystallized",
+      "adversary_clear",
+      "harness_score",
+      "conductor_override",
+      "budget_exhausted"
+    ],
+    "orthogonality_rules": [
+      "Each branch must differ on at least one divergence axis",
+      "Branches must not be paraphrases of the same path",
+      "Adversary branch is mandatory when n_branches >= 3",
+      "Collapse requires named robust invariants before commit"
+    ],
+    "council_integration": {
+      "adversary": "stress_test top-N branches by robustness before collapse",
+      "guardian": "may veto collapse paths that imply silent auto-promotion or sovereignty erosion",
+      "external_bridge": "may inject external grounding signals as additional branches"
+    },
+    "experience_graph_relations": [
+      "multiverse_session",
+      "branch_spawned",
+      "branch_simulated_forward",
+      "invariant_extracted",
+      "convergence_detected",
+      "divergence_detected",
+      "path_collapsed",
+      "branch_stress_tested",
+      "multiverse_informed_decision"
+    ],
+    "page_types": [
+      "multiverse-session",
+      "multiverse-branch",
+      "multiverse-invariants",
+      "multiverse-collapse",
+      "multiverse-council-verdict"
+    ],
+    "defaults": {
+      "n_branches": 7,
+      "forward_steps": 3,
+      "robust_threshold": 0.7,
+      "stress_test_top_n": 2
+    },
+    "philosophy": "See a path, secure a path. Superposition is for finding; collapse is immediate once pattern crystallizes.",
+    "references": {
+      "design_doc": "docs/MULTIVERSE_COGNITION.md",
+      "module": "src/agentdrive/cognition/multiverse.py",
+      "cognitive_agent_team": "architect-cognition-agent.md (Multiverse Cognition engine)",
+      "parent_loop": "IntegratedRealTimeEvolutionSystem.record_parent_decision"
+    }
+  },
+  "provenance": {
+    "lineage": [
+      {
+        "parent": "Cognitive Agent Team + AD-Grid Experience Graph v3 integration sketch",
+        "note": "M0 tranche — design + module skeleton"
+      }
+    ]
+  }
+}

@@ -1,13 +1,13 @@
 # AgentDrive Assessment — What We Have and What Could Be Next
 
-**Date:** 2026-06-08  
-**Scope:** Golden path, terminal UX (Patterns 1–5), CLI/MCP surface, session observability, skills registry, platform depth (Phases C–F). Verified on Parallax (`git pull`, `pip install -e`, pytest).
+**Date:** 2026-06-18 (updated)  
+**Scope:** Golden path, terminal UX (Patterns 1–5), CLI/MCP surface, session observability, skills registry, multiverse cognition, auto-learning, codebase mirrors, platform depth (Phases C–F).
 
 ---
 
 ## Executive summary
 
-AgentDrive crossed a meaningful product threshold: **a new operator can install, wire MCP, run the memory loop, and use a terminal that feels alive while the agent works.** The UX-PROPOSAL’s five patterns are all shipped at v1. The codebase is in strong shape — **554 tests collected, full suite green** — with live verification on Parallax.
+AgentDrive crossed a meaningful product threshold: **a new operator can install, wire MCP, run the memory loop, and use a terminal that feels alive while the agent works.** The UX-PROPOSAL’s five patterns are all shipped at v1. The codebase is in strong shape — **618 tests collected, full suite green** — with multiverse, auto-learning, and codebase-mirror coverage added since the June 8 snapshot.
 
 What you have now is not a demo shell. It is a **local-first agent memory platform** with a coherent operator surface (CLI + TUI + MCP), observable sessions, and a credible first-run story. The main gap is no longer “does the terminal feel broken?” but “which surface do we deepen next — terminal v2, web, or external adapters?”
 
@@ -43,7 +43,7 @@ What you have now is not a demo shell. It is a **local-first agent memory platfo
 |---------|--------|-------------|
 | **1 — Typed event bus** | Shipped | `events.py`, `session_events.py`, `TranscriptLane`, `MessageStreamLane` |
 | **2 — Keep typing** | Shipped | `chat_loop.py`, double-Enter interrupt, slash bypass |
-| **3 — Pool activity** | Shipped | `PoolActivityLane`, transcript ribbons |
+| **3 — Drive activity** | Shipped | `PoolActivityLane` (Drive DNA ribbons), transcript ribbons |
 | **4 — Sub-agent tree** | Shipped | `SwarmActivityLane`, `turn_telemetry.py`, Grok `SubagentSpawn`/`SubagentDone` |
 | **5 — CLI = slash** | Shipped | `genomes_api`, `skills/`, golden-path ops + REPL |
 
@@ -67,7 +67,7 @@ Every chat session writes `~/.agentdrive/agents/<agent>/sessions/<id>/events.jso
 
 1. Coherent operator story — golden path + TUI gate + MCP + verify
 2. Event-bus architecture — lanes compose; session recording is automatic
-3. Test discipline — 554 tests, per-lane suites, Parallax parity
+3. Test discipline — 618 tests, per-lane + multiverse + auto-learning suites
 4. Unified dispatch — CLI, REPL, slash, skills share handlers
 5. Low TODO debt — ~3 TODOs across ~22k LOC
 
@@ -82,7 +82,8 @@ Every chat session writes `~/.agentdrive/agents/<agent>/sessions/<id>/events.jso
 | Web | Phase 2+ dashboard (Drive/Swarms/DNA pages thin) |
 | Distribution | No PyPI/Docker release path yet |
 | Architecture | In-process bus only; JSON-RPC sidecar not started |
-| Docs | `PROJECT-STATUS.md` (May 2025) stale vs current terminal work |
+| Docs | `PROJECT-STATUS.md` stale; consolidation adds `CAPABILITY_FUNNEL.md` + `ARCHITECTURE.md` |
+| Naming | Pool → Drive drift in code (`pool/` module) — docs reframed, code rename incremental |
 
 ---
 

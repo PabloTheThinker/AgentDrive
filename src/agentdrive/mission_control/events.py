@@ -123,6 +123,19 @@ class GridHealthEvent(MissionEvent):
 
 
 @dataclass
+class MultiverseUpdateEvent(MissionEvent):
+    """Multiverse Cognition session lifecycle for Mission Control Tower."""
+
+    session_id: str = ""
+    phase: str = "spawned"  # spawned | simulated | collapsed | reopened
+    status: str = "open"
+    branch_count: int = 0
+    collapsed_branch_id: str | None = None
+    invariants: list[str] = field(default_factory=list)
+    branches_summary: list[dict[str, Any]] = field(default_factory=list)
+
+
+@dataclass
 class DreamPhaseEvent(MissionEvent):
     """Telemetry for one phased dream maintenance cycle step."""
 
@@ -145,4 +158,5 @@ MissionEventType = (
     | StaticFireEvent
     | GridHealthEvent
     | DreamPhaseEvent
+    | MultiverseUpdateEvent
 )

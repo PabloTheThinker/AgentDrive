@@ -2681,6 +2681,18 @@ class ExperienceGraphRecorder:
             "fabric_reasoning_prompt_template": template,
             "few_shot_good_traces": few_shot,
             "usage_in_parent_flow": "1. Call get_parent_actionable_briefing()  2. (optionally) call this suggest_fabric...  3. Reason over fabric_context_pack + few-shots  4. Call record_parent_decision(..., fabric_reasoning=populated_dict)  --> richer parent_fabric_reasoning_informed_decision TypedEdge + element links + normalized trace artifact created automatically (still inside 6-step).",
+            "external_mcp_parent_flow": (
+                "When YOU are the connected model (Grok/Claude/Codex via MCP) and no local LLM is configured: "
+                "1) experience_graph_get_context_pack  2) this suggest tool  3) reason across multiverse roles "
+                "in your session  4) external_parent_decision(trigger, branches, collapsed_branch_id, "
+                "fabric_reasoning=...) OR experience_graph_record_reasoning for lighter decisions. "
+                "Sets llm_mode=external on the persisted session."
+            ),
+            "reasoning_provider_modes": {
+                "local_llm": "multiverse_parent_decision when ~/.agentdrive/local_models.yaml backend is reachable",
+                "heuristic": "multiverse_parent_decision fallback when no local model (template branches only)",
+                "external_mcp": "external_parent_decision — frontier/chat MCP client is the Parent reasoner",
+            },
             "live_traces_available": len(live_examples) > 0,
         }
 
