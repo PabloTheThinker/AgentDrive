@@ -16,7 +16,8 @@ For model onboarding rules, see **`docs/FOR_AI_MODELS.md`**.
 | **Operations registry** | `src/agentdrive/operations/registry.py` | Canonical MCP/CLI surface + auto-learning |
 | **Experience Graph** | `src/agentdrive/evolution/experience_graph.py` | TypedEdges, cycles, fabric reasoning |
 | **Multiverse cognition** | `src/agentdrive/cognition/` | Parallel timelines → governed collapse |
-| **Skills + learning** | `src/agentdrive/skills/`, `learning/auto_absorb.py` | Distillation, inheritance, auto-absorb |
+| **Memory Bank** | `src/agentdrive/memory/` | Deep AI databank + graph memory triage |
+| **Skills + learning** | `src/agentdrive/skills/`, `learning/auto_absorb.py` | Distillation, inheritance, auto-absorb, fusion |
 | **Codebase mirrors** | `src/agentdrive/codebase/` | Pattern recognition + mimicry |
 | **Golden path** | `golden_path.py` | Install → doctor → MCP → verify |
 | **Event bus + sessions** | `events.py`, `session_events.py` | TUI/CLI observability |
@@ -34,6 +35,7 @@ Historical module names (`pool/`, `AgentDrivePool`) remain in code; product docs
 ├── genomes/                    # Global genome registry
 ├── swarms/<swarm_id>/
 │   ├── drive/                  # Graph + multiverse + meta_evolution
+│   │   └── memory_bank/        # Deep AI memory databank (memories.jsonl)
 │   └── <subagent_id>/pool/     # Isolated sub-agent DNA (optional)
 ├── codebase-patterns/<project>/  # Mirror-neuron observations
 └── agents/<agent>/sessions/    # Chat session event logs

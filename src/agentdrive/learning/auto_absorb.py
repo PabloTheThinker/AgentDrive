@@ -112,6 +112,11 @@ class LearningSession:
     context_pack_pulled: bool = False
     reasoning_recorded: bool = False
     ops: list[tuple[str, str]] = field(default_factory=list)
+    experience_traces: list[str] = field(default_factory=list)
+    distilled_skills: list[str] = field(default_factory=list)
+    referenced_skills: list[str] = field(default_factory=list)
+    pattern_projects: list[str] = field(default_factory=list)
+    fused_skill_name: str | None = None
 
 
 _SESSIONS: dict[tuple[str, str], LearningSession] = {}
@@ -475,6 +480,18 @@ def maybe_absorb_operation_outcome(
     if operation == "experience_graph_record_reasoning":
         session.reasoning_recorded = True
 
+    if operation in _CODEBASE_OPS:
+        project_id = str(kwargs.get("project_id") or result.get("project_id") or "")
+        if project_id and project_id not in session.pattern_projects:
+            session.pattern_projects.append(project_id)
+
+    for skill_key in ("skill_name", "skill"):
+        skill_ref = kwargs.get(skill_key)
+        if isinstance(skill_ref, str) and skill_ref.strip():
+            ref = skill_ref.strip()
+            if ref not in session.referenced_skills:
+                session.referenced_skills.append(ref)
+
     absorbed: dict[str, Any] = {"operation": operation, "swarm_id": swarm_id}
 
     if _should_auto_record_reasoning(operation, session, result):
@@ -482,10 +499,42 @@ def maybe_absorb_operation_outcome(
         if trace:
             absorbed["reasoning_trace"] = trace
             session.reasoning_recorded = True
+            if trace not in session.experience_traces:
+                session.experience_traces.append(trace)
 
     if _should_distill_skill(operation, result):
         skill_info = _distill_and_install_skill(operation, kwargs, result, swarm_id, program_id)
         absorbed["skill"] = skill_info
+        skill_name = skill_info.get("name")
+        if skill_name and skill_name not in session.distilled_skills:
+            session.distilled_skills.append(skill_name)
+
+    trigger = _trigger_text(kwargs, result)
+    if not session.fused_skill_name:
+        try:
+            from agentdrive.learning.skill_fusion import maybe_fuse_session
+
+            fused = maybe_fuse_session(session, trigger=trigger, last_operation=operation)
+            if fused:
+                absorbed["fused_skill"] = fused
+                session.fused_skill_name = fused.get("name")
+        except Exception:
+            logger.debug("skill fusion hook failed for %s", operation, exc_info=True)
+
+    try:
+        from agentdrive.memory.ingest import ingest_from_operation
+
+        mem = ingest_from_operation(
+            operation,
+            kwargs,
+            result,
+            swarm_id=swarm_id,
+            program_id=program_id,
+        )
+        if mem and not mem.get("skipped"):
+            absorbed["memory"] = mem
+    except Exception:
+        logger.debug("memory bank ingest failed for %s", operation, exc_info=True)
 
     if len(absorbed) <= 2:
         return None

@@ -6,6 +6,31 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Changed — Memory Bank native naming (AgentDrive-native, not ported metaphors)
+
+- **Renamed modules:** `scope.py`, `ranking.py`, `anchor.py`, `relations.py`, `dialogue_import.py` replace palace/layers/hybrid_search/temporal_kg/transcript_miner.
+- **Renamed fields:** `vault` / `topic` / `origin_path` / `shard_index` / `preserves_source` on `MemoryEntry` (legacy `wing`/`room`/etc. migrated on read).
+- **Renamed ops:** `memory_bank_anchor`, `memory_bank_import_dialogue`, `memory_relation_record`, `memory_relation_query`, `memory_relation_expire`.
+- **Removed:** `docs/MEMPALACE_INTEGRATION.md`, `tests/test_mempalace_integration.py`.
+- **Docs/tests:** `docs/MEMORY_BANK.md` rewritten; **tests:** `tests/test_memory_vault.py`.
+
+### Added — Memory Bank (deep AI knowledge databank)
+
+- **`agentdrive.memory`** — per-swarm append-only `memory_bank/memories.jsonl`; kinds: fact, insight, decision, pattern, born_skill, learning, episode, etc.
+- **Auto-ingest** from `auto_absorb`, skill fusion, `learnings_log` (`AGENTDRIVE_AUTO_MEMORY_BANK=1` default).
+- **MCP/CLI ops:** `memory_bank_store`, `memory_bank_recall`, `memory_bank_search`, `memory_bank_list`, `memory_bank_briefing`, `memory_bank_deep_briefing`, `memory_bank_stats`.
+- **`memory_bank_deep_briefing`** — unified Experience Graph fabric pack + Memory Bank in one call.
+- **Docs:** `docs/MEMORY_BANK.md`; funnel + `FOR_AI_MODELS.md` updated.
+- **Tests:** `tests/test_memory_bank.py`.
+
+### Added — Born skills (experience + skills + patterns fusion)
+
+- **`learning/skill_fusion.py`** — merges Experience Graph traces, distilled/inherited skills, and codebase pattern signals into a completely new `fused-*` skill (not a copy of any parent).
+- **Auto-fuse** in `auto_absorb` when a session spans ≥2 axes (`AGENTDRIVE_AUTO_FUSE_SKILLS=1` default); `auto_learning.fused_skill` on results.
+- **MCP/CLI op:** `synthesize_fused_skill(trigger, source_skills, pattern_projects, experience_traces, ...)`.
+- **Docs:** `CAPABILITY_FUNNEL.md`, `SKILLS-LIBRARY.md`, `FOR_AI_MODELS.md` — born-skill tier documented.
+- **Tests:** `tests/test_skill_fusion.py`.
+
 ### Changed — Consolidation sprint (architectural audit)
 
 - **Archived** 8× `STABILIZATION_SUBAGENT_REPORT-*.md` + stale `BUILD_STATUS.md` / `MISSION_PLAN.md` → `archive/development-history/`.

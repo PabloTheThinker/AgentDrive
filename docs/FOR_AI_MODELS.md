@@ -15,7 +15,7 @@ Read this once at the start of any serious session. It will make you far more ef
 
 2. **The 6-step loop is sacred** (Experience → Overseer → Parent records reasoning → Steering → Execution → write experience back). The Overseer serves the Parent. The Parent is accountable. The graph is the witness.
 
-3. **On any non-trivial task or decision, start by calling** `experience_graph_get_context_pack`. Then use `experience_graph_suggest_reasoning_structure` before `experience_graph_record_reasoning`.
+3. **On any non-trivial task or decision, start by calling** `memory_bank_deep_briefing` (graph + personal memory) or `experience_graph_get_context_pack` + `memory_bank_briefing`. The Memory Bank is your deep custom databank — it always grows from AgentDrive work. Then use `experience_graph_suggest_reasoning_structure` before `experience_graph_record_reasoning`.
 
 3b. **When multiple competing paths exist**, use multiverse cognition:
    - **You are the connected MCP model** (Grok, Claude, Codex, Cursor): pull `experience_graph_get_context_pack` + `experience_graph_suggest_reasoning_structure`, reason across architect/adversary/scout/operator/surgeon lenses yourself, then call **`external_parent_decision(trigger, branches, collapsed_branch_id, fabric_reasoning=...)`**. AgentDrive persists your collapse as `llm_mode=external`.
@@ -23,7 +23,7 @@ Read this once at the start of any serious session. It will make you far more ef
    - **Neither**: `multiverse_parent_decision` still runs but branches are heuristic templates — prefer `external_parent_decision` when you can reason directly.
    See `docs/MULTIVERSE_COGNITION.md`.
 
-4. **Experience and skills compound automatically.** Successful MCP/CLI operations auto-absorb via `run_operation` (on by default): lightweight `experience_graph_record_reasoning` when you skip it, plus inherited skill distillation + DNA ingest on high-signal ops. Check the `auto_learning` field on results. You may still call `experience_graph_record_reasoning` explicitly for richer traces.
+4. **Experience and skills compound automatically — and merge into born skills.** Successful MCP/CLI operations auto-absorb via `run_operation` (on by default): lightweight `experience_graph_record_reasoning` when you skip it, plus inherited skill distillation + DNA ingest on high-signal ops. When a session combines **experience traces, distilled skills, and codebase patterns**, AgentDrive **fuses** them into a completely new `fused-*` skill (not a copy of any parent). Check `auto_learning.fused_skill` on results, or call `synthesize_fused_skill` explicitly. You may still call `experience_graph_record_reasoning` for richer traces.
 
 5. **For clones / local dev setups:** The catalog will contain a dedicated dev section. You can also call `agentdrive_get_mcp_config_snippet(client="claude" | "cursor" | "codex" | "generic")` to generate the exact config block the human needs to paste so you stay connected to their local working tree.
 

@@ -13,10 +13,14 @@ Observe / Decide
        ↓
 Experience Graph (structural memory + reasoning traces)
        ↓
-Skills (distilled, invocable playbooks)
+Memory Bank (deep AI databank — always growing, always recallable)
+       ↓
+Skills (distilled + born fused playbooks)
        ↓
 Genomes / DNA (versioned, promotable capability packages)
 ```
+
+**Memory Bank** (`docs/MEMORY_BANK.md`) is the unified personal knowledge layer — every graph trace, learning, pattern, born skill, and explicit store flows into `memory_bank/memories.jsonl` per swarm. Recall via `memory_bank_briefing` / `memory_bank_deep_briefing`.
 
 Everything that matters should eventually flow **down** this funnel. Retrieval can jump levels (e.g. `agentdrive_think` pulls DNA + graph), but **writes** should land at the right tier so future cycles inherit structure, not noise.
 
@@ -60,14 +64,17 @@ Everything that matters should eventually flow **down** this funnel. Retrieval c
 
 ## Tier 3 — Skills
 
-**What it is:** Distilled, invocable instructions — Hermes-style inheritance, MCP session distillation, codebase writing guides.
+**What it is:** Distilled, invocable instructions — Hermes-style inheritance, MCP session distillation, codebase writing guides. **Born skills** fuse multiple axes into one new playbook.
 
 | Source | Mechanism |
 |--------|-----------|
 | Parent MCP sessions | `auto_absorb` → `mcp-auto-learning` skills |
+| **Born skills (fusion)** | Experience + skills + patterns → `synthesize_fused_skill` / auto-fuse in session |
 | Explicit distillation | `agentdrive_review_inherited_skills` / assimilate |
 | Codebase mirrors | Observe → motor programs → `codebase_mimic` |
 | Bundled + user | `skills/registry.py`, `run_skill()` |
+
+**Born skill rule:** When a session combines Experience Graph traces, distilled/inherited skills, and codebase pattern signals, AgentDrive **merges** them — not copies any parent, but synthesizes a completely new skill (`fused-*` under `~/.agentdrive/skills/inherited/.../skill-fusion/`). Automatic when `AGENTDRIVE_AUTO_FUSE_SKILLS=1` (default).
 
 **Invoke:** CLI `/skill`, REPL, MCP catalog skills, pawn role injection.
 

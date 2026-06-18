@@ -101,10 +101,11 @@ Every successful `run_operation` call (MCP tools + CLI) runs the auto-learning h
 2. **Auto reasoning** — high-signal mutating ops get a lightweight fabric trace if you did not call `experience_graph_record_reasoning`.
 3. **Skill distillation** — playbooks install under `~/.agentdrive/skills/inherited/<swarm>/mcp-auto-learning/`.
 4. **DNA ingest** — high-signal skills (external/multiverse parent, think, record_outcome) promote + ingest when `AGENTDRIVE_AUTO_ASSIMILATE_SKILLS=1`.
+5. **Born skills (fusion)** — when a session merges **experience + skills + patterns** (≥2 axes), AgentDrive births a completely new `fused-*` skill — not a copy of any parent, but a synthesis of the session's lived work. Check `auto_learning.fused_skill` on results. Explicit: `synthesize_fused_skill` MCP op.
 
 Results include `auto_learning` when something was absorbed. Sub-agent `agentdrive-skill` handoffs still merge through the same inherited path.
 
-Disable: `AGENTDRIVE_AUTO_LEARN=0`, or finer `AGENTDRIVE_AUTO_RECORD_REASONING` / `AGENTDRIVE_AUTO_DISTILL_SKILLS`.
+Disable: `AGENTDRIVE_AUTO_LEARN=0`, or finer `AGENTDRIVE_AUTO_RECORD_REASONING` / `AGENTDRIVE_AUTO_DISTILL_SKILLS` / `AGENTDRIVE_AUTO_FUSE_SKILLS`.
 
 ## Inherited skill curation
 

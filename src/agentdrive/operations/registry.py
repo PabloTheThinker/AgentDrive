@@ -862,7 +862,17 @@ def _handler_learnings_log(**kwargs: Any) -> dict[str, Any]:
 
     store = LearningsStore(slug=kwargs.get("slug"))
     record = store.log(entry)
-    return _success(operation="learnings_log", slug=store.slug, record=record)
+    result = _success(operation="learnings_log", slug=store.slug, record=record)
+    try:
+        from agentdrive.memory.ingest import ingest_from_learning
+
+        effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+        mem = ingest_from_learning(record, swarm_id=effective)
+        if mem:
+            result["memory"] = mem
+    except Exception:
+        pass
+    return result
 
 
 def _handler_learnings_list(**kwargs: Any) -> dict[str, Any]:
@@ -1275,6 +1285,116 @@ OPERATIONS: list[OperationSpec] = [
         when_to_use="See which writing patterns resonate across all projects AD has observed (like shared mirror-neuron firing).",
         mcp_tool="codebase_mirror_resonance",
     ),
+    OperationSpec(
+        name="synthesize_fused_skill",
+        description="Birth a new skill by fusing experience traces, parent skills, and codebase patterns",
+        category="skills",
+        read_only=False,
+        when_to_use=(
+            "When a session combined Experience Graph work, distilled/inherited skills, "
+            "and repo patterns — merge them into one born playbook (not a copy of any parent)."
+        ),
+        examples=[
+            'synthesize_fused_skill(trigger="Ship gateway helper", source_skills=["auto-think-x"], pattern_projects=["interegy-web"])',
+        ],
+        mcp_tool="synthesize_fused_skill",
+    ),
+    OperationSpec(
+        name="memory_bank_store",
+        description="Store a new memory in the AI's deep Memory Bank databank",
+        category="memory",
+        read_only=False,
+        when_to_use="When the AI or user wants to persist knowledge that should compound across all future sessions.",
+        examples=[
+            'memory_bank_store(kind="fact", title="Gateway auth", content="Uses X-Ren-API-Key not bootstrap key")',
+        ],
+        mcp_tool="memory_bank_store",
+    ),
+    OperationSpec(
+        name="memory_bank_recall",
+        description="Recall one memory by id from the Memory Bank",
+        category="memory",
+        read_only=True,
+        mcp_tool="memory_bank_recall",
+    ),
+    OperationSpec(
+        name="memory_bank_search",
+        description="BM25 + lexical ranked search over Memory Bank",
+        category="memory",
+        read_only=True,
+        when_to_use="Before acting on a task — scoped by vault/topic when provided.",
+        mcp_tool="memory_bank_search",
+    ),
+    OperationSpec(
+        name="memory_bank_list",
+        description="List recent memories in the Memory Bank",
+        category="memory",
+        read_only=True,
+        mcp_tool="memory_bank_list",
+    ),
+    OperationSpec(
+        name="memory_bank_briefing",
+        description="Dense Memory Bank briefing for session grounding",
+        category="memory",
+        read_only=True,
+        when_to_use="Start of session — your custom AI memory databank, always growing from AgentDrive work.",
+        mcp_tool="memory_bank_briefing",
+    ),
+    OperationSpec(
+        name="memory_bank_deep_briefing",
+        description="Unified briefing: Experience Graph fabric pack + Memory Bank",
+        category="memory",
+        read_only=True,
+        when_to_use="Maximum grounding — structural graph memory + deep personal memory bank in one call.",
+        mcp_tool="memory_bank_deep_briefing",
+    ),
+    OperationSpec(
+        name="memory_bank_stats",
+        description="Memory Bank statistics (counts by kind, sources, path)",
+        category="memory",
+        read_only=True,
+        mcp_tool="memory_bank_stats",
+    ),
+    OperationSpec(
+        name="memory_bank_anchor",
+        description="Session anchor: agent brief + essential memories + optional scoped recall",
+        category="memory",
+        read_only=True,
+        when_to_use="Session start — ~600-900 token grounding from ~/.agentdrive/identity.txt + top memories.",
+        mcp_tool="memory_bank_anchor",
+    ),
+    OperationSpec(
+        name="memory_bank_import_dialogue",
+        description="Import JSONL/text dialogue transcripts into full-text memory shards",
+        category="memory",
+        read_only=False,
+        when_to_use="Backfill Claude/Cursor/Grok session JSONL into the memory bank without summarization.",
+        examples=[
+            'memory_bank_import_dialogue(path="~/.claude/projects/", vault="claude-sessions")',
+        ],
+        mcp_tool="memory_bank_import_dialogue",
+    ),
+    OperationSpec(
+        name="memory_relation_record",
+        description="Record a time-bounded subject–predicate–object relation in the swarm graph",
+        category="memory",
+        read_only=False,
+        mcp_tool="memory_relation_record",
+    ),
+    OperationSpec(
+        name="memory_relation_query",
+        description="Query relation graph by entity (optional as_of date)",
+        category="memory",
+        read_only=True,
+        mcp_tool="memory_relation_query",
+    ),
+    OperationSpec(
+        name="memory_relation_expire",
+        description="Expire an active relation (set valid_to)",
+        category="memory",
+        read_only=False,
+        mcp_tool="memory_relation_expire",
+    ),
 ]
 
 def _handler_codebase_register_project(**kwargs: Any) -> dict[str, Any]:
@@ -1440,6 +1560,309 @@ def _handler_codebase_list_projects(**kwargs: Any) -> dict[str, Any]:
     return _success(operation="codebase_list_projects", projects=projects, count=len(projects))
 
 
+def _memory_bank_store_handler(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.memory.store import MemoryBankStore
+
+    kind = str(kwargs.get("kind") or "insight")
+    title = str(kwargs.get("title") or "")
+    content = str(kwargs.get("content") or kwargs.get("text") or "")
+    if not title or not content:
+        return {
+            "success": False,
+            "error": "title and content are required",
+            "operation": "memory_bank_store",
+        }
+    dry_run = bool(kwargs.get("dry_run", False))
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    if dry_run:
+        return _dry_plan("memory_bank_store", swarm_id=effective, kind=kind, title=title[:80])
+
+    store = MemoryBankStore(effective)
+    entry = store.store(
+        kind=kind,
+        title=title,
+        content=content,
+        confidence=float(kwargs.get("confidence", 0.8)),
+        source=str(kwargs.get("source") or "user"),
+        program_id=str(kwargs.get("program_id") or ""),
+        tags=list(kwargs.get("tags") or []),
+        links=list(kwargs.get("links") or []),
+    )
+    return _success(
+        operation="memory_bank_store",
+        swarm_id=effective,
+        memory=entry.to_dict(),
+    )
+
+
+def _memory_bank_recall_handler(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.memory.store import MemoryBankStore
+
+    memory_id = str(kwargs.get("memory_id") or kwargs.get("id") or "")
+    if not memory_id:
+        return {
+            "success": False,
+            "error": "memory_id is required",
+            "operation": "memory_bank_recall",
+        }
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    entry = MemoryBankStore(effective).recall(memory_id)
+    if entry is None:
+        return {
+            "success": False,
+            "error": f"memory not found: {memory_id}",
+            "operation": "memory_bank_recall",
+        }
+    return _success(operation="memory_bank_recall", swarm_id=effective, memory=entry.to_dict())
+
+
+def _memory_scope_filters(kwargs: dict[str, Any]) -> tuple[str | None, str | None]:
+    vault = kwargs.get("vault") or kwargs.get("wing")
+    topic = kwargs.get("topic") or kwargs.get("room")
+    return (
+        str(vault) if vault else None,
+        str(topic) if topic else None,
+    )
+
+
+def _memory_bank_search_handler(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.memory.store import MemoryBankStore
+
+    query = str(kwargs.get("query") or kwargs.get("text") or kwargs.get("question") or "")
+    limit = int(kwargs.get("limit", 10))
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    store = MemoryBankStore(effective)
+    vault, topic = _memory_scope_filters(kwargs)
+    memories = store.search(
+        query,
+        limit=limit,
+        kind=kwargs.get("kind"),
+        program_id=kwargs.get("program_id"),
+        vault=vault,
+        topic=topic,
+        ranked=not bool(kwargs.get("lexical_only", False)),
+    )
+    return _success(
+        operation="memory_bank_search",
+        swarm_id=effective,
+        query=query,
+        count=len(memories),
+        memories=[m.to_dict() for m in memories],
+    )
+
+
+def _memory_bank_list_handler(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.memory.store import MemoryBankStore
+
+    limit = int(kwargs.get("limit", 20))
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    store = MemoryBankStore(effective)
+    memories = store.list_recent(limit=limit, kind=kwargs.get("kind"))
+    return _success(
+        operation="memory_bank_list",
+        swarm_id=effective,
+        count=len(memories),
+        memories=[m.to_dict() for m in memories],
+    )
+
+
+def _memory_bank_briefing_handler(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.memory.briefing import build_memory_briefing
+
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    pack = build_memory_briefing(
+        effective,
+        query=str(kwargs.get("query") or kwargs.get("text") or ""),
+        limit=int(kwargs.get("limit", 12)),
+        program_id=kwargs.get("program_id"),
+    )
+    return _success(operation="memory_bank_briefing", swarm_id=effective, **pack)
+
+
+def _memory_bank_deep_briefing_handler(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.memory.briefing import build_deep_briefing
+
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    pack = build_deep_briefing(
+        effective,
+        query=str(kwargs.get("query") or kwargs.get("text") or ""),
+        reasoning_style=str(kwargs.get("reasoning_style", "balanced")),
+        lookback_days=int(kwargs.get("lookback_days", 7)),
+        memory_limit=int(kwargs.get("memory_limit", 10)),
+        max_tokens=int(kwargs.get("max_tokens", 1800)),
+    )
+    return _success(operation="memory_bank_deep_briefing", swarm_id=effective, **pack)
+
+
+def _memory_bank_stats_handler(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.memory.store import MemoryBankStore
+
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    return _success(
+        operation="memory_bank_stats",
+        swarm_id=effective,
+        stats=MemoryBankStore(effective).stats(),
+    )
+
+
+def _memory_bank_anchor_handler(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.memory.anchor import build_session_anchor
+
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    vault, _ = _memory_scope_filters(kwargs)
+    pack = build_session_anchor(
+        effective,
+        vault=vault,
+        query=str(kwargs.get("query") or kwargs.get("text") or ""),
+    )
+    payload = dict(pack)
+    payload.pop("swarm_id", None)
+    return _success(operation="memory_bank_anchor", swarm_id=effective, **payload)
+
+
+def _memory_bank_import_dialogue_handler(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.memory.dialogue_import import import_dialogue_directory, import_dialogue_file
+
+    path = str(kwargs.get("path") or kwargs.get("directory") or "")
+    if not path:
+        return {
+            "success": False,
+            "error": "path is required",
+            "operation": "memory_bank_import_dialogue",
+        }
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    resolved = Path(path).expanduser()
+    vault, _ = _memory_scope_filters(kwargs)
+    vault_name = str(vault or "")
+    if resolved.is_file():
+        result = import_dialogue_file(resolved, swarm_id=effective, vault=vault_name)
+    else:
+        result = import_dialogue_directory(
+            resolved,
+            swarm_id=effective,
+            vault=vault_name,
+            pattern=str(kwargs.get("pattern") or "*.jsonl"),
+        )
+    return _success(operation="memory_bank_import_dialogue", swarm_id=effective, result=result)
+
+
+def _memory_relation_record_handler(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.memory.relations import MemoryRelationGraph
+
+    subject = str(kwargs.get("subject") or "")
+    predicate = str(kwargs.get("predicate") or kwargs.get("relation") or "")
+    obj = str(kwargs.get("object") or kwargs.get("obj") or "")
+    if not subject or not predicate or not obj:
+        return {
+            "success": False,
+            "error": "subject, predicate, and object are required",
+            "operation": "memory_relation_record",
+        }
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    graph = MemoryRelationGraph(effective)
+    relation = graph.record(
+        subject,
+        predicate,
+        obj,
+        valid_from=kwargs.get("valid_from"),
+        valid_to=kwargs.get("valid_to"),
+        memory_id=kwargs.get("memory_id"),
+    )
+    return _success(
+        operation="memory_relation_record",
+        swarm_id=effective,
+        relation=relation.to_dict(),
+    )
+
+
+def _memory_relation_query_handler(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.memory.relations import MemoryRelationGraph
+
+    entity = str(kwargs.get("entity") or kwargs.get("subject") or "")
+    if not entity:
+        return {
+            "success": False,
+            "error": "entity is required",
+            "operation": "memory_relation_query",
+        }
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    relations = MemoryRelationGraph(effective).query(
+        entity,
+        as_of=kwargs.get("as_of"),
+        limit=int(kwargs.get("limit", 50)),
+    )
+    return _success(
+        operation="memory_relation_query",
+        swarm_id=effective,
+        entity=entity,
+        count=len(relations),
+        relations=[relation.to_dict() for relation in relations],
+    )
+
+
+def _memory_relation_expire_handler(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.memory.relations import MemoryRelationGraph
+
+    subject = str(kwargs.get("subject") or "")
+    predicate = str(kwargs.get("predicate") or "")
+    obj = str(kwargs.get("object") or "")
+    if not subject or not predicate or not obj:
+        return {
+            "success": False,
+            "error": "subject, predicate, and object are required",
+            "operation": "memory_relation_expire",
+        }
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    updated = MemoryRelationGraph(effective).expire(
+        subject, predicate, obj, ended=kwargs.get("ended")
+    )
+    return _success(
+        operation="memory_relation_expire",
+        swarm_id=effective,
+        updated=updated,
+    )
+
+
+def _handler_synthesize_fused_skill(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.learning.skill_fusion import synthesize_from_inputs
+
+    trigger = str(kwargs.get("trigger") or kwargs.get("task") or kwargs.get("text") or "")
+    if not trigger:
+        return {
+            "success": False,
+            "error": "trigger is required",
+            "operation": "synthesize_fused_skill",
+        }
+    dry_run = bool(kwargs.get("dry_run", False))
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    if dry_run:
+        return _dry_plan(
+            "synthesize_fused_skill",
+            swarm_id=effective,
+            trigger=trigger[:200],
+        )
+
+    try:
+        fused = synthesize_from_inputs(
+            trigger=trigger,
+            swarm_id=effective,
+            program_id=str(kwargs.get("program_id") or "skill-fusion"),
+            operations=list(kwargs.get("operations") or []),
+            experience_traces=list(kwargs.get("experience_traces") or []),
+            source_skills=list(kwargs.get("source_skills") or kwargs.get("skills") or []),
+            pattern_projects=list(kwargs.get("pattern_projects") or kwargs.get("projects") or []),
+            promote=bool(kwargs.get("promote", False)),
+        )
+    except ValueError as exc:
+        return {
+            "success": False,
+            "error": str(exc),
+            "operation": "synthesize_fused_skill",
+        }
+
+    return _success(operation="synthesize_fused_skill", swarm_id=effective, fused_skill=fused)
+
+
 _HANDLERS: dict[str, OperationHandler] = {
     "think": _handler_think,
     "pool_query": _handler_pool_query,
@@ -1481,6 +1904,19 @@ _HANDLERS: dict[str, OperationHandler] = {
     "codebase_mimic": _handler_codebase_mimic,
     "codebase_transform_style": _handler_codebase_transform_style,
     "codebase_mirror_resonance": _handler_codebase_mirror_resonance,
+    "synthesize_fused_skill": _handler_synthesize_fused_skill,
+    "memory_bank_store": _memory_bank_store_handler,
+    "memory_bank_recall": _memory_bank_recall_handler,
+    "memory_bank_search": _memory_bank_search_handler,
+    "memory_bank_list": _memory_bank_list_handler,
+    "memory_bank_briefing": _memory_bank_briefing_handler,
+    "memory_bank_deep_briefing": _memory_bank_deep_briefing_handler,
+    "memory_bank_stats": _memory_bank_stats_handler,
+    "memory_bank_anchor": _memory_bank_anchor_handler,
+    "memory_bank_import_dialogue": _memory_bank_import_dialogue_handler,
+    "memory_relation_record": _memory_relation_record_handler,
+    "memory_relation_query": _memory_relation_query_handler,
+    "memory_relation_expire": _memory_relation_expire_handler,
 }
 
 _OPERATIONS_BY_NAME: dict[str, OperationSpec] = {op.name: op for op in OPERATIONS}
