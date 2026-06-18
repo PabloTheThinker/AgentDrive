@@ -76,15 +76,7 @@ class MemoryEntry:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> MemoryEntry:
-        vault = str(data.get("vault") or data.get("wing") or "")
-        topic = str(data.get("topic") or data.get("room") or "")
-        origin_path = str(data.get("origin_path") or data.get("source_file") or "")
         shard_index = data.get("shard_index")
-        if shard_index is None:
-            shard_index = data.get("chunk_index")
-        preserves_source = data.get("preserves_source")
-        if preserves_source is None:
-            preserves_source = data.get("verbatim", True)
         return cls(
             memory_id=str(data.get("memory_id") or ""),
             kind=str(data.get("kind") or "insight"),
@@ -101,11 +93,11 @@ class MemoryEntry:
             access_count=int(data.get("access_count") or 0),
             active=bool(data.get("active", True)),
             supersedes=data.get("supersedes"),
-            vault=vault,
-            topic=topic,
-            origin_path=origin_path,
-            shard_index=shard_index,
-            preserves_source=bool(preserves_source),
+            vault=str(data.get("vault") or ""),
+            topic=str(data.get("topic") or ""),
+            origin_path=str(data.get("origin_path") or ""),
+            shard_index=int(shard_index) if shard_index is not None else None,
+            preserves_source=bool(data.get("preserves_source", True)),
         )
 
 

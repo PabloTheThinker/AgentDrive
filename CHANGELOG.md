@@ -6,10 +6,15 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Removed — Memory Bank legacy field aliases
+
+- **`MemoryEntry.from_dict`** — no longer reads `wing`/`room`/`source_file`/`chunk_index`/`verbatim`; canonical fields only.
+- **Ops** — `memory_bank_search` / `memory_bank_anchor` / `memory_bank_import_dialogue` accept `vault`/`topic` only (not `wing`/`room`).
+
 ### Changed — Memory Bank native naming (AgentDrive-native, not ported metaphors)
 
 - **Renamed modules:** `scope.py`, `ranking.py`, `anchor.py`, `relations.py`, `dialogue_import.py` replace palace/layers/hybrid_search/temporal_kg/transcript_miner.
-- **Renamed fields:** `vault` / `topic` / `origin_path` / `shard_index` / `preserves_source` on `MemoryEntry` (legacy `wing`/`room`/etc. migrated on read).
+- **Renamed fields:** `vault` / `topic` / `origin_path` / `shard_index` / `preserves_source` on `MemoryEntry` (canonical only — no legacy field aliases).
 - **Renamed ops:** `memory_bank_anchor`, `memory_bank_import_dialogue`, `memory_relation_record`, `memory_relation_query`, `memory_relation_expire`.
 - **Removed:** `docs/MEMPALACE_INTEGRATION.md`, `tests/test_mempalace_integration.py`.
 - **Docs/tests:** `docs/MEMORY_BANK.md` rewritten; **tests:** `tests/test_memory_vault.py`.

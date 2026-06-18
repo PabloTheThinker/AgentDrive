@@ -56,8 +56,6 @@ AgentDrive organizes memories by **vault** (workspace/project) and **topic** (th
 | `shard_index` | Position when long text is split into shards |
 | `preserves_source` | `true` when content is stored without summarization |
 
-Legacy records using `wing`/`room`/`source_file`/`chunk_index`/`verbatim` are migrated on read.
-
 ---
 
 ## Search and ranking

@@ -1617,8 +1617,8 @@ def _memory_bank_recall_handler(**kwargs: Any) -> dict[str, Any]:
 
 
 def _memory_scope_filters(kwargs: dict[str, Any]) -> tuple[str | None, str | None]:
-    vault = kwargs.get("vault") or kwargs.get("wing")
-    topic = kwargs.get("topic") or kwargs.get("room")
+    vault = kwargs.get("vault")
+    topic = kwargs.get("topic")
     return (
         str(vault) if vault else None,
         str(topic) if topic else None,

@@ -25,7 +25,7 @@ def swarm_id(isolated_agentdrive_home):
     return "memory-vault-test-swarm"
 
 
-def test_memory_entry_migrates_legacy_fields() -> None:
+def test_memory_entry_ignores_legacy_fields() -> None:
     entry = MemoryEntry.from_dict(
         {
             "memory_id": "mem-1",
@@ -39,11 +39,11 @@ def test_memory_entry_migrates_legacy_fields() -> None:
             "verbatim": False,
         }
     )
-    assert entry.vault == "old-vault"
-    assert entry.topic == "old-topic"
-    assert entry.origin_path == "/tmp/session.jsonl"
-    assert entry.shard_index == 2
-    assert entry.preserves_source is False
+    assert entry.vault == ""
+    assert entry.topic == ""
+    assert entry.origin_path == ""
+    assert entry.shard_index is None
+    assert entry.preserves_source is True
 
 
 def test_search_scoped_by_vault_and_topic(swarm_id) -> None:
