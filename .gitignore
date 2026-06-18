@@ -157,3 +157,4 @@ Thumbs.db
 node_modules/
 site/.next/
 site/out/
+.venv-ci/
