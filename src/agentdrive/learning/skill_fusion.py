@@ -9,7 +9,6 @@ session's lived AgentDrive work.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 import os
@@ -106,18 +105,13 @@ def lineage_from_session(session: LearningSession, trigger: str) -> FusionLineag
 
 
 def _fused_skill_name(lineage: FusionLineage) -> str:
-    seed = "|".join(
-        [
-            lineage.trigger,
-            lineage.swarm_id,
-            ",".join(sorted(lineage.source_skills)[:4]),
-            ",".join(sorted(lineage.pattern_projects)[:2]),
-        ]
+    from agentdrive.learning.skill_naming import fused_skill_name
+
+    return fused_skill_name(
+        trigger=lineage.trigger,
+        pattern_projects=lineage.pattern_projects,
+        axes=lineage.axes_present(),
     )
-    digest = hashlib.sha256(seed.encode()).hexdigest()[:10]
-    trig = _slugify(lineage.trigger, max_len=28)
-    name = f"fused-{trig}-{digest}"
-    return name[:_MAX_SKILL_NAME]
 
 
 def _load_skill_excerpts(skill_names: list[str], *, limit: int = 3) -> list[dict[str, str]]:

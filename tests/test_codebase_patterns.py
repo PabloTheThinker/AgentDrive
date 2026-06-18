@@ -110,7 +110,7 @@ def test_run_operation_observe_with_auto_learning(
     assert result.get("success") is True
     assert result.get("auto_learning") is not None
     skill = (result.get("auto_learning") or {}).get("skill") or {}
-    assert skill.get("name", "").startswith("auto-codebase-observe-file")
+    assert skill.get("name", "").startswith(f"learned-{project_id}-observe")
 
 
 def test_register_and_list_via_operations(sample_project: tuple[str, Path]) -> None:

@@ -99,7 +99,9 @@ Every successful `run_operation` call (MCP tools + CLI) runs the auto-learning h
 
 1. **Session tracking** — context pack / think ops mark the session grounded.
 2. **Auto reasoning** — high-signal mutating ops get a lightweight fabric trace if you did not call `experience_graph_record_reasoning`.
-3. **Skill distillation** — playbooks install under `~/.agentdrive/skills/inherited/<swarm>/mcp-auto-learning/`.
+3. **Skill distillation** — playbooks install under `~/.agentdrive/skills/inherited/<swarm>/mcp-auto-learning/` with **descriptive slugs**:
+   - `learned-{project}-{verb}-{focus}` — e.g. `learned-openmangos-mimic-growth-merge-briefing`
+   - `fused-{project}-{axes}` — e.g. `fused-openmangos-experience-patterns-skills`
 4. **DNA ingest** — high-signal skills (external/multiverse parent, think, record_outcome) promote + ingest when `AGENTDRIVE_AUTO_ASSIMILATE_SKILLS=1`.
 5. **Born skills (fusion)** — when a session merges **experience + skills + patterns** (≥2 axes), AgentDrive births a completely new `fused-*` skill — not a copy of any parent, but a synthesis of the session's lived work. Check `auto_learning.fused_skill` on results. Explicit: `synthesize_fused_skill` MCP op.
 

@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Changed — Descriptive learned skill names
+
+- **`learning/skill_naming.py`** — human-readable slugs for auto-distilled and born skills.
+- **Learned:** `learned-{project}-{verb}-{focus}` (e.g. `learned-openmangos-mimic-growth-merge-briefing`).
+- **Fused:** `fused-{project}-{axes}` (e.g. `fused-openmangos-experience-patterns-skills`).
+- Replaces opaque `auto-*` / hash-suffixed `fused-session-*` names from MCP auto-learning.
+- **Tests:** `tests/test_skill_naming.py`.
+
 ### Added — Growth merge (experience + pattern recognition + memory)
 
 - **`learning/growth_merge.py`** — recognizes cross-surface patterns (memory overlap, structural similarities, codebase frameworks) and merges session growth into compound memories (`vault=growth`, `topic=merge`) + relations.

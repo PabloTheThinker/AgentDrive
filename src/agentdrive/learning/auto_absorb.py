@@ -16,7 +16,6 @@ Finer control: ``AGENTDRIVE_AUTO_RECORD_REASONING``, ``AGENTDRIVE_AUTO_DISTILL_S
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import os
 import re
@@ -169,16 +168,6 @@ def _slugify(text: str, *, max_len: int = 36) -> str:
     return slug or "session"
 
 
-def _skill_name(operation: str, trigger: str, *, suffix: str = "") -> str:
-    op_part = _slugify(operation.replace("_", "-"), max_len=28)
-    trig_hash = hashlib.sha256(trigger.encode()).hexdigest()[:8] if trigger else "generic"
-    trig_part = _slugify(trigger, max_len=24) if trigger else trig_hash
-    if suffix:
-        trig_part = _slugify(suffix, max_len=20) or trig_part
-    name = f"auto-{op_part}-{trig_part}"[:_MAX_SKILL_NAME]
-    return name or f"auto-{op_part}"[:_MAX_SKILL_NAME]
-
-
 _MAX_SKILL_NAME = 64
 
 
@@ -287,8 +276,17 @@ def _build_skill_body(
     kwargs: dict[str, Any],
     result: dict[str, Any],
 ) -> tuple[str, str]:
+    from agentdrive.learning.skill_naming import learned_skill_title
+
     trigger = _trigger_text(kwargs, result)
-    title = trigger[:80] if trigger else f"AgentDrive {operation.replace('_', ' ')}"
+    project_id = str(kwargs.get("project_id") or result.get("project_id") or "")
+    intent = str(kwargs.get("intent") or kwargs.get("task") or "")
+    title = learned_skill_title(
+        operation,
+        trigger=trigger,
+        project_id=project_id,
+        intent=intent,
+    )
     lines = [
         f"# {title}",
         "",
@@ -379,13 +377,22 @@ def _distill_and_install_skill(
     swarm_id: str,
     program_id: str,
 ) -> dict[str, Any]:
+    from agentdrive.learning.skill_naming import learned_skill_name
     from agentdrive.skills.registry import install_inherited_skill
 
     trigger = _trigger_text(kwargs, result)
-    suffix = str(kwargs.get("project_id") or result.get("project_id") or "")
-    name = _skill_name(operation, trigger, suffix=suffix)
+    project_id = str(kwargs.get("project_id") or result.get("project_id") or "")
+    intent = str(kwargs.get("intent") or kwargs.get("task") or "")
+    name = learned_skill_name(
+        operation,
+        trigger=trigger,
+        project_id=project_id,
+        intent=intent,
+    )
     description, body = _build_skill_body(operation, kwargs, result)
-    tags = ["auto-learned", "mcp-parent", operation.replace("_", "-")]
+    tags = ["learned", "auto-learned", "mcp-parent", operation.replace("_", "-")]
+    if project_id:
+        tags.append(project_id)
     if program_id and program_id != _MCP_SUBAGENT_ID:
         tags.append(program_id)
 

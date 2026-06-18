@@ -79,7 +79,7 @@ def test_external_parent_decision_auto_distills_skill(swarm_id) -> None:
     auto = result.get("auto_learning") or {}
     assert auto.get("operation") == "external_parent_decision"
     skill = auto.get("skill") or {}
-    assert skill.get("name", "").startswith("auto-external-parent-decision")
+    assert skill.get("name", "").startswith("learned-parent-decision")
     installed = get_skill(skill["name"])
     assert installed is not None
     assert "auto-learned" in installed.tags
