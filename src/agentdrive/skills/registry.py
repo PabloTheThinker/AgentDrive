@@ -235,6 +235,7 @@ def install_inherited_skill(
     swarm_id: str = "",
     tags: list[str] | tuple[str, ...] | None = None,
     operation: str | None = None,
+    when_to_call: str = "",
     force: bool = False,
     update_existing: bool = False,
 ) -> Path:
@@ -288,7 +289,8 @@ def install_inherited_skill(
         "role": "shared",
         "tags": tag_values,
         "source": f"inheritance:{swarm_id or 'default'}:{source_subagent_id or 'subagent'}",
-        "when_to_call": "Use when a task matches the sub-agent playbook captured in this inherited skill.",
+        "when_to_call": when_to_call.strip()
+        or "Use when a task matches the sub-agent playbook captured in this inherited skill.",
         "inheritance": {
             "status": "active",
             "revision_count": 1,

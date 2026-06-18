@@ -107,6 +107,19 @@ Every successful `run_operation` call (MCP tools + CLI) runs the auto-learning h
 
 Results include `auto_learning` when something was absorbed. Sub-agent `agentdrive-skill` handoffs still merge through the same inherited path.
 
+## Using learned skills (framework playbook)
+
+When AgentDrive is your framework for any task:
+
+| Step | Op | Purpose |
+|------|-----|---------|
+| 1 | `framework_session_start(task, project_id)` | Anchor + growth merge + matched learned/fused skills |
+| 2 | `framework_skill_route(task, project_id)` | Re-route as the task evolves |
+| 3 | `framework_skill_run(name)` | Execute bound operation or read playbook body |
+| 4 | Normal ops + `record_outcome` | Work compounds; bench grows |
+
+`framework_skill_route` prioritizes `learned-*` and `fused-*` skills and includes `when_to_call` + `invoke_hint` on each match.
+
 Disable: `AGENTDRIVE_AUTO_LEARN=0`, or finer `AGENTDRIVE_AUTO_RECORD_REASONING` / `AGENTDRIVE_AUTO_DISTILL_SKILLS` / `AGENTDRIVE_AUTO_FUSE_SKILLS`.
 
 ## Inherited skill curation

@@ -151,6 +151,7 @@ See `docs/FOR_AI_MODELS.md` for model-facing rules.
 
 | Intent | Start here |
 |--------|------------|
+| "Starting work (AgentDrive is my framework)" | `framework_session_start` → `framework_skill_route` → `framework_skill_run` |
 | "What do we already know?" | `experience_graph_get_context_pack` → `agentdrive_think` |
 | "Which path should we take?" | `external_parent_decision` (MCP model) or `multiverse_parent_decision` (local LLM) |
 | "How is this repo written?" | `codebase_register_project` → `codebase_observe_file` → `codebase_mimic` |

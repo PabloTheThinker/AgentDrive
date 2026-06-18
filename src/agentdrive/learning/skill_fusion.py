@@ -271,12 +271,18 @@ def synthesize_fused_skill(
     if lineage.program_id:
         tags.append(lineage.program_id)
 
+    when_to_call = (
+        f"Task resembles: {lineage.trigger[:200]}"
+        if lineage.trigger
+        else f"Session merged {', '.join(sorted(lineage.axes_present()))} for {lineage.pattern_projects[0] if lineage.pattern_projects else 'this swarm'}"
+    )
     path = install_inherited_skill(
         name=name,
         description=description,
         body=body,
         tags=tags,
         operation="synthesize_fused_skill",
+        when_to_call=when_to_call,
         swarm_id=lineage.swarm_id,
         source_subagent_id="skill-fusion",
         update_existing=True,

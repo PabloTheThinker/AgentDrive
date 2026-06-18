@@ -396,12 +396,18 @@ def _distill_and_install_skill(
     if program_id and program_id != _MCP_SUBAGENT_ID:
         tags.append(program_id)
 
+    when_to_call = (
+        f"Task resembles: {intent or trigger[:200]}"
+        if (intent or trigger)
+        else f"After successful {operation.replace('_', ' ')} on {project_id or swarm_id}"
+    )
     path = install_inherited_skill(
         name=name,
         description=description,
         body=body,
         tags=tags,
         operation=operation,
+        when_to_call=when_to_call,
         swarm_id=swarm_id,
         source_subagent_id=_MCP_SUBAGENT_ID,
         update_existing=True,

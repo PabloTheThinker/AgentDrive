@@ -9,7 +9,7 @@ from agentdrive.skills.registry import get_skill, skill_operation_kwargs
 from agentdrive.skills.usage import record_skill_run
 
 
-def run_skill(name: str, arg: str = "") -> dict[str, Any]:
+def run_skill(name: str, arg: str = "", *, swarm_id: str = "") -> dict[str, Any]:
     """Execute a skill. Returns operation result dict or error envelope."""
     entry = get_skill(name)
     if entry is None:
@@ -29,6 +29,8 @@ def run_skill(name: str, arg: str = "") -> dict[str, Any]:
 
     if entry.operation:
         kwargs = skill_operation_kwargs(entry, arg)
+        if swarm_id:
+            kwargs["swarm_id"] = swarm_id
         result = run_operation(entry.operation, **kwargs)
         success = bool(result.get("success", False))
         _record_run_safely(entry.name, success=success)

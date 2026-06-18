@@ -1406,6 +1406,32 @@ OPERATIONS: list[OperationSpec] = [
         ),
         mcp_tool="growth_merge_briefing",
     ),
+    OperationSpec(
+        name="framework_session_start",
+        description="AgentDrive-as-framework session pack: anchor + growth + matched learned skills",
+        category="learning",
+        read_only=True,
+        when_to_use="Start of any task when AgentDrive is your framework — routes learned/fused skills for the work ahead.",
+        examples=['framework_session_start(task="wire growth merge into OpenMango", project_id="openmangos")'],
+        mcp_tool="framework_session_start",
+    ),
+    OperationSpec(
+        name="framework_skill_route",
+        description="Match learned/fused skills to the current task",
+        category="learning",
+        read_only=True,
+        when_to_use="Before acting — find which learned playbooks apply to this task.",
+        examples=['framework_skill_route(task="OpenMango context pack", project_id="openmangos")'],
+        mcp_tool="framework_skill_route",
+    ),
+    OperationSpec(
+        name="framework_skill_run",
+        description="Run a matched learned skill (bound operation or playbook body)",
+        category="learning",
+        read_only=False,
+        when_to_use="After framework_skill_route — execute the chosen learned/fused playbook.",
+        mcp_tool="framework_skill_run",
+    ),
 ]
 
 def _handler_codebase_register_project(**kwargs: Any) -> dict[str, Any]:
@@ -1811,6 +1837,60 @@ def _memory_relation_query_handler(**kwargs: Any) -> dict[str, Any]:
     )
 
 
+def _framework_session_start_handler(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.learning.framework_skills import build_framework_session_pack
+
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    vault, _ = _memory_scope_filters(kwargs)
+    pack = build_framework_session_pack(
+        str(kwargs.get("task") or kwargs.get("query") or kwargs.get("text") or ""),
+        swarm_id=effective,
+        project_id=str(vault or kwargs.get("project_id") or ""),
+        skill_limit=int(kwargs.get("limit", 5)),
+    )
+    payload = dict(pack)
+    payload.pop("swarm_id", None)
+    return _success(operation="framework_session_start", swarm_id=effective, **payload)
+
+
+def _framework_skill_route_handler(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.learning.framework_skills import format_skill_playbook, route_skills_for_task
+
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    vault, _ = _memory_scope_filters(kwargs)
+    task = str(kwargs.get("task") or kwargs.get("query") or kwargs.get("text") or "")
+    matches = route_skills_for_task(
+        task,
+        swarm_id=effective,
+        project_id=str(vault or kwargs.get("project_id") or ""),
+        limit=int(kwargs.get("limit", 5)),
+        learned_only=bool(kwargs.get("learned_only", True)),
+    )
+    return _success(
+        operation="framework_skill_route",
+        swarm_id=effective,
+        task=task,
+        count=len(matches),
+        matched_skills=[m.to_dict() for m in matches],
+        playbook=format_skill_playbook(matches),
+    )
+
+
+def _framework_skill_run_handler(**kwargs: Any) -> dict[str, Any]:
+    from agentdrive.learning.framework_skills import run_framework_skill
+
+    name = str(kwargs.get("name") or kwargs.get("skill") or kwargs.get("skill_name") or "")
+    if not name:
+        return {
+            "success": False,
+            "error": "name is required",
+            "operation": "framework_skill_run",
+        }
+    effective, _ = _integrated_recorder(kwargs.get("swarm_id"))
+    arg = str(kwargs.get("arg") or kwargs.get("argument") or kwargs.get("text") or "")
+    return run_framework_skill(name, arg=arg, swarm_id=effective)
+
+
 def _growth_merge_briefing_handler(**kwargs: Any) -> dict[str, Any]:
     from agentdrive.learning.growth_merge import build_growth_briefing
 
@@ -1943,6 +2023,9 @@ _HANDLERS: dict[str, OperationHandler] = {
     "memory_relation_query": _memory_relation_query_handler,
     "memory_relation_expire": _memory_relation_expire_handler,
     "growth_merge_briefing": _growth_merge_briefing_handler,
+    "framework_session_start": _framework_session_start_handler,
+    "framework_skill_route": _framework_skill_route_handler,
+    "framework_skill_run": _framework_skill_run_handler,
 }
 
 _OPERATIONS_BY_NAME: dict[str, OperationSpec] = {op.name: op for op in OPERATIONS}

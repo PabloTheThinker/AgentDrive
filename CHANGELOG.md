@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Added — Framework skill playbook (use learned skills on any task)
+
+- **`learning/framework_skills.py`** — route `learned-*` / `fused-*` skills to tasks; unified session pack.
+- **Ops:** `framework_session_start`, `framework_skill_route`, `framework_skill_run`.
+- **`when_to_call`** on auto-installed skills (from trigger/intent).
+- **`run_skill`** accepts optional `swarm_id` for framework invocations.
+- **Docs:** `FOR_AI_MODELS.md`, `SKILLS-LIBRARY.md`, `CAPABILITY_FUNNEL.md`.
+- **Tests:** `tests/test_framework_skills.py`.
+
 ### Changed — Descriptive learned skill names
 
 - **`learning/skill_naming.py`** — human-readable slugs for auto-distilled and born skills.
