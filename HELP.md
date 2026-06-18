@@ -514,7 +514,7 @@ These are production optional advanced extensions. Core AgentDrive (three drives
 
 **Deep reference & mental models**:
 - `CONCEPTS.md` (the single best deep, agent-and-human-friendly explanation of the three-tier model, genomes, living loops, quarantine, reconciliation, and the new Lineage-enhanced components)
-- `ARCHITECTURE.md`
+- `docs/ARCHITECTURE.md`
 - `GENOME-SPEC.md`
 - `docs/AGENTDRIVE-V2-INHERITANCE.md`
 - `docs/SETTINGS.md`

@@ -27,11 +27,14 @@ Read it once at the beginning of any serious engagement with a user's AgentDrive
 
    The Overseer serves the Parent. The Parent is accountable. The graph is the witness.
 
-3. **On any non-trivial task or decision**:
-   - Start with `experience_graph_get_context_pack`.
-   - (Strongly recommended) Call `experience_graph_suggest_reasoning_structure` before recording.
-   - Make the decision.
-   - Record with `experience_graph_record_reasoning` (be explicit about elements considered, pattern matched, rationale, expected lift).
+3. **On any non-trivial task — use the framework playbook**:
+   - `framework_session_start(task=..., project_id=...)` — anchor + growth merge + matched learned/fused skills.
+   - `framework_skill_route(task=..., project_id=...)` — ranked playbooks with `when_to_call` + `invoke_hint`.
+   - `framework_skill_run(name=...)` — execute bound op or return SKILL.md body.
+   - Alternatively: `memory_bank_deep_briefing` + `growth_merge_briefing` for maximum grounding.
+   - Then `experience_graph_suggest_reasoning_structure` → decide → `experience_graph_record_reasoning`.
+
+3b. **Competing paths** — use `external_parent_decision` (you are the MCP model) or `multiverse_parent_decision` (local LLM). See `docs/MULTIVERSE_COGNITION.md`.
 
 4. **Clones and local dev setups are first-class**:
    - If the catalog shows a `clone_dev_setup...` section, use it.
@@ -47,6 +50,17 @@ Read it once at the beginning of any serious engagement with a user's AgentDrive
    - Record outcomes (`learnings_log`, `record_outcome`).
    - Use structural similarity before inventing.
    - When in doubt, pull a fresh context pack.
+   - Check `auto_learning` on every `run_operation` result — new skills, growth merge, memory ingest.
+
+## Capability funnel (how work compounds)
+
+```
+Observe / Decide → Experience Graph → Growth Merge → Memory Bank → Skills → Genomes/DNA
+```
+
+Writes flow down; retrieval can jump levels. Full table: `docs/CAPABILITY_FUNNEL.md`. Deep memory: `docs/MEMORY_BANK.md`.
+
+**Readable skill names:** `learned-{project}-{verb}-{focus}`, `fused-{project}-{axes}`.
 
 ## The Experience Graph v3 — Your Real Brain
 

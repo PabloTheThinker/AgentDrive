@@ -43,15 +43,14 @@ Tower (Experience Layer), via MCP experience_graph_* tools, and get_parent_reaso
 This seeds ongoing Grid self-evolution: the north star is now live and compounding.
 """
 
-import json
-import shutil
 import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from agentdrive.grid.engine import GridEngine, GridConfig
-from agentdrive.system.integrated_real_time_evolution_system import IntegratedRealTimeEvolutionSystem
+from agentdrive.system.integrated_real_time_evolution_system import (
+    IntegratedRealTimeEvolutionSystem,
+)
 
 
 def main() -> None:
@@ -74,7 +73,7 @@ def main() -> None:
     print("=== THE GRID EVOLVES ITSELF — META SELF-REFERENCE DEMO (ILO Perfectionist Lens) ===")
     print(f"Swarm: {swarm}")
     print(f"Program: {program_id}")
-    print(f"Charter: 1780296458 + ad-grid-program-contract@stabilization-wave-20260531")
+    print("Charter: 1780296458 + ad-grid-program-contract@stabilization-wave-20260531")
     print("Council constitutions active as governing inhabitants.")
     print()
 
@@ -83,23 +82,35 @@ def main() -> None:
     # engine = GridEngine(config=GridConfig(swarm_id=swarm))  # available if needed for register
 
     # === 1. PULL RECENT FABRIC CONTEXT (MCP patterns) ===
-    print("[1] Pulling fabric context (recorder.get_fabric_context_pack == MCP experience_graph_get_context_pack)...")
+    print(
+        "[1] Pulling fabric context (recorder.get_fabric_context_pack == MCP experience_graph_get_context_pack)..."
+    )
     try:
         context = recorder.get_fabric_context_pack(
             lookback_days=2, max_tokens=900, reasoning_style="balanced"
         )
         print(f"    Fabric coherence: {context.get('fabric_coherence', 'n/a')}")
         print(f"    Top weak clusters: {len(context.get('top_weak_clusters', []))}")
-        print(f"    Strong continuations (recent Parent reasoning over vision/contract/docs): present")
+        print(
+            "    Strong continuations (recent Parent reasoning over vision/contract/docs): present"
+        )
     except Exception as e:
         print(f"    (non-fatal context pull): {str(e)[:100]}")
         context = {}
 
-    print("[1b] Pulling Parent reasoning history (MCP: experience_graph_get_parent_reasoning_history)...")
+    print(
+        "[1b] Pulling Parent reasoning history (MCP: experience_graph_get_parent_reasoning_history)..."
+    )
     try:
         history = recorder.get_parent_reasoning_history(lookback=12) or []
-        recent_charters = [h.get("slug") for h in history if "1780296458" in str(h) or "self-evolution" in str(h).lower()]
-        print(f"    Recent traces incl. 1780296458 charter + prior self-improve: {len(history)} total, relevant hits noted")
+        _recent_charters = [
+            h.get("slug")
+            for h in history
+            if "1780296458" in str(h) or "self-evolution" in str(h).lower()
+        ]
+        print(
+            f"    Recent traces incl. 1780296458 charter + prior self-improve: {len(history)} total, relevant hits noted"
+        )
     except Exception as e:
         print(f"    (non-fatal history): {str(e)[:80]}")
         history = []
@@ -110,9 +121,15 @@ def main() -> None:
     #   - Vision doc updated with seeding note.
     # For the runnable gated apply demo here: target a safe additive marker in a /tmp copy of vision
     # (or further annotation of the evolved contract copy). This exercises the full proposal/gate/apply DNA path.
-    print("\n[2] Perfectionist identification: high-signal safe target = additive visibility marker")
-    print("    on safe /tmp copy (references the real constitution + vision self-evolution performed).")
-    print("    Real target evolved: genomes/examples/research-constitution-ad-grid-program-contract@... + docs/AD_GRID_VISION.md")
+    print(
+        "\n[2] Perfectionist identification: high-signal safe target = additive visibility marker"
+    )
+    print(
+        "    on safe /tmp copy (references the real constitution + vision self-evolution performed)."
+    )
+    print(
+        "    Real target evolved: genomes/examples/research-constitution-ad-grid-program-contract@... + docs/AD_GRID_VISION.md"
+    )
 
     demo_root = Path(tempfile.mkdtemp(prefix="self_evo_demo_"))
     (demo_root / "demo_targets").mkdir(exist_ok=True)
@@ -156,14 +173,18 @@ def main() -> None:
     print(f"    Proposal recorded (INHABITANT_CODE_PROPOSAL DNA): {prop_slug}")
 
     # === 4. ROUTE THROUGH GUARDIAN GATE + CONDUCTOR OVERRIDE SIM ===
-    print("\n[4] Routing through Guardian gate (guardian_verdict_gate + record_inhabitant_code_action for verdict)...")
+    print(
+        "\n[4] Routing through Guardian gate (guardian_verdict_gate + record_inhabitant_code_action for verdict)..."
+    )
     gate_result = recorder.guardian_verdict_gate(
         proposal=proposal,
         program_id=program_id,
         constitution_refs=constitution_refs,
         user_objective_refs=user_objective_refs,
     )
-    print(f"    Gate verdict: {gate_result['verdict']} (gbrain={gate_result.get('gbrain_signal_score')})")
+    print(
+        f"    Gate verdict: {gate_result['verdict']} (gbrain={gate_result.get('gbrain_signal_score')})"
+    )
     print(f"    Reason: {gate_result['reason'][:120]}...")
 
     verdict_action = {
@@ -185,7 +206,9 @@ def main() -> None:
     print(f"    Guardian verdict recorded (GUARDIAN_VERDICT DNA): {verdict_slug}")
 
     # === 5. APPLY (guarded path to safe copy) ===
-    print("\n[5] Guarded apply to safe demo target (guarded_apply_inhabitant_action, dry_run=False on demo root)...")
+    print(
+        "\n[5] Guarded apply to safe demo target (guarded_apply_inhabitant_action, dry_run=False on demo root)..."
+    )
     improved_marker = marker_content + (
         f"improved_by={program_id}\n"
         f"via=guarded_apply + record_inhabitant_code_action (full DNA loop)\n"
@@ -212,7 +235,9 @@ def main() -> None:
         dry_run=False,
         allowed_demo_roots=[str(demo_root)],
     )
-    print(f"    Apply result: applied={apply_result.get('applied')}, verification={apply_result.get('verification')}")
+    print(
+        f"    Apply result: applied={apply_result.get('applied')}, verification={apply_result.get('verification')}"
+    )
     for log in apply_result.get("logs", [])[:4]:
         print(f"      log: {log[:100]}")
     apply_slug = apply_result.get("apply_slug")
@@ -220,7 +245,9 @@ def main() -> None:
     print(f"    code_change_applied + test_result DNA: {apply_slug}, {test_slug}")
 
     # === 6. RECORD FULL SELF-EVOLUTION LOOP OUTCOME AS parent_fabric_reasoning ===
-    print("\n[6] Recording entire self-evolution loop + outcomes as parent_fabric_reasoning (MCP equiv experience_graph_record_reasoning)...")
+    print(
+        "\n[6] Recording entire self-evolution loop + outcomes as parent_fabric_reasoning (MCP equiv experience_graph_record_reasoning)..."
+    )
     closing_reasoning = {
         "fabric_elements_considered": [
             "parent_fabric_reasoning:1780296458",
@@ -250,7 +277,7 @@ def main() -> None:
         "self_improvement_performed": {
             "real_edits": [
                 "genomes/examples/research-constitution-ad-grid-program-contract@stabilization-wave-20260531.json: last_improved bumped, authors extended with meta self-evo entry, self_referential clause now proves meta use, fusion/provenance updated with 1780296458 + demo lineage",
-                "docs/AD_GRID_VISION.md: bullet 4 expanded with concrete seeding details, demo location, DNA refs"
+                "docs/AD_GRID_VISION.md: bullet 4 expanded with concrete seeding details, demo location, DNA refs",
             ],
             "demo_apply": "safe /tmp marker with full before/after + refs (exercises guarded path end-to-end)",
             "governance": "Guardian gate passed (program+refs+no erosion+contract), explicit Conductor/ILO override audit recorded",
@@ -282,10 +309,16 @@ def main() -> None:
 
     print("\n=== DEMO COMPLETE — THE GRID NOW EVOLVES ITSELF ===")
     print(f"Swarm DNA anchor: {close_slug}")
-    print(f"Real self-applied improvement: Program Contract constitution (first meta self-edit) + vision doc")
+    print(
+        "Real self-applied improvement: Program Contract constitution (first meta self-edit) + vision doc"
+    )
     print(f"Safe gated apply demo target: {safe_target}")
-    print("All traces (proposal, verdict, apply, test, parent_fabric_reasoning) first-class on the drive.")
-    print("Query via: experience_graph_get_parent_reasoning_history, get_reasoning_traces_for_element, Tower Experience Layer.")
+    print(
+        "All traces (proposal, verdict, apply, test, parent_fabric_reasoning) first-class on the drive."
+    )
+    print(
+        "Query via: experience_graph_get_parent_reasoning_history, get_reasoning_traces_for_element, Tower Experience Layer."
+    )
     print()
 
     # === DOCUMENTED PATTERN FOR AUTONOMOUS FUTURE INHABITANTS ===

@@ -32,9 +32,9 @@ Safe by default, explicitly relaxable by the user.
 ### 2. SwarmDriveManager (the active subagents registry)
 Located in `swarm_manager.py`.
 
-- Thread-safe registry of all active `(swarm_id, subagent_id)` → their private `AgentDrive`
-- Automatic provisioning of isolated directories under `~/.agentdrive/swarms/<swarm_id>/<subagent_id>/pool/`
-- `get_or_create_pool(...)` — the method that should be called when spawning any sub-agent
+- Thread-safe registry of swarm members → shared `AgentDrive` per `swarm_id`
+- Automatic provisioning at `~/.agentdrive/swarms/<swarm_id>/drive/` (v2 shared Drive)
+- `get_or_create_pool(...)` — call when spawning any sub-agent; siblings share one instance
 - `propose_dna_merge(...)` for controlled sharing
 - Pause / resume capability at the swarm level
 

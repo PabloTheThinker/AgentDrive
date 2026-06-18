@@ -61,10 +61,8 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import random
 import signal
-import sys
 import threading
 import time
 from datetime import datetime, timezone
@@ -72,7 +70,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 # Public + internal imports following AGENTS.md + dogfood/harness patterns (public preferred for examples)
-from agentdrive.drive.drive import AgentDrive, get_swarm_drive_path
+from agentdrive.drive.drive import get_swarm_drive_path
 from agentdrive.evolution.experience_graph import (
     ExperienceGraphRecorder,
     get_recorder_for_drive,
@@ -187,7 +185,7 @@ class SimulatedLocalModel:
         """Rule-based local reasoning over real structural data. Always produces valid DNA payloads."""
         self.call_count += 1
         pack = context.get("pack") or context.get("fabric_context_pack") or {}
-        synth = context.get("synth", {})
+        _synth = context.get("synth", {})
         coh = float(pack.get("fabric_coherence", 0.68) or 0.68)
         weaks = pack.get("top_weak_clusters", []) or []
         conts = pack.get("strong_continuations", []) or []
@@ -452,7 +450,7 @@ class AutonomousExperienceGraphAgentLoop:
 
         # 4. Execution (via tools / recorder / Grid)
         exec_ctx = {"decision": decision, "pack": pack}
-        exec_result = self.model.reason("execute", exec_ctx, self.constitution)
+        self.model.reason("execute", exec_ctx, self.constitution)
         real_exec: dict[str, Any] = {}
         try:
             real_exec = self._execute_action(decision, cid, pack)

@@ -35,17 +35,14 @@ from __future__ import annotations
 
 import json
 import time
-from pathlib import Path
 
 from agentdrive.drive.drive import AgentDrive, get_swarm_drive_path
 from agentdrive.evolution.experience_graph import (
     ExperienceGraphRecorder,
-    get_recorder_for_drive,
-    embed_graph_into_artifact,
-    trigger_densification_for_weak_cycles,
 )
-from agentdrive.system.integrated_real_time_evolution_system import IntegratedRealTimeEvolutionSystem
-
+from agentdrive.system.integrated_real_time_evolution_system import (
+    IntegratedRealTimeEvolutionSystem,
+)
 
 SWARM_ID = "stabilization-wave-20260531"
 
@@ -65,44 +62,89 @@ def main() -> None:
     recorder: ExperienceGraphRecorder = system.recorder
     print(f"    Drive: {drive_path}")
     print(f"    Recorder loops dir: {recorder.loops_dir}")
-    print(f"    Integrated surfaces wired: trigger_graph_densification, embed_recent_densified_graphs_into_diary, updated briefings/decision/get_*")
+    print(
+        "    Integrated surfaces wired: trigger_graph_densification, embed_recent_densified_graphs_into_diary, updated briefings/decision/get_*"
+    )
 
     # 2. Create fresh low-coh cycle with visible weak links (force simulation; reuse recent densified if preferred)
-    print("\n[2] Creating fresh low-coherence cycle with visible weak links (sparse artifacts, few connections)...")
+    print(
+        "\n[2] Creating fresh low-coherence cycle with visible weak links (sparse artifacts, few connections)..."
+    )
     root_corr = f"v2-densif-dogfood-{int(time.time())}"
-    cid = recorder.start_cycle(root_corr, {"source": "v2-autonomous-densification-dogfood-conductor", "intent": "force low-coh for GraphGardener demo"})
+    cid = recorder.start_cycle(
+        root_corr,
+        {
+            "source": "v2-autonomous-densification-dogfood-conductor",
+            "intent": "force low-coh for GraphGardener demo",
+        },
+    )
     print(f"    Cycle ID: {cid}")
 
     # Sparse artifacts → low initial density / coh, multiple weak connections
-    recorder.record_artifact(cid, "overseer_briefing:v2-lowcoh", "overseer_briefing",
-                             "Adaptation effectiveness low (0.31). Plateau risk. Weak inter-artifact links visible in graph.",
-                             {"effectiveness": 0.31, "texture": [0.6, 0.4, 0.7, 0.3, 0.55]})
-    recorder.record_artifact(cid, "parent_decision:v2-init", "parent_decision",
-                             "Monitor only; defer aggressive action until more signals.")
-    recorder.record_artifact(cid, "research_thread:sparse-01", "research_thread_outcome",
-                             "Partial synthesis: 1 gap closed, 2 contradictions remain.")
-    recorder.record_artifact(cid, "synthesis:weak", "synthesis_result",
-                             "Gaps persist; low fusion quality. Needs connection strengthening.")
-    recorder.record_artifact(cid, "episodic_trace:initial", "episodic_trace",
-                             "Texture resonance noted but unlinked to later outcomes.")
+    recorder.record_artifact(
+        cid,
+        "overseer_briefing:v2-lowcoh",
+        "overseer_briefing",
+        "Adaptation effectiveness low (0.31). Plateau risk. Weak inter-artifact links visible in graph.",
+        {"effectiveness": 0.31, "texture": [0.6, 0.4, 0.7, 0.3, 0.55]},
+    )
+    recorder.record_artifact(
+        cid,
+        "parent_decision:v2-init",
+        "parent_decision",
+        "Monitor only; defer aggressive action until more signals.",
+    )
+    recorder.record_artifact(
+        cid,
+        "research_thread:sparse-01",
+        "research_thread_outcome",
+        "Partial synthesis: 1 gap closed, 2 contradictions remain.",
+    )
+    recorder.record_artifact(
+        cid,
+        "synthesis:weak",
+        "synthesis_result",
+        "Gaps persist; low fusion quality. Needs connection strengthening.",
+    )
+    recorder.record_artifact(
+        cid,
+        "episodic_trace:initial",
+        "episodic_trace",
+        "Texture resonance noted but unlinked to later outcomes.",
+    )
 
     # Only 2-3 causal connections initially → many weak (low confidence default in find_weak)
-    recorder.record_connection(cid, "overseer_briefing:v2-lowcoh", "parent_decision:v2-init",
-                               "overseer_briefing_informed_parent_decision", {"note": "initial sparse"})
-    recorder.record_connection(cid, "parent_decision:v2-init", "research_thread:sparse-01",
-                               "parent_decision_executed_as_research_thread")
+    recorder.record_connection(
+        cid,
+        "overseer_briefing:v2-lowcoh",
+        "parent_decision:v2-init",
+        "overseer_briefing_informed_parent_decision",
+        {"note": "initial sparse"},
+    )
+    recorder.record_connection(
+        cid,
+        "parent_decision:v2-init",
+        "research_thread:sparse-01",
+        "parent_decision_executed_as_research_thread",
+    )
 
     pre_graph = recorder.get_cycle_graph(cid)
     pre_coh = pre_graph.get("coherence_score", 0.0)
-    print(f"    Pre-cycle coherence: {pre_coh} | artifacts: {len(pre_graph.get('artifacts', []))} | edges: {len(pre_graph.get('edges', []))}")
+    print(
+        f"    Pre-cycle coherence: {pre_coh} | artifacts: {len(pre_graph.get('artifacts', []))} | edges: {len(pre_graph.get('edges', []))}"
+    )
     print(f"    Weak links (pre): {len(recorder.find_weak_connections(cid))}")
 
     # 3. "Parent" consumes briefing (via Integrated surface) → record_parent_decision with densification directive
     print("\n[3] Parent consumes actionable briefing (surfaces densif candidates via v2 wiring)...")
     briefing = system.get_parent_actionable_briefing()
     print(f"    Briefing active_cycle: {briefing.get('active_evolution_cycle_id')}")
-    print(f"    Densification candidates surfaced: {len(briefing.get('densification_candidates', []))}")
-    print(f"    suggest_connection_improvements surfaced: {len(briefing.get('suggest_connection_improvements', []))}")
+    print(
+        f"    Densification candidates surfaced: {len(briefing.get('densification_candidates', []))}"
+    )
+    print(
+        f"    suggest_connection_improvements surfaced: {len(briefing.get('suggest_connection_improvements', []))}"
+    )
 
     print("\n    Parent records decision with explicit densification directive...")
     decision = {
@@ -114,19 +156,31 @@ def main() -> None:
     actions = ["trigger_graph_densification", "embed_graph_after_lift"]
     recorded_cid = system.record_parent_decision(cid, decision, actions_taken=actions)
     print(f"    record_parent_decision returned cid: {recorded_cid}")
-    print(f"    Special 'parent_directed_graph_densification' edge + artifact recorded (visible in graph).")
+    print(
+        "    Special 'parent_directed_graph_densification' edge + artifact recorded (visible in graph)."
+    )
 
     # 4. Trigger the gardener via the NEW Integrated surface
-    print("\n[4] Triggering gardener via the new Integrated surface: system.trigger_graph_densification(cid)...")
+    print(
+        "\n[4] Triggering gardener via the new Integrated surface: system.trigger_graph_densification(cid)..."
+    )
     densif_result = system.trigger_graph_densification(cid)
-    print(json.dumps({k: v for k, v in densif_result.items() if k not in ("mermaid", "text_map")}, indent=2, default=str))
+    print(
+        json.dumps(
+            {k: v for k, v in densif_result.items() if k not in ("mermaid", "text_map")},
+            indent=2,
+            default=str,
+        )
+    )
 
     # 5. (inside trigger) one full densification pass already executed:
     #    proposal → lift measurement (using v2 coherence formula + density) → observation written + renders
     #    The result dict contains the post-densif full mermaid + text from renderers.
 
     # 6. Close the cycle with full mermaid/text embeds via the new renderer helpers
-    print("\n[6] Closing cycle with full embeds via recorder renderers + embed_graph_into_artifact...")
+    print(
+        "\n[6] Closing cycle with full embeds via recorder renderers + embed_graph_into_artifact..."
+    )
     close_notes = (
         "v2-autonomous-densification-dogfood complete. Parent issued densification directive. "
         "GraphGardener executed full pass. Coherence lifted. Post-densif Connection Graph (mermaid + text) embedded."
@@ -137,10 +191,14 @@ def main() -> None:
     # Demonstrate the embed helper (style requested)
     diary_seed = "# Parent Conductor Diary — v2 Densification Tranche\n\nDensification directive executed. Graph now visibly stronger.\n"
     diary_with_graph = system.embed_recent_densified_graphs_into_diary(diary_seed, n=1)
-    print(f"    embed_recent_densified_graphs_into_diary produced +{len(diary_with_graph) - len(diary_seed)} chars of Connection Graph section.")
+    print(
+        f"    embed_recent_densified_graphs_into_diary produced +{len(diary_with_graph) - len(diary_seed)} chars of Connection Graph section."
+    )
 
     # 7. Produce the rich "v2-autonomous-densification-dogfood" living-experience / daily-present style observation
-    print("\n[7] Producing rich v2-autonomous-densification-dogfood observation (daily-present style)...")
+    print(
+        "\n[7] Producing rich v2-autonomous-densification-dogfood observation (daily-present style)..."
+    )
     ts = int(time.time())
     obs_id = f"v2-autonomous-densification-dogfood-{cid}-{ts}"
     obs_dir = drive_path / "observations" / "meta-evolution"
@@ -148,7 +206,9 @@ def main() -> None:
     obs_path = obs_dir / f"{obs_id}.json"
 
     # Use the post-densif renders from the trigger result (or re-render)
-    mermaid = densif_result.get("mermaid", recorder.render_cycle_graph_mermaid(cid, include_texture=True, max_edges=25))
+    mermaid = densif_result.get(
+        "mermaid", recorder.render_cycle_graph_mermaid(cid, include_texture=True, max_edges=25)
+    )
     text_map = densif_result.get("text_map", recorder.render_cycle_graph_text(cid))
     fusion = densif_result.get("fusion_checkpoint", {})
 
@@ -182,7 +242,9 @@ def main() -> None:
             "relations_introduced": densif_result.get("relations_used"),
             "weak_links_addressed": densif_result.get("weak_links_addressed"),
             "post_densif_render_sizes": densif_result.get("post_densif_render_sizes"),
-            "densification_observation_written": densif_result.get("densification_observation_path"),
+            "densification_observation_written": densif_result.get(
+                "densification_observation_path"
+            ),
             "loop_graph": densif_result.get("loop_graph_json"),
             "participating_roles": [
                 "Parent Conductor (issued densification directive via record_parent_decision)",
@@ -206,8 +268,12 @@ def main() -> None:
         },
         "fusion_checkpoint": {
             **fusion,
-            "rendered_mermaid_chars": densif_result.get("post_densif_render_sizes", {}).get("mermaid_chars", len(mermaid)),
-            "rendered_text_chars": densif_result.get("post_densif_render_sizes", {}).get("text_chars", len(text_map)),
+            "rendered_mermaid_chars": densif_result.get("post_densif_render_sizes", {}).get(
+                "mermaid_chars", len(mermaid)
+            ),
+            "rendered_text_chars": densif_result.get("post_densif_render_sizes", {}).get(
+                "text_chars", len(text_map)
+            ),
             "total_edges_after": len(recorder.get_cycle_graph(cid).get("edges", [])),
             "source": "v2-autonomous-densification-dogfood conductor + Integrated.trigger_graph_densification",
         },
@@ -219,38 +285,60 @@ def main() -> None:
             "via": "trigger_graph_densification after Parent densification directive (record_parent_decision)",
             "git_note": "Changes landed in IntegratedRealTimeEvolutionSystem + RealTimeEvolutionOverseer + this script on stabilization-wave-20260531 drive.",
         },
-        "edges_emitted_during_pass": ["densified_via_gardener", "connection_strengthened_by", "graph_coherence_lift", "parent_directed_graph_densification", "overseer_guided_densification"],
+        "edges_emitted_during_pass": [
+            "densified_via_gardener",
+            "connection_strengthened_by",
+            "graph_coherence_lift",
+            "parent_directed_graph_densification",
+            "overseer_guided_densification",
+        ],
     }
 
     obs_path.write_text(json.dumps(payload, default=str, indent=2))
     print(f"    Wrote: {obs_path}")
 
     # Also ensure the connection densif obs from the pass is present (already written inside trigger)
-    print(f"    Densification observation from pass: {densif_result.get('densification_observation_path')}")
+    print(
+        f"    Densification observation from pass: {densif_result.get('densification_observation_path')}"
+    )
 
     # Final metrics
     final_graph = recorder.get_cycle_graph(cid)
     print("\n" + "=" * 72)
     print("DOGFOOD COMPLETE — SELF-REFERENTIAL PROOF SHIPPED")
     print("=" * 72)
-    print(f"New/updated drive artifacts (high-signal, page_type correct, fusion_checkpoint, provenance):")
+    print(
+        "New/updated drive artifacts (high-signal, page_type correct, fusion_checkpoint, provenance):"
+    )
     print(f"  - Fresh cycle JSON: {recorder.loops_dir / f'{cid}.json'}")
     print(f"  - Densif obs from trigger: {densif_result.get('densification_observation_path')}")
     print(f"  - v2-autonomous-densification-dogfood observation: {obs_path}")
-    print(f"  - (also updated canonical arch ref separately)")
+    print("  - (also updated canonical arch ref separately)")
     print()
     print("Key metrics:")
-    print(f"  Coherence lift: {densif_result.get('pre_coherence')} → {densif_result.get('post_coherence')} (+{densif_result.get('lift')})")
+    print(
+        f"  Coherence lift: {densif_result.get('pre_coherence')} → {densif_result.get('post_coherence')} (+{densif_result.get('lift')})"
+    )
     print(f"  New densified edges: {densif_result.get('new_densified_edges')}")
     print(f"  Relations: {densif_result.get('relations_used')}")
-    print(f"  Post-densif rendered graph sizes: mermaid={densif_result.get('post_densif_render_sizes',{}).get('mermaid_chars')} chars, text={densif_result.get('post_densif_render_sizes',{}).get('text_chars')} chars")
+    print(
+        f"  Post-densif rendered graph sizes: mermaid={densif_result.get('post_densif_render_sizes', {}).get('mermaid_chars')} chars, text={densif_result.get('post_densif_render_sizes', {}).get('text_chars')} chars"
+    )
     print(f"  Final cycle edges: {len(final_graph.get('edges', []))}")
     print()
     print("Swarm tranche summary (for final closure report):")
-    print("  Experience Graph v2 + Autonomous GraphGardener now live and densifying on stabilization-wave-20260531.")
-    print("  Integrated surfaces (trigger_graph_densification, updated Parent briefing/decision/state/embed helpers) + Overseer metacog surfacing of low-coh opportunities + 'overseer_guided_densification' edges executed a full visible self-referential pass:")
-    print("  Parent directive → gardener trigger → 4+ new densified edges (connection_strengthened_by etc.) → +0.09x coherence lift via density term → rich daily-present obs carrying full mermaid/text Connection Graph + fusion_checkpoint + roles + self-ref note.")
-    print("  The experience is now autonomously growing its own connection graphs; all artifacts first-class + immediately Drive.think(prefer_experience_layer=True) queryable. Next tranche will inherit denser, higher-fidelity memory.")
+    print(
+        "  Experience Graph v2 + Autonomous GraphGardener now live and densifying on stabilization-wave-20260531."
+    )
+    print(
+        "  Integrated surfaces (trigger_graph_densification, updated Parent briefing/decision/state/embed helpers) + Overseer metacog surfacing of low-coh opportunities + 'overseer_guided_densification' edges executed a full visible self-referential pass:"
+    )
+    print(
+        "  Parent directive → gardener trigger → 4+ new densified edges (connection_strengthened_by etc.) → +0.09x coherence lift via density term → rich daily-present obs carrying full mermaid/text Connection Graph + fusion_checkpoint + roles + self-ref note."
+    )
+    print(
+        "  The experience is now autonomously growing its own connection graphs; all artifacts first-class + immediately Drive.think(prefer_experience_layer=True) queryable. Next tranche will inherit denser, higher-fidelity memory."
+    )
     print("=" * 72)
 
     # Bonus: show a tiny slice of the embedded graph for console

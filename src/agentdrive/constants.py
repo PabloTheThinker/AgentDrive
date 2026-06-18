@@ -238,7 +238,7 @@ def get_default_drive_path() -> Path:
 
 
 def get_swarms_dir() -> Path:
-    """Root for all swarm-isolated AgentDrives (each sub-agent gets its own DNA)."""
+    """Root for all swarm-scoped AgentDrives (shared ``<swarm_id>/drive/`` per swarm)."""
     return get_agentdrive_home() / "swarms"
 
 

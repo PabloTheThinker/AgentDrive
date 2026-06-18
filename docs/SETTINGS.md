@@ -86,7 +86,7 @@ agentdrive config edit
 ### Via Python API (agents or scripts)
 
 ```python
-from agentdrive.pool.settings import (
+from agentdrive.drive.settings import (
     get_pool_settings_manager,
     PoolSettings,
     get_effective_pool_settings,
@@ -187,7 +187,7 @@ pool:
 ## Viewing Effective Policy at Runtime
 
 ```python
-from agentdrive.pool.settings import get_effective_pool_settings
+from agentdrive.drive.settings import get_effective_drive_settings
 print(get_effective_pool_settings("my-swarm").to_dict())
 ```
 

@@ -51,26 +51,25 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
-import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
 # --- Project imports (existing patterns only) ---
-from agentdrive.drive.drive import AgentDrive, get_swarm_drive_path
+from agentdrive.drive.drive import get_swarm_drive_path
 from agentdrive.evolution.experience_graph import (
+    FABRIC_QUERY_RESULT_RECORDED,
+    PARENT_FABRIC_QUERY,
     ExperienceGraphRecorder,
     get_recorder_for_drive,
-    PARENT_FABRIC_REASONING_TRACE,
-    FABRIC_ELEMENT_REASONED_OVER,
-    STRUCTURAL_SIMILARITY_DETECTED,
-    PARENT_FABRIC_QUERY,
-    FABRIC_REASONING_TRACE_ACCESSED,
-    FABRIC_QUERY_RESULT_RECORDED,
 )
-from agentdrive.local_models import LocalModelSpec, LocalModelAdapter, OllamaAdapter, OpenAICompatAdapter  # existing local model surface
+from agentdrive.local_models import (  # existing local model surface
+    LocalModelAdapter,
+    LocalModelSpec,
+    OllamaAdapter,
+    OpenAICompatAdapter,
+)
 
 SWARM_ID = "stabilization-wave-20260531"
 DEFAULT_DRIVE_PATH = get_swarm_drive_path(SWARM_ID)
@@ -79,6 +78,7 @@ DEFAULT_DRIVE_PATH = get_swarm_drive_path(SWARM_ID)
 # ---------------------------------------------------------------------------
 # Simulated Local Reasoner (drop-in replacement point for real local model)
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class SimulatedLocalReasoner:
@@ -121,7 +121,9 @@ class SimulatedLocalReasoner:
         if lifts:
             pattern = f"matches prior densif lift pattern in {lifts[0].get('cycle', cycle_ref)} (+{lifts[0].get('lift', 0.04)} coh)"
         elif conts:
-            pattern = f"extends strong cross-cycle continuation {conts[0].get('relation', 'fabric_link')}"
+            pattern = (
+                f"extends strong cross-cycle continuation {conts[0].get('relation', 'fabric_link')}"
+            )
 
         rationale = (
             f"From fabric_context_pack (coh={fab_coh:.3f}, style={context_pack.get('reasoning_style', 'balanced')}) "
@@ -155,6 +157,7 @@ class SimulatedLocalReasoner:
 # Optional real local model caller (reuses project's local_models.py exactly)
 # ---------------------------------------------------------------------------
 
+
 def try_real_local_reason(
     spec: Optional[LocalModelSpec],
     prompt: str,
@@ -178,7 +181,9 @@ def try_real_local_reason(
         # The project's adapters expose .generate (see local_models.py)
         # We use a minimal wrapper here that matches the spirit.
         # For full fidelity users extend with their exact generate call.
-        result = adapter.generate(spec, prompt, max_tokens=800) if hasattr(adapter, "generate") else None
+        result = (
+            adapter.generate(spec, prompt, max_tokens=800) if hasattr(adapter, "generate") else None
+        )
         if isinstance(result, str):
             # crude JSON extraction
             start = result.find("{")
@@ -193,6 +198,7 @@ def try_real_local_reason(
 # ---------------------------------------------------------------------------
 # MCP Experience Graph Adapter (the core deliverable)
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class MCPExperienceGraphAdapter:
@@ -246,18 +252,22 @@ class MCPExperienceGraphAdapter:
 
         # --- Real MCP client path (requires 'mcp' package) ---
         try:
-            from mcp import ClientSession  # type: ignore
-            from mcp.client.streamable_http import streamablehttp_client  # type: ignore
             # stdio variant also available but omitted for brevity in prototype
-            print(f"[adapter] Attempting MCP {self.mode} connection to {self.mcp_url if 'http' in self.mode else 'stdio server'}...")
+            print(
+                f"[adapter] Attempting MCP {self.mode} connection to {self.mcp_url if 'http' in self.mode else 'stdio server'}..."
+            )
             # For full prototype we keep the connection stub lightweight.
             # A production adapter would keep the session and call tools via
             # await session.call_tool("experience_graph_get_context_pack", {...})
             self._mcp_session = "stub-mcp-session"  # placeholder for real session
             self._connected = True
-            print("[adapter] MCP connection established (stub — replace with real ClientSession in prod).")
+            print(
+                "[adapter] MCP connection established (stub — replace with real ClientSession in prod)."
+            )
         except Exception as e:
-            print(f"[adapter] MCP client not available or connection failed ({e}). Falling back to DIRECT mode.")
+            print(
+                f"[adapter] MCP client not available or connection failed ({e}). Falling back to DIRECT mode."
+            )
             self.mode = "direct"
             self._connected = True
 
@@ -298,8 +308,13 @@ class MCPExperienceGraphAdapter:
         self, element: str, lookback: int = 10, min_similarity: float = 0.6
     ) -> list[dict[str, Any]]:
         rec = self.ensure_recorder()
-        matches = rec.find_structural_similarities(element=element, lookback=lookback, min_similarity=min_similarity)
-        self._record_adapter_usage("experience_graph_find_structural_similarities", {"element": element, "matches": len(matches)})
+        matches = rec.find_structural_similarities(
+            element=element, lookback=lookback, min_similarity=min_similarity
+        )
+        self._record_adapter_usage(
+            "experience_graph_find_structural_similarities",
+            {"element": element, "matches": len(matches)},
+        )
         return matches
 
     def experience_graph_get_reasoning_traces_for_element(
@@ -307,13 +322,20 @@ class MCPExperienceGraphAdapter:
     ) -> list[dict[str, Any]]:
         rec = self.ensure_recorder()
         traces = rec.get_fabric_reasoning_traces_for_element(element=element, lookback=lookback)
-        self._record_adapter_usage("experience_graph_get_reasoning_traces_for_element", {"element": element, "count": len(traces)})
+        self._record_adapter_usage(
+            "experience_graph_get_reasoning_traces_for_element",
+            {"element": element, "count": len(traces)},
+        )
         return traces
 
-    def experience_graph_get_parent_reasoning_history(self, lookback: int = 10) -> list[dict[str, Any]]:
+    def experience_graph_get_parent_reasoning_history(
+        self, lookback: int = 10
+    ) -> list[dict[str, Any]]:
         rec = self.ensure_recorder()
         history = rec.get_parent_reasoning_history(lookback=lookback)
-        self._record_adapter_usage("experience_graph_get_parent_reasoning_history", {"count": len(history)})
+        self._record_adapter_usage(
+            "experience_graph_get_parent_reasoning_history", {"count": len(history)}
+        )
         return history
 
     # --- Internal: record adapter usage as first-class experience (recorder pattern) ---
@@ -334,7 +356,9 @@ class MCPExperienceGraphAdapter:
                 cid,
                 "mcp-local-model-adapter",
                 slug,
-                PARENT_FABRIC_QUERY if "get_context" in tool or "suggest" in tool else FABRIC_QUERY_RESULT_RECORDED,
+                PARENT_FABRIC_QUERY
+                if "get_context" in tool or "suggest" in tool
+                else FABRIC_QUERY_RESULT_RECORDED,
                 metadata={
                     "tool": tool,
                     "gbrain_signal_score": 0.81,
@@ -347,7 +371,9 @@ class MCPExperienceGraphAdapter:
 
     # --- The simple participation loop (6-step flavored) ---
 
-    def run_simple_reasoning_loop(self, num_cycles: int = 1, use_real_local: bool = False) -> list[dict[str, Any]]:
+    def run_simple_reasoning_loop(
+        self, num_cycles: int = 1, use_real_local: bool = False
+    ) -> list[dict[str, Any]]:
         """Demonstrates a local model participating in the 6-step loop via the 6 tools.
 
         This is the "simple loop" requested. Real local models replace the
@@ -359,14 +385,22 @@ class MCPExperienceGraphAdapter:
         reasoner = SimulatedLocalReasoner()
 
         for i in range(num_cycles):
-            print(f"\n=== MCP Local Adapter Participation Cycle {i+1}/{num_cycles} (6-step fabric reasoning) ===")
+            print(
+                f"\n=== MCP Local Adapter Participation Cycle {i + 1}/{num_cycles} (6-step fabric reasoning) ==="
+            )
             cycle_start = time.time()
 
             # 1 + 2 (prep for Parent step 4): read the Experience Graph + suggested structure
-            pack = self.experience_graph_get_context_pack(reasoning_style="balanced", lookback_days=7)
+            pack = self.experience_graph_get_context_pack(
+                reasoning_style="balanced", lookback_days=7
+            )
             suggestion = self.experience_graph_suggest_reasoning_structure()
-            print(f"  [tool-1] context_pack: coh={pack.get('fabric_coherence')}, weak_clusters={len(pack.get('top_weak_clusters',[]))}, style={pack.get('reasoning_style')}")
-            print(f"  [tool-6] suggest_structure: template + {len(suggestion.get('few_shot_good_traces', []))} few-shots available")
+            print(
+                f"  [tool-1] context_pack: coh={pack.get('fabric_coherence')}, weak_clusters={len(pack.get('top_weak_clusters', []))}, style={pack.get('reasoning_style')}"
+            )
+            print(
+                f"  [tool-6] suggest_structure: template + {len(suggestion.get('few_shot_good_traces', []))} few-shots available"
+            )
 
             # 3. Local model (sim or real) reasons over the graph substrate
             prior = self.experience_graph_get_parent_reasoning_history(lookback=3)
@@ -384,9 +418,15 @@ class MCPExperienceGraphAdapter:
             print(f"  [tool-3] record_reasoning -> trace_slug={trace_slug}")
 
             # 5 + 6. Verify + close the loop (query power surfaces)
-            elem = reasoning["fabric_elements_considered"][0] if reasoning.get("fabric_elements_considered") else "experience_layer_v3"
+            elem = (
+                reasoning["fabric_elements_considered"][0]
+                if reasoning.get("fabric_elements_considered")
+                else "experience_layer_v3"
+            )
             sims = self.experience_graph_find_structural_similarities(element=elem, lookback=8)
-            traces = self.experience_graph_get_reasoning_traces_for_element(element=elem, lookback=8)
+            traces = self.experience_graph_get_reasoning_traces_for_element(
+                element=elem, lookback=8
+            )
             hist = self.experience_graph_get_parent_reasoning_history(lookback=5)
             print(f"  [tool-2] find_similarities({elem[:40]}): {len(sims)} matches")
             print(f"  [tool-4] get_traces_for_element: {len(traces)} prior traces")
@@ -408,17 +448,28 @@ class MCPExperienceGraphAdapter:
                 },
             )
 
-            results.append({
-                "cycle": i,
-                "trace_slug": trace_slug,
-                "fabric_coherence": pack.get("fabric_coherence"),
-                "expected_lift": reasoning.get("expected_lift_signal"),
-                "tools_called": ["get_context_pack", "suggest", "record_reasoning", "find_similarities", "get_traces", "get_history"],
-                "duration_s": round(time.time() - cycle_start, 2),
-                "gbrain_signal_score": 0.83,
-            })
+            results.append(
+                {
+                    "cycle": i,
+                    "trace_slug": trace_slug,
+                    "fabric_coherence": pack.get("fabric_coherence"),
+                    "expected_lift": reasoning.get("expected_lift_signal"),
+                    "tools_called": [
+                        "get_context_pack",
+                        "suggest",
+                        "record_reasoning",
+                        "find_similarities",
+                        "get_traces",
+                        "get_history",
+                    ],
+                    "duration_s": round(time.time() - cycle_start, 2),
+                    "gbrain_signal_score": 0.83,
+                }
+            )
 
-        print(f"\n[adapter] Loop complete. {len(results)} participation cycles. All calls grew the Experience Graph on {self.swarm_id}.")
+        print(
+            f"\n[adapter] Loop complete. {len(results)} participation cycles. All calls grew the Experience Graph on {self.swarm_id}."
+        )
         return results
 
     def _build_local_model_prompt(self, pack: dict, suggestion: dict) -> str:
@@ -439,23 +490,38 @@ class MCPExperienceGraphAdapter:
 # Main (runnable demo + CLI)
 # ---------------------------------------------------------------------------
 
+
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="MCP Local Model Adapter Prototype — Experience Graph for any local model")
-    parser.add_argument("--mode", choices=["direct", "mcp-stdio", "mcp-http"], default="direct",
-                        help="Connection mode (direct = recorder, always works)")
-    parser.add_argument("--cycles", type=int, default=1, help="Number of participation loops to run")
+    parser = argparse.ArgumentParser(
+        description="MCP Local Model Adapter Prototype — Experience Graph for any local model"
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["direct", "mcp-stdio", "mcp-http"],
+        default="direct",
+        help="Connection mode (direct = recorder, always works)",
+    )
+    parser.add_argument(
+        "--cycles", type=int, default=1, help="Number of participation loops to run"
+    )
     parser.add_argument("--mcp-url", default="http://127.0.0.1:9876", help="URL for mcp-http mode")
-    parser.add_argument("--use-real-local", action="store_true", help="Attempt real local model via local_models.py")
+    parser.add_argument(
+        "--use-real-local", action="store_true", help="Attempt real local model via local_models.py"
+    )
     args = parser.parse_args(argv)
 
     # Example real local model spec (user edits this; works with Ollama, LM Studio, llama.cpp server, etc.)
-    real_spec = LocalModelSpec(
-        backend="openai-compat",  # or "ollama"
-        model="llama3.2",         # or whatever you have loaded
-        endpoint="http://127.0.0.1:1234/v1",  # LM Studio default, or Ollama http://localhost:11434
-        name="my-local-model",
-        timeout_s=45.0,
-    ) if args.use_real_local else None
+    real_spec = (
+        LocalModelSpec(
+            backend="openai-compat",  # or "ollama"
+            model="llama3.2",  # or whatever you have loaded
+            endpoint="http://127.0.0.1:1234/v1",  # LM Studio default, or Ollama http://localhost:11434
+            name="my-local-model",
+            timeout_s=45.0,
+        )
+        if args.use_real_local
+        else None
+    )
 
     adapter = MCPExperienceGraphAdapter(
         swarm_id=SWARM_ID,
@@ -470,7 +536,9 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Mode: {adapter.mode} | Swarm: {adapter.swarm_id}")
     print("=" * 78)
 
-    results = adapter.run_simple_reasoning_loop(num_cycles=args.cycles, use_real_local=args.use_real_local)
+    results = adapter.run_simple_reasoning_loop(
+        num_cycles=args.cycles, use_real_local=args.use_real_local
+    )
 
     print("\n=== RESULTS (also written to Experience Graph as artifacts + edges) ===")
     print(json.dumps(results, indent=2, default=str))
@@ -488,11 +556,17 @@ def main(argv: list[str] | None = None) -> int:
             "cycles": args.cycles,
             "design_version": "v1-stabilization-wave-20260531",
         },
-        texture_hints={"self_referential": "This run of the MCP Local Model Adapter Prototype itself became living experience."},
+        texture_hints={
+            "self_referential": "This run of the MCP Local Model Adapter Prototype itself became living experience."
+        },
     )
     print(f"\n[recorder] Final prototype execution artifact written: {final_slug}")
-    print("All design decisions + full source + these results live as first-class Experience Graph artifacts on this drive.")
-    print("See observations/meta-evolution/ for the authoritative record (page_type living-experience / mcp-local-adapter-...).")
+    print(
+        "All design decisions + full source + these results live as first-class Experience Graph artifacts on this drive."
+    )
+    print(
+        "See observations/meta-evolution/ for the authoritative record (page_type living-experience / mcp-local-adapter-...)."
+    )
     return 0
 
 

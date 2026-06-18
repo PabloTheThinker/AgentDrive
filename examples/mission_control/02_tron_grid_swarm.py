@@ -53,7 +53,7 @@ import signal
 import sys
 import threading
 import time
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 # Public API only (never submodule imports in examples)
 from agentdrive import (
@@ -110,9 +110,11 @@ def _install_signal_handlers(stop_event: threading.Event) -> None:
 
 
 def main() -> int:
-    print(f"=== Mission Control v1.5 — Tron Grid Full Integrated Cycle Swarm ===")
+    print("=== Mission Control v1.5 — Tron Grid Full Integrated Cycle Swarm ===")
     print(f"Stabilization context: {SWARM_ID}")
-    print(f"Objective: Tron Grid time dilation mathematics + real-time parent-swarm-overseer adaptation")
+    print(
+        "Objective: Tron Grid time dilation mathematics + real-time parent-swarm-overseer adaptation"
+    )
     print(f"Mission duration: {DURATION_S}s (env MISSION_DURATION=90 for longer run)")
     print(f"Time: {_now()}\n")
 
@@ -124,10 +126,14 @@ def main() -> int:
 
     # THE ATTACH — everything the Tower needs (loop, Experience Graph (fabric), static fire, overseer, grid) now flows here
     system.attach_mission_control(mission_control_hub)
-    print(f"[{_now()}] mission_control_hub attached. All 6-step + Experience Graph (fabric) + Grid + Overseer events → Tower.")
+    print(
+        f"[{_now()}] mission_control_hub attached. All 6-step + Experience Graph (fabric) + Grid + Overseer events → Tower."
+    )
 
     system.start()
-    print(f"[{_now()}] Full Integrated system started (GridEngine + RealTimeEvolutionOverseer with embodied intuition).")
+    print(
+        f"[{_now()}] Full Integrated system started (GridEngine + RealTimeEvolutionOverseer with embodied intuition)."
+    )
 
     stop_event = threading.Event()
     _install_signal_handlers(stop_event)
@@ -148,10 +154,22 @@ def main() -> int:
     try:
         if system.grid is not None and hasattr(system.grid, "form_autonomous_research_thread"):
             roles = [
-                ("Mathematician", "Develop mathematical models for Grid time dilation and cycle-rate acceleration"),
-                ("SystemsArchitect", "Design the cycle system architecture for faster subjective time inside the Grid"),
-                ("IntuitionResearcher", "Explore embodied intuition + texture resonance for cycle discovery"),
-                ("AdaptationMonitor", "Track parent-swarm-overseer loops and surface real-time improvements"),
+                (
+                    "Mathematician",
+                    "Develop mathematical models for Grid time dilation and cycle-rate acceleration",
+                ),
+                (
+                    "SystemsArchitect",
+                    "Design the cycle system architecture for faster subjective time inside the Grid",
+                ),
+                (
+                    "IntuitionResearcher",
+                    "Explore embodied intuition + texture resonance for cycle discovery",
+                ),
+                (
+                    "AdaptationMonitor",
+                    "Track parent-swarm-overseer loops and surface real-time improvements",
+                ),
             ]
             for role, objective in roles:
                 if stop_event.is_set():
@@ -159,7 +177,11 @@ def main() -> int:
                 try:
                     tid = system.grid.form_autonomous_research_thread(
                         objective=objective,
-                        budget={"token_budget": 420, "time_budget_seconds": max(30, DURATION_S // 2), "max_experiments": 2},
+                        budget={
+                            "token_budget": 420,
+                            "time_budget_seconds": max(30, DURATION_S // 2),
+                            "max_experiments": 2,
+                        },
                         parent_context=f"tron_swarm_role_{role}",
                     )
                     print(f"  + Spawned {role} thread: {tid}")
@@ -170,7 +192,9 @@ def main() -> int:
         print(f"Grid thread formation note (continuing): {e}")
 
     # Main Parent adaptation + mission loop (the heart of the "full integrated cycle")
-    print(f"\n[{_now()}] Parent Conductor receiving live metacognitive briefings and making decisions...\n")
+    print(
+        f"\n[{_now()}] Parent Conductor receiving live metacognitive briefings and making decisions...\n"
+    )
 
     cycle = 0
     fire_window_opened = False
@@ -181,11 +205,17 @@ def main() -> int:
 
             # === Core Parent-facing surfaces (all emit to Tower) ===
             briefing = system.get_parent_actionable_briefing()
-            understanding = system.get_overseer_current_understanding() if hasattr(system, "get_overseer_current_understanding") else {}
+            understanding = (
+                system.get_overseer_current_understanding()
+                if hasattr(system, "get_overseer_current_understanding")
+                else {}
+            )
 
             print(f"[{_now()}] PARENT CYCLE {cycle}")
             print(f"  Overseer understanding (texture): {str(understanding)[:110]}...")
-            print(f"  Adaptation effectiveness: {briefing.get('briefing', {}).get('adaptation_effectiveness', 0):.3f}")
+            print(
+                f"  Adaptation effectiveness: {briefing.get('briefing', {}).get('adaptation_effectiveness', 0):.3f}"
+            )
             print(f"  Plateau: {briefing.get('briefing', {}).get('plateau_detected', False)}")
 
             # Real Parent decision (exercises record_parent_decision + Experience Graph (fabric) + loop step paths)
@@ -196,20 +226,26 @@ def main() -> int:
                 "mission": LABEL,
                 "cycle": cycle,
             }
-            system.record_parent_decision(cid, decision, actions_taken=["briefing_ingest", "overseer_recommendation"])
+            system.record_parent_decision(
+                cid, decision, actions_taken=["briefing_ingest", "overseer_recommendation"]
+            )
 
             # Occasionally surface an Experience Graph densification steer (exercises trigger path via command surface too)
             if cycle % 3 == 0:
                 try:
                     system.trigger_graph_densification(cid)
-                    print("  → triggered graph densification (Experience Graph delta will appear in Tower)")
+                    print(
+                        "  → triggered graph densification (Experience Graph delta will appear in Tower)"
+                    )
                 except Exception:
                     pass
 
             # === Inside the longer mission, demonstrate rich static fire surfaces ===
             # (a) Thin entrypoint (what MC command "start_static_fire" calls)
             if not fire_window_opened and cycle >= 2 and DURATION_S > 15:
-                print("  → Opening short rich static fire sub-window via thin entrypoint (Tower Static Fire Bay lights up)")
+                print(
+                    "  → Opening short rich static fire sub-window via thin entrypoint (Tower Static Fire Bay lights up)"
+                )
                 try:
                     system.start_static_fire(duration_seconds=12.0, label=f"{LABEL}-subfire-thin")
                 except Exception as e:
@@ -218,7 +254,9 @@ def main() -> int:
 
             # (b) Or the full zero-friction helper for a beautiful completed card (used here for a mid-mission burst)
             if cycle == 4 and DURATION_S > 25:
-                print("  → Mid-mission rich static fire via run_static_fire_with_mission_telemetry (full final_report)")
+                print(
+                    "  → Mid-mission rich static fire via run_static_fire_with_mission_telemetry (full final_report)"
+                )
                 try:
                     with run_static_fire_with_mission_telemetry(
                         duration_seconds=8.0,
@@ -226,9 +264,18 @@ def main() -> int:
                         coherence_start=0.87,
                         mission=system,
                     ) as sess:
-                        sess.report_progress(cycles_completed=2, current_coherence=0.895, log_line="mid-mission burst: 2 cycles, densify +1 intervention")
-                        sess.record_intervention("Parent injected adversarial time-dilation challenge inside burst", cid)
-                        sess.log_key_event("texture_resonance", "overseer reported strong embodied signal on cycle math")
+                        sess.report_progress(
+                            cycles_completed=2,
+                            current_coherence=0.895,
+                            log_line="mid-mission burst: 2 cycles, densify +1 intervention",
+                        )
+                        sess.record_intervention(
+                            "Parent injected adversarial time-dilation challenge inside burst", cid
+                        )
+                        sess.log_key_event(
+                            "texture_resonance",
+                            "overseer reported strong embodied signal on cycle math",
+                        )
                         time.sleep(1.5)
                 except Exception as e:
                     print(f"     (run_* burst note: {e})")
@@ -246,15 +293,21 @@ def main() -> int:
                     fabric_edges_delta=2,
                 )
 
-            state = system.get_full_system_state() if hasattr(system, "get_full_system_state") else {}
+            state = (
+                system.get_full_system_state() if hasattr(system, "get_full_system_state") else {}
+            )
             grid_h = state.get("grid_health", {}) if isinstance(state, dict) else {}
-            print(f"  Grid: active_research={grid_h.get('active_research_threads', 0)}, resilience_lift={grid_h.get('resilience_lift_total', 0):.3f}")
+            print(
+                f"  Grid: active_research={grid_h.get('active_research_threads', 0)}, resilience_lift={grid_h.get('resilience_lift_total', 0):.3f}"
+            )
 
     except KeyboardInterrupt:
         print("\nOperator interrupt — ending mission early.")
     finally:
         elapsed = time.time() - start_t
-        print(f"\n[{_now()}] === TRON GRID SWARM MISSION COMPLETE ({elapsed:.1f}s, {cycle} parent cycles) ===")
+        print(
+            f"\n[{_now()}] === TRON GRID SWARM MISSION COMPLETE ({elapsed:.1f}s, {cycle} parent cycles) ==="
+        )
 
         try:
             system.stop()
@@ -273,13 +326,25 @@ def main() -> int:
         print(f"Total new events emitted to Mission Control hub: +{delta}")
         print(f"Surface coverage (Tower filters + replay will contain all of these): {by_type}")
         if mission_control_hub.recent_events:
-            print(f"Replay seq integrity: {mission_control_hub.recent_events[0]['seq']} → {mission_control_hub.recent_events[-1]['seq']}")
+            print(
+                f"Replay seq integrity: {mission_control_hub.recent_events[0]['seq']} → {mission_control_hub.recent_events[-1]['seq']}"
+            )
 
-        print(f"\n[{_now()}] All v1.5 surfaces exercised under one attached hub (Experience Graph deltas (fabric), loop steps,")
-        print("    rich static fire via both thin + run_* helpers, parent adaptation, grid threads, overseer).")
-        print("    The live Control Tower (embedded or via `agentdrive mission` in another terminal) is the")
-        print("    single pane for the entire mission. Artifacts + adaptation traces remain in the experience layer.")
-        print("\n    Re-run with MISSION_DURATION=120 for a full-length Tron Grid research org evolution.")
+        print(
+            f"\n[{_now()}] All v1.5 surfaces exercised under one attached hub (Experience Graph deltas (fabric), loop steps,"
+        )
+        print(
+            "    rich static fire via both thin + run_* helpers, parent adaptation, grid threads, overseer)."
+        )
+        print(
+            "    The live Control Tower (embedded or via `agentdrive mission` in another terminal) is the"
+        )
+        print(
+            "    single pane for the entire mission. Artifacts + adaptation traces remain in the experience layer."
+        )
+        print(
+            "\n    Re-run with MISSION_DURATION=120 for a full-length Tron Grid research org evolution."
+        )
 
     return 0
 

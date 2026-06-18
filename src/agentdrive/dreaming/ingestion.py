@@ -36,10 +36,17 @@ class IngestionConfig:
         default_factory=lambda: Path("~/.agentdrive/reasoning/ledger").expanduser()
     )
     pool_ingest_path: Path = field(
-        default_factory=lambda: Path("~/.agentdrive/pool/ingest.jsonl").expanduser()
+        default_factory=lambda: (
+            __import__(
+                "agentdrive.constants", fromlist=["get_default_drive_path"]
+            ).get_default_drive_path()
+            / "ingest.jsonl"
+        )
     )
     pool_genomes_root: Path = field(
-        default_factory=lambda: Path("~/.agentdrive/pool/genomes").expanduser()
+        default_factory=lambda: __import__(
+            "agentdrive.constants", fromlist=["get_genomes_dir"]
+        ).get_genomes_dir()
     )
     peers_root: Path = field(default_factory=lambda: Path("~/.agentdrive/peers").expanduser())
     since_seconds: int = 86_400

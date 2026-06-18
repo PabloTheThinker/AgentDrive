@@ -190,7 +190,11 @@ def main() -> int:
             print(f"  branch {b.get('role')}: {str(b.get('path_summary', ''))[:70]}…")
 
     print()
-    print(json.dumps({"passed": passed, "total": total, "results": results}, indent=2, default=str)[:8000])
+    print(
+        json.dumps({"passed": passed, "total": total, "results": results}, indent=2, default=str)[
+            :8000
+        ]
+    )
 
     return 0 if passed == total else 1
 

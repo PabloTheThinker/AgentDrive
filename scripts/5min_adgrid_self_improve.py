@@ -34,13 +34,14 @@ on the thing that created it — the Tron Grid ethos made live and user-sovereig
 """
 
 import argparse
-import json
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from agentdrive.grid.engine import GridEngine, GridConfig
-from agentdrive.system.integrated_real_time_evolution_system import IntegratedRealTimeEvolutionSystem
+from agentdrive.grid.engine import GridConfig, GridEngine
+from agentdrive.system.integrated_real_time_evolution_system import (
+    IntegratedRealTimeEvolutionSystem,
+)
 
 
 def _run_inhabitant_code_agency_demo(
@@ -59,21 +60,25 @@ def _run_inhabitant_code_agency_demo(
     """
     print("\n=== INHABITANT CODE AGENCY CLOSED-LOOP DEMO (full tranche capability) ===")
     print(f"Program: {program_id}")
-    print("Pulling fabric context (direct recorder; equiv. MCP experience_graph_get_context_pack + get_parent_reasoning_history)...")
+    print(
+        "Pulling fabric context (direct recorder; equiv. MCP experience_graph_get_context_pack + get_parent_reasoning_history)..."
+    )
     try:
         context = recorder.get_fabric_context_pack(
             reasoning_style="balanced", lookback_days=2, max_tokens=800
         )
         print(f"  Fabric coherence: {context.get('fabric_coherence', 'n/a')}")
         print(f"  Top weak clusters: {len(context.get('top_weak_clusters', []))}")
-        print(f"  Strong continuations include program-contract + 1780293824/4141 traces.")
+        print("  Strong continuations include program-contract + 1780293824/4141 traces.")
     except Exception as e:
         print(f"  Context pull (non-fatal): {str(e)[:80]}")
         context = {}
 
     demo_ts = datetime.now(timezone.utc).isoformat()
     target_file = "/home/pablothethinker/agentdrive/docs/AD_GRID_VISION.md"
-    marker_prefix = "**Inhabitant Code Agency Tranche Demo Marker (safe edit target for closed loop):**"
+    marker_prefix = (
+        "**Inhabitant Code Agency Tranche Demo Marker (safe edit target for closed loop):**"
+    )
 
     # 1. PROPOSE (as Perfectionist-driven inhabitant improvement, referencing Program Contract)
     proposal = {
@@ -142,6 +147,7 @@ def _run_inhabitant_code_agency_demo(
         if "demo_runs=" in before_snip:
             try:
                 import re
+
                 m = re.search(r"demo_runs=(\d+)", before_snip)
                 if m:
                     new_demo_count = int(m.group(1)) + 1
@@ -153,7 +159,9 @@ def _run_inhabitant_code_agency_demo(
         new_content = original_content.replace(before_snip, after_snip, 1)
         target_path.write_text(new_content, encoding="utf-8")
         edit_success = True
-        print(f"  [3] REAL guarded apply executed: {target_file} marker updated (demo_runs -> {new_demo_count})")
+        print(
+            f"  [3] REAL guarded apply executed: {target_file} marker updated (demo_runs -> {new_demo_count})"
+        )
 
     # Record the change (even if marker miss, record the attempt)
     change_record = {
@@ -208,8 +216,12 @@ def _run_inhabitant_code_agency_demo(
     print(f"  [4] INHABITANT_TEST_RESULT recorded: {slug_test} (passed={test_passed})")
 
     # Update the change record? (optional; for demo we note in close instead)
-    print("  Closed loop complete: proposal -> guardian PASS -> real apply -> test. All DNA attributed.")
-    print("  (MCP clients can replicate exact flow using experience_graph_record_reasoning + Python recorder for actions.)")
+    print(
+        "  Closed loop complete: proposal -> guardian PASS -> real apply -> test. All DNA attributed."
+    )
+    print(
+        "  (MCP clients can replicate exact flow using experience_graph_record_reasoning + Python recorder for actions.)"
+    )
 
     # =====================================================================
     # Inhabitants that Ship REAL SHIP DEMO PHASE (ILO Guardian, charter 1780296458)
@@ -221,13 +233,17 @@ def _run_inhabitant_code_agency_demo(
     # This is the concrete "from demo-root to real (heavily gated) contrib" progress.
     # =====================================================================
     print("\n=== INHABITANTS THAT SHIP: REAL CONTRIBUTION DEMO (charter 1780296458) ===")
-    real_ship_target = "/home/pablothethinker/agentdrive/src/agentdrive/evolution/experience_graph.py"
+    real_ship_target = (
+        "/home/pablothethinker/agentdrive/src/agentdrive/evolution/experience_graph.py"
+    )
     real_ship_marker = "Inhabitants that Ship (1780296458, ILO Guardian+impl)"
     try:
         with open(real_ship_target, "r", encoding="utf-8") as f:
             real_ship_orig = f.read()
         if real_ship_marker not in real_ship_orig:
-            print("  Real ship target marker not present (post-edit source may differ); skipping real ship edit but still record proposal/queue/approval DNA.")
+            print(
+                "  Real ship target marker not present (post-edit source may differ); skipping real ship edit but still record proposal/queue/approval DNA."
+            )
             real_ship_edit_success = False
             real_ship_after = "MARKER_MISSING_IN_SOURCE"
         else:
@@ -260,7 +276,9 @@ def _run_inhabitant_code_agency_demo(
                 approval_notes="Approved for bounded 5min real-ship demo. Tiny additive self-ref edit on implementing source. Full safeguards active.",
                 cycle_id=f"real-ship-{int(time.time())}",
             )
-            print(f"  [RS2] Conductor approval simulated: {approval_result.get('status')} (sig present)")
+            print(
+                f"  [RS2] Conductor approval simulated: {approval_result.get('status')} (sig present)"
+            )
             ca = approval_result.get("conductor_approval", {})
 
             # 3. Build the tiny real edit content (str replace the marker line)
@@ -271,8 +289,10 @@ def _run_inhabitant_code_agency_demo(
                     break
             if before_line:
                 # tiny additive: append the demo evidence
-                dna_refs = f"q={real_prop_id} appr={approval_result.get('verdict_slug','n/a')}"
-                after_line = before_line.rstrip() + f" [real-ship-demo-1780296458 exercised; dna={dna_refs}]"
+                dna_refs = f"q={real_prop_id} appr={approval_result.get('verdict_slug', 'n/a')}"
+                after_line = (
+                    before_line.rstrip() + f" [real-ship-demo-1780296458 exercised; dna={dna_refs}]"
+                )
                 real_ship_new_content = real_ship_orig.replace(before_line, after_line, 1)
             else:
                 real_ship_new_content = real_ship_orig
@@ -299,7 +319,9 @@ def _run_inhabitant_code_agency_demo(
                 conductor_approval=ca,
                 allow_real_source_targets=True,
             )
-            print(f"  [RS3] Guarded real apply result: applied={real_apply_res.get('applied')}, logs[:1]={real_apply_res.get('logs', [''])[0][:80]}")
+            print(
+                f"  [RS3] Guarded real apply result: applied={real_apply_res.get('applied')}, logs[:1]={real_apply_res.get('logs', [''])[0][:80]}"
+            )
             real_ship_edit_success = real_apply_res.get("applied", False)
             real_ship_after = after_line if real_ship_edit_success else "APPLY_FAILED"
 
@@ -313,7 +335,11 @@ def _run_inhabitant_code_agency_demo(
                 "type": "test_result",
                 "test": "real_ship_guarded_apply_verify",
                 "passed": rs_test_pass,
-                "real_apply_res_summary": {k: real_apply_res.get(k) for k in ("applied", "verification", "edit_details") if k in real_apply_res},
+                "real_apply_res_summary": {
+                    k: real_apply_res.get(k)
+                    for k in ("applied", "verification", "edit_details")
+                    if k in real_apply_res
+                },
                 "proposal_in_queue": real_prop_id,
                 "conductor_approval_ref": approval_result.get("verdict_slug"),
                 "charter": "1780296458",
@@ -328,13 +354,17 @@ def _run_inhabitant_code_agency_demo(
             print(f"  [RS4] Real ship test_result DNA: {rs_test_slug} passed={rs_test_pass}")
             # Also surface queue state (for review surface demo)
             pending = recorder.list_pending_conductor_reviews(limit=3)
-            print(f"  Review queue now has {len(pending)} recent items (most approved in this demo).")
+            print(
+                f"  Review queue now has {len(pending)} recent items (most approved in this demo)."
+            )
     except Exception as rs_exc:
         print(f"  Real ship demo phase error (non-fatal, DNA may be partial): {str(rs_exc)[:120]}")
         real_ship_edit_success = False
         real_ship_after = f"ERROR:{str(rs_exc)[:50]}"
 
-    print("  REAL SHIP closed: queue submit -> Conductor approve -> guarded real apply on actual source -> test. All under 1780296458 + Contract + Councils.")
+    print(
+        "  REAL SHIP closed: queue submit -> Conductor approve -> guarded real apply on actual source -> test. All under 1780296458 + Contract + Councils."
+    )
 
     return {
         "proposal": slug_proposal or "",
@@ -347,7 +377,7 @@ def _run_inhabitant_code_agency_demo(
         # 1780296458 real ship additions
         "real_ship_target": real_ship_target,
         "real_ship_edit_success": str(real_ship_edit_success),
-        "real_ship_proposal_in_queue": real_prop_id if 'real_prop_id' in locals() else "",
+        "real_ship_proposal_in_queue": real_prop_id if "real_prop_id" in locals() else "",
         "real_ship_after_snip": real_ship_after[:120] if isinstance(real_ship_after, str) else "",
     }
 
@@ -364,7 +394,9 @@ def main():
     print("=== AD-GRID 5-MINUTE SELF-IMPROVEMENT MISSION ===")
     print(f"Swarm: {swarm}")
     print(f"Duration: {args.minutes} minutes")
-    print("Council constitutions (PerfectionistOptimizer, GuardianIntegrity, ExternalBridge) active as default inhabitants.")
+    print(
+        "Council constitutions (PerfectionistOptimizer, GuardianIntegrity, ExternalBridge) active as default inhabitants."
+    )
     print()
 
     system = IntegratedRealTimeEvolutionSystem(swarm_id=swarm)
@@ -383,19 +415,23 @@ def main():
                 "Council constitutions now default in GridEngine",
                 "recent AD-Grid additions (Tower panel, register_model_program, wiring, recorder attribution, record_inhabitant_code_action, ad-grid-program-contract)",
                 "Inhabitant Code Agency Tranche (1780293824 + 1780294141): closed-loop demo + Guardian gate + vision update",
-                "Inhabitants that Ship (1780296458 ILO Guardian+impl): real_contrib mode in guarded_apply, proposal/review queue (submit/list/approve), explicit Conductor approval for actual source files, 5min real ship demo"
+                "Inhabitants that Ship (1780296458 ILO Guardian+impl): real_contrib mode in guarded_apply, proposal/review queue (submit/list/approve), explicit Conductor approval for actual source files, 5min real ship demo",
             ],
             "decision_rationale": "Bounded real-world use of the experimental AD-Grid: its Council inhabitants will autonomously analyze and propose concrete additive improvements to AgentDrive (including via the new inhabitant_code_action closed-loop demo in this driver + the new 1780296458 Inhabitants that Ship real gated contrib path). All proposals, code actions, Guardian verdicts, real applies, tests, queue reviews, Conductor approvals, and reasoning recorded as living attributed DNA on the drive under Program Contract + constitutions + user charter 1780293824 + 1780296458.",
             "expected_lift_signal": 0.08,
             "program_id": "ad-grid-self-improver@stabilization-wave-20260531",
-            "user_objective_refs": ["self-improve-AgentDrive-via-AD-Grid", "5-minute-timeboxed-experiment", "inhabitants-that-ship-1780296458"],
+            "user_objective_refs": [
+                "self-improve-AgentDrive-via-AD-Grid",
+                "5-minute-timeboxed-experiment",
+                "inhabitants-that-ship-1780296458",
+            ],
             "constitution_refs": [
                 "research-constitution-perfectionist-optimizer@stabilization-wave-20260531",
                 "research-constitution-guardian-integrity@stabilization-wave-20260531",
                 "research-constitution-external-bridge@stabilization-wave-20260531",
-                "research-constitution-ad-grid-program-contract@stabilization-wave-20260531"
-            ]
-        }
+                "research-constitution-ad-grid-program-contract@stabilization-wave-20260531",
+            ],
+        },
     )
     print("Mission charter declared in the Experience Graph.")
 
@@ -433,7 +469,7 @@ def main():
                     cycle_id=f"self-improve-cycle-{cycles}",
                     slug=f"improvement-proposal-cycle-{cycles}",
                     artifact_type="self_improvement_proposal",
-                    content_ref=proposal
+                    content_ref=proposal,
                 )
                 print(f"  PerfectionistOptimizer proposal recorded: {idea[:80]}...")
 
@@ -454,7 +490,12 @@ def main():
             "research-constitution-guardian-integrity@stabilization-wave-20260531",
             "research-constitution-external-bridge@stabilization-wave-20260531",
         ],
-        user_objective_refs=["self-improve-AgentDrive-via-AD-Grid", "5-minute-timeboxed-experiment", "inhabitant-code-agency-tranche-1780293824", "inhabitants-that-ship-1780296458-real-gated-contrib"],
+        user_objective_refs=[
+            "self-improve-AgentDrive-via-AD-Grid",
+            "5-minute-timeboxed-experiment",
+            "inhabitant-code-agency-tranche-1780293824",
+            "inhabitants-that-ship-1780296458-real-gated-contrib",
+        ],
     )
 
     # Mission close: always emit a single final fabric reasoning record with outcomes + any observed loop evidence.
@@ -476,11 +517,16 @@ def main():
             "decision_rationale": f"Window closed after {cycles} forced passes + 1 full inhabitant code demo cycle + 1 real-ship 1780296458 phase. Local proposal dupes suppressed. Central recorder dupe guard + this close. The real apply (vision marker bump + DNA embedding) + all 4+ inhabitant_code_action records (proposal, guardian_verdict, code_change_applied, test_result) + real ship (queue proposal, conductor_approve, guarded real apply on src, test) are now permanent attributable fabric DNA. All under program_id + 3 constitutions + 1780293824 + 1780296458 + contract. Non-breaking: prior recorder/MCP paths verified intact during demo run. Loop demonstrably closed. 'Inhabitants that Ship' progress delivered (guarded real contrib path live).",
             "expected_lift_signal": 0.15,
             "program_id": "ad-grid-self-improver@stabilization-wave-20260531",
-            "user_objective_refs": ["self-improve-AgentDrive-via-AD-Grid", "5-minute-timeboxed-experiment", "inhabitant-code-agency-tranche-1780293824", "inhabitants-that-ship-1780296458-real-gated-contrib"],
+            "user_objective_refs": [
+                "self-improve-AgentDrive-via-AD-Grid",
+                "5-minute-timeboxed-experiment",
+                "inhabitant-code-agency-tranche-1780293824",
+                "inhabitants-that-ship-1780296458-real-gated-contrib",
+            ],
             "constitution_refs": [
                 "research-constitution-perfectionist-optimizer@stabilization-wave-20260531",
                 "research-constitution-guardian-integrity@stabilization-wave-20260531",
-                "research-constitution-external-bridge@stabilization-wave-20260531"
+                "research-constitution-external-bridge@stabilization-wave-20260531",
             ],
             "reference_contract": "ad-grid-program-contract@stabilization-wave-20260531",
             "reference_user_charter": "parent_fabric_reasoning:1780293824",
@@ -497,7 +543,15 @@ def main():
                     "target_file": demo_dna.get("vision_doc_target"),
                     "edit_success": demo_dna.get("edit_success"),
                     "non_breaking_confirmation": "Existing recorder + MCP experience_graph_* (get_context_pack, record_reasoning, get_parent_history etc.) behavior fully preserved and used in demo.",
-                    "tranche_elements": ["Program Contract", "MCP experience_graph surfaces (used for closer)", "Guardian gate (sim + constitution refs)", "constitutions updates", "closed-loop example (this script)", "vision doc new section + real edit by inhabitant", "high-gbrain MCP tranche closure records (by closer)"],
+                    "tranche_elements": [
+                        "Program Contract",
+                        "MCP experience_graph surfaces (used for closer)",
+                        "Guardian gate (sim + constitution refs)",
+                        "constitutions updates",
+                        "closed-loop example (this script)",
+                        "vision doc new section + real edit by inhabitant",
+                        "high-gbrain MCP tranche closure records (by closer)",
+                    ],
                     # 1780296458 Inhabitants that Ship additions (parallel stream)
                     "inhabitants_that_ship_real_ship_phase": {
                         "executed": True,
@@ -511,16 +565,33 @@ def main():
                     },
                 },
             },
-        }
+        },
     )
-    print(f"\n=== MISSION WINDOW COMPLETE ({cycles} Council research passes + 1 full Inhabitant Code Agency closed loop + 1 Inhabitants that Ship real gated contrib) ===")
-    print("All charters, passes, proposals, AND the full code agency loop (proposal/guardian/apply/test) + real ship (queue+Conductor approve+guarded real src edit) recorded on stabilization-wave-20260531 as living DNA.")
-    print(f"Demo DNA slugs: proposal={demo_dna.get('proposal')}, verdict={demo_dna.get('guardian_verdict')}, change={demo_dna.get('code_change_applied')}, test={demo_dna.get('test_result')}")
-    print(f"Real edit applied to: {demo_dna.get('vision_doc_target')} (success={demo_dna.get('edit_success')})")
-    print(f"REAL SHIP (1780296458): target={demo_dna.get('real_ship_target')} success={demo_dna.get('real_ship_edit_success')} queue_id={demo_dna.get('real_ship_proposal_in_queue')}")
-    print("Launch the Tower (`agentdrive grid run --swarm-id stabilization-wave-20260531 --with-tower`) to observe the inhabitants, new model-program-manifests if registered, and all new traces (including inhabitant_code_action page_types + pending_review).")
-    print("Query via MCP: experience_graph_get_parent_reasoning_history (look for 1780293824/4141/6458 + demo slugs + proposal_review), get_context_pack, etc.")
-    print("The Grid + its inhabitants improved the host (including this vision + the loop itself + real gated source change under Conductor approval). The full tranche + 'Inhabitants that Ship' start is closed and attributable. Tron Grid ethos: live. Inhabitants now ship (gated).")
+    print(
+        f"\n=== MISSION WINDOW COMPLETE ({cycles} Council research passes + 1 full Inhabitant Code Agency closed loop + 1 Inhabitants that Ship real gated contrib) ==="
+    )
+    print(
+        "All charters, passes, proposals, AND the full code agency loop (proposal/guardian/apply/test) + real ship (queue+Conductor approve+guarded real src edit) recorded on stabilization-wave-20260531 as living DNA."
+    )
+    print(
+        f"Demo DNA slugs: proposal={demo_dna.get('proposal')}, verdict={demo_dna.get('guardian_verdict')}, change={demo_dna.get('code_change_applied')}, test={demo_dna.get('test_result')}"
+    )
+    print(
+        f"Real edit applied to: {demo_dna.get('vision_doc_target')} (success={demo_dna.get('edit_success')})"
+    )
+    print(
+        f"REAL SHIP (1780296458): target={demo_dna.get('real_ship_target')} success={demo_dna.get('real_ship_edit_success')} queue_id={demo_dna.get('real_ship_proposal_in_queue')}"
+    )
+    print(
+        "Launch the Tower (`agentdrive grid run --swarm-id stabilization-wave-20260531 --with-tower`) to observe the inhabitants, new model-program-manifests if registered, and all new traces (including inhabitant_code_action page_types + pending_review)."
+    )
+    print(
+        "Query via MCP: experience_graph_get_parent_reasoning_history (look for 1780293824/4141/6458 + demo slugs + proposal_review), get_context_pack, etc."
+    )
+    print(
+        "The Grid + its inhabitants improved the host (including this vision + the loop itself + real gated source change under Conductor approval). The full tranche + 'Inhabitants that Ship' start is closed and attributable. Tron Grid ethos: live. Inhabitants now ship (gated)."
+    )
+
 
 if __name__ == "__main__":
     main()

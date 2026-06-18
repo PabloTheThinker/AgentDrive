@@ -1,6 +1,6 @@
 # DEVELOPERS — One-Command Bring-Up
 
-This is the contributor's quick-start. For high-level orientation read [`VISION.md`](VISION.md), then [`ARCHITECTURE.md`](ARCHITECTURE.md). For the project's public framing read [`README.md`](README.md).
+This is the contributor's quick-start. For high-level orientation read [`VISION.md`](VISION.md), then [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/CAPABILITY_FUNNEL.md`](docs/CAPABILITY_FUNNEL.md). For the project's public framing read [`README.md`](README.md).
 
 ## Prerequisites
 

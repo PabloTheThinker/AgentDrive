@@ -31,10 +31,8 @@ from agentdrive.drive.drive import (
     AgentDrive,
     DriveIngestResult,
     DriveQuery,
-    SwarmDriveManager,
     get_default_drive,
     get_global_drive,
-    get_swarm_drive_manager,
 )
 from agentdrive.drive.settings import (
     DriveSettings,
@@ -42,6 +40,7 @@ from agentdrive.drive.settings import (
     get_drive_settings_manager,
     get_effective_drive_settings,
 )
+from agentdrive.drive.swarm_manager import SwarmDriveManager, get_swarm_drive_manager
 from agentdrive.genome.models import (
     Genome,
     GenomeAuthor,

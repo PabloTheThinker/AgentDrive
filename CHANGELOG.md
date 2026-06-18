@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Fixed — Repo-wide consistency audit (2026-06-18)
+
+- **Drive path unification (P0)** — removed duplicate `SwarmDriveManager` from `drive.py`; `get_default_drive()` and `create_scoped_pool()` now use `swarm_manager.get_or_create_pool()` → shared `swarms/<id>/drive/` (aligns MCP, memory bank, Experience Graph).
+- **`__init__.py`** — `SwarmDriveManager` / `get_swarm_drive_manager` imported from `swarm_manager` only.
+- **Dreaming defaults** — `ingestion.py` / `dilation.py` use `get_default_drive_path()` / `get_genomes_dir()` instead of legacy `~/.agentdrive/pool/`.
+- **Docs** — `ARCHITECTURE.md`, `CAPABILITY_FUNNEL.md`, `SWARM.md`, `FOR_AI_MODELS.md`, `rules-and-patterns.md`, `SETTINGS.md`, `ASSESSMENT.md`, `DEVELOPERS.md`, `HELP.md` updated for v2 shared Drive + full capability funnel.
+- **`docs/docs.json`** — navigation trimmed to existing pages; added Memory Bank, Capability Funnel, Skills Library groups.
+- **Tests** — `test_create_scoped_pool_uses_shared_swarm_drive` in `test_shared_swarm_drive.py`.
+- **Examples/scripts** — ruff clean across `scripts/` and `examples/`.
+
 ### Fixed — CI ruff lint + format (2026-06-18)
 
 - **ruff check** — removed unused imports (`json`, `list_projects`, `ingest_from_operation`, `ingest_observation_mirror`, `PathTraversalError`); fixed import ordering across cognition, memory, learning, and test modules.

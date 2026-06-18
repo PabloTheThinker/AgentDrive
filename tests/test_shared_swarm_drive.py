@@ -23,6 +23,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
+from agentdrive.adapters.base import create_scoped_pool
 from agentdrive.constants import get_swarm_drive_path
 from agentdrive.drive.swarm_manager import SwarmDriveManager
 from agentdrive.drive.swarm_policy import SwarmDrivePolicy
@@ -83,6 +84,16 @@ def test_drive_path_is_the_real_swarm_path(isolated_agentdrive_home: Path) -> No
         f"Drive landed at {drive.drive_path}, expected {expected} — "
         "the drive_path bug surfaced by examples/03_swarm.py is back"
     )
+
+
+def test_create_scoped_pool_uses_shared_swarm_drive(isolated_agentdrive_home: Path) -> None:
+    """MCP/adapters create_scoped_pool must land on the same path as SwarmDriveManager."""
+    via_adapter = create_scoped_pool(swarm_id="mcp-swarm", subagent_id="worker-1")
+    expected = isolated_agentdrive_home / "swarms" / "mcp-swarm" / "drive"
+    assert via_adapter.drive_path == expected
+
+    via_sibling = create_scoped_pool(swarm_id="mcp-swarm", subagent_id="worker-2")
+    assert via_sibling is via_adapter
 
 
 def test_different_swarms_get_different_drives(isolated_agentdrive_home: Path) -> None:

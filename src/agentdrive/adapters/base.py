@@ -45,7 +45,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
-from agentdrive.constants import get_swarms_dir
 from agentdrive.drive.drive import AgentDrive, get_default_drive
 from agentdrive.drive.settings import (
     DriveSettings,
@@ -235,56 +234,27 @@ def create_scoped_pool(
     subagent_id: str | None = None,
     registry_root: Path | str | None = None,
 ) -> AgentDrive:
-    """Create or return a properly isolated AgentDrive for a swarm/sub-agent.
+    """Create or return the shared swarm AgentDrive (v2 / Milestone 2a).
 
-    Genomes live under ~/.agentdrive/swarms/<swarm>/<sub>/genomes (fully isolated DNA)
-    Ingest log + drive metadata under .../pool
+    All sub-agents in a swarm share ``~/.agentdrive/swarms/<swarm_id>/drive/``.
+    Memory bank, Experience Graph, and ingest logs live on that path — the same
+    layout ``get_swarm_drive_path()`` and ``SwarmDriveManager`` use.
 
-    If neither id is given, returns the global default pool.
+    ``subagent_id`` is tracked for membership/attribution; it does not isolate storage.
+    If neither id is given, returns the global default Drive.
     """
     if not swarm_id and not subagent_id:
         return get_default_drive()
 
-    # Compute directories consistently with constants.get_swarm_drive_path
-    # but also give each scope its own GenomeRegistry root.
-    import os.path
+    from agentdrive.drive.swarm_manager import get_swarm_drive_manager
 
-    from agentdrive.utils.safe_paths import safe_join
-
-    # safe_join validates that swarm_id / subagent_id stay under the swarms
-    # root (rejects "../", absolute paths, symlink escapes). The sink-side
-    # realpath wrap below gives CodeQL's py/path-injection query a visible
-    # sanitiser barrier at the mkdir call site.
-    swarms_root = get_swarms_dir()
-    if swarm_id and subagent_id:
-        base = safe_join(swarms_root, swarm_id, subagent_id)
-    elif swarm_id:
-        base = safe_join(swarms_root, swarm_id)
-    elif subagent_id:
-        base = safe_join(swarms_root, "default", subagent_id)
-    else:
-        base = safe_join(swarms_root, "default")
-
-    genomes_root = Path(registry_root) if registry_root else (base / "genomes")
-    drive_path = base / "pool"  # matches get_swarm_drive_path semantics
-
-    genomes_root = Path(os.path.realpath(os.fspath(genomes_root)))
-    drive_path = Path(os.path.realpath(os.fspath(drive_path)))
-    genomes_root.mkdir(parents=True, exist_ok=True)
-    drive_path.mkdir(parents=True, exist_ok=True)
-
-    registry = GenomeRegistry(root=genomes_root)
-    name = f"swarm:{swarm_id or 'default'}"
-    if subagent_id:
-        name += f":sub:{subagent_id}"
-
-    logger.debug(
-        "Creating scoped AgentDrive name=%s genomes=%s drive_path=%s",
-        name,
-        genomes_root,
-        drive_path,
+    drive = get_swarm_drive_manager().get_or_create_pool(
+        swarm_id or "default",
+        subagent_id,
     )
-    return AgentDrive(registry=registry, name=name, drive_path=drive_path)
+    if registry_root is not None:
+        drive.registry = GenomeRegistry(root=Path(registry_root))
+    return drive
 
 
 def get_agentdrive_pool(swarm_id: str | None = None, subagent_id: str | None = None) -> AgentDrive:

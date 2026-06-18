@@ -168,7 +168,7 @@ class AgentDrive:
 
     Supports full per-swarm and per-subagent isolation:
     - When swarm_id or subagent_id provided (or via current context / AGENTDRIVE_*_ID env), uses
-      ~/.agentdrive/swarms/<swarm_id>/<subagent_id>/pool/  (starts empty: own genomes/ + ingest)
+      ~/.agentdrive/swarms/<swarm_id>/drive/  (shared per-swarm Drive; sub-agents tag writes via author field)
     - Parent/child sharing governed by user's DriveSettings.sharing_policy (none/read-only/selective/full)
     - Automatic provisioning via SwarmDriveManager + get_default_drive()
 
@@ -2008,78 +2008,6 @@ class AgentDrive:
 # Global default pool (easy for agents to use) -- the root/parent pool
 default_pool: AgentDrive | None = None
 
-# Cache for scoped child pools (keyed by (swarm, subagent))
-_scoped_pools: dict[tuple[str, str], AgentDrive] = {}
-
-# Singleton manager
-_swarm_pool_manager: SwarmDriveManager | None = None
-
-
-class SwarmDriveManager:
-    """
-    Provisions and manages isolated per-swarm / per-subagent AgentDrives.
-
-    Automatically creates the directory structure:
-        ~/.agentdrive/swarms/<swarm_id>/<subagent_id>/pool/
-          ├── genomes/   (child's private DNA, starts empty)
-          └── ingest.jsonl
-
-    When any spawner (Grok's spawn_subagent, Claude, etc.) sets
-    AGENTDRIVE_SWARM_ID + AGENTDRIVE_SUBAGENT_ID (or uses using_swarm() context),
-    get_default_drive() + Harness automatically give the child its own pool.
-
-    Sharing policies (from user settings) are honored for parent<->child visibility.
-    """
-
-    def __init__(self):
-        self._cache: dict[tuple[str, str], AgentDrive] = {}
-
-    def provision(self, swarm_id: str, subagent_id: str | None = None) -> Path:
-        """Create the isolated dir tree (idempotent). Returns the Drive/ path.
-
-        Now also ensures objects/ + experience layer seed for empty-drive
-        self-healing parity with global Drive initialization.
-        """
-        p = get_swarm_drive_path(swarm_id, subagent_id)
-        try:
-            p.mkdir(parents=True, exist_ok=True)
-            for sub in ("genomes", "objects"):
-                (p / sub).mkdir(exist_ok=True)
-            # Touch ingest log defensively (AgentDrive will also do it)
-            ingest = p / "ingest.jsonl"
-            if not ingest.exists():
-                ingest.touch(exist_ok=True)
-        except Exception:
-            pass
-        # The subsequent AgentDrive() ctor will run the full _ensure_experience_layer_seed
-        # + home ensure + recovery logic. We keep provision minimal but safe.
-        return p
-
-    def get_pool(self, swarm_id: str, subagent_id: str | None = None, **kwargs: Any) -> AgentDrive:
-        """Return the child's private pool (creates + wires parent for sharing if new)."""
-        key = (swarm_id or "default", subagent_id or "")
-        if key in self._cache:
-            return self._cache[key]
-        self.provision(swarm_id, subagent_id)
-        child = AgentDrive(
-            swarm_id=swarm_id,
-            subagent_id=subagent_id,
-            name=f"swarm:{swarm_id}/sub:{subagent_id or 'anon'}",
-            **kwargs,
-        )
-        # Wire to global root parent so sharing policies work (query + full-ingest)
-        child.parent_pool = get_global_drive()
-        self._cache[key] = child
-        _scoped_pools[key] = child  # also global cache
-        return child
-
-
-def get_swarm_drive_manager() -> SwarmDriveManager:
-    global _swarm_pool_manager
-    if _swarm_pool_manager is None:
-        _swarm_pool_manager = SwarmDriveManager()
-    return _swarm_pool_manager
-
 
 def get_global_drive() -> AgentDrive:
     """Always returns the root (non-scoped) pool, regardless of current context/env ids.
@@ -2118,7 +2046,12 @@ def get_default_drive() -> AgentDrive:
     subagent_id = get_current_subagent_id()
 
     if swarm_id is not None or subagent_id is not None:
-        return get_swarm_drive_manager().get_pool(swarm_id or "default", subagent_id)
+        from agentdrive.drive.swarm_manager import get_swarm_drive_manager
+
+        return get_swarm_drive_manager().get_or_create_pool(
+            swarm_id or "default",
+            subagent_id,
+        )
 
     return get_global_drive()
 

@@ -2,7 +2,7 @@
 
 **Single mental model for how intelligence compounds in AgentDrive.**
 
-Public product: **AgentDrive**. Internal engine modules still use historical names (`pool/`, `AgentDrivePool`) — treat **Drive** as the product-facing term and **Pool** as the persistence/query engine behind it.
+Public product: **AgentDrive**. Python module is `agentdrive.drive` (`AgentDrive` class). Some config keys and method names still say `pool` (e.g. YAML `pool:`, `get_pool_stats()`) — treat **Drive** as the product term.
 
 ---
 
@@ -124,9 +124,10 @@ Each swarm gets isolated storage:
 
 ```
 ~/.agentdrive/swarms/<swarm_id>/
-├── drive/          # Experience Graph + meta_evolution + multiverse sessions
-└── <subagent_id>/pool/   # Per-sub-agent DNA (when isolation_level=subagent)
+└── drive/          # Shared swarm Drive: graph, memory_bank, ingest, genomes
 ```
+
+Sub-agents share this Drive; writes are attributed via Genome author field (`sub:<id>`). Truly air-gapped children need an explicit custom `drive_path`.
 
 The funnel runs **per swarm**. Cross-swarm sharing is policy-gated (`docs/SETTINGS.md`).
 

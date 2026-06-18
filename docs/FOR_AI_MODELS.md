@@ -41,7 +41,11 @@ These rules turn stateless tool-calling into compounding intelligence.
 
 ## Capability funnel (how work compounds)
 
-All serious work flows one direction: **Observe/Decide → Experience Graph → Skills → Genomes/DNA**. Retrieval can jump levels; writes should land at the right tier. Full routing table: **`docs/CAPABILITY_FUNNEL.md`**. Architecture overview: **`docs/ARCHITECTURE.md`**.
+All serious work flows one direction:
+
+**Observe/Decide → Experience Graph → Growth Merge → Memory Bank → Skills → Genomes/DNA**
+
+Retrieval can jump levels; writes should land at the right tier. Full routing table: **`docs/CAPABILITY_FUNNEL.md`**. Architecture overview: **`docs/ARCHITECTURE.md`**.
 
 ---
 

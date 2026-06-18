@@ -30,18 +30,20 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from agentdrive.dreaming.durable import _publish_mission_event
+from agentdrive.mission_control.events import LoopStepEvent
 from agentdrive.mission_control.server import (
     MissionControlHub,
     publish_static_fire_telemetry,
     run_static_fire_with_mission_telemetry,
 )
-from agentdrive.mission_control.events import LoopStepEvent
-from agentdrive.system.integrated_real_time_evolution_system import IntegratedRealTimeEvolutionSystem
+from agentdrive.system.integrated_real_time_evolution_system import (
+    IntegratedRealTimeEvolutionSystem,
+)
 
 
 def main() -> int:
     print("=== Mission Control v1.5 Full Chain Verification ===")
-    print(f"Target context: stabilization-wave-20260531")
+    print("Target context: stabilization-wave-20260531")
     print(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}")
     print()
 
@@ -75,14 +77,22 @@ def main() -> int:
     results["cmds_ok"] = all(
         c.get("result") is not None or c.get("error") == "no_mission_attached"
         for c in (cmd_brief, cmd_dec, cmd_dens, cmd_fire, cmd_state)
-    ) and "unknown_command" not in str([c.get("error") for c in (cmd_brief, cmd_dec, cmd_dens, cmd_fire, cmd_state)])
-    print(f"  dispatch: {'PASS' if results['cmds_ok'] else 'FAIL'} (5 cmds routed; no unknown errors)")
+    ) and "unknown_command" not in str(
+        [c.get("error") for c in (cmd_brief, cmd_dec, cmd_dens, cmd_fire, cmd_state)]
+    )
+    print(
+        f"  dispatch: {'PASS' if results['cmds_ok'] else 'FAIL'} (5 cmds routed; no unknown errors)"
+    )
 
     # 3. Replay seq integrity
     print("[3/6] Replay seq integrity (after_seq + bounded + monotonic)...")
     # Ensure some events
     for _ in range(3):
-        hub._record_event_for_introspection(LoopStepEvent(event_type="loop_step", timestamp=time.time(), step=5, description="verify-replay"))
+        hub._record_event_for_introspection(
+            LoopStepEvent(
+                event_type="loop_step", timestamp=time.time(), step=5, description="verify-replay"
+            )
+        )
     after = hub._event_seq - 2
     replay = [e for e in hub.recent_events if e.get("seq", 0) > after][:64]
     results["replay_ok"] = (
@@ -90,7 +100,9 @@ def main() -> int:
         and all(e["seq"] > after for e in replay)
         and hub._event_seq == max((e["seq"] for e in replay), default=hub._event_seq)
     )
-    print(f"  replay: {'PASS' if results['replay_ok'] else 'FAIL'} (seqs after={after}, count={len(replay)}, current={hub._event_seq})")
+    print(
+        f"  replay: {'PASS' if results['replay_ok'] else 'FAIL'} (seqs after={after}, count={len(replay)}, current={hub._event_seq})"
+    )
 
     # 4. Rich StaticFire telemetry (context + direct publish + final_report shape)
     print("[4/6] Rich StaticFire telemetry (run_* + publish + FireSession + final_report)...")
@@ -105,20 +117,31 @@ def main() -> int:
         key_events=[{"type": "verify", "summary": "command+rich in stabilization-wave-20260531"}],
         log_line="verify script mid-fire",
     )
-    with run_static_fire_with_mission_telemetry(duration_seconds=2.0, label="verify-script-fire", coherence_start=0.83) as sess:
+    with run_static_fire_with_mission_telemetry(
+        duration_seconds=2.0, label="verify-script-fire", coherence_start=0.83
+    ) as sess:
         sess.report_progress(cycles_completed=1, current_coherence=0.85)
         sess.record_intervention("verify parent steer inside fire window")
         sess.add_recorder_snippet("verify:fabric+densif-during-fire")
-        sess.complete(final_coherence=0.90, final_report={"post_densif_fabric": {"lift": "7pct"}, "recorder_snippets": ["v"]})
+        sess.complete(
+            final_coherence=0.90,
+            final_report={"post_densif_fabric": {"lift": "7pct"}, "recorder_snippets": ["v"]},
+        )
 
     sf_events = [e for e in hub.recent_events if e.get("event_type") == "static_fire"]
     sf_after = len(sf_events)
-    has_completed = any(e["data"].get("phase") == "completed" and "final_report" in e["data"] for e in sf_events)
+    has_completed = any(
+        e["data"].get("phase") == "completed" and "final_report" in e["data"] for e in sf_events
+    )
     results["static_fire_ok"] = (sf_after > sf_count_before) and has_completed
-    print(f"  staticfire: {'PASS' if results['static_fire_ok'] else 'FAIL'} (events +{sf_after-sf_count_before}, has completed+final_report)")
+    print(
+        f"  staticfire: {'PASS' if results['static_fire_ok'] else 'FAIL'} (events +{sf_after - sf_count_before}, has completed+final_report)"
+    )
 
     # 5. Daily / dream emission path (the exact helper used by run_daily... + dream phases)
-    print("[5/6] Daily/dream emissions (_publish_mission_event from durable + stabilization context)...")
+    print(
+        "[5/6] Daily/dream emissions (_publish_mission_event from durable + stabilization context)..."
+    )
     daily_cycle = f"daily-consol-verify-{int(time.time())}"
     _publish_mission_event(
         "loop_step",
@@ -140,7 +163,9 @@ def main() -> int:
     )
     daily_events = [e for e in hub.recent_events if e.get("cycle_id") == daily_cycle]
     results["daily_dream_ok"] = len(daily_events) >= 2 and all("seq" in e for e in daily_events)
-    print(f"  daily/dream: {'PASS' if results['daily_dream_ok'] else 'FAIL'} ({len(daily_events)} events with stabilization-wave metadata)")
+    print(
+        f"  daily/dream: {'PASS' if results['daily_dream_ok'] else 'FAIL'} ({len(daily_events)} events with stabilization-wave metadata)"
+    )
 
     # 6. Optional light daily job (non-mutating parts; may be heavy so best-effort)
     print("[6/6] Light daily_consolidation_job surface (best-effort, covers real emission site)...")
@@ -149,9 +174,13 @@ def main() -> int:
         # Run with very bounded scope if possible; the job itself does drive.think etc.
         # For pure verification we just ensure the symbol + call path exists without full exec side effects.
         # Call a tiny subset that exercises the publish site.
-        _publish_mission_event("fabric_update", cycle_id="daily-verify-job", summary="job entry point covered")
+        _publish_mission_event(
+            "fabric_update", cycle_id="daily-verify-job", summary="job entry point covered"
+        )
         results["daily_job_surface_ok"] = True
-        print("  daily_job: PASS (surface + emission helper exercised; full run_daily would do real Drive.think)")
+        print(
+            "  daily_job: PASS (surface + emission helper exercised; full run_daily would do real Drive.think)"
+        )
     except Exception as exc:
         results["daily_job_surface_ok"] = False
         print(f"  daily_job: FAIL ({exc})")
@@ -159,7 +188,14 @@ def main() -> int:
     # Aggregate
     all_ok = all(
         results.get(k, False)
-        for k in ("attach_ok", "cmds_ok", "replay_ok", "static_fire_ok", "daily_dream_ok", "daily_job_surface_ok")
+        for k in (
+            "attach_ok",
+            "cmds_ok",
+            "replay_ok",
+            "static_fire_ok",
+            "daily_dream_ok",
+            "daily_job_surface_ok",
+        )
     )
     results["overall_ok"] = all_ok
 
@@ -170,7 +206,9 @@ def main() -> int:
     print(f"  recent_events captured: {len(hub.recent_events)} (seq up to {hub._event_seq})")
     print()
     if all_ok:
-        print("PASS: All v1.5 Mission Control surfaces (daily/dream + static fire rich + commands + replay + attach) covered and hardened.")
+        print(
+            "PASS: All v1.5 Mission Control surfaces (daily/dream + static fire rich + commands + replay + attach) covered and hardened."
+        )
         return 0
     else:
         print("FAIL: One or more surfaces did not verify cleanly. See report above.")

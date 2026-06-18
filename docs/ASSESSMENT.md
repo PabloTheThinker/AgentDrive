@@ -7,7 +7,7 @@
 
 ## Executive summary
 
-AgentDrive crossed a meaningful product threshold: **a new operator can install, wire MCP, run the memory loop, and use a terminal that feels alive while the agent works.** The UX-PROPOSAL’s five patterns are all shipped at v1. The codebase is in strong shape — **618 tests collected, full suite green** — with multiverse, auto-learning, and codebase-mirror coverage added since the June 8 snapshot.
+AgentDrive crossed a meaningful product threshold: **a new operator can install, wire MCP, run the memory loop, and use a terminal that feels alive while the agent works.** The UX-PROPOSAL’s five patterns are all shipped at v1. The codebase is in strong shape — **655+ tests collected, full suite green** — with multiverse, auto-learning, and codebase-mirror coverage added since the June 8 snapshot.
 
 What you have now is not a demo shell. It is a **local-first agent memory platform** with a coherent operator surface (CLI + TUI + MCP), observable sessions, and a credible first-run story. The main gap is no longer “does the terminal feel broken?” but “which surface do we deepen next — terminal v2, web, or external adapters?”
 
@@ -67,7 +67,7 @@ Every chat session writes `~/.agentdrive/agents/<agent>/sessions/<id>/events.jso
 
 1. Coherent operator story — golden path + TUI gate + MCP + verify
 2. Event-bus architecture — lanes compose; session recording is automatic
-3. Test discipline — 618 tests, per-lane + multiverse + auto-learning suites
+3. Test discipline — 655+ tests, per-lane + multiverse + auto-learning + memory bank suites
 4. Unified dispatch — CLI, REPL, slash, skills share handlers
 5. Low TODO debt — ~3 TODOs across ~22k LOC
 

@@ -74,7 +74,7 @@ import signal
 import sys
 import threading
 import time
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 # Public API only (AGENTS.md rule for examples + external docs)
 from agentdrive import (
@@ -112,8 +112,12 @@ def run_embedded_tower() -> None:
         import uvicorn
 
         print(f"[{_now()}] Starting embedded Control Tower at http://{MC_HOST}:{MC_PORT}")
-        print("    Open this URL now — you will see live 6-step + Experience Graph (fabric) + rich Static Fire data.")
-        print("    (This is the exact surface `agentdrive mission` would serve against an attached mission.)")
+        print(
+            "    Open this URL now — you will see live 6-step + Experience Graph (fabric) + rich Static Fire data."
+        )
+        print(
+            "    (This is the exact surface `agentdrive mission` would serve against an attached mission.)"
+        )
         uvicorn.run(
             create_mission_control_app,
             host=MC_HOST,
@@ -124,7 +128,9 @@ def run_embedded_tower() -> None:
         )
     except ImportError:
         print("[warn] uvicorn not available — install with: pip install 'agentdrive[web]'")
-        print("       Tower will not be hosted by this harness (use `agentdrive mission` in another terminal after attaching).")
+        print(
+            "       Tower will not be hosted by this harness (use `agentdrive mission` in another terminal after attaching)."
+        )
     except Exception as exc:
         print(f"[warn] Embedded Tower failed to start (harness continues): {exc}")
 
@@ -139,7 +145,7 @@ def _install_signal_handlers(stop_event: threading.Event) -> None:
 
 
 def main() -> int:
-    print(f"=== Mission Control v1.5 Static Fire Harness ===")
+    print("=== Mission Control v1.5 Static Fire Harness ===")
     print(f"Swarm / stabilization context: {SWARM_ID}")
     print(f"Duration: {DURATION_S}s (set MISSION_DURATION=120 for canonical 2-minute fire)")
     print(f"Label: {LABEL}")
@@ -156,7 +162,9 @@ def main() -> int:
     #    (recorder + integrated loop paths + FireSession) into the global hub that the
     #    Tower (embedded or `agentdrive mission`) is listening on.
     system.attach_mission_control(mission_control_hub)
-    print(f"[{_now()}] Attached mission_control_hub — all future emissions will be visible in the Tower.")
+    print(
+        f"[{_now()}] Attached mission_control_hub — all future emissions will be visible in the Tower."
+    )
 
     # Start the real-time components (overseer ticks, grid health, background fabric work)
     # This produces OverseerState + GridHealth events "for free".
@@ -174,8 +182,12 @@ def main() -> int:
     # Give the server a moment to bind before we start emitting heavily
     time.sleep(1.8)
 
-    print(f"\n[{_now()}] === BEGIN STATIC FIRE WINDOW (via run_static_fire_with_mission_telemetry) ===")
-    print("    Watch the Static Fire Bay, Fabric Observatory (Experience Graph deltas + coherence), Loop steps,")
+    print(
+        f"\n[{_now()}] === BEGIN STATIC FIRE WINDOW (via run_static_fire_with_mission_telemetry) ==="
+    )
+    print(
+        "    Watch the Static Fire Bay, Fabric Observatory (Experience Graph deltas + coherence), Loop steps,"
+    )
     print("    Parent Decision timeline, and command surface in the Tower.\n")
 
     start_wall = time.time()
@@ -183,12 +195,14 @@ def main() -> int:
 
     try:
         # THE ZERO-FRICTION PATTERN FOR REAL HARNESSSES
-        with run_static_fire_with_mission_telemetry(
-            duration_seconds=float(DURATION_S),
-            label=LABEL,
-            coherence_start=0.855,  # realistic starting point; helper will try to improve from real fabric if available
-            mission=system,  # lets it auto-probe better start coherence
-        ) as sess:
+        with (
+            run_static_fire_with_mission_telemetry(
+                duration_seconds=float(DURATION_S),
+                label=LABEL,
+                coherence_start=0.855,  # realistic starting point; helper will try to improve from real fabric if available
+                mission=system,  # lets it auto-probe better start coherence
+            ) as sess
+        ):
             # Drive a realistic number of canonical Parent loop iterations inside the window.
             # Each record_parent_decision + get_* call exercises the exact paths that feed
             # LoopStepEvent + FabricUpdateEvent + ParentDecisionEvent into the Tower.
@@ -223,7 +237,7 @@ def main() -> int:
                 sess.report_progress(
                     cycles_completed=i + 1,
                     current_coherence=round(coh, 4),
-                    log_line=f"cycle {i+1}/{cycles} inside static fire — coherence lift in progress",
+                    log_line=f"cycle {i + 1}/{cycles} inside static fire — coherence lift in progress",
                 )
                 sess.record_intervention(
                     decision_summary="Parent steered research toward time-dilation mathematics during controlled evolution window",
@@ -273,15 +287,23 @@ def main() -> int:
             t = e.get("event_type", "unknown")
             by_type[t] = by_type.get(t, 0) + 1
 
-        print(f"Events emitted during this harness run: +{new_events} (total in hub: {events_after})")
+        print(
+            f"Events emitted during this harness run: +{new_events} (total in hub: {events_after})"
+        )
         print(f"Event families seen (Tower surfaces exercised): {by_type}")
-        print(f"Recent seq range (replay integrity): "
-              f"{mission_control_hub.recent_events[0].get('seq') if mission_control_hub.recent_events else 0} → "
-              f"{mission_control_hub.recent_events[-1].get('seq') if mission_control_hub.recent_events else 0}")
+        print(
+            f"Recent seq range (replay integrity): "
+            f"{mission_control_hub.recent_events[0].get('seq') if mission_control_hub.recent_events else 0} → "
+            f"{mission_control_hub.recent_events[-1].get('seq') if mission_control_hub.recent_events else 0}"
+        )
 
-        print(f"\n[{_now()}] Harness complete. All v1.5 surfaces (loop + Experience Graph deltas (fabric) + rich StaticFire + replay) exercised.")
+        print(
+            f"\n[{_now()}] Harness complete. All v1.5 surfaces (loop + Experience Graph deltas (fabric) + rich StaticFire + replay) exercised."
+        )
         print("    If the embedded Tower is still running, it has the full live session.")
-        print("    Re-run with MISSION_DURATION=120 for a canonical 2-minute production static fire.")
+        print(
+            "    Re-run with MISSION_DURATION=120 for a canonical 2-minute production static fire."
+        )
         print("    To observe from a separate `agentdrive mission` process (long-running swarms):")
         print("        PYTHONPATH=src agentdrive mission   # then http://127.0.0.1:8421")
 

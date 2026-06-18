@@ -90,7 +90,9 @@ def main() -> int:
         if vendor == "grok":
             n = vendor_counts.get("grok", 0)
             lines.append(f"| *({n} skills)* | Synced from `~/.grok/skills` — see `vendors/grok/` |")
-            lines.append("| `grok-changelog`, `grok-check-work`, `grok-imagine`, … | Native Grok tool paths; use `changelog` / `verify-work` universal when on MCP only |")
+            lines.append(
+                "| `grok-changelog`, `grok-check-work`, `grok-imagine`, … | Native Grok tool paths; use `changelog` / `verify-work` universal when on MCP only |"
+            )
         else:
             for slug, spec in (cfg.get("skills") or {}).items():
                 prefix = cfg.get("name_prefix", f"{vendor}-")

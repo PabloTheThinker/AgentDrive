@@ -29,7 +29,10 @@ class DilationPolicy:
     ticks_per_simulated_hour: int = 60
     wake_paths: list[Path] = field(
         default_factory=lambda: [
-            Path("~/.agentdrive/pool/ingest.jsonl").expanduser(),
+            __import__(
+                "agentdrive.constants", fromlist=["get_default_drive_path"]
+            ).get_default_drive_path()
+            / "ingest.jsonl",
             Path("~/.agentdrive/swarms").expanduser(),
             Path("~/.agentdrive/reasoning/ledger").expanduser(),
         ]
