@@ -1,9 +1,10 @@
 # AgentDrive for AI Models (LLM Onboarding Guide)
 
-**This is the canonical "rules for the AI" document.**\
-Give this file (or keep it in context) to any model — frontier (Grok, Claude, Cursor) or local (via Continue, Ollama, LM Studio, direct MCP, etc.) — that will use AgentDrive.
+**Start with [INSTRUCTION.md](../INSTRUCTION.md)** — what AgentDrive is, why to use it, how it works, session workflow, and how to explain it to your user.
 
-Read this once at the start of any serious session. It will make you far more effective.
+**This document is the deep reference** — extended rules, Experience Graph tool tables, AD-Grid inhabitant guide, and anti-patterns. Give both files (or keep them in context) to any model — frontier (Grok, Claude, Cursor) or local (via Continue, Ollama, LM Studio, direct MCP, etc.) — that will use AgentDrive.
+
+Read INSTRUCTION.md once at session start; consult this file when you need detail on a specific surface.
 
 ---
 

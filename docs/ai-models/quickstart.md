@@ -5,6 +5,8 @@ description: "Get any model (Claude, Grok, Cursor, local LLM) connected to Agent
 
 # Quickstart for AI Models
 
+**Full onboarding:** Read **[INSTRUCTION](../INSTRUCTION)** first — what AgentDrive is, why to use it, how to explain it to your user, and the session workflow.
+
 This page gets you (the model) or your human operator productive fast.
 
 ## 1. Connect via MCP (the only interface that matters)

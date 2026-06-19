@@ -78,7 +78,8 @@
           "ai-models/quickstart",
           "ai-models/rules-and-patterns",
           "ai-models/local-models",
-          "FOR_AI_MODELS"
+          "FOR_AI_MODELS",
+          "INSTRUCTION"
         ]
       },
       {
@@ -115,7 +116,6 @@
     {
       "source": "/GOLDEN_PATH",
       "destination": "/start/golden-path"
-    },
-
+    }
   ]
 }

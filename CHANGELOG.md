@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Added — INSTRUCTION.md for LLM onboarding (2026-06-18)
+
+- **`INSTRUCTION.md`** (repo root) — canonical onboarding for any AI agent: what AgentDrive is, why to use it, how it works (capability funnel + 6-step loop), session workflow, anti-patterns, how to explain AgentDrive to the user (elevator pitch, analogies, FAQ), golden rules, and a full session example.
+- **`docs/INSTRUCTION.md`** — Mintlify mirror with frontmatter for docs site nav.
+- **`README.md`** — points models to INSTRUCTION.md before FOR_AI_MODELS.md.
+- **`docs/FOR_AI_MODELS.md`** · **`docs/ai-models/quickstart.md`** — cross-links to INSTRUCTION as entry point.
+- **`docs/docs.json`** — INSTRUCTION added to "Using with AI Models" nav; fixed trailing comma in redirects.
+
 ### Fixed — Repo-wide consistency audit (2026-06-18)
 
 - **Drive path unification (P0)** — removed duplicate `SwarmDriveManager` from `drive.py`; `get_default_drive()` and `create_scoped_pool()` now use `swarm_manager.get_or_create_pool()` → shared `swarms/<id>/drive/` (aligns MCP, memory bank, Experience Graph).

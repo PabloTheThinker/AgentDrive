@@ -8,7 +8,7 @@
 
 AgentDrive gives any capable model — Grok, Claude, Cursor, Continue, Ollama, custom harnesses — a **structural memory system** that grows from its own decisions. Not a vector store. Not a chat-memory SaaS. A living substrate where reasoning traces, patterns, skills, and knowledge compound across sessions instead of resetting every time you open a new chat.
 
-> **For AI models:** Your first MCP action is always `agentdrive_mcp_catalog()`. Then read **[docs/FOR_AI_MODELS.md](docs/FOR_AI_MODELS.md)** — the canonical rules for working inside AgentDrive.
+> **For AI models:** Your first MCP action is always `agentdrive_mcp_catalog()`. Then read **[INSTRUCTION.md](INSTRUCTION.md)** — what AgentDrive is, how to use it, and how to explain it to your user. Deep reference: **[docs/FOR_AI_MODELS.md](docs/FOR_AI_MODELS.md)**.
 
 ---
 
@@ -199,7 +199,8 @@ Guides: [docs/AD_GRID_JOIN.md](docs/AD_GRID_JOIN.md) · [docs/AD_GRID_VISION.md]
 
 | Doc | Purpose |
 |-----|---------|
-| [FOR_AI_MODELS.md](docs/FOR_AI_MODELS.md) | Canonical rules for any connected model |
+| [INSTRUCTION.md](INSTRUCTION.md) | **Start here (LLMs)** — what, why, how, explain to user |
+| [FOR_AI_MODELS.md](docs/FOR_AI_MODELS.md) | Deep reference rules for any connected model |
 | [CAPABILITY_FUNNEL.md](docs/CAPABILITY_FUNNEL.md) | How intelligence compounds (single mental model) |
 | [MEMORY_BANK.md](docs/MEMORY_BANK.md) | Deep memory layer — vault/topic, search, anchor |
 | [MULTIVERSE_COGNITION.md](docs/MULTIVERSE_COGNITION.md) | Parallel timeline decisions |
