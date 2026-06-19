@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Changed — About page & docs landing (2026-06-18)
+
+- **`docs/about.md`** — new About page: problem statement, capability layers, who it's for, comparison vs chat memory/RAG, principles, Vektra attribution, next-step cards.
+- **`docs/index.md`** — rewritten landing: compounding-intelligence positioning, Golden Path cards, INSTRUCTION link, capability funnel, removed stale external-site reference.
+- **`docs/docs.json`** — About added to Get Started nav.
+- **`pyproject.toml`** — package description aligned with current product framing.
+- **`README.md`** — docs link points to About + index.
+- **GitHub repo About** — description updated for compounding intelligence + Memory Bank + Skills.
+
 ### Added — INSTRUCTION.md for LLM onboarding (2026-06-18)
 
 - **`INSTRUCTION.md`** (repo root) — canonical onboarding for any AI agent: what AgentDrive is, why to use it, how it works (capability funnel + 6-step loop), session workflow, anti-patterns, how to explain AgentDrive to the user (elevator pitch, analogies, FAQ), golden rules, and a full session example.

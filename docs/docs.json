@@ -49,6 +49,7 @@
         "group": "Get Started",
         "pages": [
           "index",
+          "about",
           "start/golden-path",
           "start/install",
           "start/getting-started"

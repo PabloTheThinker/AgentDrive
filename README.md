@@ -176,7 +176,7 @@ Swarm-scoped storage means each project or mission gets isolated memory that sti
 
 Subsystem map: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)  
 Capability funnel: [docs/CAPABILITY_FUNNEL.md](docs/CAPABILITY_FUNNEL.md)  
-Instruction manual (Mintlify-style): [docs/](docs/) — start at [docs/index.md](docs/index.md)
+About & docs site: [docs/about.md](docs/about.md) · [docs/index.md](docs/index.md)
 
 ---
 
