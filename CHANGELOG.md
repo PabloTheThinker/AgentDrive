@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The product is
 
 ## Unreleased
 
+### Changed — branch policy: main only (2026-06-18)
+
+- **Deleted** remote + local `codex/memory-systems-whole-update` (merged via PR #12; no longer maintained).
+- **`AGENTS.md`** — branch policy: `main` only; do not recreate/sync merged feature branches.
+
 ### Changed — About page & docs landing (2026-06-18)
 
 - **`docs/about.md`** — new About page: problem statement, capability layers, who it's for, comparison vs chat memory/RAG, principles, Vektra attribution, next-step cards.

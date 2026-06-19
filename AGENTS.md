@@ -66,6 +66,12 @@ The public API is re-exported at `src/agentdrive/__init__.py`. Don't reach into 
 2. Route receive-side handling through `quarantine.submit` — never bypass.
 3. Add an adversarial test under `tests/peers/` that confirms a malformed payload is quarantined and the audit log records the rejection.
 
+## Branch policy
+
+- **`main` is the only long-lived branch.** All work merges to `main`. Do not recreate, sync, or push feature branches after merge (e.g. `codex/*` sprint branches).
+- **Delete merged branches** on GitHub when the PR closes. Do not fast-forward stale feature branches to `main` and push them again.
+- **New work:** branch from `main`, open a PR, merge, delete the branch.
+
 ## Things to avoid
 
 - **Don't introduce a new auth path.** Cap + admin role are the only two. If you think you need a third, open a Discussion first.
