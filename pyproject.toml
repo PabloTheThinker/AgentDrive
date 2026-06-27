@@ -30,7 +30,7 @@ dependencies = [
     "rich>=15.0.0",
     "prompt_toolkit>=3.0.52",
     "httpx>=0.28.1",
-    "fastapi>=0.137.2",
+    "fastapi>=0.138.1",
     "uvicorn>=0.49.0",
     "python-multipart>=0.0.32",
     "jinja2>=3.1.6",
@@ -41,23 +41,23 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=9.1.0",
+    "pytest>=9.1.1",
     "pytest-cov",
     "ruff",
     "mypy",
     "types-PyYAML",
 ]
 test = [
-    "pytest>=9.1.0",
+    "pytest>=9.1.1",
     "pytest-cov",
     # tests/test_chat_loop.py uses async def + @pytest.mark.asyncio.
     # Required in CI; locally most devs have it system-wide.
     "pytest-asyncio>=1.4.0",
     # CI exercises the MCP catalog/server as a first-class AgentDrive surface.
-    "mcp>=1.28.0",
+    "mcp>=1.28.1",
 ]
 mcp = [
-    "mcp>=1.28.0",
+    "mcp>=1.28.1",
 ]
 
 [project.scripts]
