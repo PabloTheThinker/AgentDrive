@@ -87,6 +87,10 @@ agentdrive = ["*.yaml", "*.json", "genomes/**/*", "mission_control/static/**/*"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+# Ruff 0.16+ formats fenced Python inside Markdown. Specs under src/ (e.g.
+# LOOM_DREAMING_SPEC.md) are documentation, not source — keep them out of
+# format/lint so CI does not fail on example snippets.
+extend-exclude = ["**/*.md"]
 
 [tool.ruff.lint]
 # Focused ruleset — bugs we genuinely want caught, not stylistic noise.
