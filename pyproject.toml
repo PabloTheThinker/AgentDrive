@@ -28,9 +28,9 @@ dependencies = [
     "pydantic>=2.13.4",
     "pyyaml>=6.0.3",
     "rich>=15.0.0",
-    "prompt_toolkit>=3.0.52",
+    "prompt_toolkit>=3.0.53",
     "httpx>=0.28.1",
-    "fastapi>=0.139.0",
+    "fastapi>=0.140.13",
     "uvicorn>=0.51.0",
     "python-multipart>=0.0.32",
     "jinja2>=3.1.6",
@@ -54,10 +54,10 @@ test = [
     # Required in CI; locally most devs have it system-wide.
     "pytest-asyncio>=1.4.0",
     # CI exercises the MCP catalog/server as a first-class AgentDrive surface.
-    "mcp>=1.28.1",
+    "mcp>=2.0.0",
 ]
 mcp = [
-    "mcp>=1.28.1",
+    "mcp>=2.0.0",
 ]
 
 [project.scripts]
