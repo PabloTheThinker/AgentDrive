@@ -28,15 +28,15 @@ dependencies = [
     "pydantic>=2.13.4",
     "pyyaml>=6.0.3",
     "rich>=15.0.0",
-    "prompt_toolkit>=3.0.52",
+    "prompt_toolkit>=3.0.53",
     "httpx>=0.28.1",
-    "fastapi>=0.139.0",
-    "uvicorn>=0.51.0",
+    "fastapi>=0.141.1",
+    "uvicorn>=0.52.1",
     "python-multipart>=0.0.32",
     "jinja2>=3.1.6",
     # v2 / Milestone 2c: Ed25519 signatures for lineage_share grants.
     # Also provides Argon2id KDF for the web UI password store.
-    "cryptography>=49.0.0",
+    "cryptography>=50.0.0",
 ]
 
 [project.optional-dependencies]
@@ -54,10 +54,10 @@ test = [
     # Required in CI; locally most devs have it system-wide.
     "pytest-asyncio>=1.4.0",
     # CI exercises the MCP catalog/server as a first-class AgentDrive surface.
-    "mcp>=1.28.1",
+    "mcp>=2.0.0",
 ]
 mcp = [
-    "mcp>=1.28.1",
+    "mcp>=2.0.0",
 ]
 
 [project.scripts]
