@@ -57,7 +57,8 @@ from .base import (
 def get_agentdrive_adapter(model: str = "auto") -> AgentDriveAdapter:
     """Factory: return the best adapter for the given model family.
 
-    model: "grok" | "grok-build" | "claude" | "claude-code" | "codex" | "auto"
+    model: "grok" | "grok-build" | "claude" | "claude-code" | "codex"
+           | "hermes" | "nous" | "ilo" | "auto"
     """
     model = (model or "auto").lower()
     if model in ("grok", "grok-build", "grok_build"):
@@ -72,6 +73,10 @@ def get_agentdrive_adapter(model: str = "auto") -> AgentDriveAdapter:
         from .codex_adapter import CodexAgentDriveAdapter
 
         return CodexAgentDriveAdapter()
+    if model in ("hermes", "nous", "ilo"):
+        from .hermes_adapter import HermesAgentDriveAdapter
+
+        return HermesAgentDriveAdapter()
     # default / auto
     from .base import AgentDriveAdapterBase
 
@@ -101,6 +106,16 @@ def activate_for_claude(swarm_id: str | None = None, **kwargs) -> AgentDriveAdap
     return adapter
 
 
+def activate_for_hermes(swarm_id: str | None = None, **kwargs) -> AgentDriveAdapter:
+    """One-liner for Hermes / Nous / ILO agents after user says 'use AgentDrive'."""
+    from .hermes_adapter import HermesAgentDriveAdapter, get_agentdrive_instructions_for_hermes
+
+    adapter = HermesAgentDriveAdapter(swarm_id=swarm_id, **kwargs)
+    adapter.activate(swarm_id=swarm_id)
+    print(get_agentdrive_instructions_for_hermes(swarm_id or "current-session"))
+    return adapter
+
+
 __all__ = [
     "AgentDriveAdapter",
     "AgentDriveAdapterBase",
@@ -111,6 +126,7 @@ __all__ = [
     "create_scoped_pool",
     "activate_for_grok_build",
     "activate_for_claude",
+    "activate_for_hermes",
     "AgentDrive",
     "DriveSettings",
     "get_effective_drive_settings",

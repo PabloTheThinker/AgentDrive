@@ -156,6 +156,29 @@ The catalog returns every tool with `when_to_use`, examples, read-only hints, an
 
 **Clone/dev:** If the user has a git clone, call `agentdrive_get_mcp_config_snippet(client="claude" | "cursor" | "codex" | "generic")` and give them the exact config block to paste.
 
+### If you are Hermes
+
+Hermes (Nous / ILO chassis) uses the same capability funnel as every other runtime. **MCP first** when connected: call `agentdrive_mcp_catalog()` before anything else.
+
+When MCP is not wired in, activate the Python adapter or use the CLI experience commands:
+
+```python
+from agentdrive.adapters import activate_for_hermes
+adapter = activate_for_hermes(swarm_id="your-mission-id")
+adapter.health()
+```
+
+| When | Action |
+|------|--------|
+| Before similar work | MCP `experience_graph_get_context_pack()` or CLI `agentdrive experience context-pack` (or `agentdrive think`) |
+| After material sittings | MCP `experience_graph_record_reasoning(...)` or CLI `agentdrive experience record --summary "..."` |
+
+| Hermes concept | AgentDrive layer |
+|----------------|------------------|
+| Skills (procedures) | Learned / fused playbooks |
+| Hot memory (facts) | Memory Bank |
+| — | Experience Graph (decision *shape*, not raw facts) |
+
 ---
 
 ## 4. How to use it (session workflow)
