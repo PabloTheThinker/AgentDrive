@@ -54,10 +54,11 @@ test = [
     # Required in CI; locally most devs have it system-wide.
     "pytest-asyncio>=1.4.0",
     # CI exercises the MCP catalog/server as a first-class AgentDrive surface.
-    "mcp>=1.28.1",
+    # Pin <2: mcp 2.x renamed FastMCP → MCPServer and breaks stdio client timeouts.
+    "mcp>=1.28.1,<2",
 ]
 mcp = [
-    "mcp>=1.28.1",
+    "mcp>=1.28.1,<2",
 ]
 
 [project.scripts]
